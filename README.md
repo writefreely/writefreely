@@ -1,6 +1,6 @@
 # writeas.org
 
-We're building a small, focused digital writing and publishing tool that you can host yourself. Today, you can see what will eventually be open source on [Write.as](https://write.as).
+We're building a small, focused digital writing and publishing tool that you can host yourself. Today, you can see what will eventually be open source on [Write.as](https://write.as) &mdash; and see our complementary reader that's already open source today, called [Read.as](https://github.com/writeas/Read.as).
 
 ## Development
 
