@@ -1,4 +1,19 @@
-# writeas.org
+&nbsp;
+<p align="center">
+	<a href="https://writefreely.org"><img src="https://writefreely.org/writefreely.svg" width="350px" alt="Write Freely" /></a>
+</p>
+<hr />
+<p align="center">
+	<a href="https://github.com/writeas/Write.as/releases/">
+		<img src="https://img.shields.io/github/release/writeas/Write.as.svg" alt="Latest release" />
+	</a>
+	<a href="https://travis-ci.org/writeas/Write.as">
+		<img src="https://travis-ci.org/writeas/Write.as.svg?branch=develop" alt="Build status" />
+	</a>
+	<a href="https://github.com/writeas/Write.as/contributors/">
+		<img src="https://img.shields.io/github/contributors/writeas/Write.as.svg" alt="Contributors" />
+	</a>
+</p>
 
 We're building a small, focused digital writing and publishing tool that you can host yourself. Today, you can see what will eventually be open source on [Write.as](https://write.as) &mdash; and see our complementary reader that's already open source today, called [Read.as](https://github.com/writeas/Read.as).
 
