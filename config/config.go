@@ -51,6 +51,7 @@ func New() *Config {
 		Database: DatabaseCfg{
 			Type: "mysql",
 			Host: "localhost",
+			Port: 3306,
 		},
 		App: AppCfg{
 			Federation:     true,

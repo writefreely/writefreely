@@ -1,6 +1,7 @@
 package writefreely
 
 import (
+	"flag"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"net/http"
@@ -28,6 +29,17 @@ type app struct {
 var shttp = http.NewServeMux()
 
 func Serve() {
+	createConfig := flag.Bool("create-config", false, "Creates a basic configuration and exits")
+	flag.Parse()
+
+	if *createConfig {
+		log.Info("Creating configuration...")
+		c := config.New()
+		log.Info("Saving configuration...")
+		config.Save(c)
+		os.Exit(0)
+	}
+
 	log.Info("Initializing...")
 
 	log.Info("Loading configuration...")
