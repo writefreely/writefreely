@@ -1,9 +1,5 @@
-node_modules/
 *~
 *.swp
 *.swo
-*.log
-static/css/*.css
 
-# Executables
-writeas
+config.ini
