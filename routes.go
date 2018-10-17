@@ -2,8 +2,10 @@ package writefreely
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/writeas/go-nodeinfo"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
+	"net/http"
 	"strings"
 )
 
@@ -28,4 +30,12 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 
 	// Primary app routes
 	log.Info("Adding %s routes (multi-user)...", hostSubroute)
+	write := r.Host(hostSubroute).Subrouter()
+
+	// Federation endpoints
+	// nodeinfo
+	niCfg := nodeInfoConfig(cfg)
+	ni := nodeinfo.NewService(*niCfg, nodeInfoResolver{cfg, db})
+	write.HandleFunc(nodeinfo.NodeInfoPath, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfoDiscover)))
+	write.HandleFunc(niCfg.InfoURL, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfo)))
 }

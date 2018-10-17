@@ -27,6 +27,8 @@ type (
 		MultiUser   bool `ini:"multiuser"`
 		OpenSignups bool `ini:"open_signups"`
 		Federation  bool `ini:"federation"`
+		PublicStats bool `ini:"public_stats"`
+		Private     bool `ini:"private"`
 
 		Name string `ini:"site_name"`
 
@@ -56,6 +58,7 @@ func New() *Config {
 		},
 		App: AppCfg{
 			Federation:     true,
+			PublicStats:    true,
 			MinUsernameLen: 3,
 		},
 	}

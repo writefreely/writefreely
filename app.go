@@ -18,6 +18,10 @@ import (
 
 const (
 	staticDir = "static/"
+
+	serverSoftware = "Write Freely"
+	softwareURL    = "https://writefreely.org"
+	softwareVer    = "0.1"
 )
 
 type app struct {
