@@ -4,14 +4,14 @@
 </p>
 <hr />
 <p align="center">
-	<a href="https://github.com/writeas/Write.as/releases/">
-		<img src="https://img.shields.io/github/release/writeas/Write.as.svg" alt="Latest release" />
+	<a href="https://github.com/writeas/writefreely/releases/">
+		<img src="https://img.shields.io/github/release/writeas/writefreely.svg" alt="Latest release" />
 	</a>
-	<a href="https://travis-ci.org/writeas/Write.as">
-		<img src="https://travis-ci.org/writeas/Write.as.svg?branch=develop" alt="Build status" />
+	<a href="https://travis-ci.org/writeas/writefreely">
+		<img src="https://travis-ci.org/writeas/writefreely.svg?branch=develop" alt="Build status" />
 	</a>
-	<a href="https://github.com/writeas/Write.as/contributors/">
-		<img src="https://img.shields.io/github/contributors/writeas/Write.as.svg" alt="Contributors" />
+	<a href="https://github.com/writeas/writefreely/contributors/">
+		<img src="https://img.shields.io/github/contributors/writeas/writefreely.svg" alt="Contributors" />
 	</a>
 </p>
 &nbsp;
