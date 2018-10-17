@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config) {
+func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datastore) {
 	isSingleUser := !cfg.App.MultiUser
 
 	// Write.as router

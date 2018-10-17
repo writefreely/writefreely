@@ -1,6 +1,7 @@
 package writefreely
 
 import (
+	"database/sql"
 	"flag"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
@@ -21,6 +22,7 @@ const (
 
 type app struct {
 	router       *mux.Router
+	db           *datastore
 	cfg          *config.Config
 	keys         *keychain
 	sessionStore *sessions.CookieStore
@@ -62,11 +64,33 @@ func Serve() {
 	// Initialize modules
 	app.sessionStore = initSession(app)
 
+	// Check database configuration
+	if app.cfg.Database.User == "" || app.cfg.Database.Password == "" {
+		log.Error("Database user or password not set.")
+		os.Exit(1)
+	}
+	if app.cfg.Database.Host == "" {
+		app.cfg.Database.Host = "localhost"
+	}
+	if app.cfg.Database.Database == "" {
+		app.cfg.Database.Database = "writeas"
+	}
+
+	log.Info("Connecting to database...")
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database))
+	if err != nil {
+		log.Error("\n%s\n", err)
+		os.Exit(1)
+	}
+	app.db = &datastore{db}
+	defer shutdown(app)
+	app.db.SetMaxOpenConns(50)
+
 	r := mux.NewRouter()
 	handler := NewHandler(app.sessionStore)
 
 	// Handle app routes
-	initRoutes(handler, r, app.cfg)
+	initRoutes(handler, r, app.cfg, app.db)
 
 	// Handle static files
 	fs := http.FileServer(http.Dir(staticDir))
@@ -92,4 +116,6 @@ func Serve() {
 }
 
 func shutdown(app *app) {
+	log.Info("Closing database connection...")
+	app.db.Close()
 }

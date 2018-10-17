@@ -15,11 +15,12 @@ type (
 	}
 
 	DatabaseCfg struct {
-		Type string `ini:"type"`
-		User string `ini:"username"`
-		Pass string `ini:"password"`
-		Host string `ini:"host"`
-		Port int    `ini:"port"`
+		Type     string `ini:"type"`
+		User     string `ini:"username"`
+		Password string `ini:"password"`
+		Database string `ini:"database"`
+		Host     string `ini:"host"`
+		Port     int    `ini:"port"`
 	}
 
 	AppCfg struct {
