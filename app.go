@@ -60,6 +60,8 @@ func Serve() {
 	}
 
 	// Initialize modules
+	app.sessionStore = initSession(app)
+
 	r := mux.NewRouter()
 	handler := NewHandler(app.sessionStore)
 
