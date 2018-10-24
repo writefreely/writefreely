@@ -42,7 +42,11 @@ func Serve() {
 		log.Info("Creating configuration...")
 		c := config.New()
 		log.Info("Saving configuration...")
-		config.Save(c)
+		err := config.Save(c)
+		if err != nil {
+			log.Error("Unable to save configuration: %v", err)
+			os.Exit(1)
+		}
 		os.Exit(0)
 	}
 
