@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	configFile = "config.ini"
+	FileName = "config.ini"
 )
 
 type (
@@ -24,18 +24,22 @@ type (
 	}
 
 	AppCfg struct {
-		MultiUser   bool `ini:"multiuser"`
-		OpenSignups bool `ini:"open_signups"`
+		SiteName string `ini:"site_name"`
+
+		// Site appearance
+		Theme      string `ini:"theme"`
+		JSDisabled bool   `ini:"disable_js"`
+		WebFonts   bool   `ini:"webfonts"`
+
+		// Users
+		SingleUser       bool `ini:"single_user"`
+		OpenRegistration bool `ini:"open_registration"`
+		MinUsernameLen   int  `ini:"min_username_len"`
+
+		// Federation
 		Federation  bool `ini:"federation"`
 		PublicStats bool `ini:"public_stats"`
 		Private     bool `ini:"private"`
-
-		Name string `ini:"site_name"`
-
-		JSDisabled bool `ini:"disable_js"`
-
-		// User registration
-		MinUsernameLen int `ini:"min_username_len"`
 	}
 
 	Config struct {
@@ -57,15 +61,18 @@ func New() *Config {
 			Port: 3306,
 		},
 		App: AppCfg{
+			Theme:          "write",
+			WebFonts:       true,
+			SingleUser:     true,
+			MinUsernameLen: 3,
 			Federation:     true,
 			PublicStats:    true,
-			MinUsernameLen: 3,
 		},
 	}
 }
 
 func Load() (*Config, error) {
-	cfg, err := ini.Load(configFile)
+	cfg, err := ini.Load(FileName)
 	if err != nil {
 		return nil, err
 	}
@@ -86,5 +93,5 @@ func Save(uc *Config) error {
 		return err
 	}
 
-	return cfg.SaveTo(configFile)
+	return cfg.SaveTo(FileName)
 }

@@ -36,6 +36,7 @@ var shttp = http.NewServeMux()
 
 func Serve() {
 	createConfig := flag.Bool("create-config", false, "Creates a basic configuration and exits")
+	doConfig := flag.Bool("config", false, "Run the configuration process")
 	flag.Parse()
 
 	if *createConfig {
@@ -45,6 +46,13 @@ func Serve() {
 		err := config.Save(c)
 		if err != nil {
 			log.Error("Unable to save configuration: %v", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	} else if *doConfig {
+		err := config.Configure()
+		if err != nil {
+			log.Error("Unable to configure: %v", err)
 			os.Exit(1)
 		}
 		os.Exit(0)
