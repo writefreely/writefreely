@@ -12,8 +12,7 @@ import (
 func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datastore) {
 	isSingleUser := !cfg.App.MultiUser
 
-	// Write.as router
-	hostSubroute := cfg.Server.Host[strings.Index(cfg.Server.Host, "://")+3:]
+	hostSubroute := cfg.App.Host[strings.Index(cfg.App.Host, "://")+3:]
 	if isSingleUser {
 		hostSubroute = "{domain}"
 	} else {

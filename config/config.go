@@ -10,7 +10,6 @@ const (
 
 type (
 	ServerCfg struct {
-		Host string `ini:"host"`
 		Port int    `ini:"port"`
 	}
 
@@ -25,6 +24,7 @@ type (
 
 	AppCfg struct {
 		SiteName string `ini:"site_name"`
+		Host     string `ini:"host"`
 
 		// Site appearance
 		Theme      string `ini:"theme"`
@@ -52,7 +52,6 @@ type (
 func New() *Config {
 	return &Config{
 		Server: ServerCfg{
-			Host: "http://localhost:8080",
 			Port: 8080,
 		},
 		Database: DatabaseCfg{
@@ -61,6 +60,7 @@ func New() *Config {
 			Port: 3306,
 		},
 		App: AppCfg{
+			Host:           "http://localhost:8080",
 			Theme:          "write",
 			WebFonts:       true,
 			SingleUser:     true,

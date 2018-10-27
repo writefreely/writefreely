@@ -42,9 +42,9 @@ func Configure() error {
 	prompt = promptui.Prompt{
 		Label:    "Public-facing host",
 		Validate: validateDomain,
-		Default:  c.Server.Host,
+		Default:  c.App.Host,
 	}
-	c.Server.Host, err = prompt.Run()
+	c.App.Host, err = prompt.Run()
 	if err != nil {
 		return err
 	}

@@ -27,7 +27,7 @@ func initSession(app *app) *sessions.CookieStore {
 		Path:     "/",
 		MaxAge:   sessionLength,
 		HttpOnly: true,
-		Secure:   strings.HasPrefix(app.cfg.Server.Host, "https://"),
+		Secure:   strings.HasPrefix(app.cfg.App.Host, "https://"),
 	}
 	return store
 }

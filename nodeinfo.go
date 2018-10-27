@@ -15,7 +15,7 @@ type nodeInfoResolver struct {
 func nodeInfoConfig(cfg *config.Config) *nodeinfo.Config {
 	name := cfg.App.SiteName
 	return &nodeinfo.Config{
-		BaseURL: cfg.Server.Host,
+		BaseURL: cfg.App.Host,
 		InfoURL: "/api/nodeinfo",
 
 		Metadata: nodeinfo.Metadata{
