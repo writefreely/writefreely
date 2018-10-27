@@ -18,8 +18,8 @@ else
 fi
 
 # Generate email encryption key
-if [[ ! -e "$(pwd)/keys/email_enc.aes256" ]]; then
-	dd of=$(pwd)/keys/email_enc.aes256 if=/dev/urandom bs=32 count=1
+if [[ ! -e "$(pwd)/keys/email.aes256" ]]; then
+	dd of=$(pwd)/keys/email.aes256 if=/dev/urandom bs=32 count=1
 else
-	echo "email key already exists! rm keys/email_enc.aes256 if you understand the consquences."
+	echo "email key already exists! rm keys/email.aes256 if you understand the consquences."
 fi
