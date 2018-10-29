@@ -28,4 +28,4 @@ It's designed to be flexible and share your writing widely, so it's built around
 
 ## License
 
-Licensed under the GPL.
+Licensed under the AGPL.
