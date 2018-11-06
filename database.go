@@ -1515,7 +1515,7 @@ func (db *datastore) GetPinnedPosts(coll *CollectionObj) (*[]PublicPost, error) 
 }
 
 func (db *datastore) GetCollections(u *User) (*[]Collection, error) {
-	rows, err := db.Query("SELECT id, alias, title, privacy, view_count FROM collections LEFT JOIN domains ON id = collection_id WHERE owner_id = ? ORDER BY id ASC", u.ID)
+	rows, err := db.Query("SELECT id, alias, title, description, privacy, view_count FROM collections WHERE owner_id = ? ORDER BY id ASC", u.ID)
 	if err != nil {
 		log.Error("Failed selecting from collections: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve user collections."}
@@ -1527,7 +1527,7 @@ func (db *datastore) GetCollections(u *User) (*[]Collection, error) {
 	var isActive, isSecure null.Bool
 	for rows.Next() {
 		c := Collection{}
-		err = rows.Scan(&c.ID, &c.Alias, &c.Title, &c.Visibility, &c.Views)
+		err = rows.Scan(&c.ID, &c.Alias, &c.Title, &c.Description, &c.Visibility, &c.Views)
 		if err != nil {
 			log.Error("Failed scanning row: %v", err)
 			break
