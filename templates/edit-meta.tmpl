@@ -1,0 +1,371 @@
+{{define "edit-meta"}}<!DOCTYPE HTML>
+<html>
+	<head>
+
+		<title>Edit metadata: {{if .Post.Title}}{{.Post.Title}}{{else}}{{.Post.Id}}{{end}} &mdash; {{.SiteName}}</title>
+		
+		<link rel="stylesheet" type="text/css" href="/css/write.css" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<style type="text/css">
+		dt {
+			width: 8em;
+		}
+		.error {
+			display: none;
+		}
+		.mono {
+			font-style: normal;
+		}
+		#set-now {
+			font-style: italic;
+			margin-left: 0.25rem;
+		}
+		.content-container h2 a {
+			font-size: .6em;
+			font-weight: normal;
+			margin-left: 1em;
+		}
+		.content-container h2 a:link, .content-container h2 a:visited {
+			color: blue;
+		}
+		.content-container h2 a:hover {
+			text-decoration: underline;
+		}
+		</style>
+
+	</head>
+	<body id="pad-sub" class="light">
+		
+		<header id="tools">
+			<div id="clip">
+				<h1>{{if .User}}<a href="/me/posts/" style="font-weight:normal"><span style="font-size:1.2em;font-weight:bold;margin-right:0.5em">w</span></a>{{else}}<a href="/">w<span class="if-room">rite.as</span></a>{{end}}
+				</h1>
+				<nav id="target" class=""><ul>
+						<li>{{if .EditCollection}}<a href="{{.EditCollection.CanonicalURL}}">{{.EditCollection.Title}}</a>{{else}}<a>Anonymous</a>{{end}}</li>
+				</ul></nav>
+			</div>
+			<div id="belt">
+				<div class="tool if-room"><a href="{{if .EditCollection}}{{.EditCollection.CanonicalURL}}{{.Post.Slug}}/edit{{else}}/{{.Post.Id}}/edit{{end}}" title="Edit post" id="edit"><img class="ic-24dp" src="/img/ic_edit_dark@2x.png" /></a></div>
+				<div class="tool if-room room-2"><a href="#theme" title="Toggle theme" id="toggle-theme"><img class="ic-24dp" src="/img/ic_brightness_dark@2x.png" /></a></div>
+				<div class="tool if-room room-1"><a href="{{if not .User}}/pad/posts{{else}}/me/posts/{{end}}" title="View posts" id="view-posts"><img class="ic-24dp" src="/img/ic_list_dark@2x.png" /></a></div>
+			</div>
+		</header>
+		
+		<div class="content-container tight">
+			<form action="/api/{{if .EditCollection}}collections/{{.EditCollection.Alias}}/{{end}}posts/{{.Post.Id}}" method="post" onsubmit="return updateMeta()">
+				<h2>Edit metadata: {{if .Post.Title}}{{.Post.Title}}{{else}}{{.Post.Id}}{{end}} <a href="/{{if .EditCollection}}{{.EditCollection.Alias}}/{{.Post.Slug}}{{else}}{{.Post.Id}}{{end}}">view post</a></h2>
+
+				{{if .Flashes}}<ul class="errors">
+					{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
+				</ul>{{end}}
+
+				<dl class="dl-horizontal">
+					{{if .EditCollection}}
+					<dt><label for="slug">Slug</label></dt>
+					<dd><input type="text" id="slug" name="slug" value="{{.Post.Slug}}" /></dd>
+					{{end}}
+					<dt><label for="lang">Language</label></dt>
+					<dd>
+						<select name="lang" id="lang" dir="auto">
+							<option value=""></option>
+							<option value="ab"{{if eq "ab" .Post.Language.String}} selected="selected"{{end}}>аҧсуа бызшәа, аҧсшәа</option>
+							<option value="aa"{{if eq "aa" .Post.Language.String}} selected="selected"{{end}}>Afaraf</option>
+							<option value="af"{{if eq "af" .Post.Language.String}} selected="selected"{{end}}>Afrikaans</option>
+							<option value="ak"{{if eq "ak" .Post.Language.String}} selected="selected"{{end}}>Akan</option>
+							<option value="sq"{{if eq "sq" .Post.Language.String}} selected="selected"{{end}}>Shqip</option>
+							<option value="am"{{if eq "am" .Post.Language.String}} selected="selected"{{end}}>አማርኛ</option>
+							<option dir="rtl" value="ar"{{if eq "ar" .Post.Language.String}} selected="selected"{{end}}>العربية</option>
+							<option value="an"{{if eq "an" .Post.Language.String}} selected="selected"{{end}}>aragonés</option>
+							<option value="hy"{{if eq "hy" .Post.Language.String}} selected="selected"{{end}}>Հայերեն</option>
+							<option value="as"{{if eq "as" .Post.Language.String}} selected="selected"{{end}}>অসমীয়া</option>
+							<option value="av"{{if eq "av" .Post.Language.String}} selected="selected"{{end}}>авар мацӀ, магӀарул мацӀ</option>
+							<option value="ae"{{if eq "ae" .Post.Language.String}} selected="selected"{{end}}>avesta</option>
+							<option value="ay"{{if eq "ay" .Post.Language.String}} selected="selected"{{end}}>aymar aru</option>
+							<option value="az"{{if eq "az" .Post.Language.String}} selected="selected"{{end}}>azərbaycan dili</option>
+							<option value="bm"{{if eq "bm" .Post.Language.String}} selected="selected"{{end}}>bamanankan</option>
+							<option value="ba"{{if eq "ba" .Post.Language.String}} selected="selected"{{end}}>башҡорт теле</option>
+							<option value="eu"{{if eq "eu" .Post.Language.String}} selected="selected"{{end}}>euskara, euskera</option>
+							<option value="be"{{if eq "be" .Post.Language.String}} selected="selected"{{end}}>беларуская мова</option>
+							<option value="bn"{{if eq "bn" .Post.Language.String}} selected="selected"{{end}}>বাংলা</option>
+							<option value="bh"{{if eq "bh" .Post.Language.String}} selected="selected"{{end}}>भोजपुरी</option>
+							<option value="bi"{{if eq "bi" .Post.Language.String}} selected="selected"{{end}}>Bislama</option>
+							<option value="bs"{{if eq "bs" .Post.Language.String}} selected="selected"{{end}}>bosanski jezik</option>
+							<option value="br"{{if eq "br" .Post.Language.String}} selected="selected"{{end}}>brezhoneg</option>
+							<option value="bg"{{if eq "bg" .Post.Language.String}} selected="selected"{{end}}>български език</option>
+							<option value="my"{{if eq "my" .Post.Language.String}} selected="selected"{{end}}>ဗမာစာ</option>
+							<option value="ca"{{if eq "ca" .Post.Language.String}} selected="selected"{{end}}>català</option>
+							<option value="ch"{{if eq "ch" .Post.Language.String}} selected="selected"{{end}}>Chamoru</option>
+							<option value="ce"{{if eq "ce" .Post.Language.String}} selected="selected"{{end}}>нохчийн мотт</option>
+							<option value="ny"{{if eq "ny" .Post.Language.String}} selected="selected"{{end}}>chiCheŵa, chinyanja</option>
+							<option value="zh"{{if eq "zh" .Post.Language.String}} selected="selected"{{end}}>中文 (Zhōngwén), 汉语, 漢語</option>
+							<option value="cv"{{if eq "cv" .Post.Language.String}} selected="selected"{{end}}>чӑваш чӗлхи</option>
+							<option value="kw"{{if eq "kw" .Post.Language.String}} selected="selected"{{end}}>Kernewek</option>
+							<option value="co"{{if eq "co" .Post.Language.String}} selected="selected"{{end}}>corsu, lingua corsa</option>
+							<option value="cr"{{if eq "cr" .Post.Language.String}} selected="selected"{{end}}>ᓀᐦᐃᔭᐍᐏᐣ</option>
+							<option value="hr"{{if eq "hr" .Post.Language.String}} selected="selected"{{end}}>hrvatski jezik</option>
+							<option value="cs"{{if eq "cs" .Post.Language.String}} selected="selected"{{end}}>čeština, český jazyk</option>
+							<option value="da"{{if eq "da" .Post.Language.String}} selected="selected"{{end}}>dansk</option>
+							<option dir="rtl" value="dv"{{if eq "dv" .Post.Language.String}} selected="selected"{{end}}>ދިވެހި</option>
+							<option value="nl"{{if eq "nl" .Post.Language.String}} selected="selected"{{end}}>Nederlands, Vlaams</option>
+							<option value="dz"{{if eq "dz" .Post.Language.String}} selected="selected"{{end}}>རྫོང་ཁ</option>
+							<option value="en"{{if eq "en" .Post.Language.String}} selected="selected"{{end}}>English</option>
+							<option value="eo"{{if eq "eo" .Post.Language.String}} selected="selected"{{end}}>Esperanto</option>
+							<option value="et"{{if eq "et" .Post.Language.String}} selected="selected"{{end}}>eesti, eesti keel</option>
+							<option value="ee"{{if eq "ee" .Post.Language.String}} selected="selected"{{end}}>Eʋegbe</option>
+							<option value="fo"{{if eq "fo" .Post.Language.String}} selected="selected"{{end}}>føroyskt</option>
+							<option value="fj"{{if eq "fj" .Post.Language.String}} selected="selected"{{end}}>vosa Vakaviti</option>
+							<option value="fi"{{if eq "fi" .Post.Language.String}} selected="selected"{{end}}>suomi, suomen kieli</option>
+							<option value="fr"{{if eq "fr" .Post.Language.String}} selected="selected"{{end}}>français, langue française</option>
+							<option value="ff"{{if eq "ff" .Post.Language.String}} selected="selected"{{end}}>Fulfulde, Pulaar, Pular</option>
+							<option value="gl"{{if eq "gl" .Post.Language.String}} selected="selected"{{end}}>Galego</option>
+							<option value="ka"{{if eq "ka" .Post.Language.String}} selected="selected"{{end}}>ქართული</option>
+							<option value="de"{{if eq "de" .Post.Language.String}} selected="selected"{{end}}>Deutsch</option>
+							<option value="el"{{if eq "el" .Post.Language.String}} selected="selected"{{end}}>ελληνικά</option>
+							<option value="gn"{{if eq "gn" .Post.Language.String}} selected="selected"{{end}}>Avañe'ẽ</option>
+							<option value="gu"{{if eq "gu" .Post.Language.String}} selected="selected"{{end}}>ગુજરાતી</option>
+							<option value="ht"{{if eq "ht" .Post.Language.String}} selected="selected"{{end}}>Kreyòl ayisyen</option>
+							<option dir="rtl" value="ha"{{if eq "ha" .Post.Language.String}} selected="selected"{{end}}>(Hausa) هَوُسَ</option>
+							<option dir="rtl" value="he"{{if eq "he" .Post.Language.String}} selected="selected"{{end}}>עברית</option>
+							<option value="hz"{{if eq "hz" .Post.Language.String}} selected="selected"{{end}}>Otjiherero</option>
+							<option value="hi"{{if eq "hi" .Post.Language.String}} selected="selected"{{end}}>हिन्दी, हिंदी</option>
+							<option value="ho"{{if eq "ho" .Post.Language.String}} selected="selected"{{end}}>Hiri Motu</option>
+							<option value="hu"{{if eq "hu" .Post.Language.String}} selected="selected"{{end}}>magyar</option>
+							<option value="ia"{{if eq "ia" .Post.Language.String}} selected="selected"{{end}}>Interlingua</option>
+							<option value="id"{{if eq "id" .Post.Language.String}} selected="selected"{{end}}>Bahasa Indonesia</option>
+							<option value="ie"{{if eq "ie" .Post.Language.String}} selected="selected"{{end}}>Interlingue</option>
+							<option value="ga"{{if eq "ga" .Post.Language.String}} selected="selected"{{end}}>Gaeilge</option>
+							<option value="ig"{{if eq "ig" .Post.Language.String}} selected="selected"{{end}}>Asụsụ Igbo</option>
+							<option value="ik"{{if eq "ik" .Post.Language.String}} selected="selected"{{end}}>Iñupiaq, Iñupiatun</option>
+							<option value="io"{{if eq "io" .Post.Language.String}} selected="selected"{{end}}>Ido</option>
+							<option value="is"{{if eq "is" .Post.Language.String}} selected="selected"{{end}}>Íslenska</option>
+							<option value="it"{{if eq "it" .Post.Language.String}} selected="selected"{{end}}>Italiano</option>
+							<option value="iu"{{if eq "iu" .Post.Language.String}} selected="selected"{{end}}>ᐃᓄᒃᑎᑐᑦ</option>
+							<option value="ja"{{if eq "ja" .Post.Language.String}} selected="selected"{{end}}>日本語 (にほんご)</option>
+							<option value="jv"{{if eq "jv" .Post.Language.String}} selected="selected"{{end}}>ꦧꦱꦗꦮ, Basa Jawa</option>
+							<option value="kl"{{if eq "kl" .Post.Language.String}} selected="selected"{{end}}>kalaallisut, kalaallit oqaasii</option>
+							<option value="kn"{{if eq "kn" .Post.Language.String}} selected="selected"{{end}}>ಕನ್ನಡ</option>
+							<option value="kr"{{if eq "kr" .Post.Language.String}} selected="selected"{{end}}>Kanuri</option>
+							<option value="ks"{{if eq "ks" .Post.Language.String}} selected="selected"{{end}}>कश्मीरी, كشميري‎</option>
+							<option value="kk"{{if eq "kk" .Post.Language.String}} selected="selected"{{end}}>қазақ тілі</option>
+							<option value="km"{{if eq "km" .Post.Language.String}} selected="selected"{{end}}>ខ្មែរ, ខេមរភាសា, ភាសាខ្មែរ</option>
+							<option value="ki"{{if eq "ki" .Post.Language.String}} selected="selected"{{end}}>Gĩkũyũ</option>
+							<option value="rw"{{if eq "rw" .Post.Language.String}} selected="selected"{{end}}>Ikinyarwanda</option>
+							<option value="ky"{{if eq "ky" .Post.Language.String}} selected="selected"{{end}}>Кыргызча, Кыргыз тили</option>
+							<option value="kv"{{if eq "kv" .Post.Language.String}} selected="selected"{{end}}>коми кыв</option>
+							<option value="kg"{{if eq "kg" .Post.Language.String}} selected="selected"{{end}}>Kikongo</option>
+							<option value="ko"{{if eq "ko" .Post.Language.String}} selected="selected"{{end}}>한국어</option>
+							<option value="ku"{{if eq "ku" .Post.Language.String}} selected="selected"{{end}}>Kurdî, كوردی‎</option>
+							<option value="kj"{{if eq "kj" .Post.Language.String}} selected="selected"{{end}}>Kuanyama</option>
+							<option value="la"{{if eq "la" .Post.Language.String}} selected="selected"{{end}}>latine, lingua latina</option>
+							<option value="lb"{{if eq "lb" .Post.Language.String}} selected="selected"{{end}}>Lëtzebuergesch</option>
+							<option value="lg"{{if eq "lg" .Post.Language.String}} selected="selected"{{end}}>Luganda</option>
+							<option value="li"{{if eq "li" .Post.Language.String}} selected="selected"{{end}}>Limburgs</option>
+							<option value="ln"{{if eq "ln" .Post.Language.String}} selected="selected"{{end}}>Lingála</option>
+							<option value="lo"{{if eq "lo" .Post.Language.String}} selected="selected"{{end}}>ພາສາລາວ</option>
+							<option value="lt"{{if eq "lt" .Post.Language.String}} selected="selected"{{end}}>lietuvių kalba</option>
+							<option value="lu"{{if eq "lu" .Post.Language.String}} selected="selected"{{end}}>Kiluba</option>
+							<option value="lv"{{if eq "lv" .Post.Language.String}} selected="selected"{{end}}>Latviešu Valoda</option>
+							<option value="gv"{{if eq "gv" .Post.Language.String}} selected="selected"{{end}}>Gaelg, Gailck</option>
+							<option value="mk"{{if eq "mk" .Post.Language.String}} selected="selected"{{end}}>македонски јазик</option>
+							<option value="mg"{{if eq "mg" .Post.Language.String}} selected="selected"{{end}}>fiteny malagasy</option>
+							<option value="ms"{{if eq "ms" .Post.Language.String}} selected="selected"{{end}}>Bahasa Melayu, بهاس ملايو‎</option>
+							<option value="ml"{{if eq "ml" .Post.Language.String}} selected="selected"{{end}}>മലയാളം</option>
+							<option value="mt"{{if eq "mt" .Post.Language.String}} selected="selected"{{end}}>Malti</option>
+							<option value="mi"{{if eq "mi" .Post.Language.String}} selected="selected"{{end}}>te reo Māori</option>
+							<option value="mr"{{if eq "mr" .Post.Language.String}} selected="selected"{{end}}>मराठी</option>
+							<option value="mh"{{if eq "mh" .Post.Language.String}} selected="selected"{{end}}>Kajin M̧ajeļ</option>
+							<option value="mn"{{if eq "mn" .Post.Language.String}} selected="selected"{{end}}>Монгол хэл</option>
+							<option value="na"{{if eq "na" .Post.Language.String}} selected="selected"{{end}}>Dorerin Naoero</option>
+							<option value="nv"{{if eq "nv" .Post.Language.String}} selected="selected"{{end}}>Diné bizaad</option>
+							<option value="nd"{{if eq "nd" .Post.Language.String}} selected="selected"{{end}}>isiNdebele</option>
+							<option value="ne"{{if eq "ne" .Post.Language.String}} selected="selected"{{end}}>नेपाली</option>
+							<option value="ng"{{if eq "ng" .Post.Language.String}} selected="selected"{{end}}>Owambo</option>
+							<option value="nb"{{if eq "nb" .Post.Language.String}} selected="selected"{{end}}>Norsk Bokmål</option>
+							<option value="nn"{{if eq "nn" .Post.Language.String}} selected="selected"{{end}}>Norsk Nynorsk</option>
+							<option value="no"{{if eq "no" .Post.Language.String}} selected="selected"{{end}}>Norsk</option>
+							<option value="ii"{{if eq "ii" .Post.Language.String}} selected="selected"{{end}}>ꆈꌠ꒿ Nuosuhxop</option>
+							<option value="nr"{{if eq "nr" .Post.Language.String}} selected="selected"{{end}}>isiNdebele</option>
+							<option value="oc"{{if eq "oc" .Post.Language.String}} selected="selected"{{end}}>occitan, lenga d'òc</option>
+							<option value="oj"{{if eq "oj" .Post.Language.String}} selected="selected"{{end}}>ᐊᓂᔑᓈᐯᒧᐎᓐ</option>
+							<option value="cu"{{if eq "cu" .Post.Language.String}} selected="selected"{{end}}>ѩзыкъ словѣньскъ</option>
+							<option value="om"{{if eq "om" .Post.Language.String}} selected="selected"{{end}}>Afaan Oromoo</option>
+							<option value="or"{{if eq "or" .Post.Language.String}} selected="selected"{{end}}>ଓଡ଼ିଆ</option>
+							<option value="os"{{if eq "os" .Post.Language.String}} selected="selected"{{end}}>ирон æвзаг</option>
+							<option value="pa"{{if eq "pa" .Post.Language.String}} selected="selected"{{end}}>ਪੰਜਾਬੀ</option>
+							<option value="pi"{{if eq "pi" .Post.Language.String}} selected="selected"{{end}}>पाऴि</option>
+							<option dir="rtl" value="fa"{{if eq "fa" .Post.Language.String}} selected="selected"{{end}}>فارسی</option>
+							<option value="pl"{{if eq "pl" .Post.Language.String}} selected="selected"{{end}}>Język Polski, Polszczyzna</option>
+							<option dir="rtl" value="ps"{{if eq "ps" .Post.Language.String}} selected="selected"{{end}}>پښتو</option>
+							<option value="pt"{{if eq "pt" .Post.Language.String}} selected="selected"{{end}}>Português</option>
+							<option value="qu"{{if eq "qu" .Post.Language.String}} selected="selected"{{end}}>Runa Simi, Kichwa</option>
+							<option value="rm"{{if eq "rm" .Post.Language.String}} selected="selected"{{end}}>Rumantsch Grischun</option>
+							<option value="rn"{{if eq "rn" .Post.Language.String}} selected="selected"{{end}}>Ikirundi</option>
+							<option value="ro"{{if eq "ro" .Post.Language.String}} selected="selected"{{end}}>Română</option>
+							<option value="ru"{{if eq "ru" .Post.Language.String}} selected="selected"{{end}}>Русский</option>
+							<option value="sa"{{if eq "sa" .Post.Language.String}} selected="selected"{{end}}>संस्कृतम्</option>
+							<option value="sc"{{if eq "sc" .Post.Language.String}} selected="selected"{{end}}>sardu</option>
+							<option value="sd"{{if eq "sd" .Post.Language.String}} selected="selected"{{end}}>सिन्धी, سنڌي، سندھی‎</option>
+							<option value="se"{{if eq "se" .Post.Language.String}} selected="selected"{{end}}>Davvisámegiella</option>
+							<option value="sm"{{if eq "sm" .Post.Language.String}} selected="selected"{{end}}>gagana fa'a Samoa</option>
+							<option value="sg"{{if eq "sg" .Post.Language.String}} selected="selected"{{end}}>yângâ tî sängö</option>
+							<option value="sr"{{if eq "sr" .Post.Language.String}} selected="selected"{{end}}>српски језик</option>
+							<option value="gd"{{if eq "gd" .Post.Language.String}} selected="selected"{{end}}>Gàidhlig</option>
+							<option value="sn"{{if eq "sn" .Post.Language.String}} selected="selected"{{end}}>chiShona</option>
+							<option value="si"{{if eq "si" .Post.Language.String}} selected="selected"{{end}}>සිංහල</option>
+							<option value="sk"{{if eq "sk" .Post.Language.String}} selected="selected"{{end}}>Slovenčina, Slovenský Jazyk</option>
+							<option value="sl"{{if eq "sl" .Post.Language.String}} selected="selected"{{end}}>Slovenski Jezik, Slovenščina</option>
+							<option value="so"{{if eq "so" .Post.Language.String}} selected="selected"{{end}}>Soomaaliga, af Soomaali</option>
+							<option value="st"{{if eq "st" .Post.Language.String}} selected="selected"{{end}}>Sesotho</option>
+							<option value="es"{{if eq "es" .Post.Language.String}} selected="selected"{{end}}>Español</option>
+							<option value="su"{{if eq "su" .Post.Language.String}} selected="selected"{{end}}>Basa Sunda</option>
+							<option value="sw"{{if eq "sw" .Post.Language.String}} selected="selected"{{end}}>Kiswahili</option>
+							<option value="ss"{{if eq "ss" .Post.Language.String}} selected="selected"{{end}}>SiSwati</option>
+							<option value="sv"{{if eq "sv" .Post.Language.String}} selected="selected"{{end}}>Svenska</option>
+							<option value="ta"{{if eq "ta" .Post.Language.String}} selected="selected"{{end}}>தமிழ்</option>
+							<option value="te"{{if eq "te" .Post.Language.String}} selected="selected"{{end}}>తెలుగు</option>
+							<option value="tg"{{if eq "tg" .Post.Language.String}} selected="selected"{{end}}>тоҷикӣ, toçikī, تاجیکی‎</option>
+							<option value="th"{{if eq "th" .Post.Language.String}} selected="selected"{{end}}>ไทย</option>
+							<option value="ti"{{if eq "ti" .Post.Language.String}} selected="selected"{{end}}>ትግርኛ</option>
+							<option value="bo"{{if eq "bo" .Post.Language.String}} selected="selected"{{end}}>བོད་ཡིག</option>
+							<option value="tk"{{if eq "tk" .Post.Language.String}} selected="selected"{{end}}>Türkmen, Түркмен</option>
+							<option value="tl"{{if eq "tl" .Post.Language.String}} selected="selected"{{end}}>Wikang Tagalog</option>
+							<option value="tn"{{if eq "tn" .Post.Language.String}} selected="selected"{{end}}>Setswana</option>
+							<option value="to"{{if eq "to" .Post.Language.String}} selected="selected"{{end}}>Faka Tonga</option>
+							<option value="tr"{{if eq "tr" .Post.Language.String}} selected="selected"{{end}}>Türkçe</option>
+							<option value="ts"{{if eq "ts" .Post.Language.String}} selected="selected"{{end}}>Xitsonga</option>
+							<option value="tt"{{if eq "tt" .Post.Language.String}} selected="selected"{{end}}>татар теле, tatar tele</option>
+							<option value="tw"{{if eq "tw" .Post.Language.String}} selected="selected"{{end}}>Twi</option>
+							<option value="ty"{{if eq "ty" .Post.Language.String}} selected="selected"{{end}}>Reo Tahiti</option>
+							<option value="ug"{{if eq "ug" .Post.Language.String}} selected="selected"{{end}}>ئۇيغۇرچە‎, Uyghurche</option>
+							<option value="uk"{{if eq "uk" .Post.Language.String}} selected="selected"{{end}}>Українська</option>
+							<option dir="rtl" value="ur"{{if eq "ur" .Post.Language.String}} selected="selected"{{end}}>اردو</option>
+							<option value="uz"{{if eq "uz" .Post.Language.String}} selected="selected"{{end}}>Oʻzbek, Ўзбек, أۇزبېك‎</option>
+							<option value="ve"{{if eq "ve" .Post.Language.String}} selected="selected"{{end}}>Tshivenḓa</option>
+							<option value="vi"{{if eq "vi" .Post.Language.String}} selected="selected"{{end}}>Tiếng Việt</option>
+							<option value="vo"{{if eq "vo" .Post.Language.String}} selected="selected"{{end}}>Volapük</option>
+							<option value="wa"{{if eq "wa" .Post.Language.String}} selected="selected"{{end}}>Walon</option>
+							<option value="cy"{{if eq "cy" .Post.Language.String}} selected="selected"{{end}}>Cymraeg</option>
+							<option value="wo"{{if eq "wo" .Post.Language.String}} selected="selected"{{end}}>Wollof</option>
+							<option value="fy"{{if eq "fy" .Post.Language.String}} selected="selected"{{end}}>Frysk</option>
+							<option value="xh"{{if eq "xh" .Post.Language.String}} selected="selected"{{end}}>isiXhosa</option>
+							<option dir="rtl" value="yi"{{if eq "yi" .Post.Language.String}} selected="selected"{{end}}>ייִדיש</option>
+							<option value="yo"{{if eq "yo" .Post.Language.String}} selected="selected"{{end}}>Yorùbá</option>
+							<option value="za"{{if eq "za" .Post.Language.String}} selected="selected"{{end}}>Saɯ cueŋƅ, Saw cuengh</option>
+							<option value="zu"{{if eq "zu" .Post.Language.String}} selected="selected"{{end}}>isiZulu</option>
+						</select>
+					</dd>
+					<dt><label for="rtl">Direction</label></dt>
+					<dd><input type="checkbox" id="rtl" name="rtl" {{if .Post.IsRTL.Bool}}checked="checked"{{end}} /><label for="rtl"> right-to-left</label></dd>
+					<dt><label for="created">Created</label></dt>
+					<dd>
+						<input type="text" id="created" name="created" value="{{.Post.UserFacingCreated}}" data-time="{{.Post.Created8601}}" placeholder="YYYY-MM-DD HH:MM:SS" maxlength="19" /> <span id="tz">UTC</span> <a href="#" id="set-now">now</a>
+						<p class="error" id="create-error">Date format should be: <span class="mono"><abbr title="The full year">YYYY</abbr>-<abbr title="The numeric month of the year, where January = 1, with a zero in front if less than 10">MM</abbr>-<abbr title="The day of the month, with a zero in front if less than 10">DD</abbr> <abbr title="The hour (00-23), with a zero in front if less than 10.">HH</abbr>:<abbr title="The minute of the hour (00-59), with a zero in front if less than 10.">MM</abbr>:<abbr title="The seconds (00-59), with a zero in front if less than 10.">SS</abbr></span></p>
+					</dd>
+					<dt>&nbsp;</dt><dd><input type="submit" value="Save changes" /></dd>
+				</dl>
+			</form>
+		</div>
+		
+		<script src="/js/h.js"></script>
+		<script>
+function updateMeta() {
+	document.getElementById('create-error').style.display = 'none';
+	var $created = document.getElementById('created');
+	var dateStr = $created.value.trim();
+	var m = dateStr.match(/^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}( [0-9]{1,2}:[0-9]{1,2}(:[0-9]{1,2})?)?$/);
+	if (!m) {
+		document.getElementById('create-error').style.display = 'block';
+		return false;
+	}
+	// Break up the date and parse. This ensures cross-browser compatibility
+	var p = dateStr.split(/[^0-9]/);
+	var d = new Date(p[0], p[1]-1, p[2], p[3] ? p[3] : 0, p[4] ? p[4] : 0, p[5] ? p[5] : 0);
+	$created.value = d.getUTCFullYear() + '-' + ('0' + (d.getUTCMonth()+1)).slice(-2) + '-' + ('0' + d.getUTCDate()).slice(-2)+' '+('0'+d.getUTCHours()).slice(-2)+':'+('0'+d.getUTCMinutes()).slice(-2)+':'+('0'+d.getUTCSeconds()).slice(-2);
+	var $tz = document.getElementById('tz');
+	$tz.style.display = "inline";
+	var $submit = document.querySelector('input[type=submit]');
+	$submit.value = "Saving...";
+	$submit.disabled = true;
+	return true;
+}
+function dateToStr(d) {
+	return d.getFullYear() + '-' + ('0' + (d.getMonth()+1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+':'+('0'+d.getSeconds()).slice(-2);
+}
+function setLocalTime() {
+	var $created = document.getElementById('created');
+	var d = new Date($created.getAttribute('data-time'));
+	$created.value = dateToStr(d);
+	var $tz = document.getElementById('tz');
+	$tz.style.display = "none";
+}
+setLocalTime();
+function setToNow() {
+	var $created = document.getElementById('created');
+	$created.value = dateToStr(new Date());
+}
+H.getEl('set-now').on('click', function(e) {
+	e.preventDefault();
+	setToNow();
+});
+		function toggleTheme() {
+			var btns = Array.prototype.slice.call(document.getElementById('tools').querySelectorAll('a img'));
+			if (document.body.className == 'light') {
+				document.body.className = 'dark';
+				for (var i=0; i<btns.length; i++) {
+					btns[i].src = btns[i].src.replace('_dark@2x.png', '@2x.png');
+				}
+			} else {
+				document.body.className = 'light';
+				for (var i=0; i<btns.length; i++) {
+					btns[i].src = btns[i].src.replace('@2x.png', '_dark@2x.png');
+				}
+			}
+			H.set('padTheme', document.body.className);
+		}
+		if (H.get('padTheme', 'light') != 'light') {
+			toggleTheme();
+		}
+
+		var setButtonStates = function() {
+			if (!canPublish) {
+				$btnPublish.el.className = 'disabled';
+				return;
+			}
+			if ($writer.el.value.length === 0 || (draftDoc != 'lastDoc' && $writer.el.value == origDoc)) {
+				$btnPublish.el.className = 'disabled';
+			} else {
+				$btnPublish.el.className = '';
+			}
+		};
+
+		H.getEl('toggle-theme').on('click', function(e) {
+			e.preventDefault();
+			try {
+				var newTheme = 'light';
+				if (document.body.className == 'light') {
+					newTheme = 'dark';
+				}
+			} catch(e) {}
+			toggleTheme();
+		});
+
+		WebFontConfig = {
+			custom: { families: [ 'Lora:400,700:latin' ], urls: [ '/css/fonts.css' ] }
+		};
+		try {
+		  (function() {
+			var wf=document.createElement('script');
+			wf.src = '/js/webfont.js';
+			wf.type='text/javascript';
+			wf.async='true';
+			var s=document.getElementsByTagName('script')[0];
+			s.parentNode.insertBefore(wf, s);
+		  })();
+		} catch (e) {
+		  // whatevs
+		}
+		</script>
+		<noscript><p><img src="https://analytics.write.as/piwik.php?idsite=1" style="border:0;" alt="" /></p></noscript>
+		<link href="/css/icons.css" rel="stylesheet">
+	</body>
+</html>{{end}}

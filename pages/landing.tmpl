@@ -1,0 +1,117 @@
+{{define "head"}}
+<title>{{.SiteName}}</title>
+
+<style type="text/css">
+h2 {
+	font-weight: normal;
+}
+#pricing.content-container div.form-container #payment-form {
+	display: block !important;
+}
+#pricing #signup-form table {
+	max-width: inherit !important;
+	width: 100%;
+}
+#pricing #payment-form table {
+	margin-top: 0 !important;
+	max-width: inherit !important;
+	width: 100%;
+}
+tr.subscription {
+	border-spacing: 0;
+}
+#pricing.content-container tr.subscription button {
+	margin-top: 0 !important;
+	margin-bottom: 0 !important;
+	width: 100%;
+}
+#pricing tr.subscription td {
+	padding: 0 0.5em;
+}
+#pricing table.billing > tbody > tr > td:first-child {
+	vertical-align: middle !important;
+}
+.billing-section {
+	display: none;
+}
+.billing-section.bill-me {
+	display: table-row;
+}
+#btn-create {
+	color: white !important;
+}
+#total-price {
+	padding-left: 0.5em;
+}
+#alias-site.demo {
+	color: #999;
+}
+#alias-site {
+	text-align: left;
+	margin: 0.5em 0;
+}
+</style>
+{{end}}
+{{define "content"}}
+<div id="pricing" class="content-container wide-form">
+
+<div class="row">
+	<div style="text-align:left">
+		<h1 style="margin-top:0;max-width:8em;">{{if .Federation}}Start your blog in the fediverse{{else}}Start your minimalist blog{{end}}</h1>
+		<p><a href="#more">Learn more...</a></p>
+	</div>
+
+	<div>
+		{{if .Flashes}}<ul class="errors">
+			{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
+		</ul>{{end}}
+
+		<div id="billing">
+			<form action="/auth/signup" method="POST" id="signup-form">
+				<dl class="billing">
+					<label>
+						<dt>Username</dt>
+						<dd>
+							<input type="text" id="alias" name="alias" style="width: 100%; box-sizing: border-box;" tabindex="1" autofocus />
+							<p id="alias-site" class="demo">@<strong>your-username</strong>@{{.FriendlyHost}}</p>
+						</dd>
+					</label>
+					<label>
+						<dt>Password</dt>
+						<dd><input type="password" id="password" name="pass" autocomplete="new-password" placeholder="" tabindex="2" style="width: 100%; box-sizing: border-box;" /></dd>
+					</label>
+					<label>
+						<dt>Email (optional)</dt>
+						<dd><input type="email" name="email" id="email" style="letter-spacing: 1px; width: 100%; box-sizing: border-box;" placeholder="me@example.com" tabindex="3" /></dd>
+					</label>
+					<dt>
+						<button id="btn-create" type="submit" style="margin-top: 0">Create blog</button>
+					</dt>
+				</dl>
+			</form>
+		</div>
+	</div>
+</div>
+
+{{if .Federation}}
+<a name="more"></a><hr style="margin: 1em auto 3em;" />
+{{end}}
+</div>
+
+{{ if .Federation }}
+<div class="content-container snug">
+
+<h2>Join the Fediverse</h2>
+<p>The fediverse is a large network of platforms that all speak a common language. Imagine if you could reply to Instagram posts from Twitter, or interact with your favorite Medium blogs from Facebook &mdash; federated alternatives like <a href="https://pixelfed.org/" target="pixel">PixelFed</a>, <a href="https://joinmastodon.org/" target="masto">Mastodon</a>, and Write Freely enable you to do these types of things.</p>
+
+<div style="text-align:center">
+	<iframe style="width: 560px; height: 315px; max-width: 100%;" sandbox="allow-same-origin allow-scripts" src="https://video.writeas.org/videos/embed/cc55e615-d204-417c-9575-7b57674cc6f3" frameborder="0" allowfullscreen></iframe>
+</div>
+
+<h2>Write More Socially</h2>
+<p>Write Freely can communicate with other federated platforms like Mastodon, so people can follow your blogs, bookmark their favorite posts, and boost them to their followers. Sign up above to create a blog and join the fediverse.</p>
+
+</div>
+{{ end }}
+
+{{end}}

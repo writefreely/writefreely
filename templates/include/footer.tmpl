@@ -1,0 +1,25 @@
+{{define "footer"}}
+		<footer class="contain-me">
+			<hr />
+			<div class="marketing-section">
+				<div class="clearfix blurbs">
+					<div class="half">
+						<h3><a class="home" href="/">{{.SiteName}}</a></h3>
+						<ul>
+							<li><a href="/about">about</a></li>
+							<li><a href="/privacy">privacy</a></li>
+						</ul>
+					</div>
+					<div class="half">
+						<h3><a href="https://writefreely.org">write freely</a></h3>
+						<ul>
+							<li><a href="https://writefreely.org/apps">apps</a></li>
+							<li><a href="https://developers.write.as/" title="Build on Write Freely with our open developer API.">developers</a></li>
+							<li><a href="https://github.com/writeas/writefreely">source code</a></li>
+							<li style="margin-top:0.8em">{{.Version}}</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</footer>
+{{end}}

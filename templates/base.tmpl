@@ -1,0 +1,55 @@
+{{define "base"}}<!DOCTYPE HTML>
+<html>
+	<head>
+		{{ template "head" . }}
+		<link rel="stylesheet" type="text/css" href="{{.Host}}/css/{{.Theme}}.css" />
+		<link rel="shortcut icon" href="{{.Host}}/favicon.ico" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<meta name="application-name" content="{{.SiteName}}">
+		<meta name="application-url" content="{{.Host}}">
+		<meta property="og:site_name" content="{{.SiteName}}" />
+	</head>
+	<body>
+		<div id="overlay"></div>
+		<header>
+			<h2><a href="/">{{.SiteName}}</a></h2>
+			{{if .HeaderNav}}
+			<nav id="user-nav">
+				<nav class="tabs">
+					<a href="/about"{{if eq .Path "/about"}} class="selected"{{end}}>About</a>
+					<a href="/login"{{if eq .Path "/login"}} class="selected"{{end}}>Log in</a>
+				</nav>
+			</nav>
+			{{end}}
+		</header>
+
+		<div id="official-writing">
+			{{ template "content" . }}
+		</div>
+
+		{{ template "footer" . }}
+		
+		{{if not .JSDisabled}}
+		<script type="text/javascript">
+		{{if .WebFonts}}
+		try { // Google Fonts
+		  WebFontConfig = {
+			custom: { families: [ 'Lora:400,700:latin', 'Open+Sans:400,700:latin' ], urls: [ '/css/fonts.css' ] }
+		  };
+		  (function() {
+			var wf = document.createElement('script');
+			wf.src = '/js/webfont.js';
+			wf.type = 'text/javascript';
+			wf.async = 'true';
+			var s = document.getElementsByTagName('script')[0];
+			s.parentNode.insertBefore(wf, s);
+			})();
+		} catch (e) { /* ¯\_(ツ)_/¯ */ }
+		{{end}}
+		</script>
+		{{else}}
+			{{if .WebFonts}}<link href="{{.Host}}/css/fonts.css" rel="stylesheet" type="text/css" />{{end}}
+		{{end}}
+	</body>
+</html>{{end}}

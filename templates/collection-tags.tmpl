@@ -1,0 +1,198 @@
+{{define "collection-tags"}}<!DOCTYPE HTML>
+<html>
+	<head prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article#">
+		<meta charset="utf-8">
+
+		<title>{{.Tag}} &mdash; {{.Collection.DisplayTitle}}</title>
+		
+		<link rel="stylesheet" type="text/css" href="{{if .IsCustomDomain}}https://files.writeas.org{{end}}/css/write.css" />
+		<link rel="shortcut icon" href="{{ if .Collection.ShowFooterBranding }}{{if .IsCustomDomain}}https://files.writeas.org{{end}}/favicon.ico{{ else }}/none.ico{{ end }}" />
+		{{if not .Collection.IsPrivate}}<link rel="alternate" type="application/rss+xml" title="{{.Tag}} posts on {{.DisplayTitle}}" href="{{.CanonicalURL}}tag:{{.Tag}}/feed/" />{{end}}
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="canonical" href="{{.CanonicalURL}}tag:{{.Tag | tolower}}" />
+		<meta name="generator" content="Write.as">
+		<meta name="title" content="{{.Tag}} &mdash; {{.Collection.DisplayTitle}}">
+		<meta name="description" content="{{.Tag}} posts on {{.Collection.DisplayTitle}}">
+		<meta name="application-name" content="Write.as">
+		<meta name="application-url" content="https://write.as">
+		{{if gt .Views 1}}<meta name="twitter:label1" value="Views">
+		<meta name="twitter:data1" value="{{largeNumFmt .Views}}">{{end}}
+		<meta itemprop="name" content="{{.Collection.DisplayTitle}}">
+		<meta itemprop="description" content="{{.Tag}} posts on {{.Collection.DisplayTitle}}">
+		<meta name="twitter:card" content="summary">
+		<meta name="twitter:site" content="@writeas__">
+		<meta name="twitter:description" content="{{.Tag}} posts on {{.Collection.DisplayTitle}}">
+		<meta name="twitter:title" content="{{.Tag}} &mdash; {{.Collection.DisplayTitle}}">
+		<meta property="og:title" content="{{.Tag}} &mdash; {{.Collection.DisplayTitle}}" />
+		<meta property="og:site_name" content="{{.DisplayTitle}}" />
+		<meta property="og:type" content="article" />
+		<meta property="og:url" content="{{.CanonicalURL}}tag:{{.Tag}}" />
+		{{if .Collection.StyleSheet}}<style type="text/css">{{.Collection.StyleSheetDisplay}}</style>{{end}}
+		{{if .Collection.RenderMathJax}}
+		<script type="text/x-mathjax-config">
+		  MathJax.Hub.Config({
+			extensions: ["tex2jax.js"],
+			jax: ["input/TeX", "output/HTML-CSS"],
+			tex2jax: {
+			  inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+			  displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+			  processEscapes: true
+			},
+			"HTML-CSS": { fonts: ["TeX"] }
+		  });
+		</script>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>{{end}}
+
+	</head>
+	<body id="subpage">
+		
+		<div id="overlay"></div>
+
+		<header>
+		<h1 dir="{{.Direction}}" id="blog-title"><a href="{{if .IsTopLevel}}/{{else}}/{{.Collection.Alias}}/{{end}}" class="h-card p-author">{{.Collection.DisplayTitle}}</a></h1>
+			<nav>
+				{{if .PinnedPosts}}
+				{{range .PinnedPosts}}<a class="pinned" href="{{if $.IsOwner}}/{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL}}{{end}}">{{.DisplayTitle}}</a>{{end}}
+				{{end}}
+			</nav>
+		</header>
+		
+		{{if .Posts}}<section id="wrapper" itemscope itemtype="http://schema.org/Blog">{{else}}<div id="wrapper">{{end}}
+			<h1>{{.Tag}}</h1>
+			{{template "posts" .}}
+		{{if .Posts}}</section>{{else}}</div>{{end}}
+
+		{{ if .Collection.ShowFooterBranding }}
+		<footer dir="ltr">
+			<hr>
+			<nav>
+				<p style="font-size: 0.9em"><a class="home pubd" href="/">{{.SiteName}}</a> &middot; powered by <a style="margin-left:0" href="https://writefreely.org">write freely</a></p>
+			</nav>
+		</footer>
+		{{ end }}
+	</body>
+	
+	{{if .CanShowScript}}
+		{{range .ExternalScripts}}<script type="text/javascript" src="{{.}}" async></script>{{end}}
+		{{if .Collection.Script}}<script type="text/javascript">{{.ScriptDisplay}}</script>{{end}}
+	{{end}}
+	{{if .IsOwner}}
+	<script src="/js/h.js"></script>
+	<script src="/js/postactions.js"></script>
+	{{end}}
+	<script type="text/javascript">
+{{if .IsOwner}}
+var deleting = false;
+function delPost(e, id, owned) {
+	e.preventDefault();
+	if (deleting) {
+		return;
+	}
+
+	// TODO: UNDO!
+	if (window.confirm('Are you sure you want to delete this post?')) {
+		// AJAX
+		deletePost(id, "", function() {
+			// Remove post from list
+			var $postEl = document.getElementById('post-' + id);
+			$postEl.parentNode.removeChild($postEl);
+			// TODO: add next post from this collection at the bottom
+		});
+	}
+}
+
+var deletePost = function(postID, token, callback) {
+	deleting = true;
+
+	var $delBtn = document.getElementById('post-' + postID).getElementsByClassName('delete action')[0];
+	$delBtn.innerHTML = '...';
+
+	var http = new XMLHttpRequest();
+	var url = "/api/posts/" + postID;
+	http.open("DELETE", url, true);
+	http.onreadystatechange = function() {
+		if (http.readyState == 4) {
+			deleting = false;
+			if (http.status == 204) {
+				callback();
+			} else if (http.status == 409) {
+				$delBtn.innerHTML = 'delete';
+				alert("Post is synced to another account. Delete the post from that account instead.");
+				// TODO: show "remove" button instead of "delete" now
+				// Persist that state.
+				// Have it remove the post locally only.
+			} else {
+				$delBtn.innerHTML = 'delete';
+				alert("Failed to delete." + (http.status>=500?" Please try again.":""));
+			}
+		}
+	}
+	http.send();
+};
+
+var pinning = false;
+function pinPost(e, postID, slug, title) {
+	e.preventDefault();
+	if (pinning) {
+		return;
+	}
+	pinning = true;
+
+	var callback = function() {
+		// Visibly remove post from collection
+		var $postEl = document.getElementById('post-' + postID);
+		$postEl.parentNode.removeChild($postEl);
+		var $header = document.getElementsByTagName('header')[0];
+		var $pinnedNavs = $header.getElementsByTagName('nav');
+		// Add link to nav
+		var link = '<a class="pinned" href="/{{.Alias}}/'+slug+'">'+title+'</a>';
+		if ($pinnedNavs.length == 0) {
+			$header.insertAdjacentHTML("beforeend", '<nav>'+link+'</nav>');
+		} else {
+			$pinnedNavs[0].insertAdjacentHTML("beforeend", link);
+		}
+	};
+
+	var $pinBtn = document.getElementById('post-' + postID).getElementsByClassName('pin action')[0];
+	$pinBtn.innerHTML = '...';
+
+	var http = new XMLHttpRequest();
+	var url = "/api/collections/{{.Alias}}/pin";
+	var params = [ { "id": postID } ];
+	http.open("POST", url, true);
+	http.setRequestHeader("Content-type", "application/json");
+	http.onreadystatechange = function() {
+		if (http.readyState == 4) {
+			pinning = false;
+			if (http.status == 200) {
+				callback();
+			} else if (http.status == 409) {
+				$pinBtn.innerHTML = 'pin';
+				alert("Post is synced to another account. Delete the post from that account instead.");
+				// TODO: show "remove" button instead of "delete" now
+				// Persist that state.
+				// Have it remove the post locally only.
+			} else {
+				$pinBtn.innerHTML = 'pin';
+				alert("Failed to pin." + (http.status>=500?" Please try again.":""));
+			}
+		}
+	}
+	http.send(JSON.stringify(params));
+};
+{{end}}
+	try { // Fonts
+	  WebFontConfig = {
+		custom: { families: [ 'Lora:400,700:latin', 'Open+Sans:400,700:latin' ], urls: [ '{{if .IsCustomDomain}}https://files.writeas.org{{end}}/css/fonts.css' ] }
+	  };
+	  (function() {
+		var wf = document.createElement('script');
+		wf.src = '{{if .IsCustomDomain}}https://files.writeas.org{{end}}/js/webfont.js';
+		wf.type = 'text/javascript';
+		wf.async = 'true';
+		var s = document.getElementsByTagName('script')[0];
+		s.parentNode.insertBefore(wf, s);
+	  })();
+	} catch (e) { /* ¯\_(ツ)_/¯ */ }
+	</script>
+</html>{{end}}

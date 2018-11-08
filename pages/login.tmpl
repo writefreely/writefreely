@@ -1,0 +1,30 @@
+{{define "head"}}<title>Log in &mdash; {{.SiteName}}</title>
+<meta name="description" content="Log in to access your blogs, published posts, and linked accounts.">
+<meta itemprop="description" content="Log in to access your blogs, published posts, and linked accounts.">
+<style>input{margin-bottom:0.5em;}</style>
+{{end}}
+{{define "content"}}
+<div class="tight content-container">
+	<h1>Log in to {{.SiteName}}</h1>
+
+	{{if .Flashes}}<ul class="errors">
+		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
+	</ul>{{end}}
+
+	<form action="/auth/login" method="post" style="text-align: center;margin-top:1em;" onsubmit="disableSubmit()">
+		<input type="text" name="alias" placeholder="Username" value="{{.Username}}" {{if not .Username}}autofocus{{end}} /><br />
+		<input type="password" name="pass" placeholder="Password" {{if .Username}}autofocus{{end}} /><br />
+		{{if .To}}<input type="hidden" name="to" value="{{.To}}" />{{end}}
+		<input type="submit" id="btn-login" value="Login" />
+	</form>
+
+	<p style="text-align:center;font-size:0.9em;margin:3em auto;max-width:26em;">{{if .Message}}{{.Message}}{{else}}<em>No account yet?</em> <a href="/new/blog">Sign up</a> to start a blog.{{end}}</p>
+
+<script type="text/javascript">
+function disableSubmit() {
+	var $btn = document.getElementById("btn-login");
+	$btn.value = "Logging in...";
+	$btn.disabled = true;
+}
+</script>
+{{end}}

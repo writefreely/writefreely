@@ -1,0 +1,135 @@
+{{define "post"}}<!DOCTYPE HTML>
+<html {{if .Language.Valid}}lang="{{.Language.String}}"{{end}} dir="{{.Direction}}">
+	<head prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article#">
+		<meta charset="utf-8">
+
+		<title>{{.PlainDisplayTitle}} &mdash; {{.Collection.DisplayTitle}}</title>
+		
+		<link rel="stylesheet" type="text/css" href="/css/write.css" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="canonical" href="{{.CanonicalURL}}" />
+		<meta name="generator" content="Write Freely">
+		<meta name="title" content="{{.PlainDisplayTitle}} &mdash; {{if .Collection.Title}}{{.Collection.Title}}{{else}}{{.Collection.Alias}}{{end}}">
+		<meta name="description" content="{{.Summary}}">
+		{{if gt .Views 1}}<meta name="twitter:label1" value="Views">
+		<meta name="twitter:data1" value="{{largeNumFmt .Views}}">{{end}}
+		<meta name="author" content="{{.Collection.Title}}" />
+		<meta itemprop="description" content="{{.Summary}}">
+		<meta itemprop="datePublished" content="{{.CreatedDate}}" />
+		<meta name="twitter:card" content="summary">
+		<meta name="twitter:description" content="{{.Summary}}">
+		<meta name="twitter:title" content="{{.PlainDisplayTitle}} &mdash; {{if .Collection.Title}}{{.Collection.Title}}{{else}}{{.Collection.Alias}}{{end}}">
+		{{if gt (len .Images) 0}}<meta name="twitter:image" content="{{index .Images 0}}">{{else}}<meta name="twitter:image" content="https://write.as/img/w-sq-light.png">{{end}}
+		<meta property="og:title" content="{{.PlainDisplayTitle}}" />
+		<meta property="og:description" content="{{.Summary}}" />
+		<meta property="og:site_name" content="{{.Collection.DisplayTitle}}" />
+		<meta property="og:type" content="article" />
+		<meta property="og:url" content="{{.CanonicalURL}}" />
+		<meta property="og:updated_time" content="{{.Created8601}}" />
+		{{range .Images}}<meta property="og:image" content="{{.}}" />{{else}}<meta property="og:image" content="https://write.as/img/w-sq-light.png">{{end}}
+		<meta property="article:published_time" content="{{.Created8601}}">
+		{{if .Collection.StyleSheet}}<style type="text/css">{{.Collection.StyleSheetDisplay}}</style>{{end}}
+		{{if .Collection.RenderMathJax}}
+		<script type="text/x-mathjax-config">
+		  MathJax.Hub.Config({
+			extensions: ["tex2jax.js"],
+			jax: ["input/TeX", "output/HTML-CSS"],
+			tex2jax: {
+			  inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+			  displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+			  processEscapes: true
+			},
+			"HTML-CSS": { fonts: ["TeX"] }
+		  });
+		</script>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>{{end}}
+
+	</head>
+	<body id="post">
+		
+		<div id="overlay"></div>
+
+		<header>
+		<h1 dir="{{.Direction}}" id="blog-title"><a rel="author" href="{{if .IsTopLevel}}/{{else}}/{{.Collection.Alias}}/{{end}}" class="h-card p-author">{{.Collection.DisplayTitle}}</a></h1>
+			<nav>
+				{{if .PinnedPosts}}
+				{{range .PinnedPosts}}<a class="pinned{{if eq .Slug.String $.Slug.String}} selected{{end}}" href="{{if $.IsOwner}}/{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}
+				{{end}}
+				{{ if .IsOwner }}<span class="views" dir="ltr"><strong>{{largeNumFmt .Views}}</strong> {{pluralize "view" "views" .Views}}</span>
+				<a class="xtra-feature" href="/{{.Collection.Alias}}/{{.Slug.String}}/edit" dir="{{.Direction}}">Edit</a>
+				{{if .IsPinned}}<a class="xtra-feature unpin" href="/{{.Collection.Alias}}/{{.Slug.String}}/unpin" dir="{{.Direction}}" onclick="unpinPost(event, '{{.ID}}')">Unpin</a>{{end}}
+				{{ end }}
+			</nav>
+		</header>
+		
+		<article id="post-body" class="{{.Font}} h-entry">{{if .IsScheduled}}<p class="badge">Scheduled</p>{{end}}{{if .Title.String}}<h2 id="title" class="p-name">{{.FormattedDisplayTitle}}</h2>{{end}}<div class="e-content">{{.HTMLContent}}</div></article>
+
+		{{ if .Collection.ShowFooterBranding }}
+		<footer dir="ltr"><hr><nav><p style="font-size: 0.9em">{{localhtml "published with write.as" .Language.String}}</p></nav></footer>
+		{{ end }}
+	</body>
+	
+	{{if .Collection.CanShowScript}}
+		{{range .Collection.ExternalScripts}}<script type="text/javascript" src="{{.}}" async></script>{{end}}
+		{{if .Collection.Script}}<script type="text/javascript">{{.Collection.ScriptDisplay}}</script>{{end}}
+	{{end}}
+	<script type="text/javascript">
+
+var pinning = false;
+function unpinPost(e, postID) {
+	e.preventDefault();
+	if (pinning) {
+		return;
+	}
+	pinning = true;
+
+	var $header = document.getElementsByTagName('header')[0];
+	var callback = function() {
+		// Hide current page
+		var $pinnedNavLink = $header.getElementsByTagName('nav')[0].querySelector('.pinned.selected');
+		$pinnedNavLink.style.display = 'none';
+		try { _paq.push(['trackEvent', 'Post', 'unpin', 'post']); } catch(e) {}
+	};
+
+	var $pinBtn = $header.getElementsByClassName('unpin')[0];
+	$pinBtn.innerHTML = '...';
+
+	var http = new XMLHttpRequest();
+	var url = "/api/collections/{{.Collection.Alias}}/unpin";
+	var params = [ { "id": postID } ];
+	http.open("POST", url, true);
+	http.setRequestHeader("Content-type", "application/json");
+	http.onreadystatechange = function() {
+		if (http.readyState == 4) {
+			pinning = false;
+			if (http.status == 200) {
+				callback();
+				$pinBtn.style.display = 'none';
+				$pinBtn.innerHTML = 'Pin';
+			} else if (http.status == 409) {
+				$pinBtn.innerHTML = 'Unpin';
+			} else {
+				$pinBtn.innerHTML = 'Unpin';
+				alert("Failed to unpin." + (http.status>=500?" Please try again.":""));
+			}
+		}
+	}
+	http.send(JSON.stringify(params));
+};
+
+	try { // Fonts
+	  WebFontConfig = {
+		custom: { families: [ 'Lora:400,700:latin', 'Open+Sans:400,700:latin' ], urls: [ '/css/fonts.css' ] }
+	  };
+	  (function() {
+		var wf = document.createElement('script');
+		wf.src = '/js/webfont.js';
+		wf.type = 'text/javascript';
+		wf.async = 'true';
+		var s = document.getElementsByTagName('script')[0];
+		s.parentNode.insertBefore(wf, s);
+	  })();
+	} catch (e) { /* ¯\_(ツ)_/¯ */ }
+	</script>
+</html>{{end}}

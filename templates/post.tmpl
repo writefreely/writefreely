@@ -1,0 +1,97 @@
+{{define "post"}}<!DOCTYPE HTML>
+<html {{if .Language}}lang="{{.Language}}"{{end}} dir="{{.Direction}}">
+	<head prefix="og: http://ogp.me/ns#">
+		<meta charset="utf-8">
+
+		<title>{{if .Title}}{{.Title}}{{else}}{{.GenTitle}}{{end}} &mdash; {{.SiteName}}</title>
+		
+		{{if .IsCode}}
+		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/mono-blue.min.css">
+		{{end}}
+		<link rel="stylesheet" type="text/css" href="/css/write.css" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="canonical" href="{{.Host}}/{{.ID}}" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<meta name="generator" content="{{.SiteName}}">
+		<meta name="title" content="{{if .Title}}{{.Title}}{{else}}{{.GenTitle}}{{end}}">
+		<meta name="description" content="{{.Description}}">
+		<meta itemprop="name" content="{{.SiteName}}">
+		<meta itemprop="description" content="{{.Description}}">
+		<meta name="twitter:card" content="summary">
+		<meta name="twitter:title" content="{{if .Title}}{{.Title}}{{else}}{{.GenTitle}}{{end}}">
+		<meta name="twitter:description" content="{{.Description}}">
+		{{if gt .Views 1}}<meta name="twitter:label1" value="Views">
+		<meta name="twitter:data1" value="{{largeNumFmt .Views}}">{{end}}
+		<meta name="twitter:image" content="https://write.as/img/w-sq-light.png">
+		<meta property="og:title" content="{{if .Title}}{{.Title}}{{else}}{{.GenTitle}}{{end}}" />
+		<meta property="og:site_name" content="{{.SiteName}}" />
+		<meta property="og:type" content="article" />
+		<meta property="og:url" content="https://write.as/{{.ID}}" />
+		<meta property="og:description" content="{{.Description}}" />
+		<meta property="og:image" content="https://write.as/img/w-sq-light.png">
+		{{if .Author}}<meta property="article:author" content="https://{{.Author}}" />{{end}}
+
+	</head>
+	<body id="post">
+
+		<header>
+			<h1 dir="{{.Direction}}"><a href="/">{{.SiteName}}</a></h1>
+			<nav>
+				<span class="views{{if not .IsOwner}} owner-visible{{end}}" dir="ltr"><strong>{{largeNumFmt .Views}}</strong> {{pluralize "view" "views" .Views}}</span>
+				{{if .IsCode}}<a href="/{{.ID}}.txt" rel="noindex" dir="{{.Direction}}">View raw</a>{{end}}
+				{{ if .Username }}
+				{{if .IsOwner}}
+				<a href="/{{.ID}}/edit" dir="{{.Direction}}">Edit</a>
+				{{end}}
+				<a class="xtra-feature dash-nav" href="/me/posts/" dir="{{.Direction}}">Drafts</a>
+				{{ end }}
+			</nav>
+		</header>
+		
+		<article class="{{.Font}} h-entry">{{if .Title}}<h2 id="title" class="p-name">{{.Title}}</h2>{{end}}{{ if .IsPlainText }}<p id="post-body" class="e-content">{{.Content}}</p>{{ else }}<div id="post-body" class="e-content">{{.HTMLContent}}</div>{{ end }}</article>
+
+		<footer dir="ltr"><hr><nav><p style="font-size: 0.9em">{{localhtml "published with write.as" .Language}}</p></nav></footer>
+	</body>
+	
+	{{if .IsCode}}
+	<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+	<script>
+	hljs.highlightBlock(document.getElementById('post-body'));
+	</script>
+	{{else}}
+	<script src="/js/h.js"></script>
+	{{if .IsPlainText}}<script src="/js/twitter-text.min.js"></script>{{end}}
+	{{end}}
+	<script type="text/javascript">
+	try {
+	  WebFontConfig = {
+		custom: { families: [ 'Lora:400,700:latin'{{if eq .Font "sans"}}, 'Open+Sans:400,700:latin'{{end}} ], urls: [ '/css/fonts.css' ] }
+	  };
+	  (function() {
+		var wf = document.createElement('script');
+		wf.src = '/js/webfont.js';
+		wf.type = 'text/javascript';
+		wf.async = 'true';
+		var s = document.getElementsByTagName('script')[0];
+		s.parentNode.insertBefore(wf, s);
+	  })();
+	} catch (e) { /* ¯\_(ツ)_/¯ */ }
+
+	var posts = localStorage.getItem('posts');
+	if (posts != null) {
+		posts = JSON.parse(posts);
+		var $nav = document.getElementsByTagName('nav')[0];
+		for (var i=0; i<posts.length; i++) {
+			if (posts[i].id == "{{.ID}}") {
+				$nav.innerHTML = $nav.innerHTML + '<a class="xtra-feature" href="/edit/{{.ID}}" dir="{{.Direction}}">Edit</a>';
+				var $ownerVis = document.querySelectorAll('.owner-visible');
+				for (var i=0; i<$ownerVis.length; i++) {
+					$ownerVis[i].classList.remove('owner-visible');
+				}
+				break;
+			}
+		}
+	}
+	</script>
+</html>{{end}}
