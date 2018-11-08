@@ -24,6 +24,10 @@ const (
 	softwareVer    = "0.1"
 )
 
+var (
+	debugging bool
+)
+
 type app struct {
 	router       *mux.Router
 	db           *datastore
@@ -35,9 +39,12 @@ type app struct {
 var shttp = http.NewServeMux()
 
 func Serve() {
+	debugPtr := flag.Bool("debug", false, "Enables debug logging.")
 	createConfig := flag.Bool("create-config", false, "Creates a basic configuration and exits")
 	doConfig := flag.Bool("config", false, "Run the configuration process")
 	flag.Parse()
+
+	debugging = *debugPtr
 
 	if *createConfig {
 		log.Info("Creating configuration...")
@@ -69,6 +76,8 @@ func Serve() {
 	app := &app{
 		cfg: cfg,
 	}
+
+	app.cfg.Server.Dev = *debugPtr
 
 	// Load keys
 	log.Info("Loading encryption keys...")

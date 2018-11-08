@@ -11,6 +11,8 @@ const (
 type (
 	ServerCfg struct {
 		Port int    `ini:"port"`
+
+		Dev bool `ini:"-"`
 	}
 
 	DatabaseCfg struct {
