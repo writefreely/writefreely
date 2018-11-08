@@ -11,7 +11,7 @@
 		<img src="https://goreportcard.com/badge/github.com/writeas/writefreely" alt="Go Report Card" />
 	</a>
 	<a href="https://travis-ci.org/writeas/writefreely">
-		<img src="https://travis-ci.org/writeas/writefreely.svg?branch=develop" alt="Build status" />
+		<img src="https://travis-ci.org/writeas/writefreely.svg" alt="Build status" />
 	</a>
 </p>
 &nbsp;
