@@ -76,16 +76,9 @@ Create your database, import the schema, and configure your site [as shown above
 Now generate the CSS:
 
 ```bash
-make install
-make         # Run this whenever you update your styles
-```
-
-Lastly, run the application (you could put this into a quick shell script called `run.sh`)
-
-```bash
-#!/bin/bash
-
-go install ./... && writefreely --debug
+make install # Generates encryption keys; installs LESS compiler
+make ui      # Generates CSS (run this whenever you update your styles)
+make run     # Runs the application
 ```
 
 ## License
