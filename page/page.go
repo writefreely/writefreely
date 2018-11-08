@@ -1,0 +1,29 @@
+// package page provides mechanisms and data for generating a WriteFreely page.
+package page
+
+import (
+	"github.com/writeas/writefreely/config"
+	"strings"
+)
+
+type StaticPage struct {
+	// App configuration
+	config.AppCfg
+	Version   string
+	HeaderNav bool
+
+	// Request values
+	Path     string
+	Username string
+	Values   map[string]string
+	Flashes  []string
+}
+
+// SanitizeHost alters the StaticPage to contain a real hostname. This is
+// especially important for the Tor hidden service, as it can be served over
+// proxies, messing up the apparent hostname.
+func (sp *StaticPage) SanitizeHost(cfg *config.Config) {
+	if cfg.Server.HiddenHost != "" && strings.HasPrefix(sp.Host, cfg.Server.HiddenHost) {
+		sp.Host = cfg.Server.HiddenHost
+	}
+}

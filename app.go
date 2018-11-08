@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
+	"github.com/writeas/writefreely/page"
 )
 
 const (
@@ -34,6 +35,35 @@ type app struct {
 	cfg          *config.Config
 	keys         *keychain
 	sessionStore *sessions.CookieStore
+}
+
+func pageForReq(app *app, r *http.Request) page.StaticPage {
+	p := page.StaticPage{
+		AppCfg:  app.cfg.App,
+		Path:    r.URL.Path,
+		Version: "v" + softwareVer,
+	}
+
+	// Add user information, if given
+	var u *User
+	accessToken := r.FormValue("t")
+	if accessToken != "" {
+		userID := app.db.GetUserID(accessToken)
+		if userID != -1 {
+			var err error
+			u, err = app.db.GetUserByID(userID)
+			if err == nil {
+				p.Username = u.Username
+			}
+		}
+	} else {
+		u = getUserSession(app, r)
+		if u != nil {
+			p.Username = u.Username
+		}
+	}
+
+	return p
 }
 
 var shttp = http.NewServeMux()
@@ -79,6 +109,8 @@ func Serve() {
 
 	app.cfg.Server.Dev = *debugPtr
 
+	initTemplates()
+
 	// Load keys
 	log.Info("Loading encryption keys...")
 	err = initKeys(app)
@@ -112,7 +144,13 @@ func Serve() {
 	app.db.SetMaxOpenConns(50)
 
 	r := mux.NewRouter()
-	handler := NewHandler(app.sessionStore)
+	handler := NewHandler(app)
+	handler.SetErrorPages(&ErrorPages{
+		NotFound:            pages["404-general.tmpl"],
+		Gone:                pages["410.tmpl"],
+		InternalServerError: pages["500.tmpl"],
+		Blank:               pages["blank.tmpl"],
+	})
 
 	// Handle app routes
 	initRoutes(handler, r, app.cfg, app.db)

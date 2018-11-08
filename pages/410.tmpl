@@ -1,0 +1,7 @@
+{{define "head"}}<title>Unpublished &mdash; {{.SiteName}}</title>{{end}}
+{{define "content"}}
+		<div class="error-page">
+			<p class="msg">{{if .Content}}{{.Content}}{{else}}Post was unpublished by the author.{{end}}</p>
+			<p class="commentary">It might be back some day.</p>
+		</div>
+{{end}}
