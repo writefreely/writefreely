@@ -3,6 +3,7 @@ package writefreely
 import (
 	"github.com/gorilla/mux"
 	"github.com/writeas/go-nodeinfo"
+	"github.com/writeas/go-webfinger"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
 	"net/http"
@@ -28,7 +29,15 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 	// Primary app routes
 	write := r.Host(hostSubroute).Subrouter()
 
+	// Federation endpoint configurations
+	wf := webfinger.Default(wfResolver{db, cfg})
+	wf.NoTLSHandler = nil
+
 	// Federation endpoints
+	// host-meta
+	write.HandleFunc("/.well-known/host-meta", handler.Web(handleViewHostMeta, UserLevelOptional))
+	// webfinger
+	write.HandleFunc(webfinger.WebFingerPath, handler.LogHandlerFunc(http.HandlerFunc(wf.Webfinger)))
 	// nodeinfo
 	niCfg := nodeInfoConfig(cfg)
 	ni := nodeinfo.NewService(*niCfg, nodeInfoResolver{cfg, db})
@@ -76,6 +85,10 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 	apiColls.HandleFunc("/{alias}/collect", handler.All(addPost)).Methods("POST")
 	apiColls.HandleFunc("/{alias}/pin", handler.All(pinPost)).Methods("POST")
 	apiColls.HandleFunc("/{alias}/unpin", handler.All(pinPost)).Methods("POST")
+	apiColls.HandleFunc("/{alias}/inbox", handler.All(handleFetchCollectionInbox)).Methods("POST")
+	apiColls.HandleFunc("/{alias}/outbox", handler.All(handleFetchCollectionOutbox)).Methods("GET")
+	apiColls.HandleFunc("/{alias}/following", handler.All(handleFetchCollectionFollowing)).Methods("GET")
+	apiColls.HandleFunc("/{alias}/followers", handler.All(handleFetchCollectionFollowers)).Methods("GET")
 
 	// Handle posts
 	write.HandleFunc("/api/posts", handler.All(newPost)).Methods("POST")

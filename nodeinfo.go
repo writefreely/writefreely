@@ -43,7 +43,7 @@ func nodeInfoConfig(cfg *config.Config) *nodeinfo.Config {
 }
 
 func (r nodeInfoResolver) IsOpenRegistration() (bool, error) {
-	return !r.cfg.App.Private, nil
+	return r.cfg.App.OpenRegistration, nil
 }
 
 func (r nodeInfoResolver) Usage() (nodeinfo.Usage, error) {
