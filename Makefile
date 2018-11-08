@@ -8,7 +8,7 @@ BINARY_NAME=writefreely
 all : build
 
 build: deps
-	cd cmd/writefreely; $(GOBUILD)
+	cd cmd/writefreely; $(GOBUILD) -v
 
 test:
 	$(GOTEST) -v ./...
@@ -18,7 +18,7 @@ run:
 	$(BINARY_NAME) --debug
 
 deps :
-	$(GOGET) ./...
+	$(GOGET) -v ./...
 
 install : 
 	./keys.sh
