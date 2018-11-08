@@ -27,7 +27,7 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 	}
 
 	// Primary app routes
-	write := r.Host(hostSubroute).Subrouter()
+	write := r.PathPrefix("/").Subrouter()
 
 	// Federation endpoint configurations
 	wf := webfinger.Default(wfResolver{db, cfg})
