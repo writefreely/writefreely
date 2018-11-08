@@ -1,7 +1,6 @@
 package writefreely
 
 import (
-	"fmt"
 	"github.com/writeas/go-nodeinfo"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
@@ -59,21 +58,21 @@ func (r nodeInfoResolver) Usage() (nodeinfo.Usage, error) {
 
 	if r.cfg.App.PublicStats {
 		// Display bi-yearly / monthly stats
-		err = r.db.QueryRow(fmt.Sprintf(`SELECT COUNT(*) FROM (
+		err = r.db.QueryRow(`SELECT COUNT(*) FROM (
 SELECT DISTINCT collection_id
 FROM posts
 INNER JOIN collections c
 ON collection_id = c.id
 WHERE collection_id IS NOT NULL
-	AND updated > DATE_SUB(NOW(), INTERVAL 6 MONTH)) co`, CollPublic)).Scan(&activeHalfYear)
+	AND updated > DATE_SUB(NOW(), INTERVAL 6 MONTH)) co`).Scan(&activeHalfYear)
 
-		err = r.db.QueryRow(fmt.Sprintf(`SELECT COUNT(*) FROM (
+		err = r.db.QueryRow(`SELECT COUNT(*) FROM (
 SELECT DISTINCT collection_id
 FROM posts
 INNER JOIN FROM collections c
 ON collection_id = c.id
 WHERE collection_id IS NOT NULL
-	AND updated > DATE_SUB(NOW(), INTERVAL 1 MONTH)) co`, CollPublic)).Scan(&activeMonth)
+	AND updated > DATE_SUB(NOW(), INTERVAL 1 MONTH)) co`).Scan(&activeMonth)
 	}
 
 	return nodeinfo.Usage{

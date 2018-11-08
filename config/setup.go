@@ -35,7 +35,7 @@ func Configure() error {
 		Success: "{{ . | bold | faint }}: ",
 	}
 	selTmpls := &promptui.SelectTemplates{
-		Selected: fmt.Sprintf(`{{.Label}} {{ . | faint }}`, promptui.IconGood),
+		Selected: fmt.Sprintf(`{{.Label}} {{ . | faint }}`),
 	}
 
 	prompt := promptui.Prompt{
