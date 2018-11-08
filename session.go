@@ -13,6 +13,8 @@ const (
 	sessionLength = 180 * day
 	cookieName    = "wfu"
 	cookieUserVal = "u"
+
+	blogPassCookieName = "ub"
 )
 
 // initSession creates the cookie store. It depends on the keychain already

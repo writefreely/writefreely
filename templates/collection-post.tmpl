@@ -89,7 +89,6 @@ function unpinPost(e, postID) {
 		// Hide current page
 		var $pinnedNavLink = $header.getElementsByTagName('nav')[0].querySelector('.pinned.selected');
 		$pinnedNavLink.style.display = 'none';
-		try { _paq.push(['trackEvent', 'Post', 'unpin', 'post']); } catch(e) {}
 	};
 
 	var $pinBtn = $header.getElementsByClassName('unpin')[0];
