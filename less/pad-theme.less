@@ -1,0 +1,217 @@
+@lightBG: #ffffff;
+@lightTextColor: #000;
+@lightLinkColor: #444;
+@lightNavBG: #fff;
+@lightNavHoverBG: #f6f6f6;
+@lightNavBorder: #ccc;
+
+@darkBG: #222222;
+@darkTextColor: #ffffff;
+@darkLinkColor: #ccc;
+@darkNavBG: #393939;
+@darkNavHoverBG: #555;
+@darkNavBorder: #333;
+
+.pad-theme-transition {
+	-moz-transition-property: background-color, color;
+	-webkit-transition-property: background-color, color;
+	-o-transition-property: background-color, color;
+	transition-property: background-color, color;
+	.transition-duration(0.25s);
+}
+
+body#pad-sub #posts, .atoms {
+	h3 {
+		a {
+			color: @lightTextColor;
+			&:hover {
+				color: darken(@lightTextColor, 10%);
+			}
+		}
+	}
+	h3, h4 {
+		a {
+			color: @lightTextColor;
+			&:hover {
+				color: darken(@lightTextColor, 10%);
+			}
+		}
+	}
+	date, .electron {
+		color: #999;
+	}
+	a.action, a {
+		color: @lightLinkColor;
+		&:hover {
+			color: darken(@lightLinkColor, 10%);
+		}
+	}
+}
+
+body#pad, body#pad-sub {
+	.pad-theme-transition;
+
+	&.light {
+		background-color: @lightBG;
+		color: @lightTextColor;
+		#tools {
+			.pad-theme-transition;
+			background-color: transparent;
+			h1 {
+				a {
+					color: @headerTextColor;
+				}
+			}
+			#belt {
+				a {
+					color: #000;
+				}
+			}
+			.tool {
+				&#status {
+					color: #999;
+				}
+			}
+			.hidden {
+				&#wc {
+					color: #777;
+				}
+			}
+			a:hover, a:active {
+				background-color: transparent;
+				color: @lightLinkColor;
+			}
+		}
+		.modal {
+			border-color: @lightNavBorder;
+			background: @lightNavBG;
+		}
+	}
+
+	&.dark {
+		background-color: @darkBG;
+		color: @darkTextColor;
+		#tools {
+			.pad-theme-transition;
+			background-color: #262626;
+			h1 {
+				a {
+					color: @darkTextColor;
+				}
+			}
+			#belt {
+				a {
+					color: white;
+				}
+			}
+			.tool {
+				&#status {
+					color: #666;
+				}
+			}
+			.hidden {
+				&#wc {
+					color: #ececec;
+				}
+			}
+			a:hover, a:active {
+				background-color: transparent;
+				color: @darkLinkColor;
+			}
+			nav {
+				&> ul > li a {
+					color: @darkTextColor;
+				}
+				ul {
+					ul {
+						background: @darkNavBG;
+						border-color: @darkNavBorder;
+					}
+					li {
+						&.current-user {
+							color: #fff;
+						}
+						&.selected {
+							a {
+								color: #777;
+							}
+						}
+					}
+					li:hover {
+						background: @darkNavHoverBG;
+					}
+				}
+			}
+		}
+		#posts {
+			h3 {
+				a {
+					color: @darkTextColor;
+					&:hover {
+						color: darken(@darkTextColor, 10%);
+					}
+				}
+			}
+			h3, h4 {
+				a {
+					color: @darkTextColor;
+					&:hover {
+						color: darken(@darkTextColor, 10%);
+					}
+				}
+			}
+			a.action, a {
+				color: @darkLinkColor;
+				&:hover {
+					color: darken(@darkLinkColor, 10%);
+				}
+			}
+		}
+		.modal {
+			border-color: @darkNavBorder;
+			background: @darkNavBG;
+			input {
+				color: #fff;
+			}
+
+			.form-hint {
+				color: #ccc;
+			}
+
+			a:link, a:visited {
+				color: lighten(@primary, 8%);
+			}
+		}
+	}
+}
+
+body#pad {
+	.pad-theme-transition;
+
+	textarea {
+		.pad-theme-transition;
+	}
+
+	&.dark {
+		textarea {
+			background-color: @darkBG;
+			color: @darkTextColor;
+		}
+	}
+	&.light {
+		textarea {
+			background-color: @lightBG;
+			color: @lightTextColor;
+		}
+	}
+}
+
+body {
+	&.dark {
+		nav#top-nav {
+			a {
+				color: @darkLinkColor;
+			}
+		}
+	}
+}
