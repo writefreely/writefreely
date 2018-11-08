@@ -2,11 +2,12 @@ GOCMD=go
 GOINSTALL=$(GOCMD) install
 GOBUILD=$(GOCMD) build
 GOTEST=$(GOCMD) test
+GOGET=$(GOCMD) get
 BINARY_NAME=writefreely
 
 all : build
 
-build:
+build: deps
 	cd cmd/writefreely; $(GOBUILD)
 
 test:
@@ -15,6 +16,9 @@ test:
 run:
 	$(GOINSTALL) ./...
 	$(BINARY_NAME) --debug
+
+deps :
+	$(GOGET) ./...
 
 install : 
 	./keys.sh
