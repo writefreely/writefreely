@@ -10,10 +10,8 @@ import (
 )
 
 func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datastore) {
-	isSingleUser := !cfg.App.MultiUser
-
 	hostSubroute := cfg.App.Host[strings.Index(cfg.App.Host, "://")+3:]
-	if isSingleUser {
+	if cfg.App.SingleUser {
 		hostSubroute = "{domain}"
 	} else {
 		if strings.HasPrefix(hostSubroute, "localhost") {
@@ -21,14 +19,13 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 		}
 	}
 
-	if isSingleUser {
+	if cfg.App.SingleUser {
 		log.Info("Adding %s routes (single user)...", hostSubroute)
-
-		return
+	} else {
+		log.Info("Adding %s routes (multi-user)...", hostSubroute)
 	}
 
 	// Primary app routes
-	log.Info("Adding %s routes (multi-user)...", hostSubroute)
 	write := r.Host(hostSubroute).Subrouter()
 
 	// Federation endpoints
@@ -37,4 +34,24 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 	ni := nodeinfo.NewService(*niCfg, nodeInfoResolver{cfg, db})
 	write.HandleFunc(nodeinfo.NodeInfoPath, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfoDiscover)))
 	write.HandleFunc(niCfg.InfoURL, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfo)))
+
+	// Handle posts
+	write.HandleFunc("/api/posts", handler.All(newPost)).Methods("POST")
+	posts := write.PathPrefix("/api/posts/").Subrouter()
+	posts.HandleFunc("/{post:[a-zA-Z0-9]{10}}", handler.All(fetchPost)).Methods("GET")
+	posts.HandleFunc("/{post:[a-zA-Z0-9]{10}}", handler.All(existingPost)).Methods("POST", "PUT")
+	posts.HandleFunc("/{post:[a-zA-Z0-9]{10}}", handler.All(deletePost)).Methods("DELETE")
+	posts.HandleFunc("/{post:[a-zA-Z0-9]{10}}/{property}", handler.All(fetchPostProperty)).Methods("GET")
+	posts.HandleFunc("/claim", handler.All(addPost)).Methods("POST")
+	posts.HandleFunc("/disperse", handler.All(dispersePost)).Methods("POST")
+
+	// All the existing stuff
+	write.HandleFunc("/{action}/edit", handler.Web(handleViewPad, UserLevelOptional)).Methods("GET")
+	write.HandleFunc("/{action}/meta", handler.Web(handleViewMeta, UserLevelOptional)).Methods("GET")
+	// Collections
+	if cfg.App.SingleUser {
+	} else {
+		// Posts
+		write.HandleFunc("/{post}", handler.Web(handleViewPost, UserLevelOptional))
+	}
 }
