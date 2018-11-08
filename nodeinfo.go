@@ -32,8 +32,10 @@ func nodeInfoConfig(cfg *config.Config) *nodeinfo.Config {
 			nodeinfo.ProtocolActivityPub,
 		},
 		Services: nodeinfo.Services{
-			Inbound:  []nodeinfo.NodeService{},
-			Outbound: []nodeinfo.NodeService{},
+			Inbound: []nodeinfo.NodeService{},
+			Outbound: []nodeinfo.NodeService{
+				nodeinfo.ServiceRSS,
+			},
 		},
 		Software: nodeinfo.SoftwareInfo{
 			Name:    strings.ToLower(serverSoftware),
