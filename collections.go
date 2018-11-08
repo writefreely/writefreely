@@ -288,7 +288,7 @@ func (c *Collection) PersonObject(ids ...int64) *activitystreams.Person {
 }
 
 func (c *Collection) FederatedAPIBase() string {
-	return hostName
+	return hostName + "/"
 }
 
 func (c *Collection) FederatedAccount() string {
