@@ -25,7 +25,7 @@ const (
 	assumedTitleLen = 80
 	postsPerPage    = 10
 
-	serverSoftware = "Write Freely"
+	serverSoftware = "WriteFreely"
 	softwareURL    = "https://writefreely.org"
 	softwareVer    = "0.1"
 )

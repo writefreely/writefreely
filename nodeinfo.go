@@ -4,6 +4,7 @@ import (
 	"github.com/writeas/go-nodeinfo"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
+	"strings"
 )
 
 type nodeInfoResolver struct {
@@ -35,7 +36,7 @@ func nodeInfoConfig(cfg *config.Config) *nodeinfo.Config {
 			Outbound: []nodeinfo.NodeService{},
 		},
 		Software: nodeinfo.SoftwareInfo{
-			Name:    serverSoftware,
+			Name:    strings.ToLower(serverSoftware),
 			Version: softwareVer,
 		},
 	}
