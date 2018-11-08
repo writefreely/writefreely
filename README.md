@@ -7,11 +7,11 @@
 	<a href="https://github.com/writeas/writefreely/releases/">
 		<img src="https://img.shields.io/github/release/writeas/writefreely.svg" alt="Latest release" />
 	</a>
+	<a href="https://goreportcard.com/report/github.com/writeas/writefreely">
+		<img src="https://goreportcard.com/badge/github.com/writeas/writefreely" alt="Go Report Card" />
+	</a>
 	<a href="https://travis-ci.org/writeas/writefreely">
 		<img src="https://travis-ci.org/writeas/writefreely.svg?branch=develop" alt="Build status" />
-	</a>
-	<a href="https://github.com/writeas/writefreely/contributors/">
-		<img src="https://img.shields.io/github/contributors/writeas/writefreely.svg" alt="Contributors" />
 	</a>
 </p>
 &nbsp;
@@ -20,10 +20,14 @@ WriteFreely is a beautifully pared-down blogging platform that's simple on the s
 
 It's designed to be flexible and share your writing widely, so it's built around plain text and can publish to the _fediverse_ via ActivityPub. It's easy to install and lightweight.
 
+**Note** this is currently alpha software. We're quickly moving out of this v0.x stage, but while we're in it, there are no guarantees that this is ready for production use.
+
 ## Features
 
 * Start a blog for yourself, or host a community of writers
 * Form larger federated networks, and interact over modern protocols like ActivityPub
+* Write on a dead-simple, distraction-free and super fast editor
+* Publish drafts and let others proofread them by sharing a private link
 * Build more advanced apps and extensions with the [well-documented API](https://developers.write.as/docs/api/)
 
 ## Quick start
