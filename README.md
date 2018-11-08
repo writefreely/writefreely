@@ -26,6 +26,64 @@ It's designed to be flexible and share your writing widely, so it's built around
 * Form larger federated networks, and interact over modern protocols like ActivityPub
 * Build more advanced apps and extensions with the [well-documented API](https://developers.write.as/docs/api/)
 
+## Quick start
+
+First, download the [latest release](https://github.com/writeas/writefreely/releases/latest) for your OS. It includes everything you need to start your blog.
+
+Now extract the files from the archive, change into the directory, and do the following steps:
+
+```bash
+# 1) Log into MySQL and run:
+# CREATE DATABASE writefreely;
+#
+# 2) Import the schema with:
+mysql -u YOURUSERNAME -p writefreely < schema.sql
+
+# 3) Configure your blog
+./writefreely --config
+
+# 4) Generate data encryption keys (especially for production)
+./keys.sh
+
+# 5) Run
+./writefreely
+
+# 6) Check out your site at the URL you specified in the setup process
+# 7) There is no Step 7, you're done!
+```
+
+## Development
+
+Ready to hack on your site? Here's a quick overview.
+
+### Prerequisites
+
+* [Go 1.10+](https://golang.org/dl/)
+* [Node.js](https://nodejs.org/en/download/)
+
+### Setting up
+
+```bash
+go get github.com/writeas/writefreely/cmd/writefreely
+```
+
+Create your database, import the schema, and configure your site [as shown above](#quick-start).
+
+Now generate the CSS:
+
+```bash
+make install
+make         # Run this whenever you update your styles
+```
+
+Lastly, run the application (you could put this into a quick shell script called `run.sh`)
+
+```bash
+#!/bin/bash
+
+go install ./... && writefreely --debug
+```
+
 ## License
 
 Licensed under the AGPL.
