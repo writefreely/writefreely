@@ -1,0 +1,145 @@
+{{define "articles"}}
+{{template "header" .}}
+
+<div class="snug content-container">
+
+{{if .Flashes}}<ul class="errors">
+	{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
+</ul>{{end}}
+
+<h2 id="posts-header">drafts</h2>
+
+{{ if .AnonymousPosts }}<div class="atoms posts">
+	{{ range $el := .AnonymousPosts }}<div id="post-{{.ID}}" class="post">
+		<h3><a href="/{{.ID}}" itemprop="url">{{.DisplayTitle}}</a></h3>
+		<h4>
+			<date datetime="{{.Created}}" pubdate itemprop="datePublished" content="{{.Created}}">{{.DisplayDate}}</date>
+			<a class="action" href="/{{.ID}}/edit">edit</a>
+			<a class="delete action" href="/{{.ID}}" onclick="delPost(event, '{{.ID}}', true)">delete</a>
+			{{ if $.Collections }}
+			{{if gt (len $.Collections) 1}}<div class="action flat-select">
+				<select id="move-{{.ID}}" onchange="postActions.multiMove(this, '{{.ID}}')" title="Move this post to one of your blogs">
+					<option style="display:none"></option>
+					{{range $.Collections}}<option value="{{.Alias}}">{{.DisplayTitle}}</option>{{end}}
+				</select>
+				<label for="move-{{.ID}}">move to...</label>
+				<img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" />
+			</div>{{else}}
+			{{range $.Collections}}
+			<a class="action" href="/{{$el.ID}}" title="Publish this post to your blog '{{.DisplayTitle}}'" onclick="postActions.move(this, '{{$el.ID}}', '{{.Alias}}');return false">move to {{.DisplayTitle}}</a>
+			{{end}}
+			{{end}}
+			{{ end }}
+		</h4>
+		{{if .Summary}}<p>{{.Summary}}</p>{{end}}
+	</div>{{end}}
+</div>{{ else }}<div id="no-posts-published"><p>You haven't saved any drafts yet.</p>
+	<p>They'll show up here once you do. Find your blog posts from the <a href="/me/c/">Blogs</a> page.</p>
+	<p class="text-cta"><a href="/">Start writing</a></p></div>{{ end }}
+
+<div id="moving"></div>
+
+<h2 id="unsynced-posts-header" style="display: none">unsynced posts</h2>
+<div id="unsynced-posts-info" style="margin-top: 1em"></div>
+<div id="unsynced-posts" class="atoms"></div>
+
+</div>
+
+<script src="/js/h.js"></script>
+<script src="/js/postactions.js"></script>
+<script>
+var auth = true;
+function postsLoaded(n) {
+	if (n == 0) {
+		return;
+	}
+	document.getElementById('unsynced-posts-header').style.display = 'block';
+	var syncing = false;
+	var $pInfo = document.getElementById('unsynced-posts-info');
+	$pInfo.className = 'alert info';
+	var plural = n != 1;
+	$pInfo.innerHTML = '<p>You have <strong>'+n+'</strong> post'+(plural?'s that aren\'t':' that isn\'t')+' synced to your account yet. <a href="#" id="btn-sync">Sync '+(plural?'them':'it')+' now</a>.</p>';
+
+	var $noPosts = document.getElementById('no-posts-published');
+	if ($noPosts != null) {
+		$noPosts.style.display = 'none';
+		document.getElementById('posts-header').style.display = 'none';
+	}
+
+	H.getEl('btn-sync').on('click', function(e) {
+		e.preventDefault();
+		if (syncing) {
+			return;
+		}
+		var http = new XMLHttpRequest();
+		var params = [];
+		var posts = JSON.parse(H.get('posts', '[]'));
+		if (posts.length > 0) {
+			for (var i=0; i<posts.length; i++) {
+				params.push({id: posts[i].id, token: posts[i].token});
+			}
+		}
+
+		this.style.fontWeight = 'bold';
+		this.innerText = 'Syncing '+(plural?'them':'it')+' now...';
+
+		http.open("POST", "/api/posts/claim", true);
+
+		// Send the proper header information along with the request
+		http.setRequestHeader("Content-type", "application/json");
+
+		http.onreadystatechange = function() {
+			if (http.readyState == 4) {
+				syncing = false;
+				this.innerText = 'Importing '+(plural?'them':'it')+' now...';
+
+				if (http.status == 200) {
+					var res = JSON.parse(http.responseText);
+					if (res.data.length > 0) {
+						if (res.data.length != posts.length) {
+							// TODO: handle something that royally fucked up
+							console.error("Request and result array length didn't match!");
+							return;
+						}
+						for (var i=0; i<res.data.length; i++) {
+							if (res.data[i].code == 200) {
+								// Post successfully claimed.
+								for (var j=0; j<posts.length; j++) {
+									// Find post in local store
+									if (posts[j].id == res.data[i].post.id) {
+										// Remove this post
+										posts.splice(j, 1);
+										break;
+									}
+								}
+							} else {
+								for (var j=0; j<posts.length; j++) {
+									// Find post in local store
+									if (posts[j].id == res.data[i].id) {
+										// Note the error in the local post
+										posts[j].error = res.data[i].error_msg;
+										break;
+									}
+								}
+							}
+						}
+						H.set('posts', JSON.stringify(posts));
+						location.reload();
+					}
+				} else {
+					// TODO: handle error visually (option to retry)
+					console.error("Didn't work at all, man.");
+					this.style.fontWeight = 'normal';
+					this.innerText = 'Sync '+(plural?'them':'it')+' now';
+				}
+			}
+		}
+		http.send(JSON.stringify(params));
+		syncing = true;
+	});
+}
+</script>
+<script src="/js/posts.js"></script>
+
+{{template "footer" .}}
+{{end}}

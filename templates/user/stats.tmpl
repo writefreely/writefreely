@@ -1,0 +1,53 @@
+{{define "stats"}}
+{{template "header" .}}
+<style>
+table.classy th { text-align: left }
+table.classy th.num { text-align: right }
+td + td {
+	padding-left: 0.5em;
+	padding-right: 0.5em;
+}
+td.num {
+	text-align: right;
+}
+table.classy.export a { text-transform: inherit; }
+td.none {
+	font-style: italic;
+}
+</style>
+
+<div class="content-container snug">
+	<h2 id="posts-header">{{if .Collection}}{{.Collection.DisplayTitle}} {{end}}Stats</h2>
+
+	<p>Stats for all time.</p>
+	
+	{{if .Federation}}
+	<h3>Fediverse stats</h3>
+	<table id="fediverse" class="classy export">
+		<tr>
+			<th>Followers</th>
+		</tr>
+		<tr>
+			<td>{{.APFollowers}}</td>
+		</tr>
+	</table>
+	{{end}}
+
+	<h3>Top {{len .TopPosts}} posts</h3>
+	<table class="classy export">
+		<tr>
+			<th>Post</th>
+			{{if not .Collection}}<th>Blog</th>{{end}}
+			<th class="num">Total Views</th>
+		</tr>
+		{{range .TopPosts}}<tr>
+			<td style="word-break: break-all;"><a href="{{if .Collection}}{{.Collection.CanonicalURL}}{{.Slug.String}}{{else}}/{{.ID}}{{end}}">{{if ne .Title.String ""}}{{.Title.String}}{{else}}<em>{{.ID}}</em>{{end}}</a></td>
+			{{ if not $.Collection }}<td>{{if .Collection}}<a href="{{.Collection.CanonicalURL}}">{{.Collection.Title}}</a>{{else}}<em>Draft</em>{{end}}</td>{{ end }}
+			<td class="num">{{.ViewCount}}</td>
+		</tr>{{end}}
+	</table>
+
+</div>
+
+{{template "footer" .}}
+{{end}}

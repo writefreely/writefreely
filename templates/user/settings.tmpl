@@ -1,0 +1,83 @@
+{{define "settings"}}
+{{template "header" .}}
+
+<style type="text/css">
+.option { margin: 2em 0em; }
+h3 { font-weight: normal; }
+.section > *:not(input) { font-size: 0.86em; }
+</style>
+<div class="content-container snug regular">
+	<h2>{{if .IsLogOut}}Before you go...{{else}}Account Settings{{end}}</h2>
+	{{if .Flashes}}<ul class="errors">
+		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
+	</ul>{{end}}
+
+	{{ if .IsLogOut }}
+	<div class="alert info">
+		<p class="introduction">Please add an <strong>email address</strong> and/or <strong>passphrase</strong> so you can log in again later.</p>
+	</div>
+	{{ else }}
+	<div class="option">
+		<p>Change your account settings here.</p>
+	</div>
+
+	<form method="post" action="/api/me/self" autocomplete="false">
+		<div class="option">
+			<h3>Username</h3>
+			<div class="section">
+				<input type="text" name="username" value="{{.Username}}" tabindex="1" />
+				<input type="submit" value="Update" style="margin-left: 1em;" />
+			</div>
+		</div>
+	</form>
+	{{ end }}
+
+	<form method="post" action="/api/me/self" autocomplete="false">
+		<input type="hidden" name="logout" value="{{.IsLogOut}}" />
+		<div class="option">
+			<h3>Passphrase</h3>
+			<div class="section">
+				{{if and (not .HasPass) (not .IsLogOut)}}<div class="alert info"><p>Add a passphrase to easily log in to your account.</p></div>{{end}}
+				{{if .HasPass}}<p>Current passphrase</p>
+				<input type="password" name="current-pass" placeholder="Current passphrase" tabindex="1" /> <input class="show" type="checkbox" id="show-cur-pass" /><label for="show-cur-pass"> Show</label>
+				<p>New passphrase</p>
+				{{end}}
+				{{if .IsLogOut}}<input type="text" value="{{.Username}}" style="display:none" />{{end}}
+				<input type="password" name="new-pass" autocomplete="new-password" placeholder="New passphrase" tabindex="{{if .IsLogOut}}1{{else}}2{{end}}" /> <input class="show" type="checkbox" id="show-new-pass" /><label for="show-new-pass"> Show</label>
+			</div>
+		</div>
+
+		<div class="option">
+			<h3>Email</h3>
+			<div class="section">
+				{{if and (not .Email) (not .IsLogOut)}}<div class="alert info"><p>Add your email to get:</p>
+				<ul>
+					<li>No-passphrase login</li>
+					<li>Account recovery if you forget your passphrase</li>
+				</ul></div>{{end}}
+				<input type="email" name="email" style="letter-spacing: 1px" placeholder="Email address" value="{{.Email}}" size="40" tabindex="{{if .IsLogOut}}2{{else}}3{{end}}" />
+			</div>
+		</div>
+
+		<div class="option" style="text-align: center; margin-top: 4em;">
+			<input type="submit" value="Save changes" tabindex="4" />
+		</div>
+	</form>
+</div>
+
+<script>
+var showChecks = document.querySelectorAll('input.show');
+for (var i=0; i<showChecks.length; i++) {
+	showChecks[i].addEventListener('click', function() {
+		var prevEl = this.previousElementSibling;
+		if (prevEl.type == "password") {
+			prevEl.type = "text";
+		} else {
+			prevEl.type = "password";
+		}
+	});
+}
+</script>
+
+{{template "footer" .}}
+{{end}}

@@ -1,0 +1,234 @@
+{{define "upgrade"}}
+<p><a href="/me/plan?to=/me/c/{{.Alias}}">Upgrade</a> for <span>$40 / year</span> to edit.</p>
+{{end}}
+
+{{define "collection"}}
+{{template "header" .}}
+
+<div class="content-container snug">
+	<div id="overlay"></div>
+
+	<h2>Customize {{.DisplayTitle}} <a href="/{{.Alias}}/">view blog</a></h2>
+
+	{{if .Flashes}}<ul class="errors">
+		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
+	</ul>{{end}}
+
+<form name="customize-form" action="/api/collections/{{.Alias}}" method="post" onsubmit="return disableSubmit()">
+<div id="collection-options">
+	<div style="text-align:center">
+		<h1><input type="text" name="title" id="title" value="{{.DisplayTitle}}" placeholder="Title" /></h1>
+		<p><input type="text" name="description" id="description" value="{{.Description}}" placeholder="Description" /></p>
+	</div>
+
+	<div class="option">
+		<h2><a name="preferred-url"></a>URL</h2>
+		<div class="section">
+			{{if eq .Alias .Username}}<p style="font-size: 0.8em">This blog uses your username in its URL{{if .Federation}} and fediverse handle{{end}}. You can change it in your <a href="/me/settings">Account Settings</a>.</p>{{end}}
+			<ul style="list-style:none">
+				<li>
+					{{.FriendlyHost}}/<strong>{{.Alias}}</strong>/
+				</li>
+				<li>
+					<strong id="normal-handle-env" class="fedi-handle" {{if or (not .Federation) .SingleUser}}style="display:none"{{end}}>@<span id="fedi-handle">{{.Alias}}</span>@<span id="fedi-domain">{{.FriendlyHost}}</span></strong>
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<div class="option">
+		<h2>Publicity</h2>
+		<div class="section">
+			<ul style="list-style:none">
+				<li>
+					<label><input type="radio" name="visibility" id="visibility-unlisted" value="0" {{if .IsUnlisted}}checked="checked"{{end}} />
+						Unlisted
+					</label>
+					<p>This blog is visible to anyone with its link.</p>
+				</li>
+				<li>
+				<label class="option-text"><input type="radio" name="visibility" id="visibility-private" value="2" {{if .IsPrivate}}checked="checked"{{end}} />
+						Private
+					</label>
+					<p>Only you may read this blog (while you're logged in).</p>
+				</li>
+				<li>
+					<label class="option-text"><input type="radio" name="visibility" id="visibility-protected" value="4" {{if .IsProtected}}checked="checked"{{end}} />
+						Password-protected: <input type="password" class="low-profile" name="password" id="collection-pass" autocomplete="new-password" placeholder="{{if .IsProtected}}xxxxxxxxxxxxxxxx{{else}}a memorable password{{end}}" />
+					</label>
+					<p>A password is required to read this blog.</p>
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<div class="option">
+		<h2>Display Format</h2>
+		<div class="section">
+			<p class="explain">Customize how your posts display on your page.
+			</p>
+			<ul style="list-style:none">
+				<li>
+					<label><input type="radio" name="format" id="format-blog" value="blog" {{if or (not .Format) (eq .Format "blog")}}checked="checked"{{end}} />
+						Blog
+					</label>
+					<p>Dates are shown. Latest posts listed first.</p>
+				</li>
+				<li>
+					<label class="option-text"><input type="radio" name="format" id="format-novel" value="novel" {{if eq .Format "novel"}}checked="checked"{{end}} />
+						Novel
+					</label>
+					<p>No dates shown. Oldest posts first.</p>
+				</li>
+				<li>
+					<label class="option-text"><input type="radio" name="format" id="format-notebook" value="notebook" {{if eq .Format "notebook"}}checked="checked"{{end}} />
+						Notebook
+					</label>
+					<p>No dates shown. Latest posts first.</p>
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<div class="option">
+		<h2>Text Rendering</h2>
+		<div class="section">
+			<p class="explain">Customize how plain text renders on your blog.</p>
+			<ul style="list-style:none">
+				<li>
+					<label class="option-text disabled"><input type="checkbox" name="markdown" checked="checked" disabled />
+						Markdown
+					</label>
+				</li>
+				<li>
+					<label><input type="checkbox" name="mathjax" {{if .RenderMathJax}}checked="checked"{{end}} />
+						MathJax
+					</label>
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<div class="option">
+		<h2>Custom CSS</h2>
+		<div class="section">
+			<textarea id="css-editor" class="section codable" name="style_sheet">{{.StyleSheet}}</textarea>
+			<p class="explain">See our guide on <a href="https://guides.write.as/customizing/#custom-css">customization</a>.</p>
+		</div>
+	</div>
+
+	<div class="option" style="text-align: center; margin-top: 4em;">
+		<input type="submit" id="save-changes" value="Save changes" />
+		<p><a href="/{{.Alias}}/">View Blog</a></p>
+		{{if ne .Alias .Username}}<p><a class="danger" href="#modal-delete" onclick="promptDelete();">Delete Blog...</a></p>{{end}}
+	</div>
+</div>
+</form>
+</div>
+
+		<div id="modal-delete" class="modal">
+			<h2>Are you sure you want to delete this blog?</h2>
+			<div class="body short">
+				<p style="text-align:left">This will permanently erase <strong>{{.DisplayTitle}}</strong> ({{.FriendlyHost}}/{{.Alias}}) from the internet. Any posts on this blog will be saved and made into drafts (found on your <a href="/me/posts/">Drafts</a> page).</p>
+				<p>If you're sure you want to delete this blog, enter its name in the box below and press <strong>Delete</strong>.</p>
+
+				<ul id="delete-errors" class="errors"></ul>
+
+				<input id="confirm-text" placeholder="{{.Alias}}" type="text" class="boxy" style="margin-top: 0.5em;" />
+				<div style="text-align:right; margin-top: 1em;">
+					<a id="cancel-delete" style="margin-right:2em" href="#">Cancel</a>
+					<button id="btn-delete" class="danger" onclick="deleteBlog(); return false;">Delete</button>
+				</div>
+			</div>
+		</div>
+
+<script src="/js/h.js"></script>
+<script src="/js/ace.js" type="text/javascript" charset="utf-8"></script>
+<script>
+// Begin shared modal code
+function showModal(id) {
+	document.getElementById('overlay').style.display = 'block';
+	document.getElementById('modal-'+id).style.display = 'block';
+}
+
+var closeModals = function(e) {
+	e.preventDefault();
+	document.getElementById('overlay').style.display = 'none';
+	var modals = document.querySelectorAll('.modal');
+	for (var i=0; i<modals.length; i++) {
+		modals[i].style.display = 'none'; 
+	}
+};
+H.getEl('overlay').on('click', closeModals);
+H.getEl('cancel-delete').on('click', closeModals);
+// end
+var deleteBlog = function(e) {
+	if (document.getElementById('confirm-text').value != '{{.Alias}}') {
+		document.getElementById('delete-errors').innerHTML = '<li class="urgent">Enter <strong>{{.Alias}}</strong> in the box below.</li>';
+		return;
+	}
+	// Clear errors
+	document.getElementById('delete-errors').innerHTML = '';
+	document.getElementById('btn-delete').innerHTML = 'Deleting...';
+
+	var http = new XMLHttpRequest();
+	var url = "/api/collections/{{.Alias}}?web=1";
+	http.open("DELETE", url, true);
+	http.setRequestHeader("Content-type", "application/json");
+	http.onreadystatechange = function() {
+		if (http.readyState == 4) {
+			if (http.status == 204) {
+				window.location = '/me/c/';
+			} else {
+				var data = JSON.parse(http.responseText);
+				document.getElementById('delete-errors').innerHTML = '<li class="urgent">'+data.error_msg+'</li>';
+				document.getElementById('btn-delete').innerHTML = 'Delete';
+			}
+		}
+	};
+	http.send(null);
+};
+
+function createHidden(theForm, key, value) {
+    var input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = key;
+    input.value = value;
+    theForm.appendChild(input);
+}
+function disableSubmit() {
+	var $form = document.forms['customize-form'];
+	createHidden($form, 'style_sheet', cssEditor.getSession().getValue());
+	createHidden($form, 'script', jsEditor.getSession().getValue());
+	var $btn = document.getElementById("save-changes");
+	$btn.value = "Saving changes...";
+	$btn.disabled = true;
+	return true;
+}
+function promptDelete() {
+	showModal("delete");
+}
+
+var $fediDomain = document.getElementById('fedi-domain');
+var $fediCustomDomain = document.getElementById('fedi-custom-domain');
+var $customDomain = document.getElementById('domain-alias');
+var $customHandleEnv = document.getElementById('custom-handle-env');
+var $normalHandleEnv = document.getElementById('normal-handle-env');
+
+var opt = {
+	showLineNumbers: false,
+	showPrintMargin: 0,
+};
+var theme = "ace/theme/chrome";
+var cssEditor = ace.edit("css-editor");
+cssEditor.setTheme(theme);
+cssEditor.session.setMode("ace/mode/css");
+cssEditor.setOptions(opt);
+var jsEditor = ace.edit("js-editor");
+jsEditor.setTheme(theme);
+jsEditor.session.setMode("ace/mode/javascript");
+jsEditor.setOptions(opt);
+</script>
+
+{{template "footer" .}}
+{{end}}

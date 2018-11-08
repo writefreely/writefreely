@@ -1,0 +1,37 @@
+{{define "header"}}<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+
+	<title>{{.PageTitle}} {{if .Separator}}{{.Separator}}{{else}}&mdash;{{end}} {{.SiteName}}</title>
+
+	<link rel="stylesheet" type="text/css" href="/css/write.css" />
+	<link rel="shortcut icon" href="/favicon.ico" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="theme-color" content="#888888" />
+	<meta name="apple-mobile-web-app-title" content="{{.SiteName}}">
+	<link rel="apple-touch-icon" sizes="152x152" href="/img/touch-icon-152.png">
+	<link rel="apple-touch-icon" sizes="167x167" href="/img/touch-icon-167.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="/img/touch-icon-180.png">
+</head>
+<body id="me">
+	<header>
+		<h1><a href="/" title="Return to editor">{{.SiteName}}</a></h1>
+		<nav id="user-nav">
+			<nav class="dropdown-nav">
+				<ul><li><a>{{.Username}}</a> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /><ul>
+						<li><a href="/me/settings">Account settings</a></li>
+						<li><a href="/me/export">Export</a></li>
+						<li class="separator"><hr /></li>
+						<li><a href="/me/logout">Log out</a></li>
+					</ul></li>
+				</ul>
+			</nav>
+			<nav class="tabs">
+				<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>
+				<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>
+			</nav>
+		</nav>
+	</header>
+	<div id="official-writing">
+{{end}}

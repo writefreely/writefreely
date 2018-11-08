@@ -1,0 +1,28 @@
+{{define "export"}}
+{{template "header" .}}
+
+<div class="snug content-container">
+	<h2 id="posts-header">Export</h2>
+	<p>Your data on {{.SiteName}} is always free. Download and back-up your work any time.</p>
+
+	<table class="classy export">
+		<tr>
+			<th style="width: 40%">Export</th>
+			<th colspan="2">Format</th>
+		</tr>
+		<tr>
+			<th>Posts</th>
+			<td><p class="text-cta"><a href="/me/posts/export.csv">CSV</a></p></td>
+			<td><p class="text-cta"><a href="/me/posts/export.zip">ZIP</a></p></td>
+		</tr>
+		<tr>
+			<th>User + Blogs + Posts</th>
+			<td><p class="text-cta"><a href="/me/export.json">JSON</a></p></td>
+			<td><p class="text-cta"><a href="/me/export.json?pretty=1">Prettified</a></p></td>
+		</tr>
+	</table>
+
+</div>
+
+{{template "footer" .}}
+{{end}}

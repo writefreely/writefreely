@@ -1,0 +1,111 @@
+{{define "collections"}}
+{{template "header" .}}
+
+<div class="snug content-container">
+
+{{if .Flashes}}<ul class="errors">
+	{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
+</ul>{{end}}
+
+<h2>blogs</h2>
+<ul class="atoms collections">
+	{{range $i, $el := .Collections}}<li class="collection"><h3>
+		<a class="title" href="/{{.Alias}}/">{{if .Title}}{{.Title}}{{else}}{{.Alias}}{{end}}</a>
+	</h3> 
+	<h4>
+		<a class="action new-post" href="/#{{.Alias}}">new post</a>
+		<a class="action" href="/me/c/{{.Alias}}">customize</a>
+		<a class="action" href="/me/c/{{.Alias}}/stats">stats</a>
+	</h4>
+	{{if .Description}}<p class="description">{{.Description}}</p>{{end}}
+</li>{{end}}
+	<li id="create-collection">
+		{{if not .NewBlogsDisabled}}
+		<form method="POST" action="/api/collections" id="new-collection-form" onsubmit="return createCollection()">
+			<h4>
+				<input type="text" name="title" placeholder="Blog name" id="blog-name">
+				<input type="hidden" name="web" value="true" />
+				<input type="submit" value="Create" id="create-collection-btn">
+			</h4>
+		</form>
+		{{end}}
+	</li>
+</ul>
+{{if not .NewBlogsDisabled}}<p style="margin-top:0"><a id="new-collection" href="#new-collection">New blog</a></p>{{end}}
+
+</div>
+
+{{template "foot" .}}
+
+<script src="/js/h.js"></script>
+<script>
+function createCollection() {
+	var input = He.get('blog-name');
+	if (input.value == "") {
+		return false;
+	}
+	var form = He.get('new-collection-form');
+	var submit = He.get('create-collection-btn');
+	submit.value = "Creating...";
+	submit.disabled = "disabled";
+	He.postJSON("/api/collections", {
+		title: input.value,
+		web: true
+	}, function(code, data) {
+		if (data.code == 201) {
+			location.reload();
+		} else {
+			var $createColl = document.getElementById('create-collection');
+			var $submit = $createColl.querySelector('input[type=submit]');
+			$submit.value = "Create";
+			$submit.disabled = "";
+			var $err = $createColl.querySelector('.error');
+			if (data.code == 409) {
+				if ($err === null) {
+					var url = He.create('span');
+					url.className = "error";
+					url.innerText = "This name is taken.";
+					$createColl.appendChild(url);
+				} else {
+					$err.innerText = "This name is taken.";
+				}
+			} else {
+				if ($err === null) {
+					var url = He.create('span');
+					url.className = "error";
+					url.innerText = data.error_msg;
+					$createColl.appendChild(url);
+				} else {
+					$err.innerText = "This name is taken.";
+				}
+			}
+		}
+	});
+	return false;
+};
+(function() {
+	H.getEl('new-collection').on('click', function(e) {
+		e.preventDefault();
+		var collForm = He.get('create-collection');
+		if (collForm.style.display == '' || collForm.style.display == 'none') {
+			// Show form
+			this.textContent = "Cancel";
+			collForm.style.display = 'list-item';
+			collForm.querySelector('input[type=text]').focus();
+			return;
+		}
+		// Hide form
+		this.textContent = "New blog";
+		collForm.style.display = 'none';
+	});
+	if (location.hash == '#new-collection' || location.hash == '#new') {
+		var collForm = He.get('create-collection');
+		collForm.style.display = 'list-item';
+		collForm.querySelector('input[type=text]').focus();
+		He.get('new-collection').textContent = "Cancel";
+	}
+}());
+</script>
+
+{{template "body-end" .}}
+{{end}}
