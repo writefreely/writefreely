@@ -45,6 +45,12 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 	posts.HandleFunc("/claim", handler.All(addPost)).Methods("POST")
 	posts.HandleFunc("/disperse", handler.All(dispersePost)).Methods("POST")
 
+	if cfg.App.SingleUser {
+		write.HandleFunc("/me/new", handler.Web(handleViewPad, UserLevelOptional)).Methods("GET")
+	} else {
+		write.HandleFunc("/new", handler.Web(handleViewPad, UserLevelOptional)).Methods("GET")
+	}
+
 	// All the existing stuff
 	write.HandleFunc("/{action}/edit", handler.Web(handleViewPad, UserLevelOptional)).Methods("GET")
 	write.HandleFunc("/{action}/meta", handler.Web(handleViewMeta, UserLevelOptional)).Methods("GET")
@@ -54,4 +60,5 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 		// Posts
 		write.HandleFunc("/{post}", handler.Web(handleViewPost, UserLevelOptional))
 	}
+	write.HandleFunc("/", handler.Web(handleViewHome, UserLevelOptional))
 }

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"syscall"
 
 	"github.com/gorilla/mux"
@@ -35,6 +36,25 @@ type app struct {
 	cfg          *config.Config
 	keys         *keychain
 	sessionStore *sessions.CookieStore
+}
+
+// handleViewHome shows page at root path. Will be the Pad if logged in and the
+// catch-all landing page otherwise.
+func handleViewHome(app *app, w http.ResponseWriter, r *http.Request) error {
+	if app.cfg.App.SingleUser {
+		// Render blog index
+		return handleViewCollection(app, w, r)
+	}
+
+	// Multi-user instance
+	u := getUserSession(app, r)
+	if u != nil {
+		// User is logged in, so show the Pad
+		return handleViewPad(app, w, r)
+	}
+
+	// Show landing page
+	return renderPage(w, "landing.tmpl", pageForReq(app, r))
 }
 
 func pageForReq(app *app, r *http.Request) page.StaticPage {
@@ -67,6 +87,7 @@ func pageForReq(app *app, r *http.Request) page.StaticPage {
 }
 
 var shttp = http.NewServeMux()
+var fileRegex = regexp.MustCompile("/([^/]*\\.[^/]*)$")
 
 func Serve() {
 	debugPtr := flag.Bool("debug", false, "Enables debug logging.")
