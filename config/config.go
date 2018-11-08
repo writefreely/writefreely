@@ -35,6 +35,7 @@ type (
 		SingleUser       bool `ini:"single_user"`
 		OpenRegistration bool `ini:"open_registration"`
 		MinUsernameLen   int  `ini:"min_username_len"`
+		MaxBlogs         int  `ini:"max_blogs"`
 
 		// Federation
 		Federation  bool `ini:"federation"`
@@ -65,6 +66,7 @@ func New() *Config {
 			WebFonts:       true,
 			SingleUser:     true,
 			MinUsernameLen: 3,
+			MaxBlogs:       1,
 			Federation:     true,
 			PublicStats:    true,
 		},
