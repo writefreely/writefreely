@@ -10,11 +10,14 @@ import (
 
 func Configure() error {
 	c, err := Load()
+	var action string
 	if err != nil {
 		fmt.Println("No configuration yet. Creating new.")
 		c = New()
+		action = "generate"
 	} else {
 		fmt.Println("Configuration loaded.")
+		action = "update"
 	}
 	title := color.New(color.Bold, color.BgGreen).PrintlnFunc()
 
@@ -22,7 +25,7 @@ func Configure() error {
 	fmt.Println()
 	intro("  ✍ Write Freely Configuration ✍")
 	fmt.Println()
-	fmt.Println(wordwrap.WrapString("  This quick configuration process will generate the application's config file, "+FileName+".\n\n  It validates your input along the way, so you can be sure any future errors aren't caused by a bad configuration. If you'd rather configure your server manually, instead run: writefreely --create-config and edit that file.", 75))
+	fmt.Println(wordwrap.WrapString("  This quick configuration process will "+action+" the application's config file, "+FileName+".\n\n  It validates your input along the way, so you can be sure any future errors aren't caused by a bad configuration. If you'd rather configure your server manually, instead run: writefreely --create-config and edit that file.", 75))
 	fmt.Println()
 
 	title(" Server setup ")

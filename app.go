@@ -12,14 +12,18 @@ import (
 	"syscall"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
+	"github.com/writeas/web-core/converter"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
 	"github.com/writeas/writefreely/page"
 )
 
 const (
-	staticDir = "static/"
+	staticDir       = "static/"
+	assumedTitleLen = 80
+	postsPerPage    = 10
 
 	serverSoftware = "Write Freely"
 	softwareURL    = "https://writefreely.org"
@@ -28,6 +32,12 @@ const (
 
 var (
 	debugging bool
+
+	// DEPRECATED VARS
+	// TODO: pass app.cfg into GetCollection* calls so we can get these values
+	// from Collection methods and we no longer need these.
+	hostName     string
+	isSingleUser bool
 )
 
 type app struct {
@@ -36,6 +46,7 @@ type app struct {
 	cfg          *config.Config
 	keys         *keychain
 	sessionStore *sessions.CookieStore
+	formDecoder  *schema.Decoder
 }
 
 // handleViewHome shows page at root path. Will be the Pad if logged in and the
@@ -128,6 +139,8 @@ func Serve() {
 		cfg: cfg,
 	}
 
+	hostName = cfg.App.Host
+	isSingleUser = cfg.App.SingleUser
 	app.cfg.Server.Dev = *debugPtr
 
 	initTemplates()
@@ -141,6 +154,13 @@ func Serve() {
 
 	// Initialize modules
 	app.sessionStore = initSession(app)
+	app.formDecoder = schema.NewDecoder()
+	app.formDecoder.RegisterConverter(converter.NullJSONString{}, converter.ConvertJSONNullString)
+	app.formDecoder.RegisterConverter(converter.NullJSONBool{}, converter.ConvertJSONNullBool)
+	app.formDecoder.RegisterConverter(sql.NullString{}, converter.ConvertSQLNullString)
+	app.formDecoder.RegisterConverter(sql.NullBool{}, converter.ConvertSQLNullBool)
+	app.formDecoder.RegisterConverter(sql.NullInt64{}, converter.ConvertSQLNullInt64)
+	app.formDecoder.RegisterConverter(sql.NullFloat64{}, converter.ConvertSQLNullFloat64)
 
 	// Check database configuration
 	if app.cfg.Database.User == "" || app.cfg.Database.Password == "" {

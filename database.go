@@ -65,11 +65,10 @@ type writestore interface {
 
 	CreateCollectionFromToken(string, string, string) (*Collection, error)
 	CreateCollection(string, string, int64) (*Collection, error)
-	GetFuzzyDomain(host string) string
 	GetCollectionBy(condition string, value interface{}) (*Collection, error)
 	GetCollection(alias string) (*Collection, error)
 	GetCollectionForPad(alias string) (*Collection, error)
-	GetCollectionFromDomain(host string) (*Collection, error)
+	GetCollectionByID(id int64) (*Collection, error)
 	UpdateCollection(c *SubmittedCollection, alias string) error
 	DeleteCollection(alias string, userID int64) error
 
@@ -256,7 +255,7 @@ func (db *datastore) DoesUserNeedAuth(id int64) bool {
 	var pass, email []byte
 
 	// Find out if user has an email set first
-	err := db.QueryRow("SELECT pass, email FROM users WHERE id = ?", id).Scan(&pass, &email)
+	err := db.QueryRow("SELECT password, email FROM users WHERE id = ?", id).Scan(&pass, &email)
 	switch {
 	case err == sql.ErrNoRows:
 		// ERROR. Don't give false positives on needing auth methods
@@ -272,7 +271,7 @@ func (db *datastore) DoesUserNeedAuth(id int64) bool {
 
 func (db *datastore) IsUserPassSet(id int64) (bool, error) {
 	var pass []byte
-	err := db.QueryRow("SELECT pass FROM users WHERE id = ?", id).Scan(&pass)
+	err := db.QueryRow("SELECT password FROM users WHERE id = ?", id).Scan(&pass)
 	switch {
 	case err == sql.ErrNoRows:
 		return false, nil
@@ -672,10 +671,10 @@ func (db *datastore) GetCollectionBy(condition string, value interface{}) (*Coll
 	c := &Collection{}
 
 	// FIXME: change Collection to reflect database values. Add helper functions to get actual values
-	var styleSheet, script, format, customHandle zero.String
-	row := db.QueryRow("SELECT id, alias, title, description, style_sheet, script, format, owner_id, privacy, handle, view_count FROM collections WHERE "+condition, value)
+	var styleSheet, script, format zero.String
+	row := db.QueryRow("SELECT id, alias, title, description, style_sheet, script, format, owner_id, privacy, view_count FROM collections WHERE "+condition, value)
 
-	err := row.Scan(&c.ID, &c.Alias, &c.Title, &c.Description, &styleSheet, &script, &format, &c.OwnerID, &c.Visibility, &customHandle, &c.Views)
+	err := row.Scan(&c.ID, &c.Alias, &c.Title, &c.Description, &styleSheet, &script, &format, &c.OwnerID, &c.Visibility, &c.Views)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, impart.HTTPError{http.StatusNotFound, "Collection doesn't exist."}
@@ -683,12 +682,12 @@ func (db *datastore) GetCollectionBy(condition string, value interface{}) (*Coll
 		log.Error("Failed selecting from collections: %v", err)
 		return nil, err
 	}
-	c.CustomHandle = customHandle.String
 	c.StyleSheet = styleSheet.String
 	c.Script = script.String
 	c.Format = format.String
 	c.Public = c.IsPublic()
-	// TODO: set app to c
+
+	c.db = db
 
 	return c, nil
 }
@@ -715,6 +714,10 @@ func (db *datastore) GetCollectionForPad(alias string) (*Collection, error) {
 	return c, nil
 }
 
+func (db *datastore) GetCollectionByID(id int64) (*Collection, error) {
+	return db.GetCollectionBy("id = ?", id)
+}
+
 func (db *datastore) GetCollectionFromDomain(host string) (*Collection, error) {
 	return db.GetCollectionBy("host = ?", host)
 }
@@ -723,7 +726,6 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 	q := query.NewUpdate().
 		SetStringPtr(c.Title, "title").
 		SetStringPtr(c.Description, "description").
-		SetBoolPtr(c.PreferSubdomain, "prefer_subdomain").
 		SetNullString(c.StyleSheet, "style_sheet").
 		SetNullString(c.Script, "script")
 
@@ -751,15 +753,10 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 
 	// Find any current domain
 	var collID int64
-	var currentDomain sql.NullString
 	var rowsAffected int64
 	var changed bool
 	var res sql.Result
-	err := db.QueryRow("SELECT id, host FROM collections LEFT JOIN domains ON id = collection_id WHERE alias = ?", alias).Scan(&collID, &currentDomain)
-	if err != nil {
-		log.Error("Failed selecting from domains: %v", err)
-		return impart.HTTPError{http.StatusInternalServerError, "Couldn't update custom domain."}
-	}
+	var err error
 
 	// Update MathJax value
 	if c.MathJax {
@@ -772,42 +769,6 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 		_, err = db.Exec("DELETE FROM collectionattributes WHERE collection_id = ? AND attribute = ?", collID, "render_mathjax")
 		if err != nil {
 			log.Error("Unable to delete render_mathjax value: %v", err)
-			return err
-		}
-	}
-
-	if currentDomain.String != c.Domain.String {
-		if c.Domain.String == "" {
-			_, err := db.Exec("DELETE FROM domains WHERE collection_id = ?", collID)
-			if err != nil {
-				log.Error("Unable to delete domain %s from domains: %s", currentDomain.String, err)
-			}
-		} else if !currentDomain.Valid {
-			c.Domain.String = strings.ToLower(c.Domain.String)
-			// There is no current domain; add it
-			res, err = db.Exec("INSERT INTO domains (host, collection_id, handle) VALUES (?, ?, ?)", c.Domain, collID, c.FediverseHandle())
-			if err != nil {
-				log.Error("Unable to insert domain: %v", err)
-				return err
-			}
-			changed = true
-		} else {
-			c.Domain.String = strings.ToLower(c.Domain.String)
-			// Update the current domain
-			res, err = db.Exec("UPDATE domains SET host = ?, handle = ?, last_checked = NULL WHERE collection_id = ?", c.Domain, c.FediverseHandle(), collID)
-			if err != nil {
-				log.Error("Unable to update domain: %v", err)
-			} else {
-				rowsAffected, _ = res.RowsAffected()
-				if rowsAffected > 0 {
-					changed = true
-				}
-			}
-		}
-	} else if c.Handle != "" {
-		_, err = db.Exec("UPDATE domains SET handle = ? WHERE collection_id = ?", c.FediverseHandle(), collID)
-		if err != nil {
-			log.Error("Unable to update domain handle (only): %v", err)
 			return err
 		}
 	}
@@ -848,34 +809,6 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 	}
 
 	return nil
-}
-
-// GetFuzzyDomain takes an attempted host and finds any potential authoritative
-// domains where the user should be redirected
-func (db *datastore) GetFuzzyDomain(host string) string {
-	if strings.HasPrefix(host, "www.") {
-		host = host[strings.Index(host, ".")+1:]
-	} else {
-		return ""
-	}
-	var curHost string
-	var active, secure bool
-	err := db.QueryRow("SELECT host, is_active, is_secure FROM domains WHERE host = ?", host).Scan(&curHost, &active, &secure)
-	if err != nil {
-		if err != sql.ErrNoRows {
-			log.Error("Failed fuzzy domain check for %s: %v", host, err)
-		}
-		return ""
-	}
-	if !active {
-		return ""
-	}
-	if secure {
-		curHost = "https://" + curHost
-	} else {
-		curHost = "http://" + curHost
-	}
-	return curHost
 }
 
 const postCols = "id, slug, text_appearance, language, rtl, privacy, owner_id, collection_id, pinned_position, created, updated, view_count, title, content"
@@ -1407,7 +1340,7 @@ func (db *datastore) ClaimPosts(userID int64, collAlias string, posts *[]ClaimPo
 		qRes, err = db.AttemptClaim(&p, query, params, slugIdx)
 		if err != nil {
 			r.Code = http.StatusInternalServerError
-			r.ErrorMessage = "A Write.as error occurred. The humans have been alerted."
+			r.ErrorMessage = "An unknown error occurred."
 			r.ID = p.ID
 			res = append(res, r)
 			log.Error("claimPosts (post %s): %v", p.ID, err)
@@ -1523,8 +1456,6 @@ func (db *datastore) GetCollections(u *User) (*[]Collection, error) {
 	defer rows.Close()
 
 	colls := []Collection{}
-	var domain zero.String
-	var isActive, isSecure null.Bool
 	for rows.Next() {
 		c := Collection{}
 		err = rows.Scan(&c.ID, &c.Alias, &c.Title, &c.Description, &c.Visibility, &c.Views)
@@ -1532,9 +1463,6 @@ func (db *datastore) GetCollections(u *User) (*[]Collection, error) {
 			log.Error("Failed scanning row: %v", err)
 			break
 		}
-		c.Domain = domain.String
-		c.IsDomainActive = isActive.Bool
-		c.IsSecure = isSecure.Bool
 		c.URL = c.CanonicalURL()
 		c.Public = c.IsPublic()
 
@@ -2051,16 +1979,6 @@ func (db *datastore) DeleteAccount(userID int64) (l *string, err error) {
 		rs, _ := res.RowsAffected()
 		stringLogln(l, "Deleted %d for %s from collectionattributes", rs, c.Alias)
 
-		// Delete collection email address
-		res, err = t.Exec("DELETE FROM collectionemails WHERE collection_id = ?", c.ID)
-		if err != nil {
-			t.Rollback()
-			stringLogln(l, "Unable to delete emails on %s: %v", c.Alias, err)
-			return
-		}
-		rs, _ = res.RowsAffected()
-		stringLogln(l, "Deleted %d for %s from collectionemails", rs, c.Alias)
-
 		// Remove any optional collection password
 		res, err = t.Exec("DELETE FROM collectionpasswords WHERE collection_id = ?", c.ID)
 		if err != nil {
@@ -2080,16 +1998,6 @@ func (db *datastore) DeleteAccount(userID int64) (l *string, err error) {
 		}
 		rs, _ = res.RowsAffected()
 		stringLogln(l, "Deleted %d for %s from collectionredirects", rs, c.Alias)
-
-		// Remove any associated custom domains
-		res, err = t.Exec("DELETE FROM domains WHERE collection_id = ?", c.ID)
-		if err != nil {
-			t.Rollback()
-			stringLogln(l, "Unable to delete domains on %s: %v", c.Alias, err)
-			return
-		}
-		rs, _ = res.RowsAffected()
-		stringLogln(l, "Deleted %d for %s from domains", rs, c.Alias)
 	}
 
 	// Delete collections
@@ -2152,18 +2060,18 @@ func (db *datastore) DeleteAccount(userID int64) (l *string, err error) {
 
 func (db *datastore) GetAPActorKeys(collectionID int64) ([]byte, []byte) {
 	var pub, priv []byte
-	err := db.QueryRow("SELECT public_key, private_key FROM activitypubkeys WHERE collection_id = ?", collectionID).Scan(&pub, &priv)
+	err := db.QueryRow("SELECT public_key, private_key FROM collectionkeys WHERE collection_id = ?", collectionID).Scan(&pub, &priv)
 	switch {
 	case err == sql.ErrNoRows:
 		// Generate keys
 		pub, priv = activitypub.GenerateKeys()
-		_, err = db.Exec("INSERT INTO activitypubkeys (collection_id, public_key, private_key) VALUES (?, ?, ?)", collectionID, pub, priv)
+		_, err = db.Exec("INSERT INTO collectionkeys (collection_id, public_key, private_key) VALUES (?, ?, ?)", collectionID, pub, priv)
 		if err != nil {
 			log.Error("Unable to INSERT new activitypub keypair: %v", err)
 			return nil, nil
 		}
 	case err != nil:
-		log.Error("Couldn't SELECT activitypubkeys: %v", err)
+		log.Error("Couldn't SELECT collectionkeys: %v", err)
 		return nil, nil
 	}
 

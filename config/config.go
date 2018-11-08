@@ -10,7 +10,8 @@ const (
 
 type (
 	ServerCfg struct {
-		Port int    `ini:"port"`
+		HiddenHost string `ini:"hidden_host"`
+		Port       int    `ini:"port"`
 
 		Dev bool `ini:"-"`
 	}

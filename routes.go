@@ -44,6 +44,16 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 	write.HandleFunc(nodeinfo.NodeInfoPath, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfoDiscover)))
 	write.HandleFunc(niCfg.InfoURL, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfo)))
 
+	// Set up dyamic page handlers
+	// Handle auth
+	auth := write.PathPrefix("/api/auth/").Subrouter()
+	if cfg.App.OpenRegistration {
+		auth.HandleFunc("/signup", handler.All(apiSignup)).Methods("POST")
+	}
+	auth.HandleFunc("/login", handler.All(login)).Methods("POST")
+	auth.HandleFunc("/read", handler.WebErrors(handleWebCollectionUnlock, UserLevelNone)).Methods("POST")
+	auth.HandleFunc("/me", handler.All(handleAPILogout)).Methods("DELETE")
+
 	// Handle logged in user sections
 	me := write.PathPrefix("/me").Subrouter()
 	me.HandleFunc("/", handler.Redirect("/me", UserLevelUser))
@@ -99,6 +109,14 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 	posts.HandleFunc("/{post:[a-zA-Z0-9]{10}}/{property}", handler.All(fetchPostProperty)).Methods("GET")
 	posts.HandleFunc("/claim", handler.All(addPost)).Methods("POST")
 	posts.HandleFunc("/disperse", handler.All(dispersePost)).Methods("POST")
+
+	if cfg.App.OpenRegistration {
+		write.HandleFunc("/auth/signup", handler.Web(handleWebSignup, UserLevelNoneRequired)).Methods("POST")
+	}
+	write.HandleFunc("/auth/login", handler.Web(webLogin, UserLevelNoneRequired)).Methods("POST")
+
+	// Handle special pages first
+	write.HandleFunc("/login", handler.Web(viewLogin, UserLevelNoneRequired))
 
 	if cfg.App.SingleUser {
 		write.HandleFunc("/me/new", handler.Web(handleViewPad, UserLevelOptional)).Methods("GET")
