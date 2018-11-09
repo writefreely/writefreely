@@ -1,23 +1,31 @@
 {{define "head"}}<title>About {{.SiteName}}</title>
 {{end}}
-{{define "content"}}<div class="content-container" style="margin-top: 2em;">
-	<div class="content-container">
-		<div class="marketing-section">
-			<div class="clearfix blurbs">
-				<div class="third big">
-					<h3>Simple and focused</h3>
-					<p>Write.as isn't a platform for building <em>any</em> kind of blog or website. It's meant to help you get your thoughts down&mdash;and published&mdash;fast.</p>
-				</div>
+{{define "content"}}
+	<div class="content-container snug">
+		<h1>About {{.SiteName}}</h1>
 
-				<div class="third big">
-					<h3>Distraction-free</h3>
-					<p>Our editor lets you write and publish &mdash; that's it. And we separated the <a href="https://read.write.as">reading</a> experience so there's no stream or feed or "likes" or "follows" to steal your focus.</p>
-				</div>
+		<!--
+			Feel free to edit this section. Describe what your instance is about!
+		-->
 
-				<div class="third big">
-					<h3>Never lose your progress</h3>
-					<p>Your writing automatically saves as you type. It'll always be waiting, even if you don't "save" before leaving.</p>
-				</div>
+		<p>
+			{{ if .Federation }}
+			<em>{{.SiteName}}</em> is an interconnected place for you to write and publish, powered by WriteFreely and ActivityPub.
+			{{ else }}
+			<em>{{.SiteName}}</em> is a place for you to write and publish, powered by WriteFreely.
+			{{ end }}
+		</p>
+
+
+		<h2 style="margin-top:2em">About WriteFreely</h2>
+		<p><a href="https://writefreely.org">WriteFreely</a> is a self-hosted, decentralized blogging platform for publishing beautiful, simple blogs.</p>
+		<p>It lets you publish a single blog, or host a community of writers who can create multiple blogs under one account. You can also enable federation, which allows people in the fediverse to follow your blog, bookmark your posts, and share them with others.</p>
+		<div class="clearfix blurbs" style="font-size: 1.3em;text-align:center">
+			<div class="half big">
+				<p><a href="https://writefreely.org/start">Start an instance</a></p>
+			</div>
+			<div class="half big">
+				<p><a href="https://writefreely.org">WriteFreely</a></p>
 			</div>
 		</div>
 	</div>
