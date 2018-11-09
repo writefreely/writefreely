@@ -30,8 +30,8 @@ var (
 )
 
 const (
-	templatesDir = "templates/"
-	pagesDir     = "pages/"
+	templatesDir = "templates"
+	pagesDir     = "pages"
 )
 
 func showUserPage(w http.ResponseWriter, name string, obj interface{}) {
@@ -39,29 +39,29 @@ func showUserPage(w http.ResponseWriter, name string, obj interface{}) {
 		log.Error("showUserPage: data is nil!")
 		return
 	}
-	if err := userPages["user/"+name+".tmpl"].ExecuteTemplate(w, name, obj); err != nil {
+	if err := userPages[filepath.Join("user", name+".tmpl")].ExecuteTemplate(w, name, obj); err != nil {
 		log.Error("Error parsing %s: %v", name, err)
 	}
 }
 
 func initTemplate(name string) {
 	if debugging {
-		log.Info("  %s%s.tmpl", templatesDir, name)
+		log.Info("  %s%s%s.tmpl", templatesDir, string(filepath.Separator), name)
 	}
 
 	if name == "collection" || name == "collection-tags" {
 		// These pages list out collection posts, so we also parse templatesDir + "include/posts.tmpl"
 		templates[name] = template.Must(template.New("").Funcs(funcMap).ParseFiles(
-			templatesDir+name+".tmpl",
-			templatesDir+"include/posts.tmpl",
-			templatesDir+"include/footer.tmpl",
-			templatesDir+"base.tmpl",
+			filepath.Join(templatesDir, name+".tmpl"),
+			filepath.Join(templatesDir, "include", "posts.tmpl"),
+			filepath.Join(templatesDir, "include", "footer.tmpl"),
+			filepath.Join(templatesDir, "base.tmpl"),
 		))
 	} else {
 		templates[name] = template.Must(template.New("").Funcs(funcMap).ParseFiles(
-			templatesDir+name+".tmpl",
-			templatesDir+"include/footer.tmpl",
-			templatesDir+"base.tmpl",
+			filepath.Join(templatesDir, name+".tmpl"),
+			filepath.Join(templatesDir, "include", "footer.tmpl"),
+			filepath.Join(templatesDir, "base.tmpl"),
 		))
 	}
 }
@@ -73,8 +73,8 @@ func initPage(path, key string) {
 
 	pages[key] = template.Must(template.New("").Funcs(funcMap).ParseFiles(
 		path,
-		templatesDir+"include/footer.tmpl",
-		templatesDir+"base.tmpl",
+		filepath.Join(templatesDir, "include", "footer.tmpl"),
+		filepath.Join(templatesDir, "base.tmpl"),
 	))
 }
 
@@ -85,8 +85,8 @@ func initUserPage(path, key string) {
 
 	userPages[key] = template.Must(template.New(key).Funcs(funcMap).ParseFiles(
 		path,
-		templatesDir+"user/include/header.tmpl",
-		templatesDir+"user/include/footer.tmpl",
+		filepath.Join(templatesDir, "user", "include", "header.tmpl"),
+		filepath.Join(templatesDir, "user", "include", "footer.tmpl"),
 	))
 }
 
@@ -109,10 +109,10 @@ func initTemplates() error {
 	// Initialize all static pages that use the base template
 	filepath.Walk(pagesDir, func(path string, i os.FileInfo, err error) error {
 		if !i.IsDir() && !strings.HasPrefix(i.Name(), ".") {
-			parts := strings.Split(path, "/")
+			parts := strings.Split(path, string(filepath.Separator))
 			key := i.Name()
 			if len(parts) > 2 {
-				key = fmt.Sprintf("%s/%s", parts[1], i.Name())
+				key = fmt.Sprintf("%s%s%s", parts[1], string(filepath.Separator), i.Name())
 			}
 			initPage(path, key)
 		}
@@ -122,12 +122,12 @@ func initTemplates() error {
 
 	log.Info("Loading user pages...")
 	// Initialize all user pages that use base templates
-	filepath.Walk(templatesDir+"/user/", func(path string, f os.FileInfo, err error) error {
+	filepath.Walk(filepath.Join(templatesDir, "user"), func(path string, f os.FileInfo, err error) error {
 		if !f.IsDir() && !strings.HasPrefix(f.Name(), ".") {
-			parts := strings.Split(path, "/")
+			parts := strings.Split(path, string(filepath.Separator))
 			key := f.Name()
 			if len(parts) > 2 {
-				key = fmt.Sprintf("%s/%s", parts[1], f.Name())
+				key = filepath.Join(parts[1], f.Name())
 			}
 			initUserPage(path, key)
 		}
