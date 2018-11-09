@@ -50,6 +50,9 @@ tr.subscription {
 	text-align: left;
 	margin: 0.5em 0;
 }
+form dd {
+	margin: 0;
+}
 </style>
 {{end}}
 {{define "content"}}
@@ -57,8 +60,8 @@ tr.subscription {
 
 <div class="row">
 	<div style="text-align:left">
-		<h1 style="margin-top:0;max-width:8em;">{{if .Federation}}Start your blog in the fediverse{{else}}Start your minimalist blog{{end}}</h1>
-		<p><a href="#more">Learn more...</a></p>
+		<h1 style="margin-top:0;max-width:8em;">{{if .Federation}}Start your blog in the fediverse{{else}}Start your blog{{end}}</h1>
+		<p><a href="{{if .Federation}}#more{{else}}/about{{end}}">Learn more...</a></p>
 	</div>
 
 	<div>
@@ -67,13 +70,13 @@ tr.subscription {
 		</ul>{{end}}
 
 		<div id="billing">
-			<form action="/auth/signup" method="POST" id="signup-form">
+			<form action="/auth/signup" method="POST" id="signup-form" onsubmit="return signup()">
 				<dl class="billing">
 					<label>
 						<dt>Username</dt>
 						<dd>
 							<input type="text" id="alias" name="alias" style="width: 100%; box-sizing: border-box;" tabindex="1" autofocus />
-							<p id="alias-site" class="demo">@<strong>your-username</strong>@{{.FriendlyHost}}</p>
+							{{if .Federation}}<p id="alias-site" class="demo">@<strong>your-username</strong>@{{.FriendlyHost}}</p>{{else}}<p id="alias-site" class="demo">{{.FriendlyHost}}/<strong>your-username</strong></p>{{end}}
 						</dd>
 					</label>
 					<label>
@@ -113,5 +116,80 @@ tr.subscription {
 
 </div>
 {{ end }}
+
+<script type="text/javascript" src="/js/h.js"></script>
+<script type="text/javascript">
+function signup() {
+	var $pass = document.getElementById('password');
+
+	// Validate input
+	if (!aliasOK) {
+		var $a = $alias;
+		$a.el.className = 'error';
+		$a.el.focus();
+		$a.el.scrollIntoView();
+		return false;
+	}
+
+	if ($pass.value == "") {
+		var $a = $pass;
+		$a.className = 'error';
+		$a.focus();
+		$a.scrollIntoView();
+		return false;
+	}
+
+	var $btn = document.getElementById('btn-create');
+	$btn.disabled = true;
+	$btn.value = 'Creating...';
+	return true;
+}
+
+var $alias = H.getEl('alias');
+var $aliasSite = document.getElementById('alias-site');
+var aliasOK = true;
+var typingTimer;
+var doneTypingInterval = 750;
+var doneTyping = function() {
+	// Check on username
+	var alias = $alias.el.value;
+	if (alias != "") {
+		var params = {
+			username: alias
+		};
+		var http = new XMLHttpRequest();
+		http.open("POST", '/api/alias', true);
+
+		// Send the proper header information along with the request
+		http.setRequestHeader("Content-type", "application/json");
+
+		http.onreadystatechange = function() {
+			if (http.readyState == 4) {
+				data = JSON.parse(http.responseText);
+				if (http.status == 200) {
+					aliasOK = true;
+					$alias.removeClass('error');
+					$aliasSite.className = $aliasSite.className.replace(/(?:^|\s)demo(?!\S)/g, '');
+					$aliasSite.className = $aliasSite.className.replace(/(?:^|\s)error(?!\S)/g, '');
+					$aliasSite.innerHTML = '{{ if .Federation }}@<strong>' + data.data + '</strong>@{{.FriendlyHost}}{{ else }}{{.FriendlyHost}}/<strong>' + data.data + '</strong>/{{ end }}';
+				} else {
+					aliasOK = false;
+					$alias.setClass('error');
+					$aliasSite.className = 'error';
+					$aliasSite.textContent = data.error_msg;
+				}
+			}
+		}
+		http.send(JSON.stringify(params));
+	} else {
+		$aliasSite.className += ' demo';
+		$aliasSite.innerHTML = '{{ if .Federation }}@<strong>your-username</strong>@{{.FriendlyHost}}{{ else }}{{.FriendlyHost}}/<strong>your-username</strong>/{{ end }}';
+	}
+};
+$alias.on('keyup input', function() {
+	clearTimeout(typingTimer);
+	typingTimer = setTimeout(doneTyping, doneTypingInterval);
+});
+</script>
 
 {{end}}

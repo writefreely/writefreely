@@ -34,9 +34,18 @@ func handleWebSignup(app *app, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 	ur.Web = true
+	ur.Normalize = true
 
 	_, err := signupWithRegistration(app, ur, w, r)
 	if err != nil {
+		if err, ok := err.(impart.HTTPError); ok {
+			session, _ := app.sessionStore.Get(r, cookieName)
+			if session != nil {
+				session.AddFlash(err.Message)
+				session.Save(r, w)
+				return impart.HTTPError{http.StatusFound, "/"}
+			}
+		}
 		return err
 	}
 	return impart.HTTPError{http.StatusFound, "/"}
