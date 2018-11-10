@@ -39,7 +39,7 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 	// webfinger
 	write.HandleFunc(webfinger.WebFingerPath, handler.LogHandlerFunc(http.HandlerFunc(wf.Webfinger)))
 	// nodeinfo
-	niCfg := nodeInfoConfig(cfg)
+	niCfg := nodeInfoConfig(db, cfg)
 	ni := nodeinfo.NewService(*niCfg, nodeInfoResolver{cfg, db})
 	write.HandleFunc(nodeinfo.NodeInfoPath, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfoDiscover)))
 	write.HandleFunc(niCfg.InfoURL, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfo)))
@@ -118,15 +118,17 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 	// Handle special pages first
 	write.HandleFunc("/login", handler.Web(viewLogin, UserLevelNoneRequired))
 
+	draftEditPrefix := ""
 	if cfg.App.SingleUser {
+		draftEditPrefix = "/d"
 		write.HandleFunc("/me/new", handler.Web(handleViewPad, UserLevelOptional)).Methods("GET")
 	} else {
 		write.HandleFunc("/new", handler.Web(handleViewPad, UserLevelOptional)).Methods("GET")
 	}
 
 	// All the existing stuff
-	write.HandleFunc("/{action}/edit", handler.Web(handleViewPad, UserLevelOptional)).Methods("GET")
-	write.HandleFunc("/{action}/meta", handler.Web(handleViewMeta, UserLevelOptional)).Methods("GET")
+	write.HandleFunc(draftEditPrefix+"/{action}/edit", handler.Web(handleViewPad, UserLevelOptional)).Methods("GET")
+	write.HandleFunc(draftEditPrefix+"/{action}/meta", handler.Web(handleViewMeta, UserLevelOptional)).Methods("GET")
 	// Collections
 	if cfg.App.SingleUser {
 		RouteCollections(handler, write.PathPrefix("/").Subrouter())
@@ -135,8 +137,8 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 		write.HandleFunc("/{collection}/", handler.Web(handleViewCollection, UserLevelOptional))
 		RouteCollections(handler, write.PathPrefix("/{prefix:[@~$!\\-+]?}{collection}").Subrouter())
 		// Posts
-		write.HandleFunc("/{post}", handler.Web(handleViewPost, UserLevelOptional))
 	}
+	write.HandleFunc(draftEditPrefix+"/{post}", handler.Web(handleViewPost, UserLevelOptional))
 	write.HandleFunc("/", handler.Web(handleViewHome, UserLevelOptional))
 }
 

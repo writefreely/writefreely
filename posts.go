@@ -1255,12 +1255,14 @@ func viewCollectionPost(app *app, w http.ResponseWriter, r *http.Request) error 
 		p.formatContent(cr.isCollOwner)
 		tp := struct {
 			*PublicPost
+			page.StaticPage
 			IsOwner        bool
 			IsPinned       bool
 			IsCustomDomain bool
 			PinnedPosts    *[]PublicPost
 		}{
 			PublicPost:     p,
+			StaticPage:     pageForReq(app, r),
 			IsOwner:        cr.isCollOwner,
 			IsCustomDomain: cr.isCustomDomain,
 		}

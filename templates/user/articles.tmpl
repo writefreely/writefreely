@@ -11,14 +11,14 @@
 
 {{ if .AnonymousPosts }}<div class="atoms posts">
 	{{ range $el := .AnonymousPosts }}<div id="post-{{.ID}}" class="post">
-		<h3><a href="/{{.ID}}" itemprop="url">{{.DisplayTitle}}</a></h3>
+		<h3><a href="/{{if $.SingleUser}}d/{{end}}{{.ID}}" itemprop="url">{{.DisplayTitle}}</a></h3>
 		<h4>
 			<date datetime="{{.Created}}" pubdate itemprop="datePublished" content="{{.Created}}">{{.DisplayDate}}</date>
-			<a class="action" href="/{{.ID}}/edit">edit</a>
+			<a class="action" href="/{{if $.SingleUser}}d/{{end}}{{.ID}}/edit">edit</a>
 			<a class="delete action" href="/{{.ID}}" onclick="delPost(event, '{{.ID}}', true)">delete</a>
 			{{ if $.Collections }}
 			{{if gt (len $.Collections) 1}}<div class="action flat-select">
-				<select id="move-{{.ID}}" onchange="postActions.multiMove(this, '{{.ID}}')" title="Move this post to one of your blogs">
+				<select id="move-{{.ID}}" onchange="postActions.multiMove(this, '{{.ID}}', {{if $.SingleUser}}true{{else}}false{{end}})" title="Move this post to one of your blogs">
 					<option style="display:none"></option>
 					{{range $.Collections}}<option value="{{.Alias}}">{{.DisplayTitle}}</option>{{end}}
 				</select>
@@ -26,7 +26,7 @@
 				<img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" />
 			</div>{{else}}
 			{{range $.Collections}}
-			<a class="action" href="/{{$el.ID}}" title="Publish this post to your blog '{{.DisplayTitle}}'" onclick="postActions.move(this, '{{$el.ID}}', '{{.Alias}}');return false">move to {{.DisplayTitle}}</a>
+			<a class="action" href="/{{$el.ID}}" title="Publish this post to your blog '{{.DisplayTitle}}'" onclick="postActions.move(this, '{{$el.ID}}', '{{.Alias}}', {{if $.SingleUser}}true{{else}}false{{end}});return false">move to {{.DisplayTitle}}</a>
 			{{end}}
 			{{end}}
 			{{ end }}

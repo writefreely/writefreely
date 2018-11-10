@@ -46,11 +46,15 @@
 		{{if .IsOwner}}<nav id="manage"><ul>
 			<li><a onclick="void(0)">&#9776; Menu</a>
 				<ul>
+					{{if .SingleUser}}
+					<li><a href="/me/new">New Post</a></li>
+					{{else}}
 					<li><a href="/#{{.Alias}}" class="write">{{.SiteName}}</a></li>
+					{{end}}
 					<li><a href="/me/c/{{.Alias}}">Customize</a></li>
 					<li><a href="/me/c/{{.Alias}}/stats">Stats</a></li>
 					<li class="separator"><hr /></li>
-					<li><a href="/me/c/"><img class="ic-18dp" src="/img/ic_blogs_dark@2x.png" /> View Blogs</a></li>
+					{{if not .SingleUser}}<li><a href="/me/c/"><img class="ic-18dp" src="/img/ic_blogs_dark@2x.png" /> View Blogs</a></li>{{end}}
 					<li><a href="/me/posts/"><img class="ic-18dp" src="/img/ic_list_dark@2x.png" /> View Drafts</a></li>
 				</ul>
 			</li>
@@ -63,7 +67,7 @@
 			<!--p class="meta-note"><span>Private collection</span>. Only you can see this page.</p-->
 		{{/*end*/}}
 		{{if .PinnedPosts}}<nav>
-			{{range .PinnedPosts}}<a class="pinned" href="{{if $.IsOwner}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}</nav>
+			{{range .PinnedPosts}}<a class="pinned" href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}</nav>
 		{{end}}
 		</header>
 		
@@ -96,7 +100,7 @@
 		<footer>
 			<hr />
 			<nav dir="ltr">
-				<a class="home pubd" href="/">{{.SiteName}}</a> &middot; powered by <a style="margin-left:0" href="https://writefreely.org">write freely</a>
+				{{if not .SingleUser}}<a class="home pubd" href="/">{{.SiteName}}</a> &middot; {{end}}powered by <a style="margin-left:0" href="https://writefreely.org">write freely</a>
 			</nav>
 		</footer>
 		{{ end }}

@@ -19,9 +19,8 @@
 		
 		<header id="tools">
 			<div id="clip">
-				<h1>{{if .User}}<a href="/me/c/" title="View blogs"><img class="ic-24dp" src="/img/ic_blogs_dark@2x.png" /></a>{{else}}<a href="/">w<span class="if-room">rite.as</span></a>{{end}}
-				</h1>
-				<nav id="target" class=""><ul>
+				{{if not .SingleUser}}<h1><a href="/me/c/" title="View blogs"><img class="ic-24dp" src="/img/ic_blogs_dark@2x.png" /></a></h1>{{end}}
+				<nav id="target" {{if .SingleUser}}style="margin-left:0"{{end}}><ul>
 						{{if .Editing}}<li>{{if .EditCollection}}<a href="{{.EditCollection.CanonicalURL}}">{{.EditCollection.Title}}</a>{{else}}<a>Draft</a>{{end}}</li>
 						{{else}}<li><a id="publish-to"><span id="target-name">Draft</span> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
 						<ul>
@@ -31,7 +30,13 @@
 							<li class="target" id="blog-{{.Alias}}"><a href="#{{.Alias}}"><i class="material-icons md-18">public</i> {{if .Title}}{{.Title}}{{else}}{{.Alias}}{{end}}</a></li>
 							{{end}}{{end}}
 							<li id="user-separator" class="separator"><hr /></li>
+						{{ if .SingleUser }}
+							<li><a href="/"><i class="material-icons md-18">launch</i> View Blog</a></li>
+							<li><a href="/me/c/{{.Username}}"><i class="material-icons md-18">palette</i> Customize</a></li>
+							<li><a href="/me/c/{{.Username}}/stats"><i class="material-icons md-18">trending_up</i> Stats</a></li>
+						{{ else }}
 							<li><a href="/me/c/"><i class="material-icons md-18">library_books</i> View Blogs</a></li>
+						{{ end }}
 							<li><a href="/me/posts/"><i class="material-icons md-18">view_list</i> View Drafts</a></li>
 							<li><a href="/me/logout"><i class="material-icons md-18">power_settings_new</i>  Log out</a></li>
 						</ul>
@@ -51,7 +56,7 @@
 			</div>
 			<noscript style="margin-left: 2em;"><strong>NOTE</strong>: for now, you'll need Javascript enabled to post.</noscript>
 			<div id="belt">
-				{{if .Editing}}<div class="tool hidden if-room"><a href="{{if .EditCollection}}{{.EditCollection.CanonicalURL}}{{.Post.Slug}}/edit/meta{{else}}/{{.Post.Id}}/meta{{end}}" title="Edit post metadata" id="edit-meta"><img class="ic-24dp" src="/img/ic_info_dark@2x.png" /></a></div>{{end}}
+				{{if .Editing}}<div class="tool hidden if-room"><a href="{{if .EditCollection}}{{.EditCollection.CanonicalURL}}{{.Post.Slug}}/edit/meta{{else}}/{{if .SingleUser}}d/{{end}}{{.Post.Id}}/meta{{end}}" title="Edit post metadata" id="edit-meta"><img class="ic-24dp" src="/img/ic_info_dark@2x.png" /></a></div>{{end}}
 				<div class="tool hidden if-room room-2"><a href="#theme" title="Toggle theme" id="toggle-theme"><img class="ic-24dp" src="/img/ic_brightness_dark@2x.png" /></a></div>
 				<div class="tool if-room room-1"><a href="{{if not .User}}/pad/posts{{else}}/me/posts/{{end}}" title="View posts" id="view-posts"><img class="ic-24dp" src="/img/ic_list_dark@2x.png" /></a></div>
 				<div class="tool"><a href="#publish" title="Publish" id="publish"><img class="ic-24dp" src="/img/ic_send_dark@2x.png" /></a></div>
@@ -180,12 +185,12 @@
 					if (http.status == 200 || http.status == 201) {
 						data = JSON.parse(http.responseText);
 						id = data.data.id;
-						nextURL = '/'+id;
+						nextURL = '{{if .SingleUser}}/d{{end}}/'+id;
 
 						{{ if not .Post.Id }}
 							// Post created
 							if (postTarget != 'anonymous') {
-								nextURL = '/'+postTarget+'/'+data.data.slug;
+							  nextURL = {{if not .SingleUser}}'/'+postTarget+{{end}}'/'+data.data.slug;
 							}
 							editToken = data.data.token;
 

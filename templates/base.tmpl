@@ -14,11 +14,11 @@
 		<div id="overlay"></div>
 		<header>
 			<h2><a href="/">{{.SiteName}}</a></h2>
-			{{if .HeaderNav}}
+			{{if not .SingleUser}}
 			<nav id="user-nav">
 				<nav class="tabs">
 					<a href="/about"{{if eq .Path "/about"}} class="selected"{{end}}>About</a>
-					<a href="/login"{{if eq .Path "/login"}} class="selected"{{end}}>Log in</a>
+					{{if and (not .SingleUser) (not .Username)}}<a href="/login"{{if eq .Path "/login"}} class="selected"{{end}}>Log in</a>{{end}}
 				</nav>
 			</nav>
 			{{end}}

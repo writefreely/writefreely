@@ -30,7 +30,7 @@
 					{{.FriendlyHost}}/<strong>{{.Alias}}</strong>/
 				</li>
 				<li>
-					<strong id="normal-handle-env" class="fedi-handle" {{if or (not .Federation) .SingleUser}}style="display:none"{{end}}>@<span id="fedi-handle">{{.Alias}}</span>@<span id="fedi-domain">{{.FriendlyHost}}</span></strong>
+					<strong id="normal-handle-env" class="fedi-handle" {{if not .Federation}}style="display:none"{{end}}>@<span id="fedi-handle">{{.Alias}}</span>@<span id="fedi-domain">{{.FriendlyHost}}</span></strong>
 				</li>
 			</ul>
 		</div>

@@ -47,13 +47,13 @@
 			<div id="belt">
 				<div class="tool if-room"><a href="{{if .EditCollection}}{{.EditCollection.CanonicalURL}}{{.Post.Slug}}/edit{{else}}/{{.Post.Id}}/edit{{end}}" title="Edit post" id="edit"><img class="ic-24dp" src="/img/ic_edit_dark@2x.png" /></a></div>
 				<div class="tool if-room room-2"><a href="#theme" title="Toggle theme" id="toggle-theme"><img class="ic-24dp" src="/img/ic_brightness_dark@2x.png" /></a></div>
-				<div class="tool if-room room-1"><a href="{{if not .User}}/pad/posts{{else}}/me/posts/{{end}}" title="View posts" id="view-posts"><img class="ic-24dp" src="/img/ic_list_dark@2x.png" /></a></div>
+				<div class="tool if-room room-1"><a href="/me/posts/" title="View posts" id="view-posts"><img class="ic-24dp" src="/img/ic_list_dark@2x.png" /></a></div>
 			</div>
 		</header>
 		
 		<div class="content-container tight">
 			<form action="/api/{{if .EditCollection}}collections/{{.EditCollection.Alias}}/{{end}}posts/{{.Post.Id}}" method="post" onsubmit="return updateMeta()">
-				<h2>Edit metadata: {{if .Post.Title}}{{.Post.Title}}{{else}}{{.Post.Id}}{{end}} <a href="/{{if .EditCollection}}{{.EditCollection.Alias}}/{{.Post.Slug}}{{else}}{{.Post.Id}}{{end}}">view post</a></h2>
+				<h2>Edit metadata: {{if .Post.Title}}{{.Post.Title}}{{else}}{{.Post.Id}}{{end}} <a href="/{{if .EditCollection}}{{.EditCollection.Alias}}/{{.Post.Slug}}{{else}}{{if .SingleUser}}d/{{end}}{{.Post.Id}}{{end}}">view post</a></h2>
 
 				{{if .Flashes}}<ul class="errors">
 					{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}

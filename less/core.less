@@ -17,7 +17,7 @@ body {
 	-moz-osx-font-smoothing: grayscale;
 	color: #111;
 	
-	h1 {
+	h1, header h2 {
 		a {
 			color: @headerTextColor;
 			.transition-duration(0.2s);
@@ -1161,9 +1161,11 @@ header {
 					text-transform: uppercase;
 					margin-left: 0.5em;
 					margin-right: 0.5em;
-					&.pro {
-						color: @proSelectedCol;
-					}
+				}
+				&.title {
+					font-size: 1.6em;
+					font-family: @serifFont;
+					font-weight: bold;
 				}
 			}
 			nav > ul > li:first-child {
@@ -1188,7 +1190,20 @@ header {
 			}
 		}
 		&.tabs {
+			margin: 0 0 0 1em;
+		}
+		&+ nav.tabs {
 			margin: 0;
+		}
+	}
+	&.singleuser {
+		margin: 0.5em 0.25em;
+		nav#user-nav {
+			nav > ul > li:first-child {
+				img {
+					top: -0.75em;
+				}
+			}
 		}
 	}
 	.dash-nav {

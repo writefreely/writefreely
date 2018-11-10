@@ -27,7 +27,7 @@ var (
 
 func (p *Post) formatContent(c *Collection, isOwner bool) {
 	baseURL := c.CanonicalURL()
-	if isOwner {
+	if !isSingleUser {
 		baseURL = "/" + c.Alias + "/"
 	}
 	newCon := hashtagReg.ReplaceAllFunc([]byte(p.Content), func(b []byte) []byte {

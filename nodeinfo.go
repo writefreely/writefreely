@@ -12,15 +12,23 @@ type nodeInfoResolver struct {
 	db  *datastore
 }
 
-func nodeInfoConfig(cfg *config.Config) *nodeinfo.Config {
+func nodeInfoConfig(db *datastore, cfg *config.Config) *nodeinfo.Config {
 	name := cfg.App.SiteName
+	desc := "Minimal, federated blogging platform."
+	if cfg.App.SingleUser {
+		// Fetch blog information, instead
+		coll, err := db.GetCollectionByID(1)
+		if err == nil {
+			desc = coll.Description
+		}
+	}
 	return &nodeinfo.Config{
 		BaseURL: cfg.App.Host,
 		InfoURL: "/api/nodeinfo",
 
 		Metadata: nodeinfo.Metadata{
 			NodeName:        name,
-			NodeDescription: "Minimal, federated blogging platform.",
+			NodeDescription: desc,
 			Private:         cfg.App.Private,
 			Software: nodeinfo.SoftwareMeta{
 				HomePage: softwareURL,

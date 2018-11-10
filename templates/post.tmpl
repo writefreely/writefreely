@@ -42,7 +42,7 @@
 				{{if .IsCode}}<a href="/{{.ID}}.txt" rel="noindex" dir="{{.Direction}}">View raw</a>{{end}}
 				{{ if .Username }}
 				{{if .IsOwner}}
-				<a href="/{{.ID}}/edit" dir="{{.Direction}}">Edit</a>
+				<a href="/{{if .SingleUser}}d/{{end}}{{.ID}}/edit" dir="{{.Direction}}">Edit</a>
 				{{end}}
 				<a class="xtra-feature dash-nav" href="/me/posts/" dir="{{.Direction}}">Drafts</a>
 				{{ end }}

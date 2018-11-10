@@ -14,6 +14,14 @@ func handleViewPad(app *app, w http.ResponseWriter, r *http.Request) error {
 	action := vars["action"]
 	slug := vars["slug"]
 	collAlias := vars["collection"]
+	if app.cfg.App.SingleUser {
+		// TODO: refactor all of this, especially for single-user blogs
+		c, err := app.db.GetCollectionByID(1)
+		if err != nil {
+			return err
+		}
+		collAlias = c.Alias
+	}
 	appData := &struct {
 		page.StaticPage
 		Post  *RawPost
@@ -52,6 +60,7 @@ func handleViewPad(app *app, w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	w.Header().Set("Expires", "Thu, 04 Oct 1990 20:00:00 GMT")
 	if slug != "" {
+		// TODO: refactor all of this, especially for single-user blogs
 		appData.Post = getRawCollectionPost(app, slug, collAlias)
 		if appData.Post.OwnerID != appData.User.ID {
 			// TODO: add ErrForbiddenEditPost message to flashes

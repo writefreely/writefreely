@@ -1,6 +1,6 @@
 var postActions = function() {
 	var $container = He.get('moving');
-	var MultiMove = function(el, id) {
+	var MultiMove = function(el, id, singleUser) {
 		var lbl = el.options[el.selectedIndex].textContent;
 		var collAlias = el.options[el.selectedIndex].value;
 		var $lbl = He.$('label[for=move-'+id+']')[0];
@@ -18,7 +18,11 @@ var postActions = function() {
 				for (var i=0; i<resp.data.length; i++) {
 					if (resp.data[i].code == 200) {
 						$lbl.innerHTML = "moved to <strong>"+lbl+"</strong>";
-						var newPostURL = "/"+collAlias+"/"+resp.data[i].post.slug;
+						var pre = "/"+collAlias;
+						if (typeof singleUser !== 'undefined' && singleUser) {
+							pre = "";
+						}
+						var newPostURL = pre+"/"+resp.data[i].post.slug;
 						try {
 							// Posts page
 							He.$('#post-'+resp.data[i].post.id+' > h3 > a')[0].href = newPostURL;
@@ -27,7 +31,11 @@ var postActions = function() {
 							var $article = He.get('post-'+resp.data[i].post.id);
 							$article.className = 'norm moved';
 							if (collAlias == '|anonymous|') {
-								$article.innerHTML = '<p><a href="/'+resp.data[i].post.id+'">Unpublished post</a>.</p>';
+								var draftPre = "";
+								if (typeof singleUser !== 'undefined' && singleUser) {
+									draftPre = "d/";
+								}
+								$article.innerHTML = '<p><a href="/'+draftPre+resp.data[i].post.id+'">Unpublished post</a>.</p>';
 							} else {
 								$article.innerHTML = '<p>Moved to <a style="font-weight:bold" href="'+newPostURL+'">'+lbl+'</a>.</p>';
 							}
@@ -44,7 +52,7 @@ var postActions = function() {
 			He.postJSON("/api/collections/"+collAlias+"/collect", params, callback);
 		}
 	};
-	var Move = function(el, id, collAlias) {
+	var Move = function(el, id, collAlias, singleUser) {
 		var lbl = el.textContent;
 		try {
 			var m = lbl.match(/move to (.*)/);
@@ -69,7 +77,11 @@ var postActions = function() {
 					if (resp.data[i].code == 200) {
 						el.innerHTML = "moved to <strong>"+lbl+"</strong>";
 						el.onclick = null;
-						var newPostURL = "/"+collAlias+"/"+resp.data[i].post.slug;
+						var pre = "/"+collAlias;
+						if (typeof singleUser !== 'undefined' && singleUser) {
+							pre = "";
+						}
+						var newPostURL = pre+"/"+resp.data[i].post.slug;
 						el.href = newPostURL;
 						el.title = "View on "+lbl;
 						try {
@@ -80,7 +92,11 @@ var postActions = function() {
 							var $article = He.get('post-'+resp.data[i].post.id);
 							$article.className = 'norm moved';
 							if (collAlias == '|anonymous|') {
-								$article.innerHTML = '<p><a href="/'+resp.data[i].post.id+'">Unpublished post</a>.</p>';
+								var draftPre = "";
+								if (typeof singleUser !== 'undefined' && singleUser) {
+									draftPre = "d/";
+								}
+								$article.innerHTML = '<p><a href="/'+draftPre+resp.data[i].post.id+'">Unpublished post</a>.</p>';
 							} else {
 								$article.innerHTML = '<p>Moved to <a style="font-weight:bold" href="'+newPostURL+'">'+lbl+'</a>.</p>';
 							}

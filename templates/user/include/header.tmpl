@@ -15,7 +15,28 @@
 	<link rel="apple-touch-icon" sizes="180x180" href="/img/touch-icon-180.png">
 </head>
 <body id="me">
-	<header>
+	<header{{if .SingleUser}} class="singleuser"{{end}}>
+		{{if .SingleUser}}
+		<nav id="user-nav">
+			<nav class="dropdown-nav">
+				<ul><li><a href="/" title="View blog" class="title">{{.SiteName}}</a> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" />
+					<ul>
+						<li><a href="/me/c/{{.Username}}">Customize</a></li>
+						<li><a href="/me/c/{{.Username}}/stats">Stats</a></li>
+						<li class="separator"><hr /></li>
+						<li><a href="/me/settings">Settings</a></li>
+						<li><a href="/me/export">Export</a></li>
+						<li class="separator"><hr /></li>
+						<li><a href="/me/logout">Log out</a></li>
+					</ul></li>
+				</ul>
+			</nav>
+			<nav class="tabs">
+				<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>
+				<a href="/me/new">New Post</a>
+			</nav>
+		</nav>
+		{{else}}
 		<h1><a href="/" title="Return to editor">{{.SiteName}}</a></h1>
 		<nav id="user-nav">
 			<nav class="dropdown-nav">
@@ -32,6 +53,7 @@
 				<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>
 			</nav>
 		</nav>
+		{{end}}
 	</header>
 	<div id="official-writing">
 {{end}}
