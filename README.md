@@ -62,6 +62,8 @@ mysql -u YOURUSERNAME -p writefreely < schema.sql
 # 7) There is no Step 7, you're done!
 ```
 
+For running in production, [see our guide](https://writefreely.org/start#production).
+
 ## Development
 
 Ready to hack on your site? Here's a quick overview.
