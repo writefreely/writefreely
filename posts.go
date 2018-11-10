@@ -955,10 +955,12 @@ func pinPost(app *app, w http.ResponseWriter, r *http.Request) error {
 
 func fetchPost(app *app, w http.ResponseWriter, r *http.Request) error {
 	var collID int64
+	var coll *Collection
+	var err error
 	vars := mux.Vars(r)
 	if collAlias := vars["alias"]; collAlias != "" {
 		// Fetch collection information, since an alias is provided
-		coll, err := app.db.GetCollection(collAlias)
+		coll, err = app.db.GetCollection(collAlias)
 		if err != nil {
 			return err
 		}
@@ -975,6 +977,27 @@ func fetchPost(app *app, w http.ResponseWriter, r *http.Request) error {
 	}
 
 	p.extractData()
+
+	accept := r.Header.Get("Accept")
+	if strings.Contains(accept, "application/activity+json") {
+		// Fetch information about the collection this belongs to
+		if coll == nil && p.CollectionID.Valid {
+			coll, err = app.db.GetCollectionByID(p.CollectionID.Int64)
+			if err != nil {
+				return err
+			}
+		}
+		if coll == nil {
+			// This is a draft post; 404 for now
+			// TODO: return ActivityObject
+			return impart.HTTPError{http.StatusNotFound, ""}
+		}
+
+		p.Collection = &CollectionObj{Collection: *coll}
+		po := p.ActivityObject()
+		po.Context = []interface{}{activitystreams.Namespace}
+		return impart.RenderActivityJSON(w, po, http.StatusOK)
+	}
 
 	return impart.WriteSuccess(w, p, http.StatusOK)
 }
