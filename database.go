@@ -289,6 +289,14 @@ func (db *datastore) GetUserForAuth(username string) (*User, error) {
 	err := db.QueryRow("SELECT id, password, email, created FROM users WHERE username = ?", username).Scan(&u.ID, &u.HashedPass, &u.Email, &u.Created)
 	switch {
 	case err == sql.ErrNoRows:
+		// Check if they've entered the wrong, unnormalized username
+		username = getSlug(username, "")
+		if username != u.Username {
+			err = db.QueryRow("SELECT id FROM users WHERE username = ? LIMIT 1", username).Scan(&u.ID)
+			if err == nil {
+				return db.GetUserForAuth(username)
+			}
+		}
 		return nil, ErrUserNotFound
 	case err != nil:
 		log.Error("Couldn't SELECT user password: %v", err)
