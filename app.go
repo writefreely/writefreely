@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"regexp"
 	"syscall"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
@@ -127,6 +128,8 @@ func Serve() {
 
 	debugging = *debugPtr
 
+	app := &app{}
+
 	if *createConfig {
 		log.Info("Creating configuration...")
 		c := config.New()
@@ -138,10 +141,30 @@ func Serve() {
 		}
 		os.Exit(0)
 	} else if *doConfig {
-		err := config.Configure()
+		d, err := config.Configure()
 		if err != nil {
 			log.Error("Unable to configure: %v", err)
 			os.Exit(1)
+		}
+		if d != nil {
+			app.cfg = d.Config
+			connectToDatabase(app)
+			defer shutdown(app)
+
+			u := &User{
+				Username:   d.User.Username,
+				HashedPass: d.User.HashedPass,
+				Created:    time.Now().Truncate(time.Second).UTC(),
+			}
+
+			// Create blog
+			log.Info("Creating user %s...\n", u.Username)
+			err = app.db.CreateUser(u, app.cfg.App.SiteName)
+			if err != nil {
+				log.Error("Unable to create user: %s", err)
+				os.Exit(1)
+			}
+			log.Info("Done!")
 		}
 		os.Exit(0)
 	}
@@ -154,9 +177,7 @@ func Serve() {
 		log.Error("Unable to load configuration: %v", err)
 		os.Exit(1)
 	}
-	app := &app{
-		cfg: cfg,
-	}
+	app.cfg = cfg
 
 	hostName = cfg.App.Host
 	isSingleUser = cfg.App.SingleUser
@@ -193,15 +214,8 @@ func Serve() {
 		app.cfg.Database.Database = "writeas"
 	}
 
-	log.Info("Connecting to database...")
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database))
-	if err != nil {
-		log.Error("\n%s\n", err)
-		os.Exit(1)
-	}
-	app.db = &datastore{db}
+	connectToDatabase(app)
 	defer shutdown(app)
-	app.db.SetMaxOpenConns(50)
 
 	r := mux.NewRouter()
 	handler := NewHandler(app)
@@ -236,6 +250,17 @@ func Serve() {
 	log.Info("Serving on http://localhost:%d\n", app.cfg.Server.Port)
 	log.Info("---")
 	http.ListenAndServe(fmt.Sprintf(":%d", app.cfg.Server.Port), nil)
+}
+
+func connectToDatabase(app *app) {
+	log.Info("Connecting to database...")
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database))
+	if err != nil {
+		log.Error("%s", err)
+		os.Exit(1)
+	}
+	app.db = &datastore{db}
+	app.db.SetMaxOpenConns(50)
 }
 
 func shutdown(app *app) {
