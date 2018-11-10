@@ -20,7 +20,11 @@ WriteFreely is a beautifully pared-down blogging platform that's simple on the s
 
 It's designed to be flexible and share your writing widely, so it's built around plain text and can publish to the _fediverse_ via ActivityPub. It's easy to install and lightweight.
 
-**Note** this is currently alpha software. We're quickly moving out of this v0.x stage, but while we're in it, there are no guarantees that this is ready for production use.
+**[Start a blog on our instance](https://write.as/new/blog/federated)**
+
+[Try the editor](https://write.as/new)
+
+[Find another instance](https://writefreely.org/instances)
 
 ## Features
 
@@ -31,6 +35,8 @@ It's designed to be flexible and share your writing widely, so it's built around
 * Build more advanced apps and extensions with the [well-documented API](https://developers.write.as/docs/api/)
 
 ## Quick start
+
+> **Note** this is currently alpha software. We're quickly moving out of this v0.x stage, but while we're in it, there are no guarantees that this is ready for production use.
 
 First, download the [latest release](https://github.com/writeas/writefreely/releases/latest) for your OS. It includes everything you need to start your blog.
 
