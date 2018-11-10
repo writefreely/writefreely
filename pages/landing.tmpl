@@ -64,7 +64,8 @@ form dd {
 		<p><a href="{{if .Federation}}#more{{else}}/about{{end}}">Learn more...</a></p>
 	</div>
 
-	<div>
+	<div{{if not .OpenRegistration}} style="padding: 2em 0;"{{end}}>
+		{{ if .OpenRegistration }}
 		{{if .Flashes}}<ul class="errors">
 			{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 		</ul>{{end}}
@@ -93,6 +94,10 @@ form dd {
 				</dl>
 			</form>
 		</div>
+		{{ else }}
+		<p style="font-size: 1.3em; margin: 1rem 0;">Registration is currently closed.</p>
+		<p>You can always sign up on <a href="https://writefreely.org/instances">another instance</a>.</p>
+		{{ end }}
 	</div>
 </div>
 
