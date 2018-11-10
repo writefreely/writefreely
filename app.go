@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"html/template"
 	"net/http"
 	"os"
 	"os/signal"
@@ -64,8 +65,26 @@ func handleViewHome(app *app, w http.ResponseWriter, r *http.Request) error {
 		return handleViewPad(app, w, r)
 	}
 
+	p := struct {
+		page.StaticPage
+		Flashes []template.HTML
+	}{
+		StaticPage: pageForReq(app, r),
+	}
+
+	// Get error messages
+	session, err := app.sessionStore.Get(r, cookieName)
+	if err != nil {
+		// Ignore this
+		log.Error("Unable to get session in handleViewHome; ignoring: %v", err)
+	}
+	flashes, _ := getSessionFlashes(app, w, r, session)
+	for _, flash := range flashes {
+		p.Flashes = append(p.Flashes, template.HTML(flash))
+	}
+
 	// Show landing page
-	return renderPage(w, "landing.tmpl", pageForReq(app, r))
+	return renderPage(w, "landing.tmpl", p)
 }
 
 func pageForReq(app *app, r *http.Request) page.StaticPage {
