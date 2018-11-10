@@ -1004,7 +1004,7 @@ func viewSettings(app *app, u *User, w http.ResponseWriter, r *http.Request) err
 		IsLogOut bool
 	}{
 		UserPage: NewUserPage(app, r, u.Username, "Account Settings", flashes),
-		Email:    fullUser.Email.String,
+		Email:    fullUser.EmailClear(app.keys),
 		HasPass:  passIsSet,
 		IsLogOut: r.FormValue("logout") == "1",
 	}
