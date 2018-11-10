@@ -225,18 +225,9 @@ func viewLogout(app *app, w http.ResponseWriter, r *http.Request) error {
 		return impart.HTTPError{http.StatusFound, "/"}
 	}
 
-	passIsSet, err := app.db.IsUserPassSet(u.ID)
-	if err != nil {
-		log.Error("IsUserPassSet err: %v", err)
-		return ErrInternalCookieSession
-	}
 	u, err = app.db.GetUserByID(u.ID)
 	if err != nil && err != ErrUserNotFound {
 		return impart.HTTPError{http.StatusInternalServerError, "Unable to fetch user information."}
-	}
-
-	if !passIsSet && u.Email.String == "" {
-		return impart.HTTPError{http.StatusFound, "/me/settings?logout=1"}
 	}
 
 	session.Options.MaxAge = -1
