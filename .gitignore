@@ -2,4 +2,5 @@
 *.swp
 *.swo
 
+build
 config.ini
