@@ -249,7 +249,11 @@ func Serve() {
 	http.Handle("/", r)
 	log.Info("Serving on http://localhost:%d\n", app.cfg.Server.Port)
 	log.Info("---")
-	http.ListenAndServe(fmt.Sprintf(":%d", app.cfg.Server.Port), nil)
+	err = http.ListenAndServe(fmt.Sprintf(":%d", app.cfg.Server.Port), nil)
+	if err != nil {
+		log.Error("Unable to start: %v", err)
+		os.Exit(1)
+	}
 }
 
 func connectToDatabase(app *app) {
