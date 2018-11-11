@@ -264,12 +264,11 @@ func (c *Collection) PersonObject(ids ...int64) *activitystreams.Person {
 	p.Name = c.DisplayTitle()
 	p.Summary = c.Description
 	if p.Name != "" {
-		fl := string(unicode.ToLower([]rune(p.Name)[0]))
-		if isLowerLetter(fl) {
+		if av := c.AvatarURL(); av != "" {
 			p.Icon = activitystreams.Image{
 				Type:      "Image",
 				MediaType: "image/png",
-				URL:       hostName + "/img/avatars/" + fl + ".png",
+				URL:       av,
 			}
 		}
 	}
@@ -285,6 +284,14 @@ func (c *Collection) PersonObject(ids ...int64) *activitystreams.Person {
 	}
 
 	return p
+}
+
+func (c *Collection) AvatarURL() string {
+	fl := string(unicode.ToLower([]rune(c.DisplayTitle())[0]))
+	if !isLowerLetter(fl) {
+		return ""
+	}
+	return hostName + "/img/avatars/" + fl + ".png"
 }
 
 func (c *Collection) FederatedAPIBase() string {

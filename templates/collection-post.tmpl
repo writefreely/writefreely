@@ -20,14 +20,14 @@
 		<meta name="twitter:card" content="summary">
 		<meta name="twitter:description" content="{{.Summary}}">
 		<meta name="twitter:title" content="{{.PlainDisplayTitle}} &mdash; {{if .Collection.Title}}{{.Collection.Title}}{{else}}{{.Collection.Alias}}{{end}}">
-		{{if gt (len .Images) 0}}<meta name="twitter:image" content="{{index .Images 0}}">{{else}}<meta name="twitter:image" content="https://write.as/img/w-sq-light.png">{{end}}
+		{{if gt (len .Images) 0}}<meta name="twitter:image" content="{{index .Images 0}}">{{else}}<meta name="twitter:image" content="{{.Collection.AvatarURL}}">{{end}}
 		<meta property="og:title" content="{{.PlainDisplayTitle}}" />
 		<meta property="og:description" content="{{.Summary}}" />
 		<meta property="og:site_name" content="{{.Collection.DisplayTitle}}" />
 		<meta property="og:type" content="article" />
 		<meta property="og:url" content="{{.CanonicalURL}}" />
 		<meta property="og:updated_time" content="{{.Created8601}}" />
-		{{range .Images}}<meta property="og:image" content="{{.}}" />{{else}}<meta property="og:image" content="https://write.as/img/w-sq-light.png">{{end}}
+		{{range .Images}}<meta property="og:image" content="{{.}}" />{{else}}<meta property="og:image" content="{{.Collection.AvatarURL}}">{{end}}
 		<meta property="article:published_time" content="{{.Created8601}}">
 		{{if .Collection.StyleSheet}}<style type="text/css">{{.Collection.StyleSheetDisplay}}</style>{{end}}
 		{{if .Collection.RenderMathJax}}

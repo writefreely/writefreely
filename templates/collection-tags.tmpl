@@ -23,10 +23,12 @@
 		<meta name="twitter:site" content="@writeas__">
 		<meta name="twitter:description" content="{{.Tag}} posts on {{.Collection.DisplayTitle}}">
 		<meta name="twitter:title" content="{{.Tag}} &mdash; {{.Collection.DisplayTitle}}">
+		<meta name="twitter:image" content="{{.Collection.AvatarURL}}">
 		<meta property="og:title" content="{{.Tag}} &mdash; {{.Collection.DisplayTitle}}" />
 		<meta property="og:site_name" content="{{.DisplayTitle}}" />
 		<meta property="og:type" content="article" />
 		<meta property="og:url" content="{{.CanonicalURL}}tag:{{.Tag}}" />
+		<meta property="og:image" content="{{.Collection.AvatarURL}}">
 		{{if .Collection.StyleSheet}}<style type="text/css">{{.Collection.StyleSheetDisplay}}</style>{{end}}
 		{{if .Collection.RenderMathJax}}
 		<script type="text/x-mathjax-config">

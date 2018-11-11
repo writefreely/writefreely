@@ -19,12 +19,14 @@
 		<meta itemprop="description" content="{{.Description}}">
 		<meta name="twitter:card" content="summary">
 		<meta name="twitter:title" content="{{.DisplayTitle}}">
+		<meta name="twitter:image" content="{{.AvatarURL}}">
 		<meta name="twitter:description" content="{{.Description}}">
 		<meta property="og:title" content="{{.DisplayTitle}}" />
 		<meta property="og:site_name" content="{{.DisplayTitle}}" />
 		<meta property="og:type" content="article" />
 		<meta property="og:url" content="{{.CanonicalURL}}" />
 		<meta property="og:description" content="{{.Description}}" />
+		<meta property="og:image" content="{{.AvatarURL}}">
 		{{if .StyleSheet}}<style type="text/css">{{.StyleSheetDisplay}}</style>{{end}}
 		{{if .RenderMathJax}}
 		<script type="text/x-mathjax-config">
