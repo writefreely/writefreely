@@ -957,17 +957,13 @@ func viewStats(app *app, u *User, w http.ResponseWriter, r *http.Request) error 
 		Collection: c,
 		TopPosts:   topPosts,
 	}
-	/*
-		if app.cfg.App.Federation {
-			// TODO: fetch all user's blogs, fetch number of followers for each
-			// TODO: might as well show page views for blogs, too
-			folls, err = app.db.GetAPFollowers()
-			if err != nil {
-				return err
-			}
-			obj.APFollowers = len(folls)
+	if app.cfg.App.Federation {
+		folls, err := app.db.GetAPFollowers(c)
+		if err != nil {
+			return err
 		}
-	*/
+		obj.APFollowers = len(*folls)
+	}
 
 	showUserPage(w, "stats", obj)
 	return nil
