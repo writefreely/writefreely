@@ -39,7 +39,7 @@ release : clean ui
 	cp -r pages build
 	cp -r static build
 	mkdir build/keys
-	cp keys.sh build
+	cp schema.sql build
 	$(MAKE) build-linux
 	cp cmd/writefreely/$(BINARY_NAME) build
 	cd build; tar -cvzf ../$(BINARY_NAME)_linux_amd64.tar.gz *
@@ -48,7 +48,6 @@ release : clean ui
 	cp cmd/writefreely/$(BINARY_NAME) build
 	cd build; tar -cvzf ../$(BINARY_NAME)_darwin_amd64.tar.gz *
 	rm build/$(BINARY_NAME)
-	rm build/keys.sh
 	$(MAKE) build-windows
 	cp cmd/writefreely/$(BINARY_NAME).exe build
 	cd build; zip -r ../$(BINARY_NAME)_windows_amd64.zip ./*
