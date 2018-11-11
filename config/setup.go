@@ -28,7 +28,7 @@ func Configure() (*SetupData, error) {
 		fmt.Println("Configuration loaded.")
 		action = "update"
 	}
-	title := color.New(color.Bold, color.BgGreen).PrintlnFunc()
+	title := color.New(color.Bold, color.BgGreen).PrintFunc()
 
 	intro := color.New(color.Bold, color.FgWhite).PrintlnFunc()
 	fmt.Println()
