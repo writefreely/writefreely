@@ -146,7 +146,7 @@ func Serve() {
 			log.Error("Unable to configure: %v", err)
 			os.Exit(1)
 		}
-		if d != nil {
+		if d.User != nil {
 			app.cfg = d.Config
 			connectToDatabase(app)
 			defer shutdown(app)
