@@ -557,7 +557,7 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 		}
 	}
 
-	_, err = db.Exec("INSERT INTO posts (id, slug, title, content, text_appearance, language, rtl, owner_id, collection_id, updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())", friendlyID, slug, post.Title, post.Content, appearance, post.Language, post.IsRTL, ownerID, ownerCollID)
+	_, err = db.Exec("INSERT INTO posts (id, slug, title, content, text_appearance, language, rtl, owner_id, collection_id, updated, view_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)", friendlyID, slug, post.Title, post.Content, appearance, post.Language, post.IsRTL, ownerID, ownerCollID, 0)
 	if err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			if mysqlErr.Number == mySQLErrDuplicateKey {
@@ -565,7 +565,7 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 				// TODO: make this a little more robust
 				// TODO: reuse exact same db.Exec statement as above
 				slug = sql.NullString{id.GenSafeUniqueSlug(slug.String), true}
-				_, err = db.Exec("INSERT INTO posts (id, slug, title, content, text_appearance, language, rtl, owner_id, collection_id, updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())", friendlyID, slug, post.Title, post.Content, appearance, post.Language, post.IsRTL, ownerID, ownerCollID)
+				_, err = db.Exec("INSERT INTO posts (id, slug, title, content, text_appearance, language, rtl, owner_id, collection_id, updated, view_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)", friendlyID, slug, post.Title, post.Content, appearance, post.Language, post.IsRTL, ownerID, ownerCollID, 0)
 				if err != nil {
 					return nil, handleFailedPostInsert(fmt.Errorf("Retried slug generation, still failed: %v", err))
 				}
