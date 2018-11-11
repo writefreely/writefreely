@@ -85,7 +85,7 @@ func (h *Handler) User(f userHandlerFunc) http.HandlerFunc {
 					status = http.StatusInternalServerError
 				}
 
-				log.Info("\"%s %s\" %d %s \"%s\" \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent(), r.Host)
+				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
 			}()
 
 			u := getUserSession(h.app, r)
@@ -140,7 +140,7 @@ func (h *Handler) UserAll(web bool, f userHandlerFunc, a authFunc) http.HandlerF
 					status = 500
 				}
 
-				log.Info("\"%s %s\" %d %s \"%s\" \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent(), r.Host)
+				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
 			}()
 
 			u, err := a(h.app, r)
@@ -226,7 +226,7 @@ func (h *Handler) WebErrors(f handlerFunc, ul UserLevel) http.HandlerFunc {
 					status = 500
 				}
 
-				log.Info("\"%s %s\" %d %s \"%s\" \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent(), r.Host)
+				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
 			}()
 
 			var session *sessions.Session
@@ -301,7 +301,7 @@ func (h *Handler) Web(f handlerFunc, ul UserLevel) http.HandlerFunc {
 					status = 500
 				}
 
-				log.Info("\"%s %s\" %d %s \"%s\" \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent(), r.Host)
+				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
 			}()
 
 			if ul != UserLevelNone {
@@ -359,7 +359,7 @@ func (h *Handler) All(f handlerFunc) http.HandlerFunc {
 					status = 500
 				}
 
-				log.Info("\"%s %s\" %d %s \"%s\" \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent(), r.Host)
+				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
 			}()
 
 			// TODO: do any needed authentication
@@ -390,7 +390,7 @@ func (h *Handler) Download(f dataHandlerFunc, ul UserLevel) http.HandlerFunc {
 					status = 500
 				}
 
-				log.Info("\"%s %s\" %d %s \"%s\" \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent(), r.Host)
+				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
 			}()
 
 			data, filename, err := f(h.app, w, r)
@@ -453,7 +453,7 @@ func (h *Handler) Redirect(url string, ul UserLevel) http.HandlerFunc {
 
 			status = sendRedirect(w, http.StatusFound, url)
 
-			log.Info("\"%s %s\" %d %s \"%s\" \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent(), r.Host)
+			log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
 
 			return nil
 		}())
@@ -567,7 +567,7 @@ func (h *Handler) LogHandlerFunc(f http.HandlerFunc) http.HandlerFunc {
 				}
 
 				// TODO: log actual status code returned
-				log.Info("\"%s %s\" %d %s \"%s\" \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent(), r.Host)
+				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
 			}()
 
 			f(w, r)
