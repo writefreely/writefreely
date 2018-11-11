@@ -255,6 +255,16 @@ func handleFetchCollectionInbox(app *app, w http.ResponseWriter, r *http.Request
 			b, _ := json.Marshal(m)
 			log.Info("Follow: %s", b)
 
+			_, followID := f.GetId()
+			if followID == nil {
+				log.Error("Didn't resolve follow ID")
+			} else {
+				acceptID, err := url.Parse(followID.String() + "-accept")
+				if err != nil {
+					log.Error("Couldn't parse generated Accept URL '%s': %v", followID.String()+"#accept", err)
+				}
+				a.SetId(acceptID)
+			}
 			a.AppendObject(f.Raw())
 			_, to = f.GetActor(0)
 			obj := f.Raw().GetObjectIRI(0)
