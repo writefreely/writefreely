@@ -133,7 +133,7 @@ func (db *datastore) CreateUser(u *User, collectionTitle string) error {
 	if collectionTitle == "" {
 		collectionTitle = u.Username
 	}
-	res, err = t.Exec("INSERT INTO collections (alias, title, owner_id) VALUES (?, ?, ?)", u.Username, collectionTitle, u.ID)
+	res, err = t.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", u.Username, collectionTitle, "", CollUnlisted, u.ID, 0)
 	if err != nil {
 		t.Rollback()
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
@@ -206,7 +206,7 @@ func (db *datastore) CreateCollection(alias, title string, userID int64) (*Colle
 	}
 
 	// All good, so create new collection
-	res, err := db.Exec("INSERT INTO collections (alias, title, owner_id) VALUES (?, ?, ?)", alias, title, userID)
+	res, err := db.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", alias, title, "", CollUnlisted, userID, 0)
 	if err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			if mysqlErr.Number == mySQLErrDuplicateKey {
