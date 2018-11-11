@@ -590,6 +590,8 @@ func federatePost(app *app, p *PublicPost, collID int64, isUpdate bool) error {
 			activity = activitystreams.NewUpdateActivity(na)
 		} else {
 			activity = activitystreams.NewCreateActivity(na)
+			activity.To = na.To
+			activity.CC = na.CC
 		}
 		err = makeActivityPost(actor, si, activity)
 		if err != nil {
