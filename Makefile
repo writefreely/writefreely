@@ -20,8 +20,8 @@ run:
 deps :
 	$(GOGET) -v ./...
 
-install : 
-	./keys.sh
+install : build
+	cmd/writefreely/$(BINARY_NAME) --gen-keys
 	cd less/; $(MAKE) install $(MFLAGS)
 
 ui : force_look

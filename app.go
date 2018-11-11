@@ -124,6 +124,7 @@ func Serve() {
 	debugPtr := flag.Bool("debug", false, "Enables debug logging.")
 	createConfig := flag.Bool("create-config", false, "Creates a basic configuration and exits")
 	doConfig := flag.Bool("config", false, "Run the configuration process")
+	genKeys := flag.Bool("gen-keys", false, "Generate encryption and authentication keys")
 	flag.Parse()
 
 	debugging = *debugPtr
@@ -167,6 +168,23 @@ func Serve() {
 			log.Info("Done!")
 		}
 		os.Exit(0)
+	} else if *genKeys {
+		errStatus := 0
+
+		err := generateKey(emailKeyPath)
+		if err != nil {
+			errStatus = 1
+		}
+		err = generateKey(cookieAuthKeyPath)
+		if err != nil {
+			errStatus = 1
+		}
+		err = generateKey(cookieKeyPath)
+		if err != nil {
+			errStatus = 1
+		}
+
+		os.Exit(errStatus)
 	}
 
 	log.Info("Initializing...")

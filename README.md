@@ -52,8 +52,8 @@ mysql -u YOURUSERNAME -p writefreely < schema.sql
 # 3) Configure your blog
 ./writefreely --config
 
-# 4) Generate data encryption keys (especially for production)
-./keys.sh
+# 4) Generate data encryption keys
+./writefreely --gen-keys
 
 # 5) Run
 ./writefreely
@@ -79,9 +79,7 @@ Ready to hack on your site? Here's a quick overview.
 go get github.com/writeas/writefreely/cmd/writefreely
 ```
 
-Create your database, import the schema, and configure your site [as shown above](#quick-start).
-
-Now generate the CSS:
+Create your database, import the schema, and configure your site [as shown above](#quick-start). Then generate the remaining files you'll need:
 
 ```bash
 make install # Generates encryption keys; installs LESS compiler

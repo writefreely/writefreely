@@ -1,12 +1,17 @@
 package writefreely
 
 import (
+	"crypto/rand"
+	"github.com/writeas/web-core/log"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 )
 
 const (
 	keysDir = "keys"
+
+	encKeysBytes = 32
 )
 
 var (
@@ -39,4 +44,40 @@ func initKeys(app *app) error {
 	}
 
 	return nil
+}
+
+// generateKey generates a key at the given path used for the encryption of
+// certain user data. Because user data becomes unrecoverable without these
+// keys, this won't overwrite any existing key, and instead outputs a message.
+func generateKey(path string) error {
+	// Check if key file exists
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		log.Info("%s already exists. rm the file if you understand the consquences.", path)
+		return nil
+	}
+
+	log.Info("Generating %s.", path)
+	b, err := generateBytes(encKeysBytes)
+	if err != nil {
+		log.Error("FAILED. %s. Run writefreely --gen-keys again.", err)
+		return err
+	}
+	err = ioutil.WriteFile(path, b, 0600)
+	if err != nil {
+		log.Error("FAILED writing file: %s", err)
+		return err
+	}
+	log.Info("Success.")
+	return nil
+}
+
+// generateBytes returns securely generated random bytes.
+func generateBytes(n int) ([]byte, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
 }
