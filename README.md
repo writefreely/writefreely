@@ -14,7 +14,7 @@
 		<img src="https://travis-ci.org/writeas/writefreely.svg" alt="Build status" />
 	</a>
 	<a href="http://webchat.freenode.net/?channels=writefreely">
-		<img alt="#writefreely on freenode src="https://img.shields.io/badge/freenode-%23writefreely-blue.svg" />
+		<img alt="#writefreely on freenode" src="https://img.shields.io/badge/freenode-%23writefreely-blue.svg" />
 	</a>
 </p>
 &nbsp;
