@@ -259,7 +259,7 @@ func handleFetchCollectionInbox(app *app, w http.ResponseWriter, r *http.Request
 			if followID == nil {
 				log.Error("Didn't resolve follow ID")
 			} else {
-				acceptID, err := url.Parse(followID.String() + "-accept")
+				acceptID, err := url.Parse(followID.String() + "#accept")
 				if err != nil {
 					log.Error("Couldn't parse generated Accept URL '%s': %v", followID.String()+"#accept", err)
 				}
