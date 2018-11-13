@@ -6,10 +6,12 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
 	"regexp"
+	"strings"
 	"syscall"
 	"time"
 
@@ -126,6 +128,7 @@ func Serve() {
 	createConfig := flag.Bool("create-config", false, "Creates a basic configuration and exits")
 	doConfig := flag.Bool("config", false, "Run the configuration process")
 	genKeys := flag.Bool("gen-keys", false, "Generate encryption and authentication keys")
+	createSchema := flag.Bool("init-db", false, "Initialize app database")
 	flag.Parse()
 
 	debugging = *debugPtr
@@ -186,6 +189,44 @@ func Serve() {
 		}
 
 		os.Exit(errStatus)
+	} else if *createSchema {
+		log.Info("Loading configuration...")
+		cfg, err := config.Load()
+		if err != nil {
+			log.Error("Unable to load configuration: %v", err)
+			os.Exit(1)
+		}
+		app.cfg = cfg
+		connectToDatabase(app)
+		defer shutdown(app)
+
+		schema, err := ioutil.ReadFile("schema.sql")
+		if err != nil {
+			log.Error("Unable to load schema.sql: %v", err)
+			os.Exit(1)
+		}
+
+		tblReg := regexp.MustCompile("CREATE TABLE (IF NOT EXISTS )?`([a-z_]+)`")
+
+		queries := strings.Split(string(schema), ";\n")
+		for _, q := range queries {
+			if strings.TrimSpace(q) == "" {
+				continue
+			}
+			parts := tblReg.FindStringSubmatch(q)
+			if len(parts) >= 3 {
+				log.Info("Creating table %s...", parts[2])
+			} else {
+				log.Info("Creating table ??? (Weird query) No match in: %v", parts)
+			}
+			_, err = app.db.Exec(q)
+			if err != nil {
+				log.Error("%s", err)
+			} else {
+				log.Info("Created.")
+			}
+		}
+		os.Exit(0)
 	}
 
 	log.Info("Initializing...")

@@ -49,11 +49,11 @@ Now extract the files from the archive, change into the directory, and do the fo
 # 1) Log into MySQL and run:
 # CREATE DATABASE writefreely;
 #
-# 2) Import the schema with:
-mysql -u YOURUSERNAME -p writefreely < schema.sql
-
-# 3) Configure your blog
+# 2) Configure your blog
 ./writefreely --config
+
+# 3) Import the schema with:
+./writefreely --init-db
 
 # 4) Generate data encryption keys
 ./writefreely --gen-keys
@@ -82,7 +82,7 @@ Ready to hack on your site? Here's a quick overview.
 go get github.com/writeas/writefreely/cmd/writefreely
 ```
 
-Create your database, import the schema, and configure your site [as shown above](#quick-start). Then generate the remaining files you'll need:
+Configure your site, create your database, and import the schema [as shown above](#quick-start). Then generate the remaining files you'll need:
 
 ```bash
 make install # Generates encryption keys; installs LESS compiler
