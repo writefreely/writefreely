@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS `posts` (
   `collection_id` int(6) DEFAULT NULL,
   `pinned_position` tinyint(1) UNSIGNED DEFAULT NULL,
   `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated` timestamp NOT NULL,
+  `updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `view_count` int(6) NOT NULL,
   `title` varchar(160) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
