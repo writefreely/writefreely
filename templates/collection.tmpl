@@ -45,9 +45,10 @@
 
 	</head>
 	<body id="collection" itemscope itemtype="http://schema.org/WebPage">
-		{{if .IsOwner}}<nav id="manage"><ul>
+		{{if or .IsOwner .SingleUser}}<nav id="manage"><ul>
 			<li><a onclick="void(0)">&#9776; Menu</a>
 				<ul>
+					{{ if .IsOwner }}
 					{{if .SingleUser}}
 					<li><a href="/me/new">New Post</a></li>
 					{{else}}
@@ -58,6 +59,9 @@
 					<li class="separator"><hr /></li>
 					{{if not .SingleUser}}<li><a href="/me/c/"><img class="ic-18dp" src="/img/ic_blogs_dark@2x.png" /> View Blogs</a></li>{{end}}
 					<li><a href="/me/posts/"><img class="ic-18dp" src="/img/ic_list_dark@2x.png" /> View Drafts</a></li>
+					{{ else }}
+					<li><a href="/login">Log in</a></li>
+					{{ end }}
 				</ul>
 			</li>
 		</ul></nav>{{end}}
