@@ -8,7 +8,7 @@
 <div class="content-container snug">
 	<div id="overlay"></div>
 
-	<h2>Customize {{.DisplayTitle}} <a href="/{{.Alias}}/">view blog</a></h2>
+	<h2>Customize {{.DisplayTitle}} <a href="{{if .SingleUser}}/{{else}}/{{.Alias}}/{{end}}">view blog</a></h2>
 
 	{{if .Flashes}}<ul class="errors">
 		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
@@ -119,7 +119,7 @@
 
 	<div class="option" style="text-align: center; margin-top: 4em;">
 		<input type="submit" id="save-changes" value="Save changes" />
-		<p><a href="/{{.Alias}}/">View Blog</a></p>
+		<p><a href="{{if .SingleUser}}/{{else}}/{{.Alias}}/{{end}}">View Blog</a></p>
 		{{if ne .Alias .Username}}<p><a class="danger" href="#modal-delete" onclick="promptDelete();">Delete Blog...</a></p>{{end}}
 	</div>
 </div>
