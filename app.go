@@ -18,6 +18,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
+	"github.com/manifoldco/promptui"
 	"github.com/writeas/web-core/converter"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
@@ -129,6 +130,7 @@ func Serve() {
 	doConfig := flag.Bool("config", false, "Run the configuration process")
 	genKeys := flag.Bool("gen-keys", false, "Generate encryption and authentication keys")
 	createSchema := flag.Bool("init-db", false, "Initialize app database")
+	resetPassUser := flag.String("reset-pass", "", "Reset the given user's password")
 	flag.Parse()
 
 	debugging = *debugPtr
@@ -226,6 +228,48 @@ func Serve() {
 				log.Info("Created.")
 			}
 		}
+		os.Exit(0)
+	} else if *resetPassUser != "" {
+		// Connect to the database
+		log.Info("Loading configuration...")
+		cfg, err := config.Load()
+		if err != nil {
+			log.Error("Unable to load configuration: %v", err)
+			os.Exit(1)
+		}
+		app.cfg = cfg
+		connectToDatabase(app)
+		defer shutdown(app)
+
+		// Fetch user
+		u, err := app.db.GetUserForAuth(*resetPassUser)
+		if err != nil {
+			log.Error("Get user: %s", err)
+			os.Exit(1)
+		}
+
+		// Prompt for new password
+		prompt := promptui.Prompt{
+			Templates: &promptui.PromptTemplates{
+				Success: "{{ . | bold | faint }}: ",
+			},
+			Label: "New password",
+			Mask:  '*',
+		}
+		newPass, err := prompt.Run()
+		if err != nil {
+			log.Error("%s", err)
+			os.Exit(1)
+		}
+
+		// Do the update
+		log.Info("Updating...")
+		err = adminResetPassword(app, u, newPass)
+		if err != nil {
+			log.Error("%s", err)
+			os.Exit(1)
+		}
+		log.Info("Success.")
 		os.Exit(0)
 	}
 
