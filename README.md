@@ -90,6 +90,44 @@ make ui      # Generates CSS (run this whenever you update your styles)
 make run     # Runs the application
 ```
 
+### Using Docker
+
+From the cloned git repository, you can quickly stand up a Write Freely instance with Docker and Docker Compose.
+
+First, you'll need to change the password for MariaDB's root user in `docker-compose.yml` from `changeme` to something that is unique to your setup:
+
+```
+environment:
+  - MYSQL_ROOT_PASSWORD=changeme
+```
+
+After that, you can spin up the containers and configure them:
+
+```bash
+# 1) Spin up the DB and Write Freely
+docker-compose up -d
+
+# 2) Connect to MariaDB container
+docker-compose exec db /bin/sh
+
+# 3) Log in to MariaDB, using the password you specified in docker-compose.yml
+mysql -u root -p
+
+# 4) Create the database for Write Freely
+CREATE DATABASE writefreely;
+exit
+
+# 5) Migrate the database
+mysql -u root -p writefreely < /tmp/schema.sql
+exit
+
+# 6) Generate the configuration and clean up
+docker-compose run web writefreely --config
+docker stop writefreely_web_run_1 && docker rm writefreely_web_run_1
+```
+
+Now you should be able to navigate to http://localhost:8080 and start blogging!
+
 ## License
 
 Licensed under the AGPL.
