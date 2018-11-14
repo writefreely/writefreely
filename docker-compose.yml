@@ -1,0 +1,30 @@
+version: "3"
+services:
+  web:
+    build: .
+    volumes:
+      - "web-data:/go/src/app"
+    ports:
+      - "8080:8080"
+    networks:
+      - writefreely
+    depends_on:
+      - db
+    restart: unless-stopped
+  db:
+    image: "mariadb:latest"
+    volumes:
+      - "./schema.sql:/tmp/schema.sql"
+      - db-data:/var/lib/mysql/data
+    networks:
+      - writefreely
+    environment:
+      - MYSQL_ROOT_PASSWORD=changeme
+    restart: unless-stopped
+
+volumes:
+  web-data:
+  db-data:
+
+networks:
+  writefreely:
