@@ -460,14 +460,13 @@ func makeActivityPost(p *activitystreams.Person, url string, m interface{}) erro
 	}
 
 	resp, err := http.DefaultClient.Do(r)
+	if err != nil {
+		return err
+	}
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
 
-	if resp == nil {
-		log.Error("No response.")
-		return fmt.Errorf("No resonse.")
-	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
@@ -497,6 +496,9 @@ func resolveIRI(url string) ([]byte, error) {
 	}
 
 	resp, err := http.DefaultClient.Do(r)
+	if err != nil {
+		return nil, err
+	}
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
