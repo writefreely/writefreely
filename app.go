@@ -132,13 +132,17 @@ func Serve() {
 	genKeys := flag.Bool("gen-keys", false, "Generate encryption and authentication keys")
 	createSchema := flag.Bool("init-db", false, "Initialize app database")
 	resetPassUser := flag.String("reset-pass", "", "Reset the given user's password")
+	outputVersion := flag.Bool("v", false, "Output the current version")
 	flag.Parse()
 
 	debugging = *debugPtr
 
 	app := &app{}
 
-	if *createConfig {
+	if *outputVersion {
+		fmt.Println(serverSoftware + " " + softwareVer)
+		os.Exit(0)
+	} else if *createConfig {
 		log.Info("Creating configuration...")
 		c := config.New()
 		log.Info("Saving configuration...")
