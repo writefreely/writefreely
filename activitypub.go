@@ -12,6 +12,7 @@ import (
 	"github.com/writeas/activity/streams"
 	"github.com/writeas/httpsig"
 	"github.com/writeas/impart"
+	"github.com/writeas/nerds/store"
 	"github.com/writeas/web-core/activitypub"
 	"github.com/writeas/web-core/activitystreams"
 	"github.com/writeas/web-core/log"
@@ -259,9 +260,10 @@ func handleFetchCollectionInbox(app *app, w http.ResponseWriter, r *http.Request
 			if followID == nil {
 				log.Error("Didn't resolve follow ID")
 			} else {
-				acceptID, err := url.Parse(followID.String() + "#accept")
+				aID := c.FederatedAccount() + "#accept-" + store.GenerateFriendlyRandomString(20)
+				acceptID, err := url.Parse(aID)
 				if err != nil {
-					log.Error("Couldn't parse generated Accept URL '%s': %v", followID.String()+"#accept", err)
+					log.Error("Couldn't parse generated Accept URL '%s': %v", aID, err)
 				}
 				a.SetId(acceptID)
 			}
