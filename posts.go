@@ -848,6 +848,15 @@ func addPost(app *app, w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+
+	if app.cfg.App.Federation {
+		for _, pRes := range *res {
+			if pRes.Code != http.StatusOK {
+				continue
+			}
+			go federatePost(app, pRes.Post, pRes.Post.Collection.ID, false)
+		}
+	}
 	return impart.WriteSuccess(w, res, http.StatusOK)
 }
 

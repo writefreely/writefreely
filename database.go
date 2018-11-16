@@ -1278,6 +1278,7 @@ func (db *datastore) ClaimPosts(userID int64, collAlias string, posts *[]ClaimPo
 		var query string
 		var params []interface{}
 		var slugIdx int = -1
+		var coll *Collection
 		if collAlias == "" {
 			// Posts are being claimed at /posts/claim, not
 			// /collections/{alias}/collect, so use given individual collection
@@ -1286,7 +1287,6 @@ func (db *datastore) ClaimPosts(userID int64, collAlias string, posts *[]ClaimPo
 		}
 		if postCollAlias != "" {
 			// Associate this post with a collection
-			var coll *Collection
 			if p.CreateCollection {
 				// This is a new collection
 				// TODO: consider removing this. This seriously complicates this
@@ -1389,6 +1389,9 @@ func (db *datastore) ClaimPosts(userID int64, collAlias string, posts *[]ClaimPo
 		// Post was successfully claimed
 		r.Code = http.StatusOK
 		r.Post = fullPost
+		if coll != nil {
+			r.Post.Collection = &CollectionObj{Collection: *coll}
+		}
 
 		rowsAffected, _ := qRes.RowsAffected()
 		if rowsAffected == 0 {
