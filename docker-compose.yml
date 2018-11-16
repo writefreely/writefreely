@@ -4,6 +4,7 @@ services:
     build: .
     volumes:
       - "web-data:/go/src/app"
+      - "./config.ini.example:/go/src/app/config.ini"
     ports:
       - "8080:8080"
     networks:
@@ -19,6 +20,7 @@ services:
     networks:
       - writefreely
     environment:
+      - MYSQL_DATABASE=writefreely
       - MYSQL_ROOT_PASSWORD=changeme
     restart: unless-stopped
 

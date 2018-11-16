@@ -90,43 +90,38 @@ make ui      # Generates CSS (run this whenever you update your styles)
 make run     # Runs the application
 ```
 
-### Using Docker
+## Docker
 
-From the cloned git repository, you can quickly stand up a Write Freely instance with Docker and Docker Compose.
+### Using Docker for Development
 
-First, you'll need to change the password for MariaDB's root user in `docker-compose.yml` from `changeme` to something that is unique to your setup:
+If you'd like to use Docker as a base for working on a site's styles and such,
+you can run the following from a Bash shell.
+
+*Note: This process is intended only for working on site styling. If you'd
+like to run Write Freely in production as a Docker service, it'll require a
+little more work.*
+
+The `docker-setup.sh` script will present you with a few questions to set up
+your dev instance. You can hit enter for most of them, except for "Admin username"
+and "Admin password." You'll probably have to wait a few seconds after running
+`docker-compose up -d` for the Docker services to come up before running the
+bash script.
 
 ```
-environment:
-  - MYSQL_ROOT_PASSWORD=changeme
-```
-
-After that, you can spin up the containers and configure them:
-
-```bash
-# 1) Spin up the DB and Write Freely
 docker-compose up -d
-
-# 2) Connect to MariaDB container
-docker-compose exec db /bin/sh
-
-# 3) Log in to MariaDB, using the password you specified in docker-compose.yml
-mysql -u root -p
-
-# 4) Create the database for Write Freely
-CREATE DATABASE writefreely;
-exit
-
-# 5) Migrate the database
-mysql -u root -p writefreely < /tmp/schema.sql
-exit
-
-# 6) Generate the configuration and clean up
-docker-compose run web writefreely --config
-docker stop writefreely_web_run_1 && docker rm writefreely_web_run_1
+./docker-setup.sh
 ```
 
-Now you should be able to navigate to http://localhost:8080 and start blogging!
+Now you should be able to navigate to http://localhost:8080 and start working!
+
+When you're completely done working, you can run `docker-compose down` to destroy
+your virtual environment, including your database data. Otherwise, `docker-compose stop`
+will shut down your environment without destroying your data.
+
+### Using Docker for Production
+
+Write Freely doesn't yet provide an official Docker pathway to production. We're
+working on it, though!
 
 ## License
 
