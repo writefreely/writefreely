@@ -199,7 +199,6 @@ function createHidden(theForm, key, value) {
 function disableSubmit() {
 	var $form = document.forms['customize-form'];
 	createHidden($form, 'style_sheet', cssEditor.getSession().getValue());
-	createHidden($form, 'script', jsEditor.getSession().getValue());
 	var $btn = document.getElementById("save-changes");
 	$btn.value = "Saving changes...";
 	$btn.disabled = true;
@@ -224,10 +223,6 @@ var cssEditor = ace.edit("css-editor");
 cssEditor.setTheme(theme);
 cssEditor.session.setMode("ace/mode/css");
 cssEditor.setOptions(opt);
-var jsEditor = ace.edit("js-editor");
-jsEditor.setTheme(theme);
-jsEditor.session.setMode("ace/mode/javascript");
-jsEditor.setOptions(opt);
 </script>
 
 {{template "footer" .}}
