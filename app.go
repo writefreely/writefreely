@@ -34,7 +34,7 @@ const (
 	serverSoftware = "WriteFreely"
 	softwareURL    = "https://writefreely.org"
 
-	softwareVer = "0.2.1"
+	softwareVer = "0.3"
 )
 
 var (
