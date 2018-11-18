@@ -86,7 +86,7 @@ type writestore interface {
 	ClaimPosts(userID int64, collAlias string, posts *[]ClaimPostRequest) (*[]ClaimPostResult, error)
 
 	GetPostsCount(c *CollectionObj, includeFuture bool)
-	GetPosts(c *Collection, page int, includeFuture bool) (*[]PublicPost, error)
+	GetPosts(c *Collection, page int, includeFuture, forceRecentFirst bool) (*[]PublicPost, error)
 	GetPostsTagged(c *Collection, tag string, page int, includeFuture bool) (*[]PublicPost, error)
 
 	GetAPFollowers(c *Collection) (*[]RemoteUser, error)
@@ -986,12 +986,12 @@ func (db *datastore) GetPostsCount(c *CollectionObj, includeFuture bool) {
 // GetPosts retrieves all standard (non-pinned) posts for the given Collection.
 // It will return future posts if `includeFuture` is true.
 // TODO: change includeFuture to isOwner, since that's how it's used
-func (db *datastore) GetPosts(c *Collection, page int, includeFuture bool) (*[]PublicPost, error) {
+func (db *datastore) GetPosts(c *Collection, page int, includeFuture, forceRecentFirst bool) (*[]PublicPost, error) {
 	collID := c.ID
 
 	cf := c.NewFormat()
 	order := "DESC"
-	if cf.Ascending() {
+	if cf.Ascending() && !forceRecentFirst {
 		order = "ASC"
 	}
 

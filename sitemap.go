@@ -54,7 +54,7 @@ func handleViewSitemap(app *app, w http.ResponseWriter, r *http.Request) error {
 	host = c.CanonicalURL()
 
 	sm := buildSitemap(host, pre)
-	posts, err := app.db.GetPosts(c, 0, false)
+	posts, err := app.db.GetPosts(c, 0, false, false)
 	if err != nil {
 		log.Error("Error getting posts: %v", err)
 		return err

@@ -117,7 +117,7 @@ func handleFetchCollectionOutbox(app *app, w http.ResponseWriter, r *http.Reques
 	ocp := activitystreams.NewOrderedCollectionPage(accountRoot, "outbox", res.TotalPosts, p)
 	ocp.OrderedItems = []interface{}{}
 
-	posts, err := app.db.GetPosts(c, p, false)
+	posts, err := app.db.GetPosts(c, p, false, true)
 	for _, pp := range *posts {
 		pp.Collection = res
 		o := pp.ActivityObject()
