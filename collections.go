@@ -249,7 +249,6 @@ func (c *Collection) StyleSheetDisplay() template.CSS {
 // ForPublic modifies the Collection for public consumption, such as via
 // the API.
 func (c *Collection) ForPublic() {
-	c.ID = 0
 	c.URL = c.CanonicalURL()
 }
 

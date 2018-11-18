@@ -541,13 +541,13 @@ func newPost(app *app, w http.ResponseWriter, r *http.Request) error {
 
 	var newPost *PublicPost = &PublicPost{}
 	var coll *Collection
-	var collID int64
 	var err error
 	if accessToken != "" {
 		newPost, err = app.db.CreateOwnedPost(p, accessToken, collAlias)
 	} else {
 		//return ErrNotLoggedIn
 		// TODO: verify user is logged in
+		var collID int64
 		if collAlias != "" {
 			coll, err = app.db.GetCollection(collAlias)
 			if err != nil {
@@ -575,8 +575,8 @@ func newPost(app *app, w http.ResponseWriter, r *http.Request) error {
 	// Write success now
 	response := impart.WriteSuccess(w, newPost, http.StatusCreated)
 
-	if coll != nil && app.cfg.App.Federation {
-		go federatePost(app, newPost, collID, false)
+	if newPost.Collection != nil && app.cfg.App.Federation && !newPost.Created.After(time.Now()) {
+		go federatePost(app, newPost, newPost.Collection.ID, false)
 	}
 
 	return response
