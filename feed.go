@@ -17,9 +17,9 @@ func ViewFeed(app *app, w http.ResponseWriter, req *http.Request) error {
 	var c *Collection
 	var err error
 	if app.cfg.App.SingleUser {
-		c, err = app.db.GetCollection(alias)
-	} else {
 		c, err = app.db.GetCollectionByID(1)
+	} else {
+		c, err = app.db.GetCollection(alias)
 	}
 	if err != nil {
 		return nil
