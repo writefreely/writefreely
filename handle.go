@@ -109,6 +109,44 @@ func (h *Handler) User(f userHandlerFunc) http.HandlerFunc {
 	}
 }
 
+// Admin handles requests on /admin routes
+func (h *Handler) Admin(f userHandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		h.handleHTTPError(w, r, func() error {
+			var status int
+			start := time.Now()
+
+			defer func() {
+				if e := recover(); e != nil {
+					log.Error("%s: %s", e, debug.Stack())
+					h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app, r))
+					status = http.StatusInternalServerError
+				}
+
+				log.Info(fmt.Sprintf("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent()))
+			}()
+
+			u := getUserSession(h.app, r)
+			if u == nil || !u.IsAdmin() {
+				err := impart.HTTPError{http.StatusNotFound, ""}
+				status = err.Status
+				return err
+			}
+
+			err := f(h.app, u, w, r)
+			if err == nil {
+				status = http.StatusOK
+			} else if err, ok := err.(impart.HTTPError); ok {
+				status = err.Status
+			} else {
+				status = http.StatusInternalServerError
+			}
+
+			return err
+		}())
+	}
+}
+
 // UserAPI handles requests made in the API by the authenticated user.
 // This provides user-friendly HTML pages and actions that work in the browser.
 func (h *Handler) UserAPI(f userHandlerFunc) http.HandlerFunc {

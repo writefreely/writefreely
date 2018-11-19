@@ -7,7 +7,7 @@ h3 { font-weight: normal; }
 .section > *:not(input) { font-size: 0.86em; }
 </style>
 <div class="content-container snug regular">
-	<h2>{{if .IsLogOut}}Before you go...{{else}}Account Settings{{end}}</h2>
+	<h2>{{if .IsLogOut}}Before you go...{{else}}Account Settings {{if .IsAdmin}}<a href="/admin">admin settings</a>{{end}}{{end}}</h2>
 	{{if .Flashes}}<ul class="errors">
 		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 	</ul>{{end}}

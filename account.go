@@ -34,17 +34,19 @@ type (
 
 		PageTitle string
 		Separator template.HTML
+		IsAdmin   bool
 	}
 )
 
-func NewUserPage(app *app, r *http.Request, username, title string, flashes []string) *UserPage {
+func NewUserPage(app *app, r *http.Request, u *User, title string, flashes []string) *UserPage {
 	up := &UserPage{
 		StaticPage: pageForReq(app, r),
 		PageTitle:  title,
 	}
-	up.Username = username
+	up.Username = u.Username
 	up.Flashes = flashes
 	up.Path = r.URL.Path
+	up.IsAdmin = u.IsAdmin()
 	return up
 }
 
@@ -538,7 +540,7 @@ func getVerboseAuthUser(app *app, token string, u *User, verbose bool) *AuthUser
 
 func viewExportOptions(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
 	// Fetch extra user data
-	p := NewUserPage(app, r, u.Username, "Export", nil)
+	p := NewUserPage(app, r, u, "Export", nil)
 
 	showUserPage(w, "export", p)
 	return nil
@@ -722,7 +724,7 @@ func viewArticles(app *app, u *User, w http.ResponseWriter, r *http.Request) err
 		AnonymousPosts *[]PublicPost
 		Collections    *[]Collection
 	}{
-		UserPage:       NewUserPage(app, r, u.Username, u.Username+"'s Posts", f),
+		UserPage:       NewUserPage(app, r, u, u.Username+"'s Posts", f),
 		AnonymousPosts: p,
 		Collections:    c,
 	}
@@ -754,7 +756,7 @@ func viewCollections(app *app, u *User, w http.ResponseWriter, r *http.Request) 
 
 		NewBlogsDisabled bool
 	}{
-		UserPage:         NewUserPage(app, r, u.Username, u.Username+"'s Blogs", f),
+		UserPage:         NewUserPage(app, r, u, u.Username+"'s Blogs", f),
 		Collections:      c,
 		UsedCollections:  int(uc),
 		NewBlogsDisabled: !app.cfg.App.CanCreateBlogs(uc),
@@ -780,7 +782,7 @@ func viewEditCollection(app *app, u *User, w http.ResponseWriter, r *http.Reques
 		*UserPage
 		*Collection
 	}{
-		UserPage:   NewUserPage(app, r, u.Username, "Edit "+c.DisplayTitle(), flashes),
+		UserPage:   NewUserPage(app, r, u, "Edit "+c.DisplayTitle(), flashes),
 		Collection: c,
 	}
 
@@ -952,7 +954,7 @@ func viewStats(app *app, u *User, w http.ResponseWriter, r *http.Request) error 
 		TopPosts    *[]PublicPost
 		APFollowers int
 	}{
-		UserPage:   NewUserPage(app, r, u.Username, titleStats+"Stats", flashes),
+		UserPage:   NewUserPage(app, r, u, titleStats+"Stats", flashes),
 		VisitsBlog: alias,
 		Collection: c,
 		TopPosts:   topPosts,
@@ -990,7 +992,7 @@ func viewSettings(app *app, u *User, w http.ResponseWriter, r *http.Request) err
 		HasPass  bool
 		IsLogOut bool
 	}{
-		UserPage: NewUserPage(app, r, u.Username, "Account Settings", flashes),
+		UserPage: NewUserPage(app, r, u, "Account Settings", flashes),
 		Email:    fullUser.EmailClear(app.keys),
 		HasPass:  passIsSet,
 		IsLogOut: r.FormValue("logout") == "1",

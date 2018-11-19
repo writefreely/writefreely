@@ -115,6 +115,8 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 	}
 	write.HandleFunc("/auth/login", handler.Web(webLogin, UserLevelNoneRequired)).Methods("POST")
 
+	write.HandleFunc("/admin", handler.Admin(handleViewAdminDash)).Methods("GET")
+
 	// Handle special pages first
 	write.HandleFunc("/login", handler.Web(viewLogin, UserLevelNoneRequired))
 

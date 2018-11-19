@@ -92,3 +92,8 @@ func (u User) Cookie() *User {
 
 	return &u
 }
+
+func (u *User) IsAdmin() bool {
+	// TODO: get this from database
+	return u.ID == 1
+}
