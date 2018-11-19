@@ -258,12 +258,7 @@ func handleViewPost(app *app, w http.ResponseWriter, r *http.Request) error {
 
 	// Display reserved page if that is requested resource
 	if t, ok := pages[r.URL.Path[1:]+".tmpl"]; ok {
-		// Serve templated page
-		err := t.ExecuteTemplate(w, "base", pageForReq(app, r))
-		if err != nil {
-			log.Error("Unable to render page: %v", err)
-		}
-		return nil
+		return handleTemplatedPage(app, w, r, t)
 	} else if (strings.Contains(r.URL.Path, ".") && !isRaw && !isMarkdown) || r.URL.Path == "/robots.txt" || r.URL.Path == "/manifest.json" {
 		// Serve static file
 		shttp.ServeHTTP(w, r)

@@ -93,6 +93,42 @@ func handleViewHome(app *app, w http.ResponseWriter, r *http.Request) error {
 	return renderPage(w, "landing.tmpl", p)
 }
 
+func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *template.Template) error {
+	p := struct {
+		page.StaticPage
+		Content template.HTML
+		Updated string
+	}{
+		StaticPage: pageForReq(app, r),
+	}
+	if r.URL.Path == "/about" || r.URL.Path == "/privacy" {
+		var c string
+		var updated *time.Time
+		var err error
+
+		if r.URL.Path == "/about" {
+			c, err = getAboutPage(app)
+		} else {
+			c, updated, err = getPrivacyPage(app)
+		}
+
+		if err != nil {
+			return err
+		}
+		p.Content = template.HTML(applyMarkdown([]byte(c)))
+		if updated != nil {
+			p.Updated = updated.Format("January 2, 2006")
+		}
+	}
+
+	// Serve templated page
+	err := t.ExecuteTemplate(w, "base", p)
+	if err != nil {
+		log.Error("Unable to render page: %v", err)
+	}
+	return nil
+}
+
 func pageForReq(app *app, r *http.Request) page.StaticPage {
 	p := page.StaticPage{
 		AppCfg:  app.cfg.App,

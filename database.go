@@ -91,6 +91,9 @@ type writestore interface {
 
 	GetAPFollowers(c *Collection) (*[]RemoteUser, error)
 	GetAPActorKeys(collectionID int64) ([]byte, []byte)
+
+	GetDynamicContent(id string) (string, *time.Time, error)
+	UpdateDynamicContent(id, content string) error
 }
 
 type datastore struct {
@@ -2103,6 +2106,28 @@ func (db *datastore) GetAPActorKeys(collectionID int64) ([]byte, []byte) {
 	}
 
 	return pub, priv
+}
+
+func (db *datastore) GetDynamicContent(id string) (string, *time.Time, error) {
+	var c string
+	var u *time.Time
+	err := db.QueryRow("SELECT content, updated FROM appcontent WHERE id = ?", id).Scan(&c, &u)
+	switch {
+	case err == sql.ErrNoRows:
+		return "", nil, nil
+	case err != nil:
+		log.Error("Couldn't SELECT FROM appcontent for id '%s': %v", id, err)
+		return "", nil, err
+	}
+	return c, u, nil
+}
+
+func (db *datastore) UpdateDynamicContent(id, content string) error {
+	_, err := db.Exec("INSERT INTO appcontent (id, content, updated) VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE content = ?, updated = NOW()", id, content, content)
+	if err != nil {
+		log.Error("Unable to INSERT appcontent for '%s': %v", id, err)
+	}
+	return err
 }
 
 func stringLogln(log *string, s string, v ...interface{}) {

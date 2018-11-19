@@ -22,6 +22,19 @@ CREATE TABLE IF NOT EXISTS `accesstokens` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `appcontent`
+--
+
+CREATE TABLE IF NOT EXISTS `appcontent` (
+  `id` varchar(36) NOT NULL,
+  `content` mediumtext CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `collectionattributes`
 --
 

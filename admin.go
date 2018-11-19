@@ -3,6 +3,7 @@ package writefreely
 import (
 	"fmt"
 	"github.com/gogits/gogs/pkg/tool"
+	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
 	"net/http"
@@ -62,14 +63,45 @@ func handleViewAdminDash(app *app, u *User, w http.ResponseWriter, r *http.Reque
 		*UserPage
 		Message   string
 		SysStatus systemStatus
+
+		AboutPage, PrivacyPage string
 	}{
-		NewUserPage(app, r, u, "Admin", nil),
-		r.FormValue("m"),
-		sysStatus,
+		UserPage:  NewUserPage(app, r, u, "Admin", nil),
+		Message:   r.FormValue("m"),
+		SysStatus: sysStatus,
+	}
+
+	var err error
+	p.AboutPage, err = getAboutPage(app)
+	if err != nil {
+		return err
+	}
+
+	p.PrivacyPage, _, err = getPrivacyPage(app)
+	if err != nil {
+		return err
 	}
 
 	showUserPage(w, "admin", p)
 	return nil
+}
+
+func handleAdminUpdateSite(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	id := vars["page"]
+
+	// Validate
+	if id != "about" && id != "privacy" {
+		return impart.HTTPError{http.StatusNotFound, "No such page."}
+	}
+
+	// Update page
+	m := ""
+	err := app.db.UpdateDynamicContent(id, r.FormValue("content"))
+	if err != nil {
+		m = "?m=" + err.Error()
+	}
+	return impart.HTTPError{http.StatusFound, "/admin" + m + "#page-" + id}
 }
 
 func updateAppStats() {

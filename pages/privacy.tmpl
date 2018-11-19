@@ -2,10 +2,8 @@
 {{end}}
 {{define "content"}}<div class="content-container snug">
 	<h1>Privacy Policy</h1>
-		<p style="font-style:italic">Last updated November 8, 2018</p>
-		<p class="statement"><a href="https://writefreely.org">Write Freely</a>, the software that powers this site, is built to enforce your right to privacy by default.</p>
-		<p>It retains as little data about you as possible, not even requiring an email address to sign up. However, if you <em>do</em> give us your email address, it is stored encrypted in our database. We salt and hash your account's password.</p>
-		<p>We store log files, or data about what happens on our servers. We also use cookies to keep you logged in to your account.</p>
-		<p>Beyond this, it's important that you trust whoever runs <strong>{{.SiteName}}</strong>. Software can only do so much to protect you &mdash; your level of privacy protections will ultimately fall on the humans that run this particular service.</p>
+		<p style="font-style:italic">Last updated {{.Updated}}</p>
+
+		{{.Content}}
 	</div>
 {{end}}

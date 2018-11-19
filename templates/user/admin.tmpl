@@ -4,7 +4,9 @@
 <style type="text/css">
 h2 {font-weight: normal;}
 ul.pagenav {list-style: none;}
-form {margin: 2em 0;}
+form {
+	margin: 0 0 2em;
+}
 .ui.divider:not(.vertical):not(.horizontal) {
 	border-top: 1px solid rgba(34,36,38,.15);
 	border-bottom: 1px solid rgba(255,255,255,.1);
@@ -26,18 +28,59 @@ form {margin: 2em 0;}
 }
 </style>
 
-<div class="content-container tight">
-	<h2>Admin Dashboard</h2>
+<script>
+function savePage(el) {
+	var $btn = el.querySelector('input[type=submit]');
+	$btn.value = 'Saving...';
+	$btn.disabled = true;
+}
+</script>
+
+<div class="content-container snug">
+	<h1>Admin Dashboard</h1>
 
 	{{if .Message}}<p>{{.Message}}</p>{{end}}
 
 	<ul class="pagenav">
+		{{if not .SingleUser}}
+		<li><a href="#page-about">Edit About page</a></li>
+		<li><a href="#page-privacy">Edit Privacy page</a></li>
+		{{end}}
+		<li><a href="#reset-pass">Reset user password</a></li>
 		<li><a href="#monitor">Application monitor</a></li>
 	</ul>
 
 	<hr />
 
-	<h3><a name="monitor"></a>application monitor</h3>
+	{{if not .SingleUser}}
+	<h2>Site</h2>
+
+	<h3 id="page-about">About page</h3>
+	<p>Describe what your instance is <a href="/privacy">about</a>. <em>Accepts Markdown</em>.</p>
+	<form method="post" action="/admin/update/about" onsubmit="savePage(this)">
+		<textarea id="about-editor" class="section codable norm edit-page" name="content">{{.AboutPage}}</textarea>
+		<input type="submit" value="Save" />
+	</form>
+
+	<h3 id="page-privacy">Privacy page</h3>
+	<p>Outline your <a href="/privacy">privacy policy</a>. <em>Accepts Markdown</em>.</p>
+	<form method="post" action="/admin/update/privacy" onsubmit="savePage(this)">
+		<textarea id="privacy-editor" class="section codable norm edit-page" name="content">{{.PrivacyPage}}</textarea>
+		<input type="submit" value="Save" />
+	</form>
+
+	<hr />
+	{{end}}
+
+	<h2>Users</h2>
+
+	<h3><a name="reset-pass"></a>reset password</h3>
+	<pre><code>writefreely --reset-pass &lt;username&gt;</code></pre>
+
+	<hr />
+
+	<h2><a name="monitor"></a>Application</h2>
+
 	<div class="ui attached table segment">
 		<dl class="dl-horizontal admin-dl-horizontal">
 			<dt>Server Uptime</dt>
@@ -103,6 +146,8 @@ form {margin: 2em 0;}
 		</dl>
 	</div>
 </div>
+
 {{template "footer" .}}
+
 {{template "body-end" .}}
 {{end}}
