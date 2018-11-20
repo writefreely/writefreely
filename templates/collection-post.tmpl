@@ -45,6 +45,19 @@
 		</script>
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>{{end}}
 
+
+		{{if .Collection.CodeHighlight}}
+		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/atom-one-light.min.css" />
+		<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+		<script>
+		  addEventListener('load', function () {
+		    var x = document.querySelectorAll("code[class^='language-']");
+		    for (i=0; i<x.length; i++) {
+		      hljs.highlightBlock(x[i]);
+		    }});
+		</script>
+		{{end}}
+
 	</head>
 	<body id="post">
 		

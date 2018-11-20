@@ -800,6 +800,21 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 		}
 	}
 
+	// Update CodeHighlight value
+	if c.Highlight {
+		_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?", collID, "code_highlight", "1", "1")
+		if err != nil {
+			log.Error("Unable to insert code_highlight value: %v", err)
+			return err
+		}
+	} else {
+		_, err = db.Exec("DELETE FROM collectionattributes WHERE collection_id = ? AND attribute = ?", collID, "code_highlight")
+		if err != nil {
+			log.Error("Unable to delete code_highlight value: %v", err)
+			return err
+		}
+	}
+
 	// Update rest of the collection data
 	res, err = db.Exec("UPDATE collections SET "+q.Updates+" WHERE "+q.Conditions, q.Params...)
 	if err != nil {
