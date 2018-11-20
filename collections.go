@@ -70,7 +70,6 @@ type (
 		Privacy   int    `schema:"privacy" json:"privacy"`
 		Pass      string `schema:"password" json:"password"`
 		MathJax   bool   `schema:"mathjax" json:"mathjax"`
-		Highlight bool   `schema:"highlight" json:"highlight"`
 		Handle    string `schema:"handle" json:"handle"`
 
 		// Actual collection values updated in the DB
@@ -305,10 +304,6 @@ func (c *Collection) FederatedAccount() string {
 
 func (c *Collection) RenderMathJax() bool {
 	return c.db.CollectionHasAttribute(c.ID, "render_mathjax")
-}
-
-func (c *Collection) CodeHighlight() bool {
-	return c.db.CollectionHasAttribute(c.ID, "code_highlight")
 }
 
 func newCollection(app *app, w http.ResponseWriter, r *http.Request) error {
