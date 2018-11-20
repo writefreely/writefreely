@@ -45,15 +45,15 @@ release : clean ui
 	cp schema.sql build
 	$(MAKE) build-linux
 	cp cmd/writefreely/$(BINARY_NAME) build
-	cd build; tar -cvzf ../$(BINARY_NAME)_linux_amd64.tar.gz *
+	cd build; tar -cvzf ../$(BINARY_NAME)_$(GITREV)_linux_amd64.tar.gz *
 	rm build/$(BINARY_NAME)
 	$(MAKE) build-darwin
 	cp cmd/writefreely/$(BINARY_NAME) build
-	cd build; tar -cvzf ../$(BINARY_NAME)_darwin_amd64.tar.gz *
+	cd build; tar -cvzf ../$(BINARY_NAME)_$(GITREV)_darwin_amd64.tar.gz *
 	rm build/$(BINARY_NAME)
 	$(MAKE) build-windows
 	cp cmd/writefreely/$(BINARY_NAME).exe build
-	cd build; zip -r ../$(BINARY_NAME)_windows_amd64.zip ./*
+	cd build; zip -r ../$(BINARY_NAME)_$(GITREV)_windows_amd64.zip ./*
 	
 ui : force_look
 	cd less/; $(MAKE) $(MFLAGS)
