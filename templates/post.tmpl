@@ -32,21 +32,8 @@
 		<meta property="og:image" content="https://write.as/img/w-sq-light.png">
 		{{if .Author}}<meta property="article:author" content="https://{{.Author}}" />{{end}}
 
-
-		<!-- Collection not known during single User draft? this test feels wrong -->
-		{{if not .SingleUser }}
-		{{if .Collection.CodeHighlight}}
-		  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/atom-one-light.min.css" />
-		  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
-		  <script>
-		    addEventListener('load', function () {
-		      var x = document.querySelectorAll("code[class^='language-']");
-		      for (i=0; i<x.length; i++) {
-		        hljs.highlightBlock(x[i]);
-		      }});
-		  </script>
-		  {{end}}
-		{{end}}
+		<!-- Add highlighting logic -->
+		{{template "highlighting" .}}
 
 	</head>
 	<body id="post">

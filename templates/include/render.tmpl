@@ -1,0 +1,14 @@
+<!-- Miscelaneous render related template parts we use multiple times -->
+{{define "highlighting"}}
+  <!-- TODO: make this conditional on presence of code blocks -->
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/atom-one-light.min.css"/>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js" type="text/javascript"></script>
+
+  <script>
+  addEventListener('load', function () {
+    var x = document.querySelectorAll("code[class^='language-']");
+    for (i=0; i<x.length; i++) {
+      hljs.highlightBlock(x[i]);
+      }});
+  </script>
+{{end}}

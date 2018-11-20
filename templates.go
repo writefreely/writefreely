@@ -55,12 +55,14 @@ func initTemplate(name string) {
 			filepath.Join(templatesDir, name+".tmpl"),
 			filepath.Join(templatesDir, "include", "posts.tmpl"),
 			filepath.Join(templatesDir, "include", "footer.tmpl"),
+			filepath.Join(templatesDir, "include", "render.tmpl"),
 			filepath.Join(templatesDir, "base.tmpl"),
 		))
 	} else {
 		templates[name] = template.Must(template.New("").Funcs(funcMap).ParseFiles(
 			filepath.Join(templatesDir, name+".tmpl"),
 			filepath.Join(templatesDir, "include", "footer.tmpl"),
+			filepath.Join(templatesDir, "include", "render.tmpl"),
 			filepath.Join(templatesDir, "base.tmpl"),
 		))
 	}
@@ -74,6 +76,7 @@ func initPage(path, key string) {
 	pages[key] = template.Must(template.New("").Funcs(funcMap).ParseFiles(
 		path,
 		filepath.Join(templatesDir, "include", "footer.tmpl"),
+		filepath.Join(templatesDir, "include", "render.tmpl"),
 		filepath.Join(templatesDir, "base.tmpl"),
 	))
 }
@@ -87,6 +90,7 @@ func initUserPage(path, key string) {
 		path,
 		filepath.Join(templatesDir, "user", "include", "header.tmpl"),
 		filepath.Join(templatesDir, "user", "include", "footer.tmpl"),
+		filepath.Join(templatesDir, "user", "include", "render.tmpl"),
 	))
 }
 
