@@ -33,9 +33,10 @@ const (
 
 	serverSoftware = "WriteFreely"
 	softwareURL    = "https://writefreely.org"
-
-	softwareVer = "0.3"
 )
+
+// Software version can be set from git env using -ldflags
+var softwareVer = "0.3"
 
 var (
 	debugging bool
