@@ -30,21 +30,11 @@
 		{{range .Images}}<meta property="og:image" content="{{.}}" />{{else}}<meta property="og:image" content="{{.Collection.AvatarURL}}">{{end}}
 		<meta property="article:published_time" content="{{.Created8601}}">
 		{{if .Collection.StyleSheet}}<style type="text/css">{{.Collection.StyleSheetDisplay}}</style>{{end}}
-		{{if .Collection.RenderMathJax}}
-		<script type="text/x-mathjax-config">
-		  MathJax.Hub.Config({
-			extensions: ["tex2jax.js"],
-			jax: ["input/TeX", "output/HTML-CSS"],
-			tex2jax: {
-			  inlineMath: [ ['$','$'], ["\\(","\\)"] ],
-			  displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
-			  processEscapes: true
-			},
-			"HTML-CSS": { fonts: ["TeX"] }
-		  });
-		</script>
-		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>{{end}}
 
+		{{if .Collection.RenderMathJax}}
+		  <!-- Add mathjax logic -->
+  		  {{template "mathjax" . }}
+		{{end}}
 
 		<!-- Add highlighting logic -->
 		{{template "highlighting" .}}

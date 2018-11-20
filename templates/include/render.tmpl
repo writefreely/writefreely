@@ -2,7 +2,8 @@
 {{define "highlighting"}}
   <!-- TODO: make this conditional on presence of code blocks -->
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/atom-one-light.min.css"/>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js" type="text/javascript"></script>
+  <script type="text/javascript"
+	  src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js" async></script>
 
   <script>
   addEventListener('load', function () {
@@ -11,4 +12,22 @@
       hljs.highlightBlock(x[i]);
       }});
   </script>
+{{end}}
+
+<!-- Include mathjax configuration -->
+{{define "mathjax"}}
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { fonts: ["TeX"] }
+  });
+</script>
+<script type="text/javascript"
+	src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
 {{end}}
