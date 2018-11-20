@@ -1,7 +1,10 @@
+GITREV=`git describe --tags`
+LDFLAGS=-ldflags="-X 'github.com/writeas/writefreely.softwareVer=$(GITREV)'"
+
 GOCMD=go
-GOINSTALL=$(GOCMD) install
-GOBUILD=$(GOCMD) build
-GOTEST=$(GOCMD) test
+GOINSTALL=$(GOCMD) install $(LDFLAGS)
+GOBUILD=$(GOCMD) build $(LDFLAGS)
+GOTEST=$(GOCMD) test $(LDFLAGS)
 GOGET=$(GOCMD) get
 BINARY_NAME=writefreely
 
