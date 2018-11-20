@@ -1,4 +1,4 @@
-GITREV=`git describe --tags`
+GITREV=`git describe --tags | cut -c 2-`
 LDFLAGS=-ldflags="-X 'github.com/writeas/writefreely.softwareVer=$(GITREV)'"
 
 GOCMD=go
@@ -32,6 +32,6 @@ ui : force_look
 
 clean :
 	cd less/; $(MAKE) clean $(MFLAGS)
-	
+
 force_look : 
 	true

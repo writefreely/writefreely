@@ -36,8 +36,7 @@ const (
 )
 
 // Software version can be set from git env using -ldflags
-var	softwareVer = "v0.3"
-
+var softwareVer = "0.3"
 
 var (
 	debugging bool
@@ -135,7 +134,7 @@ func pageForReq(app *app, r *http.Request) page.StaticPage {
 	p := page.StaticPage{
 		AppCfg:  app.cfg.App,
 		Path:    r.URL.Path,
-		Version: softwareVer,
+		Version: "v" + softwareVer,
 	}
 
 	// Add user information, if given
