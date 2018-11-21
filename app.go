@@ -357,7 +357,7 @@ func Serve() {
 		app.cfg.Database.Host = "localhost"
 	}
 	if app.cfg.Database.Database == "" {
-		app.cfg.Database.Database = "writeas"
+		app.cfg.Database.Database = "writefreely"
 	}
 
 	connectToDatabase(app)
