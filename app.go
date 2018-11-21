@@ -99,6 +99,8 @@ func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *te
 		page.StaticPage
 		Content template.HTML
 		Updated string
+
+		AboutStats *InstanceStats
 	}{
 		StaticPage: pageForReq(app, r),
 	}
@@ -109,6 +111,11 @@ func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *te
 
 		if r.URL.Path == "/about" {
 			c, err = getAboutPage(app)
+
+			// Fetch stats
+			p.AboutStats = &InstanceStats{}
+			p.AboutStats.NumPosts, _ = app.db.GetTotalPosts()
+			p.AboutStats.NumBlogs, _ = app.db.GetTotalCollections()
 		} else {
 			c, updated, err = getPrivacyPage(app)
 		}
