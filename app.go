@@ -20,6 +20,7 @@ import (
 	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
 	"github.com/manifoldco/promptui"
+	"github.com/writeas/go-strip-markdown"
 	"github.com/writeas/web-core/converter"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
@@ -97,8 +98,9 @@ func handleViewHome(app *app, w http.ResponseWriter, r *http.Request) error {
 func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *template.Template) error {
 	p := struct {
 		page.StaticPage
-		Content template.HTML
-		Updated string
+		Content      template.HTML
+		PlainContent string
+		Updated      string
 
 		AboutStats *InstanceStats
 	}{
@@ -124,6 +126,7 @@ func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *te
 			return err
 		}
 		p.Content = template.HTML(applyMarkdown([]byte(c)))
+		p.PlainContent = shortPostDescription(stripmd.Strip(c))
 		if updated != nil {
 			p.Updated = updated.Format("January 2, 2006")
 		}
