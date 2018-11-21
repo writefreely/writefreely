@@ -401,11 +401,26 @@ func Serve() {
 		os.Exit(0)
 	}()
 
-	// Start web application server
 	http.Handle("/", r)
-	log.Info("Serving on http://localhost:%d\n", app.cfg.Server.Port)
-	log.Info("---")
-	err = http.ListenAndServe(fmt.Sprintf(":%d", app.cfg.Server.Port), nil)
+
+	// Start web application server
+	if app.cfg.IsSecureStandalone() {
+		log.Info("Serving redirects on http://localhost:80")
+		go func() {
+			err = http.ListenAndServe(":80", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, app.cfg.App.Host, http.StatusMovedPermanently)
+			}))
+			log.Error("Unable to start redirect server: %v", err)
+		}()
+
+		log.Info("Serving on https://localhost:443")
+		log.Info("---")
+		err = http.ListenAndServeTLS(":443", app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, nil)
+	} else {
+		log.Info("Serving on http://localhost:%d\n", app.cfg.Server.Port)
+		log.Info("---")
+		err = http.ListenAndServe(fmt.Sprintf(":%d", app.cfg.Server.Port), nil)
+	}
 	if err != nil {
 		log.Error("Unable to start: %v", err)
 		os.Exit(1)
