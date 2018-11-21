@@ -20,12 +20,13 @@ RUN mkdir /stage && \
        /go/src/app/keys \
       /stage && ls -l /stage
 
-FROM golang:1.11.2-alpine3.8
+FROM alpine:3.8
 
 COPY --from=build --chown=daemon:daemon /stage /go
 
+WORKDIR /go
 VOLUME /go/keys
 EXPOSE 8080
 USER daemon
 
-CMD ["writefreely"]
+CMD ["bin/writefreely"]
