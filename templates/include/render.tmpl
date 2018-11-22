@@ -2,15 +2,29 @@
 {{define "highlighting"}}
   <!-- TODO: make this conditional on presence of code blocks -->
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/atom-one-light.min.css"/>
-  <script type="text/javascript"
-	  src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js" async></script>
 
   <script>
-  addEventListener('load', function () {
-    var x = document.querySelectorAll("code[class^='language-']");
-    for (i=0; i<x.length; i++) {
-      hljs.highlightBlock(x[i]);
-      }});
+    // TODO: this feels more like a mutation observer
+    addEventListener('DOMContentLoaded', function () {
+        var hlbaseUri="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/";
+        var x = document.querySelectorAll("code[class^='language-']");
+        if (x.length > 0 ) {
+    	    // We have blocks to be highlighted, stuff, so we load css + js
+    	    var s=document.createElement('script');
+    	    s.type="text/javascript"; s.src= hlbaseUri + "highlight.min.js"; s.async=true;
+
+    	    // Here's the crux, we need to react on load event for this new element to make it work.
+    	    s.onload = ()  => { highlight(x) }
+    	    document.getElementsByTagName('head')[0].appendChild(s);
+
+    	    // Gives a set of nodes, run highlighting on them
+    	    function highlight(nodes) {
+		for (i=0; i<nodes.length; i++) {
+    		    hljs.highlightBlock(nodes[i]);
+		}
+    	    }
+        }
+    });
   </script>
 {{end}}
 
