@@ -18,7 +18,7 @@ RUN mkdir /stage && \
        /go/src/app/schema.sql \
        /go/src/app/pages \
        /go/src/app/keys \
-      /stage && ls -l /stage
+      /stage
 
 FROM alpine:3.8
 
