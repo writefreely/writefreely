@@ -6,7 +6,7 @@
         var hlbaseUri="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/";
         var x=document.querySelectorAll("code[class^='language-']");
         if (x.length > 0 ) {
-    	    // We have blocks to be highlighted, stuff, so we load css + js
+    	    // We have blocks to be highlighted, so we load css + js
 	    var st=document.createElement('link');
 	    st.rel="stylesheet"; st.href=hlbaseUri + "styles/atom-one-light.min.css";
 	    document.getElementsByTagName('head')[0].appendChild(st);
@@ -18,7 +18,7 @@
     	    sc.onload=()  => { highlight(x) }
     	    document.getElementsByTagName('head')[0].appendChild(sc);
 
-    	    // Gives a set of nodes, run highlighting on them
+    	    // Given a set of nodes, run highlighting on them
     	    function highlight(nodes) {
 		for (i=0; i < nodes.length; i++) {
     		    hljs.highlightBlock(nodes[i]);
