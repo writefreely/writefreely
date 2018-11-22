@@ -50,6 +50,8 @@ type writestore interface {
 	GetCollections(u *User) (*[]Collection, error)
 	GetPublishableCollections(u *User) (*[]Collection, error)
 	GetMeStats(u *User) userMeStats
+	GetTotalCollections() (int64, error)
+	GetTotalPosts() (int64, error)
 	GetTopPosts(u *User, alias string) (*[]PublicPost, error)
 	GetAnonymousPosts(u *User) (*[]PublicPost, error)
 	GetUserPosts(u *User) (*[]PublicPost, error)
@@ -1539,6 +1541,22 @@ func (db *datastore) GetMeStats(u *User) userMeStats {
 	s.CollectionPosts = collPosts
 
 	return s
+}
+
+func (db *datastore) GetTotalCollections() (collCount int64, err error) {
+	err = db.QueryRow(`SELECT COUNT(*) FROM collections`).Scan(&collCount)
+	if err != nil {
+		log.Error("Unable to fetch collections count: %v", err)
+	}
+	return
+}
+
+func (db *datastore) GetTotalPosts() (postCount int64, err error) {
+	err = db.QueryRow(`SELECT COUNT(*) FROM posts`).Scan(&postCount)
+	if err != nil {
+		log.Error("Unable to fetch posts count: %v", err)
+	}
+	return
 }
 
 func (db *datastore) GetTopPosts(u *User, alias string) (*[]PublicPost, error) {

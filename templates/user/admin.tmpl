@@ -56,7 +56,7 @@ function savePage(el) {
 	<h2>Site</h2>
 
 	<h3 id="page-about">About page</h3>
-	<p>Describe what your instance is <a href="/privacy">about</a>. <em>Accepts Markdown</em>.</p>
+	<p>Describe what your instance is <a href="/about">about</a>. <em>Accepts Markdown</em>.</p>
 	<form method="post" action="/admin/update/about" onsubmit="savePage(this)">
 		<textarea id="about-editor" class="section codable norm edit-page" name="content">{{.AboutPage}}</textarea>
 		<input type="submit" value="Save" />

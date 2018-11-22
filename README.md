@@ -21,7 +21,7 @@
 
 WriteFreely is a beautifully pared-down blogging platform that's simple on the surface, yet powerful underneath.
 
-It's designed to be flexible and share your writing widely, so it's built around plain text and can publish to the _fediverse_ via ActivityPub. It's easy to install and lightweight.
+It's designed to be flexible and share your writing widely, so it's built around plain text and can publish to the _fediverse_ via ActivityPub. It's easy to install and light enough to run on a Raspberry Pi.
 
 **[Start a blog on our instance](https://write.as/new/blog/federated)**
 
@@ -122,6 +122,12 @@ will shut down your environment without destroying your data.
 
 Write Freely doesn't yet provide an official Docker pathway to production. We're
 working on it, though!
+
+## Contributing
+
+We gladly welcome contributions to WriteFreely, whether in the form of [code](https://github.com/writeas/writefreely/blob/master/CONTRIBUTING.md#contributing-to-writefreely), [bug reports](https://github.com/writeas/writefreely/issues/new?template=bug_report.md), [feature requests](https://discuss.write.as/c/feedback/feature-requests), [translations](https://poeditor.com/join/project/TIZ6HFRFdE), or documentation improvements.
+
+Before contributing anything, please read our [Contributing Guide](https://github.com/writeas/writefreely/blob/master/CONTRIBUTING.md#contributing-to-writefreely). It describes the correct channels for submitting contributions and any potential requirements.
 
 ## License
 

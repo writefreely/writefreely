@@ -1,10 +1,16 @@
 {{define "head"}}<title>About {{.SiteName}}</title>
+<meta name="description" content="{{.PlainContent}}">
 {{end}}
 {{define "content"}}
 	<div class="content-container snug">
 		<h1>About {{.SiteName}}</h1>
 
 		{{.Content}}
+
+		{{if .Federation}}
+			<hr style="margin:1.5em 0;" />
+			<p><em>{{.SiteName}}</em> is home to <strong>{{largeNumFmt .AboutStats.NumPosts}}</strong> {{pluralize "article" "articles" .AboutStats.NumPosts}} across <strong>{{largeNumFmt .AboutStats.NumBlogs}}</strong> {{pluralize "blog" "blogs" .AboutStats.NumBlogs}}.</p>
+		{{end}}
 
 		<h2 style="margin-top:2em">About WriteFreely</h2>
 		<p><a href="https://writefreely.org">WriteFreely</a> is a self-hosted, decentralized blogging platform for publishing beautiful, simple blogs.</p>

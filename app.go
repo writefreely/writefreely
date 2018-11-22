@@ -20,6 +20,7 @@ import (
 	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
 	"github.com/manifoldco/promptui"
+	"github.com/writeas/go-strip-markdown"
 	"github.com/writeas/web-core/converter"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
@@ -97,8 +98,11 @@ func handleViewHome(app *app, w http.ResponseWriter, r *http.Request) error {
 func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *template.Template) error {
 	p := struct {
 		page.StaticPage
-		Content template.HTML
-		Updated string
+		Content      template.HTML
+		PlainContent string
+		Updated      string
+
+		AboutStats *InstanceStats
 	}{
 		StaticPage: pageForReq(app, r),
 	}
@@ -109,6 +113,11 @@ func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *te
 
 		if r.URL.Path == "/about" {
 			c, err = getAboutPage(app)
+
+			// Fetch stats
+			p.AboutStats = &InstanceStats{}
+			p.AboutStats.NumPosts, _ = app.db.GetTotalPosts()
+			p.AboutStats.NumBlogs, _ = app.db.GetTotalCollections()
 		} else {
 			c, updated, err = getPrivacyPage(app)
 		}
@@ -117,6 +126,7 @@ func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *te
 			return err
 		}
 		p.Content = template.HTML(applyMarkdown([]byte(c)))
+		p.PlainContent = shortPostDescription(stripmd.Strip(c))
 		if updated != nil {
 			p.Updated = updated.Format("January 2, 2006")
 		}
@@ -357,7 +367,7 @@ func Serve() {
 		app.cfg.Database.Host = "localhost"
 	}
 	if app.cfg.Database.Database == "" {
-		app.cfg.Database.Database = "writeas"
+		app.cfg.Database.Database = "writefreely"
 	}
 
 	connectToDatabase(app)
@@ -391,11 +401,26 @@ func Serve() {
 		os.Exit(0)
 	}()
 
-	// Start web application server
 	http.Handle("/", r)
-	log.Info("Serving on http://localhost:%d\n", app.cfg.Server.Port)
-	log.Info("---")
-	err = http.ListenAndServe(fmt.Sprintf(":%d", app.cfg.Server.Port), nil)
+
+	// Start web application server
+	if app.cfg.IsSecureStandalone() {
+		log.Info("Serving redirects on http://localhost:80")
+		go func() {
+			err = http.ListenAndServe(":80", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, app.cfg.App.Host, http.StatusMovedPermanently)
+			}))
+			log.Error("Unable to start redirect server: %v", err)
+		}()
+
+		log.Info("Serving on https://localhost:443")
+		log.Info("---")
+		err = http.ListenAndServeTLS(":443", app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, nil)
+	} else {
+		log.Info("Serving on http://localhost:%d\n", app.cfg.Server.Port)
+		log.Info("---")
+		err = http.ListenAndServe(fmt.Sprintf(":%d", app.cfg.Server.Port), nil)
+	}
 	if err != nil {
 		log.Error("Unable to start: %v", err)
 		os.Exit(1)
@@ -403,8 +428,13 @@ func Serve() {
 }
 
 func connectToDatabase(app *app) {
-	log.Info("Connecting to database...")
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String())))
+	if app.cfg.Database.Type != "mysql" {
+		log.Error("Invalid database type '%s'. Only 'mysql' is supported right now.", app.cfg.Database.Type)
+		os.Exit(1)
+	}
+
+	log.Info("Connecting to %s database...", app.cfg.Database.Type)
+	db, err := sql.Open(app.cfg.Database.Type, fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String())))
 	if err != nil {
 		log.Error("%s", err)
 		os.Exit(1)

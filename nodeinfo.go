@@ -57,12 +57,14 @@ func (r nodeInfoResolver) IsOpenRegistration() (bool, error) {
 }
 
 func (r nodeInfoResolver) Usage() (nodeinfo.Usage, error) {
-	var collCount, postCount, activeHalfYear, activeMonth int
-	err := r.db.QueryRow(`SELECT COUNT(*) FROM collections`).Scan(&collCount)
+	var collCount, postCount int64
+	var activeHalfYear, activeMonth int
+	var err error
+	collCount, err = r.db.GetTotalCollections()
 	if err != nil {
 		collCount = 0
 	}
-	err = r.db.QueryRow(`SELECT COUNT(*) FROM posts`).Scan(&postCount)
+	postCount, err = r.db.GetTotalPosts()
 	if err != nil {
 		log.Error("Unable to fetch post counts: %v", err)
 	}
@@ -88,10 +90,10 @@ WHERE collection_id IS NOT NULL
 
 	return nodeinfo.Usage{
 		Users: nodeinfo.UsageUsers{
-			Total:          collCount,
+			Total:          int(collCount),
 			ActiveHalfYear: activeHalfYear,
 			ActiveMonth:    activeMonth,
 		},
-		LocalPosts: postCount,
+		LocalPosts: int(postCount),
 	}, nil
 }

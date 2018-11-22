@@ -47,17 +47,80 @@ func Configure() (*SetupData, error) {
 		Selected: fmt.Sprintf(`{{.Label}} {{ . | faint }}`),
 	}
 
-	prompt := promptui.Prompt{
-		Templates: tmpls,
-		Label:     "Local port",
-		Validate:  validatePort,
-		Default:   fmt.Sprintf("%d", data.Config.Server.Port),
+	// Environment selection
+	selPrompt := promptui.Select{
+		Templates: selTmpls,
+		Label:     "Environment",
+		Items:     []string{"Development", "Production, standalone", "Production, behind reverse proxy"},
 	}
-	port, err := prompt.Run()
+	_, envType, err := selPrompt.Run()
 	if err != nil {
 		return data, err
 	}
-	data.Config.Server.Port, _ = strconv.Atoi(port) // Ignore error, as we've already validated number
+	isDevEnv := envType == "Development"
+	isStandalone := envType == "Production, standalone"
+
+	data.Config.Server.Dev = isDevEnv
+
+	var prompt promptui.Prompt
+	if isDevEnv || !isStandalone {
+		// Running in dev environment or behind reverse proxy; ask for port
+		prompt = promptui.Prompt{
+			Templates: tmpls,
+			Label:     "Local port",
+			Validate:  validatePort,
+			Default:   fmt.Sprintf("%d", data.Config.Server.Port),
+		}
+		port, err := prompt.Run()
+		if err != nil {
+			return data, err
+		}
+		data.Config.Server.Port, _ = strconv.Atoi(port) // Ignore error, as we've already validated number
+	}
+
+	if isStandalone {
+		selPrompt = promptui.Select{
+			Templates: selTmpls,
+			Label:     "Web server mode",
+			Items:     []string{"Insecure (port 80)", "Secure (port 443)"},
+		}
+		sel, _, err := selPrompt.Run()
+		if err != nil {
+			return data, err
+		}
+		if sel == 0 {
+			data.Config.Server.Port = 80
+			data.Config.Server.TLSCertPath = ""
+			data.Config.Server.TLSKeyPath = ""
+		} else if sel == 1 {
+			data.Config.Server.Port = 443
+
+			prompt = promptui.Prompt{
+				Templates: tmpls,
+				Label:     "Certificate path",
+				Validate:  validateNonEmpty,
+				Default:   data.Config.Server.TLSCertPath,
+			}
+			data.Config.Server.TLSCertPath, err = prompt.Run()
+			if err != nil {
+				return data, err
+			}
+
+			prompt = promptui.Prompt{
+				Templates: tmpls,
+				Label:     "Key path",
+				Validate:  validateNonEmpty,
+				Default:   data.Config.Server.TLSKeyPath,
+			}
+			data.Config.Server.TLSKeyPath, err = prompt.Run()
+			if err != nil {
+				return data, err
+			}
+		}
+	} else {
+		data.Config.Server.TLSCertPath = ""
+		data.Config.Server.TLSKeyPath = ""
+	}
 
 	fmt.Println()
 	title(" Database setup ")
@@ -124,7 +187,7 @@ func Configure() (*SetupData, error) {
 	title(" App setup ")
 	fmt.Println()
 
-	selPrompt := promptui.Select{
+	selPrompt = promptui.Select{
 		Templates: selTmpls,
 		Label:     "Site type",
 		Items:     []string{"Single user blog", "Multi-user instance"},

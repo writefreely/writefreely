@@ -13,6 +13,9 @@ type (
 		HiddenHost string `ini:"hidden_host"`
 		Port       int    `ini:"port"`
 
+		TLSCertPath string `ini:"tls_cert_path"`
+		TLSKeyPath  string `ini:"tls_key_path"`
+
 		Dev bool `ini:"-"`
 	}
 
@@ -74,6 +77,10 @@ func New() *Config {
 			PublicStats:    true,
 		},
 	}
+}
+
+func (cfg *Config) IsSecureStandalone() bool {
+	return cfg.Server.Port == 443 && cfg.Server.TLSCertPath != "" && cfg.Server.TLSKeyPath != ""
 }
 
 func Load() (*Config, error) {
