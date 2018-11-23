@@ -1,0 +1,50 @@
+<!-- Miscelaneous render related template parts we use multiple times -->
+{{define "highlighting"}}
+<script>
+  // TODO: this feels more like a mutation observer
+  addEventListener('DOMContentLoaded', function () {
+    var hlbaseUri = "//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/";
+    var x = document.querySelectorAll("code[class^='language-']");
+    if (x.length > 0) {
+      // We have blocks to be highlighted, so we load css + js
+      var st = document.createElement('link');
+      st.rel = "stylesheet";
+      st.href = hlbaseUri + "styles/atom-one-light.min.css";
+      document.getElementsByTagName('head')[0].appendChild(st);
+
+      var sc = document.createElement('script');
+      sc.type = "text/javascript";
+      sc.src = hlbaseUri + "highlight.min.js";
+      sc.async = true;
+
+      // Here's the crux, we need to react on load event for this new element to make it work.
+      sc.onload = () => { highlight(x) }
+      document.getElementsByTagName('head')[0].appendChild(sc);
+
+      // Given a set of nodes, run highlighting on them
+      function highlight(nodes) {
+        for (i=0; i < nodes.length; i++) {
+          hljs.highlightBlock(nodes[i]);
+        }
+      }
+    }
+  });
+</script>
+{{end}}
+
+<!-- Include mathjax configuration -->
+{{define "mathjax"}}
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { fonts: ["TeX"] }
+  });
+</script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+{{end}}

@@ -49,21 +49,19 @@ func initTemplate(name string) {
 		log.Info("  %s%s%s.tmpl", templatesDir, string(filepath.Separator), name)
 	}
 
+	files := []string{
+		filepath.Join(templatesDir, name+".tmpl"),
+		filepath.Join(templatesDir, "include", "footer.tmpl"),
+		filepath.Join(templatesDir, "base.tmpl"),
+	}
 	if name == "collection" || name == "collection-tags" {
 		// These pages list out collection posts, so we also parse templatesDir + "include/posts.tmpl"
-		templates[name] = template.Must(template.New("").Funcs(funcMap).ParseFiles(
-			filepath.Join(templatesDir, name+".tmpl"),
-			filepath.Join(templatesDir, "include", "posts.tmpl"),
-			filepath.Join(templatesDir, "include", "footer.tmpl"),
-			filepath.Join(templatesDir, "base.tmpl"),
-		))
-	} else {
-		templates[name] = template.Must(template.New("").Funcs(funcMap).ParseFiles(
-			filepath.Join(templatesDir, name+".tmpl"),
-			filepath.Join(templatesDir, "include", "footer.tmpl"),
-			filepath.Join(templatesDir, "base.tmpl"),
-		))
+		files = append(files, filepath.Join(templatesDir, "include", "posts.tmpl"))
 	}
+	if name == "collection" || name == "collection-tags" || name == "collection-post" || name == "post" {
+		files = append(files, filepath.Join(templatesDir, "include", "post-render.tmpl"))
+	}
+	templates[name] = template.Must(template.New("").Funcs(funcMap).ParseFiles(files...))
 }
 
 func initPage(path, key string) {

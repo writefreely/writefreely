@@ -6,7 +6,7 @@
 		<title>{{if .Title}}{{.Title}}{{else}}{{.GenTitle}}{{end}} &mdash; {{.SiteName}}</title>
 		
 		{{if .IsCode}}
-		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/mono-blue.min.css">
+		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/mono-blue.min.css">
 		{{end}}
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
 		<link rel="shortcut icon" href="/favicon.ico" />
@@ -31,7 +31,8 @@
 		<meta property="og:description" content="{{.Description}}" />
 		<meta property="og:image" content="https://write.as/img/w-sq-light.png">
 		{{if .Author}}<meta property="article:author" content="https://{{.Author}}" />{{end}}
-
+		<!-- Add highlighting logic -->
+		{{template "highlighting" .}}
 	</head>
 	<body id="post">
 
@@ -55,7 +56,7 @@
 	</body>
 	
 	{{if .IsCode}}
-	<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
 	<script>
 	hljs.highlightBlock(document.getElementById('post-body'));
 	</script>
