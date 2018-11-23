@@ -59,7 +59,7 @@ func initTemplate(name string) {
 		files = append(files, filepath.Join(templatesDir, "include", "posts.tmpl"))
 	}
 	if name == "collection" || name == "collection-tags" || name == "collection-post" || name == "post" {
-		files = append(files, filepath.Join(templatesDir, "include", "render.tmpl"))
+		files = append(files, filepath.Join(templatesDir, "include", "post-render.tmpl"))
 	}
 	templates[name] = template.Must(template.New("").Funcs(funcMap).ParseFiles(files...))
 }
