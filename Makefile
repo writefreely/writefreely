@@ -60,6 +60,10 @@ release : clean ui
 	cp cmd/writefreely/$(BINARY_NAME).exe build
 	cd build; zip -r ../$(BINARY_NAME)_$(GITREV)_windows_amd64.zip ./*
 	$(MAKE) build-docker
+	$(MAKE) release-docker
+
+release-docker :
+	$(DOCKERCMD) push $(IMAGE_NAME)
 	
 ui : force_look
 	cd less/; $(MAKE) $(MFLAGS)
