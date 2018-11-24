@@ -7,6 +7,7 @@ GOBUILD=$(GOCMD) build $(LDFLAGS)
 GOTEST=$(GOCMD) test $(LDFLAGS)
 GOGET=$(GOCMD) get
 BINARY_NAME=writefreely
+IMAGE_NAME=writeas/writefreely
 
 all : build
 
@@ -53,7 +54,8 @@ release : clean ui
 	rm build/$(BINARY_NAME)
 	$(MAKE) build-windows
 	cp cmd/writefreely/$(BINARY_NAME).exe build
-	cd build; zip -r ../$(BINARY_NAME)_$(GITREV)_windows_amd64.zip ./*
+	cd build; zip -r ../$(BINARY_NAME)_$(GITREV)_windows_amd64.zip ./*; cd ..
+	docker build -t $(IMAGE_NAME):latest -t $(IMAGE_NAME):$(GITREV) .
 	
 ui : force_look
 	cd less/; $(MAKE) $(MFLAGS)
