@@ -24,6 +24,9 @@ build-windows: deps
 build-darwin: deps
 	cd cmd/writefreely; GOOS=darwin GOARCH=amd64 $(GOBUILD) -v
 
+build-docker :
+	$(DOCKERCMD) build -t $(IMAGE_NAME):latest -t $(IMAGE_NAME):$(GITREV) .
+
 test:
 	$(GOTEST) -v ./...
 
@@ -55,8 +58,8 @@ release : clean ui
 	rm build/$(BINARY_NAME)
 	$(MAKE) build-windows
 	cp cmd/writefreely/$(BINARY_NAME).exe build
-	cd build; zip -r ../$(BINARY_NAME)_$(GITREV)_windows_amd64.zip ./*; cd ..
-	$(DOCKERCMD) build -t $(IMAGE_NAME):latest -t $(IMAGE_NAME):$(GITREV) .
+	cd build; zip -r ../$(BINARY_NAME)_$(GITREV)_windows_amd64.zip ./*
+	$(MAKE) build-docker
 	
 ui : force_look
 	cd less/; $(MAKE) $(MFLAGS)
