@@ -120,8 +120,19 @@ will shut down your environment without destroying your data.
 
 ### Using Docker for Production
 
-Write Freely doesn't yet provide an official Docker pathway to production. We're
-working on it, though!
+A Docker image is available at [`writeas/writefreely`](https://hub.docker.com/r/writeas/writefreely/); you can use it with the included
+[`docker-compose.yml`](https://github.com/writeas/writefreely/blob/master/docker-compose.yml). 
+
+To setup the compose environment, 
+1. Modify a copy of [`config.ini.docker-compose`](https://github.com/writeas/writefreely/blob/master/config.ini.docker-compose) and 
+put it in the same directory as your `docker-compose.yml`. Edit it as appropriate (the database configuration is already setup for the compose file). 
+2. Modify the `docker-compose.yml` file with a secure mysql password. Make the `config.ini.docker-compose` database patchword match. 
+3. Run `docker-compose run --rm web /bin/sh` to get a shell inside a running instance of the web container.
+5. Run `bin/writefreely -init-db` to setup the database.
+6. Run `bin/writefreely -gen-keys` to setup your instance-specific keys. 
+7. Run `exit` to exit and remove the container.
+8. Run `docker-compose up -d` to launch the server. 
+9. Point your browser to http://localhost:8080 (or whatever URL you set up) to test your instance. 
 
 ## Contributing
 

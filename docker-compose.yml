@@ -1,10 +1,10 @@
 version: "3"
 services:
   web:
-    build: .
+    image: "writeas/writefreely"
     volumes:
-      - "web-data:/go/src/app"
-      - "./config.ini.example:/go/src/app/config.ini"
+      - "web-data:/go/keys"
+      - "./config.ini.docker-compose:/go/config.ini"
     ports:
       - "8080:8080"
     networks:
@@ -15,7 +15,6 @@ services:
   db:
     image: "mariadb:latest"
     volumes:
-      - "./schema.sql:/tmp/schema.sql"
       - db-data:/var/lib/mysql/data
     networks:
       - writefreely
