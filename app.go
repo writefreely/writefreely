@@ -409,11 +409,12 @@ func Serve() {
 		bindAddress = "localhost"
 	}
 	if app.cfg.IsSecureStandalone() {
-		log.Info("Serving redirects on http://localhost:80")
+		log.Info("Serving redirects on http://%s:80", bindAddress)
 		go func() {
-			err = http.ListenAndServe(":80", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				http.Redirect(w, r, app.cfg.App.Host, http.StatusMovedPermanently)
-			}))
+			err = http.ListenAndServe(
+				fmt.Sprintf("%s:80", bindAddress), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					http.Redirect(w, r, app.cfg.App.Host, http.StatusMovedPermanently)
+				}))
 			log.Error("Unable to start redirect server: %v", err)
 		}()
 
