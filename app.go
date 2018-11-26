@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -15,6 +14,9 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
@@ -428,19 +430,28 @@ func Serve() {
 }
 
 func connectToDatabase(app *app) {
-	if app.cfg.Database.Type != "mysql" {
-		log.Error("Invalid database type '%s'. Only 'mysql' is supported right now.", app.cfg.Database.Type)
-		os.Exit(1)
-	}
-
 	log.Info("Connecting to %s database...", app.cfg.Database.Type)
-	db, err := sql.Open(app.cfg.Database.Type, fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String())))
-	if err != nil {
-		log.Error("%s", err)
+
+	if app.cfg.Database.Type == "mysql" {
+		db, err := sql.Open(app.cfg.Database.Type, fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String())))
+		if err != nil {
+			log.Error("%s", err)
+			os.Exit(1)
+		}
+		app.db = &datastore{db}
+		app.db.SetMaxOpenConns(50)
+	} else if app.cfg.Database.Type == "sqlite3" {
+		db, err := sql.Open("sqlite3", "./writefreely.db")
+		if err != nil {
+			log.Error("%s", err)
+			os.Exit(1)
+		}
+		app.db = &datastore{db}
+		app.db.SetMaxOpenConns(50)
+	} else {
+		log.Error("Invalid database type '%s'. Only 'mysql' and 'sqlite3' are supported right now.", app.cfg.Database.Type)
 		os.Exit(1)
 	}
-	app.db = &datastore{db}
-	app.db.SetMaxOpenConns(50)
 }
 
 func shutdown(app *app) {
