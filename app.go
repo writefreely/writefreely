@@ -404,22 +404,28 @@ func Serve() {
 	http.Handle("/", r)
 
 	// Start web application server
+	var bindAddress = app.cfg.Server.Bind
+	if bindAddress == "" {
+		bindAddress = "localhost"
+	}
 	if app.cfg.IsSecureStandalone() {
-		log.Info("Serving redirects on http://localhost:80")
+		log.Info("Serving redirects on http://%s:80", bindAddress)
 		go func() {
-			err = http.ListenAndServe(":80", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				http.Redirect(w, r, app.cfg.App.Host, http.StatusMovedPermanently)
-			}))
+			err = http.ListenAndServe(
+				fmt.Sprintf("%s:80", bindAddress), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					http.Redirect(w, r, app.cfg.App.Host, http.StatusMovedPermanently)
+				}))
 			log.Error("Unable to start redirect server: %v", err)
 		}()
 
-		log.Info("Serving on https://localhost:443")
+		log.Info("Serving on https://%s:443", bindAddress)
 		log.Info("---")
-		err = http.ListenAndServeTLS(":443", app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, nil)
+		err = http.ListenAndServeTLS(
+			fmt.Sprintf("%s:443", bindAddress), app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, nil)
 	} else {
-		log.Info("Serving on http://localhost:%d\n", app.cfg.Server.Port)
+		log.Info("Serving on http://%s:%d\n", bindAddress, app.cfg.Server.Port)
 		log.Info("---")
-		err = http.ListenAndServe(fmt.Sprintf(":%d", app.cfg.Server.Port), nil)
+		err = http.ListenAndServe(fmt.Sprintf("%s:%d", bindAddress, app.cfg.Server.Port), nil)
 	}
 	if err != nil {
 		log.Error("Unable to start: %v", err)
