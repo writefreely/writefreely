@@ -418,7 +418,7 @@ func Serve() {
 			log.Error("Unable to start redirect server: %v", err)
 		}()
 
-		log.Info("Serving on %s:443", bindAddress)
+		log.Info("Serving on https://%s:443", bindAddress)
 		log.Info("---")
 		err = http.ListenAndServeTLS(
 			fmt.Sprintf("%s:443", bindAddress), app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, nil)
