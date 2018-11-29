@@ -12,6 +12,7 @@ type (
 	ServerCfg struct {
 		HiddenHost string `ini:"hidden_host"`
 		Port       int    `ini:"port"`
+		Bind       string `ini:"bind"`
 
 		TLSCertPath string `ini:"tls_cert_path"`
 		TLSKeyPath  string `ini:"tls_key_path"`
@@ -60,6 +61,7 @@ func New() *Config {
 	return &Config{
 		Server: ServerCfg{
 			Port: 8080,
+			Bind: "localhost", /* IPV6 support when not using localhost? */
 		},
 		Database: DatabaseCfg{
 			Type: "mysql",

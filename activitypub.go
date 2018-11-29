@@ -254,7 +254,9 @@ func handleFetchCollectionInbox(app *app, w http.ResponseWriter, r *http.Request
 			// 2) Errors are propagated to res.Deserialize call below
 			m["@context"] = []string{activitystreams.Namespace}
 			b, _ := json.Marshal(m)
-			log.Info("Follow: %s", b)
+			if debugging {
+				log.Info("Follow: %s", b)
+			}
 
 			_, followID := f.GetId()
 			if followID == nil {
@@ -287,7 +289,9 @@ func handleFetchCollectionInbox(app *app, w http.ResponseWriter, r *http.Request
 
 			m["@context"] = []string{activitystreams.Namespace}
 			b, _ := json.Marshal(m)
-			log.Info("Undo: %s", b)
+			if debugging {
+				log.Info("Undo: %s", b)
+			}
 
 			a.AppendObject(u.Raw())
 			_, to = u.GetActor(0)
