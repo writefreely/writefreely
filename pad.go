@@ -124,7 +124,12 @@ func handleViewMeta(app *app, w http.ResponseWriter, r *http.Request) error {
 			// TODO: add ErrForbiddenEditPost message to flashes
 			return impart.HTTPError{http.StatusFound, r.URL.Path[:strings.LastIndex(r.URL.Path, "/meta")]}
 		}
-		appData.EditCollection, err = app.db.GetCollectionForPad(collAlias)
+		if app.cfg.App.SingleUser {
+			// TODO: optimize this query just like we do in GetCollectionForPad (?)
+			appData.EditCollection, err = app.db.GetCollectionByID(1)
+		} else {
+			appData.EditCollection, err = app.db.GetCollectionForPad(collAlias)
+		}
 		if err != nil {
 			return err
 		}
