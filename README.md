@@ -67,6 +67,12 @@ Now extract the files from the archive, change into the directory, and do the fo
 
 For running in production, [see our guide](https://writefreely.org/start#production).
 
+## Packages
+
+WriteFreely is available in these package repositories:
+
+* [Arch User Repository](https://aur.archlinux.org/packages/writefreely/)
+
 ## Development
 
 Ready to hack on your site? Here's a quick overview.
