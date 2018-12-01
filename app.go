@@ -256,9 +256,15 @@ func Serve() {
 		connectToDatabase(app)
 		defer shutdown(app)
 
-		schema, err := ioutil.ReadFile("schema.sql")
+		schemaFileName := "schema.sql"
+
+		if cfg.Database.Type == "sqlite3" {
+			schemaFileName = "sqlite.sql"
+		}
+
+		schema, err := ioutil.ReadFile(schemaFileName)
 		if err != nil {
-			log.Error("Unable to load schema.sql: %v", err)
+			log.Error("Unable to load schema file: %v", err)
 			os.Exit(1)
 		}
 
@@ -438,15 +444,15 @@ func connectToDatabase(app *app) {
 			log.Error("%s", err)
 			os.Exit(1)
 		}
-		app.db = &datastore{db}
+		app.db = &datastore{db, "mysql"}
 		app.db.SetMaxOpenConns(50)
 	} else if app.cfg.Database.Type == "sqlite3" {
-		db, err := sql.Open("sqlite3", "./writefreely.db")
+		db, err := sql.Open("sqlite3", "./writefreely.db?parseTime=true")
 		if err != nil {
 			log.Error("%s", err)
 			os.Exit(1)
 		}
-		app.db = &datastore{db}
+		app.db = &datastore{db, "sqlite3"}
 		app.db.SetMaxOpenConns(50)
 	} else {
 		log.Error("Invalid database type '%s'. Only 'mysql' and 'sqlite3' are supported right now.", app.cfg.Database.Type)

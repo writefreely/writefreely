@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS `accesstokens` (
   `user_id` int(6) NOT NULL,
   `sudo` tinyint(1) NOT NULL DEFAULT '0',
   `one_time` tinyint(1) NOT NULL DEFAULT '0',
-  `created` datetime NOT NULL,
+  `created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `expires` datetime DEFAULT NULL,
   `user_agent` varchar(255) NOT NULL,
   PRIMARY KEY (`token`)
@@ -197,7 +197,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `username` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `password` char(60) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
   `email` varbinary(255) DEFAULT NULL,
-  `created` datetime NOT NULL,
+  `created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

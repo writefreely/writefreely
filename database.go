@@ -100,6 +100,7 @@ type writestore interface {
 
 type datastore struct {
 	*sql.DB
+	driverName string
 }
 
 func (db *datastore) CreateUser(u *User, collectionTitle string) error {
@@ -115,7 +116,7 @@ func (db *datastore) CreateUser(u *User, collectionTitle string) error {
 
 	// 1. Add to `users` table
 	// NOTE: Assumes User's Password is already hashed!
-	res, err := t.Exec("INSERT INTO users (username, password, email, created) VALUES (?, ?, ?, NOW())", u.Username, u.HashedPass, u.Email)
+	res, err := t.Exec("INSERT INTO users (username, password, email) VALUES (?, ?, ?)", u.Username, u.HashedPass, u.Email)
 	if err != nil {
 		t.Rollback()
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
@@ -478,7 +479,7 @@ func (db *datastore) GetTemporaryOneTimeAccessToken(userID int64, validSecs int,
 		expirationVal = fmt.Sprintf("DATE_ADD(NOW(), INTERVAL %d SECOND)", validSecs)
 	}
 
-	_, err = db.Exec("INSERT INTO accesstokens (token, user_id, created, one_time, expires) VALUES (?, ?, NOW(), ?, "+expirationVal+")", string(binTok), userID, oneTime)
+	_, err = db.Exec("INSERT INTO accesstokens (token, user_id, one_time, expires) VALUES (?, ?, ?, "+expirationVal+")", string(binTok), userID, oneTime)
 	if err != nil {
 		log.Error("Couldn't INSERT accesstoken: %v", err)
 		return "", err
@@ -571,7 +572,12 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 		}
 	}
 
-	stmt, err := db.Prepare("INSERT INTO posts (id, slug, title, content, text_appearance, language, rtl, privacy, owner_id, collection_id, created, updated, view_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)")
+	timeFunction := "NOW()"
+	if db.driverName == "sqlite3" {
+		timeFunction = "strftime('%Y-%m-%d %H-%M-%S','now')"
+	}
+
+	stmt, err := db.Prepare("INSERT INTO posts (id, slug, title, content, text_appearance, language, rtl, privacy, owner_id, collection_id, created, updated, view_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, " + timeFunction + ", ?)")
 	if err != nil {
 		return nil, err
 	}
@@ -668,7 +674,13 @@ func (db *datastore) UpdateOwnedPost(post *AuthenticatedPost, userID int64) erro
 		return ErrPostNoUpdatableVals
 	}
 
-	queryUpdates += sep + "updated = NOW()"
+	timeFunction := "NOW()"
+
+	if db.driverName == "sqlite3" {
+		timeFunction = "strftime('%Y-%m-%d %H-%M-%S','now')"
+	}
+
+	queryUpdates += sep + "updated = " + timeFunction
 
 	res, err := db.Exec("UPDATE posts SET "+queryUpdates+" WHERE id = ? AND "+authCondition, params...)
 	if err != nil {
@@ -984,6 +996,10 @@ func (db *datastore) GetPostsCount(c *CollectionObj, includeFuture bool) {
 	timeCondition := ""
 	if !includeFuture {
 		timeCondition = "AND created <= NOW()"
+
+		if db.driverName == "sqlite3" {
+			timeCondition = "AND created <= strftime('%Y-%m-%d %H-%M-%S','now')"
+		}
 	}
 	err := db.QueryRow("SELECT COUNT(*) FROM posts WHERE collection_id = ? AND pinned_position IS NULL "+timeCondition, c.ID).Scan(&count)
 	switch {
@@ -1023,6 +1039,10 @@ func (db *datastore) GetPosts(c *Collection, page int, includeFuture, forceRecen
 	timeCondition := ""
 	if !includeFuture {
 		timeCondition = "AND created <= NOW()"
+
+		if db.driverName == "sqlite3" {
+			timeCondition = "AND created <= strftime('%Y-%m-%d %H-%M-%S','now')"
+		}
 	}
 	rows, err := db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND pinned_position IS NULL "+timeCondition+" ORDER BY created "+order+limitStr, collID)
 	if err != nil {
@@ -1080,6 +1100,10 @@ func (db *datastore) GetPostsTagged(c *Collection, tag string, page int, include
 	timeCondition := ""
 	if !includeFuture {
 		timeCondition = "AND created <= NOW()"
+
+		if db.driverName == "sqlite3" {
+			timeCondition = "AND created <= strftime('%Y-%m-%d %H-%M-%S','now')"
+		}
 	}
 	rows, err := db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND LOWER(content) RLIKE ? "+timeCondition+" ORDER BY created "+order+limitStr, collID, "#"+strings.ToLower(tag)+"[[:>:]]")
 	if err != nil {
@@ -1455,7 +1479,11 @@ func (db *datastore) GetLastPinnedPostPos(collID int64) int64 {
 }
 
 func (db *datastore) GetPinnedPosts(coll *CollectionObj) (*[]PublicPost, error) {
-	rows, err := db.Query("SELECT id, slug, title, LEFT(content, 80), pinned_position FROM posts WHERE collection_id = ? AND pinned_position IS NOT NULL ORDER BY pinned_position ASC", coll.ID)
+	clipFunction := "LEFT"
+	if db.driverName == "sqlite3" {
+		clipFunction = "SUBSTR"
+	}
+	rows, err := db.Query("SELECT id, slug, title, "+clipFunction+"(content, 80), pinned_position FROM posts WHERE collection_id = ? AND pinned_position IS NOT NULL ORDER BY pinned_position ASC", coll.ID)
 	if err != nil {
 		log.Error("Failed selecting pinned posts: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve pinned posts."}
@@ -2141,7 +2169,13 @@ func (db *datastore) GetDynamicContent(id string) (string, *time.Time, error) {
 }
 
 func (db *datastore) UpdateDynamicContent(id, content string) error {
-	_, err := db.Exec("INSERT INTO appcontent (id, content, updated) VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE content = ?, updated = NOW()", id, content, content)
+	timeFunction := "NOW()"
+
+	if db.driverName == "sqlite3" {
+		timeFunction = "strftime('%Y-%m-%d %H-%M-%S','now')"
+	}
+
+	_, err := db.Exec("INSERT INTO appcontent (id, content, updated) VALUES (?, ?, "+timeFunction+") ON DUPLICATE KEY UPDATE content = ?, updated = "+timeFunction, id, content, content)
 	if err != nil {
 		log.Error("Unable to INSERT appcontent for '%s': %v", id, err)
 	}
