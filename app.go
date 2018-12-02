@@ -438,26 +438,22 @@ func Serve() {
 func connectToDatabase(app *app) {
 	log.Info("Connecting to %s database...", app.cfg.Database.Type)
 
+	var db *sql.DB
+	var err error
 	if app.cfg.Database.Type == "mysql" {
-		db, err := sql.Open(app.cfg.Database.Type, fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String())))
-		if err != nil {
-			log.Error("%s", err)
-			os.Exit(1)
-		}
-		app.db = &datastore{db, "mysql"}
-		app.db.SetMaxOpenConns(50)
+		db, err = sql.Open(app.cfg.Database.Type, fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String())))
 	} else if app.cfg.Database.Type == "sqlite3" {
-		db, err := sql.Open("sqlite3", "./writefreely.db?parseTime=true")
-		if err != nil {
-			log.Error("%s", err)
-			os.Exit(1)
-		}
-		app.db = &datastore{db, "sqlite3"}
-		app.db.SetMaxOpenConns(50)
+		db, err = sql.Open("sqlite3", "./writefreely.db?parseTime=true")
 	} else {
 		log.Error("Invalid database type '%s'. Only 'mysql' and 'sqlite3' are supported right now.", app.cfg.Database.Type)
 		os.Exit(1)
 	}
+	if err != nil {
+		log.Error("%s", err)
+		os.Exit(1)
+	}
+	app.db = &datastore{db, app.cfg.Database.Type}
+	app.db.SetMaxOpenConns(50)
 }
 
 func shutdown(app *app) {
