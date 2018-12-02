@@ -48,6 +48,7 @@ release : clean ui
 	cp -r static build
 	mkdir build/keys
 	cp schema.sql build
+	cp sqlite.sql build
 	$(MAKE) build-linux
 	cp cmd/writefreely/$(BINARY_NAME) build
 	cd build; tar -cvzf ../$(BINARY_NAME)_$(GITREV)_linux_amd64.tar.gz *
