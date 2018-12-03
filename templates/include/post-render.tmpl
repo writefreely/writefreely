@@ -3,30 +3,55 @@
 <script>
   // TODO: this feels more like a mutation observer
   addEventListener('DOMContentLoaded', function () {
-    var hlbaseUri = "//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/";
-    var x = document.querySelectorAll("code[class^='language-']");
-    if (x.length > 0) {
-      // We have blocks to be highlighted, so we load css + js
+    var hlbaseUri = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/";
+    var lb = document.querySelectorAll("code[class^='language-']");
+
+    // Set langs to the langs that are included by default (for now: 'common set' on CDN)
+    var langs = ["apache", "bash", "coffeescript", "cpp", "cs", "css", "diff",
+                 "http", "ini", "java", "javascript", "json", "makefile", "xml",
+                 "markdown", "nginx", "objectivec", "perl", "php", "properties",
+                 "python", "ruby", "shell", "sql"];
+
+    // Given a set of nodes, run highlighting on them
+    function highlight(nodes) {
+      for (i=0; i < nodes.length; i++) {
+          hljs.highlightBlock(nodes[i]);
+      }
+    }
+
+    // Given a array of URIs, load them in order
+    function loadLanguages(uris, callback) {
+      uris.forEach(function(uri) {
+        var sc = document.createElement('script');
+        sc.src = uri;
+        sc.async = false; // critical?
+        if (uris.indexOf(uri) == uris.length-1) {
+          sc.onload = callback;
+        }
+        document.head.appendChild(sc);
+      });
+    }
+
+    // We don't have to do anything if there are no language blocks
+    if (lb.length > 0) {
+      // We have blocks to be highlighted, so we load css
       var st = document.createElement('link');
       st.rel = "stylesheet";
       st.href = hlbaseUri + "styles/atom-one-light.min.css";
-      document.getElementsByTagName('head')[0].appendChild(st);
+      document.head.appendChild(st);
 
-      var sc = document.createElement('script');
-      sc.type = "text/javascript";
-      sc.src = hlbaseUri + "highlight.min.js";
-      sc.async = true;
-
-      // Here's the crux, we need to react on load event for this new element to make it work.
-      sc.onload = () => { highlight(x) }
-      document.getElementsByTagName('head')[0].appendChild(sc);
-
-      // Given a set of nodes, run highlighting on them
-      function highlight(nodes) {
-        for (i=0; i < nodes.length; i++) {
-          hljs.highlightBlock(nodes[i]);
+      // Construct set of files to load, in order
+      var jss = [hlbaseUri + "highlight.min.js"];
+      // Check what we need to load
+      for (i=0; i < lb.length; i++) {
+        lang = lb[i].className.replace('language-','');
+        lurl = hlbaseUri + "languages/" + lang + ".min.js";
+        if (!(langs.includes(lang) || jss.includes(lurl))) {
+          jss.push(lurl);
         }
       }
+      // Load files in order, higlight on last load
+      loadLanguages(jss, () => {highlight(lb)});
     }
   });
 </script>
