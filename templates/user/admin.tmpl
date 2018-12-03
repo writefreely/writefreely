@@ -29,6 +29,9 @@ form dt {
 	-webkit-tap-highlight-color: transparent;
 	font-size: 1rem;
 }
+.invisible {
+	display: none;
+}
 </style>
 
 <script>
@@ -90,22 +93,20 @@ function savePage(el) {
 	<form action="/admin/update/config" method="post">
 	<div class="ui attached table segment">
 		<dl class="dl-horizontal admin-dl-horizontal">
-			<dt>Site Name</dt>
-			<dd><input type="text" name="site_name" id="site_name" class="inline" value="{{.Config.SiteName}}" style="width: 14em;" /></dd>
-			{{if not .SingleUser}}
-			<dt>Site Description</dt>
-			<dd><input type="text" name="site_desc" id="site_desc" class="inline" value="{{.Config.SiteDesc}}" style="width: 14em;" /></dd>
-			{{end}}
+			<dt{{if .Config.SingleUser}} class="invisible"{{end}}>Site Name</dt>
+			<dd{{if .Config.SingleUser}} class="invisible"{{end}}><input type="text" name="site_name" id="site_name" class="inline" value="{{.Config.SiteName}}" style="width: 14em;" /></dd>
+			<dt{{if .Config.SingleUser}} class="invisible"{{end}}>Site Description</dt>
+			<dd{{if .Config.SingleUser}} class="invisible"{{end}}><input type="text" name="site_desc" id="site_desc" class="inline" value="{{.Config.SiteDesc}}" style="width: 14em;" /></dd>
 			<dt>Host</dt>
 			<dd>{{.Config.Host}}</dd>
 			<dt>User Mode</dt>
 			<dd>{{if .Config.SingleUser}}Single user{{else}}Multiple users{{end}}</dd>
-			<dt><label for="open_registration">Open Registrations</label></dt>
-			<dd><input type="checkbox" name="open_registration" id="open_registration" {{if .Config.OpenRegistration}}checked="checked"{{end}} /></dd>
+			<dt{{if .Config.SingleUser}} class="invisible"{{end}}><label for="open_registration">Open Registrations</label></dt>
+			<dd{{if .Config.SingleUser}} class="invisible"{{end}}><input type="checkbox" name="open_registration" id="open_registration" {{if .Config.OpenRegistration}}checked="checked"{{end}} /></dd>
 			<dt><label for="min_username_len">Minimum Username Length</label></dt>
 			<dd><input type="number" name="min_username_len" id="min_username_len" class="inline" min="1" max="100" value="{{.Config.MinUsernameLen}}" /></dd>
-			<dt><label for="max_blogs">Maximum Blogs per User</label></dt>
-			<dd><input type="number" name="max_blogs" id="max_blogs" class="inline" min="1" value="{{.Config.MaxBlogs}}" /></dd>
+			<dt{{if .Config.SingleUser}} class="invisible"{{end}}><label for="max_blogs">Maximum Blogs per User</label></dt>
+			<dd{{if .Config.SingleUser}} class="invisible"{{end}}><input type="number" name="max_blogs" id="max_blogs" class="inline" min="1" value="{{.Config.MaxBlogs}}" /></dd>
 			<dt><label for="federation">Federation</label></dt>
 			<dd><input type="checkbox" name="federation" id="federation" {{if .Config.Federation}}checked="checked"{{end}} /></dd>
 			<dt><label for="public_stats">Public Stats</label></dt>
