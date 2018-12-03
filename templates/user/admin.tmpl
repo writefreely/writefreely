@@ -60,14 +60,14 @@ function savePage(el) {
 	<h2>Site</h2>
 
 	<h3 id="page-about">About page</h3>
-	<p>Describe what your instance is <a href="/about">about</a>. <em>Accepts Markdown</em>.</p>
+	<p>Describe what your instance is <a href="/about" target="page">about</a>. <em>Accepts Markdown</em>.</p>
 	<form method="post" action="/admin/update/about" onsubmit="savePage(this)">
 		<textarea id="about-editor" class="section codable norm edit-page" name="content">{{.AboutPage}}</textarea>
 		<input type="submit" value="Save" />
 	</form>
 
 	<h3 id="page-privacy">Privacy page</h3>
-	<p>Outline your <a href="/privacy">privacy policy</a>. <em>Accepts Markdown</em>.</p>
+	<p>Outline your <a href="/privacy" target="page">privacy policy</a>. <em>Accepts Markdown</em>.</p>
 	<form method="post" action="/admin/update/privacy" onsubmit="savePage(this)">
 		<textarea id="privacy-editor" class="section codable norm edit-page" name="content">{{.PrivacyPage}}</textarea>
 		<input type="submit" value="Save" />
