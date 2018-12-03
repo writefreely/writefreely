@@ -14,7 +14,10 @@ type nodeInfoResolver struct {
 
 func nodeInfoConfig(db *datastore, cfg *config.Config) *nodeinfo.Config {
 	name := cfg.App.SiteName
-	desc := "Minimal, federated blogging platform."
+	desc := cfg.App.SiteDesc
+	if desc == "" {
+		desc = "Minimal, federated blogging platform."
+	}
 	if cfg.App.SingleUser {
 		// Fetch blog information, instead
 		coll, err := db.GetCollectionByID(1)

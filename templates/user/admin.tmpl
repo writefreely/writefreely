@@ -92,6 +92,10 @@ function savePage(el) {
 		<dl class="dl-horizontal admin-dl-horizontal">
 			<dt>Site Name</dt>
 			<dd><input type="text" name="site_name" id="site_name" class="inline" value="{{.Config.SiteName}}" style="width: 14em;" /></dd>
+			{{if not .SingleUser}}
+			<dt>Site Description</dt>
+			<dd><input type="text" name="site_desc" id="site_desc" class="inline" value="{{.Config.SiteDesc}}" style="width: 14em;" /></dd>
+			{{end}}
 			<dt>Host</dt>
 			<dd>{{.Config.Host}}</dd>
 			<dt>User Mode</dt>

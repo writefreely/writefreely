@@ -31,6 +31,7 @@ type (
 
 	AppCfg struct {
 		SiteName string `ini:"site_name"`
+		SiteDesc string `ini:"site_description"`
 		Host     string `ini:"host"`
 
 		// Site appearance
