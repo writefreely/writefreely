@@ -183,6 +183,10 @@ function savePage(el) {
 	</div>
 </div>
 
+<script>
+history.replaceState(null, "", "/admin"+window.location.hash);
+</script>
+
 {{template "footer" .}}
 
 {{template "body-end" .}}
