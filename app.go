@@ -442,8 +442,10 @@ func connectToDatabase(app *app) {
 	var err error
 	if app.cfg.Database.Type == "mysql" {
 		db, err = sql.Open(app.cfg.Database.Type, fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String())))
+		db.SetMaxOpenConns(50)
 	} else if app.cfg.Database.Type == "sqlite3" {
-		db, err = sql.Open("sqlite3", "./writefreely.db?parseTime=true")
+		db, err = sql.Open("sqlite3", "./writefreely.db?parseTime=true&cached=shared")
+		db.SetMaxOpenConns(1)
 	} else {
 		log.Error("Invalid database type '%s'. Only 'mysql' and 'sqlite3' are supported right now.", app.cfg.Database.Type)
 		os.Exit(1)
@@ -453,7 +455,6 @@ func connectToDatabase(app *app) {
 		os.Exit(1)
 	}
 	app.db = &datastore{db, app.cfg.Database.Type}
-	app.db.SetMaxOpenConns(50)
 }
 
 func shutdown(app *app) {
