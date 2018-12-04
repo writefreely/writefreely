@@ -21,7 +21,7 @@ var (
 	endBlockReg     = regexp.MustCompile("</([a-z]+)>\n</(ul|ol|blockquote)>")
 	youtubeReg      = regexp.MustCompile("(https?://www.youtube.com/embed/[a-zA-Z0-9\\-_]+)(\\?[^\t\n\f\r \"']+)?")
 	titleElementReg = regexp.MustCompile("</?h[1-6]>")
-	hashtagReg      = regexp.MustCompile(` #([\p{L}\p{M}\d]+)`)
+	hashtagReg      = regexp.MustCompile(`(?m)(^| )#([\p{L}\p{M}\d]+)`)
 	markeddownReg   = regexp.MustCompile("<p>(.+)</p>")
 )
 
@@ -36,7 +36,7 @@ func (p *Post) formatContent(c *Collection, isOwner bool) {
 		// URL, so we rely on p.Tags as the final word on whether or not to link
 		// a tag.
 		for _, t := range p.Tags {
-			if string(b) == " #"+t {
+			if strings.TrimSpace(string(b)) == "#"+t {
 				return bytes.Replace(b, []byte("#"+t), []byte("<a href=\""+baseURL+"tag:"+t+"\" class=\"hashtag\"><span>#</span><span class=\"p-category\">"+t+"</span></a>"), -1)
 			}
 		}
