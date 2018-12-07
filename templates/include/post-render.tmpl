@@ -3,14 +3,11 @@
 <script>
   // TODO: this feels more like a mutation observer
   addEventListener('DOMContentLoaded', function () {
-    var hlbaseUri = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/";
+    var hlbaseUri = "/js/";
     var lb = document.querySelectorAll("code[class^='language-']");
 
     // Set langs to the langs that are included by default (for now: 'common set' on CDN)
-    var langs = ["apache", "bash", "coffeescript", "cpp", "cs", "css", "diff",
-                 "http", "ini", "java", "javascript", "json", "makefile", "xml",
-                 "markdown", "nginx", "objectivec", "perl", "php", "properties",
-                 "python", "ruby", "shell", "sql"];
+    var langs = [];
 
     // Given a set of nodes, run highlighting on them
     function highlight(nodes) {
@@ -37,7 +34,7 @@
       // We have blocks to be highlighted, so we load css
       var st = document.createElement('link');
       st.rel = "stylesheet";
-      st.href = hlbaseUri + "styles/atom-one-light.min.css";
+      st.href = "/css/lib/atom-one-light.min.css";
       document.head.appendChild(st);
 
       // Construct set of files to load, in order
@@ -45,7 +42,7 @@
       // Check what we need to load
       for (i=0; i < lb.length; i++) {
         lang = lb[i].className.replace('language-','');
-        lurl = hlbaseUri + "languages/" + lang + ".min.js";
+        lurl = hlbaseUri + "highlightjs/" + lang + ".min.js";
         if (!(langs.includes(lang) || jss.includes(lurl))) {
           jss.push(lurl);
         }
