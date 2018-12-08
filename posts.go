@@ -681,7 +681,11 @@ func existingPost(app *app, w http.ResponseWriter, r *http.Request) error {
 	collectionAlias := vars["alias"]
 	redirect := "/" + postID + "/meta"
 	if collectionAlias != "" {
-		redirect = "/" + collectionAlias + "/" + pRes.Slug.String + "/edit/meta"
+		collPre := "/" + collectionAlias
+		if app.cfg.App.SingleUser {
+			collPre = ""
+		}
+		redirect = collPre + "/" + pRes.Slug.String + "/edit/meta"
 	}
 	w.Header().Set("Location", redirect)
 	w.WriteHeader(http.StatusFound)
@@ -1131,8 +1135,13 @@ func getRawCollectionPost(app *app, slug, collAlias string) *RawPost {
 	var created time.Time
 	var ownerID null.Int
 	var views int64
+	var err error
 
-	err := app.db.QueryRow("SELECT id, title, content, text_appearance, language, rtl, view_count, created, owner_id FROM posts WHERE slug = ? AND collection_id = (SELECT id FROM collections WHERE alias = ?)", slug, collAlias).Scan(&id, &title, &content, &font, &lang, &isRTL, &views, &created, &ownerID)
+	if app.cfg.App.SingleUser {
+		err = app.db.QueryRow("SELECT id, title, content, text_appearance, language, rtl, view_count, created, owner_id FROM posts WHERE slug = ? AND collection_id = 1", slug).Scan(&id, &title, &content, &font, &lang, &isRTL, &views, &created, &ownerID)
+	} else {
+		err = app.db.QueryRow("SELECT id, title, content, text_appearance, language, rtl, view_count, created, owner_id FROM posts WHERE slug = ? AND collection_id = (SELECT id FROM collections WHERE alias = ?)", slug, collAlias).Scan(&id, &title, &content, &font, &lang, &isRTL, &views, &created, &ownerID)
+	}
 	switch {
 	case err == sql.ErrNoRows:
 		return &RawPost{Content: "", Found: false, Gone: false}

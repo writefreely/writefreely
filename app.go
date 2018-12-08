@@ -23,6 +23,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/manifoldco/promptui"
 	"github.com/writeas/go-strip-markdown"
+	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/converter"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
@@ -42,7 +43,7 @@ var (
 	debugging bool
 
 	// Software version can be set from git env using -ldflags
-	softwareVer = "0.4"
+	softwareVer = "0.5.0"
 
 	// DEPRECATED VARS
 	// TODO: pass app.cfg into GetCollection* calls so we can get these values
@@ -180,6 +181,7 @@ func Serve() {
 	doConfig := flag.Bool("config", false, "Run the configuration process")
 	genKeys := flag.Bool("gen-keys", false, "Generate encryption and authentication keys")
 	createSchema := flag.Bool("init-db", false, "Initialize app database")
+	createAdmin := flag.String("create-admin", "", "Create an admin with the given username:password")
 	resetPassUser := flag.String("reset-pass", "", "Reset the given user's password")
 	outputVersion := flag.Bool("v", false, "Output the current version")
 	flag.Parse()
@@ -288,6 +290,54 @@ func Serve() {
 				log.Info("Created.")
 			}
 		}
+		os.Exit(0)
+	} else if *createAdmin != "" {
+		// Create an admin user with --create-admin
+		creds := strings.Split(*createAdmin, ":")
+		if len(creds) != 2 {
+			log.Error("usage: writefreely --create-admin username:password")
+			os.Exit(1)
+		}
+
+		log.Info("Loading configuration...")
+		cfg, err := config.Load()
+		if err != nil {
+			log.Error("Unable to load configuration: %v", err)
+			os.Exit(1)
+		}
+		app.cfg = cfg
+		connectToDatabase(app)
+		defer shutdown(app)
+
+		// Ensure an admin / first user doesn't already exist
+		if u, _ := app.db.GetUserByID(1); u != nil {
+			log.Error("Admin user already exists (%s). Aborting.", u.Username)
+			os.Exit(1)
+		}
+
+		// Create the user
+		username := creds[0]
+		password := creds[1]
+
+		hashedPass, err := auth.HashPass([]byte(password))
+		if err != nil {
+			log.Error("Unable to hash password: %v", err)
+			os.Exit(1)
+		}
+
+		u := &User{
+			Username:   username,
+			HashedPass: hashedPass,
+			Created:    time.Now().Truncate(time.Second).UTC(),
+		}
+
+		log.Info("Creating user %s...\n", u.Username)
+		err = app.db.CreateUser(u, "")
+		if err != nil {
+			log.Error("Unable to create user: %s", err)
+			os.Exit(1)
+		}
+		log.Info("Done!")
 		os.Exit(0)
 	} else if *resetPassUser != "" {
 		// Connect to the database
@@ -412,22 +462,28 @@ func Serve() {
 	http.Handle("/", r)
 
 	// Start web application server
+	var bindAddress = app.cfg.Server.Bind
+	if bindAddress == "" {
+		bindAddress = "localhost"
+	}
 	if app.cfg.IsSecureStandalone() {
-		log.Info("Serving redirects on http://localhost:80")
+		log.Info("Serving redirects on http://%s:80", bindAddress)
 		go func() {
-			err = http.ListenAndServe(":80", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				http.Redirect(w, r, app.cfg.App.Host, http.StatusMovedPermanently)
-			}))
+			err = http.ListenAndServe(
+				fmt.Sprintf("%s:80", bindAddress), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					http.Redirect(w, r, app.cfg.App.Host, http.StatusMovedPermanently)
+				}))
 			log.Error("Unable to start redirect server: %v", err)
 		}()
 
-		log.Info("Serving on https://localhost:443")
+		log.Info("Serving on https://%s:443", bindAddress)
 		log.Info("---")
-		err = http.ListenAndServeTLS(":443", app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, nil)
+		err = http.ListenAndServeTLS(
+			fmt.Sprintf("%s:443", bindAddress), app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, nil)
 	} else {
-		log.Info("Serving on http://localhost:%d\n", app.cfg.Server.Port)
+		log.Info("Serving on http://%s:%d\n", bindAddress, app.cfg.Server.Port)
 		log.Info("---")
-		err = http.ListenAndServe(fmt.Sprintf(":%d", app.cfg.Server.Port), nil)
+		err = http.ListenAndServe(fmt.Sprintf("%s:%d", bindAddress, app.cfg.Server.Port), nil)
 	}
 	if err != nil {
 		log.Error("Unable to start: %v", err)

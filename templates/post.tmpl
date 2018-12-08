@@ -6,7 +6,7 @@
 		<title>{{if .Title}}{{.Title}}{{else}}{{.GenTitle}}{{end}} &mdash; {{.SiteName}}</title>
 		
 		{{if .IsCode}}
-		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/mono-blue.min.css">
+		<link rel="stylesheet" href="/css/lib/mono-blue.min.css">
 		{{end}}
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
 		<link rel="shortcut icon" href="/favicon.ico" />
@@ -56,7 +56,7 @@
 	</body>
 	
 	{{if .IsCode}}
-	<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+	<script src="/js/highlight.min.js"></script>
 	<script>
 	hljs.highlightBlock(document.getElementById('post-body'));
 	</script>

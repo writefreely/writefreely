@@ -6,8 +6,10 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
+	"github.com/writeas/writefreely/config"
 	"net/http"
 	"runtime"
+	"strconv"
 	"time"
 )
 
@@ -61,14 +63,19 @@ func handleViewAdminDash(app *app, u *User, w http.ResponseWriter, r *http.Reque
 	updateAppStats()
 	p := struct {
 		*UserPage
-		Message   string
 		SysStatus systemStatus
+		Config    config.AppCfg
+
+		Message, ConfigMessage string
 
 		AboutPage, PrivacyPage string
 	}{
 		UserPage:  NewUserPage(app, r, u, "Admin", nil),
-		Message:   r.FormValue("m"),
 		SysStatus: sysStatus,
+		Config:    app.cfg.App,
+
+		Message:       r.FormValue("m"),
+		ConfigMessage: r.FormValue("cm"),
 	}
 
 	var err error
@@ -102,6 +109,30 @@ func handleAdminUpdateSite(app *app, u *User, w http.ResponseWriter, r *http.Req
 		m = "?m=" + err.Error()
 	}
 	return impart.HTTPError{http.StatusFound, "/admin" + m + "#page-" + id}
+}
+
+func handleAdminUpdateConfig(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+	app.cfg.App.SiteName = r.FormValue("site_name")
+	app.cfg.App.SiteDesc = r.FormValue("site_desc")
+	app.cfg.App.OpenRegistration = r.FormValue("open_registration") == "on"
+	mul, err := strconv.Atoi(r.FormValue("min_username_len"))
+	if err == nil {
+		app.cfg.App.MinUsernameLen = mul
+	}
+	mb, err := strconv.Atoi(r.FormValue("max_blogs"))
+	if err == nil {
+		app.cfg.App.MaxBlogs = mb
+	}
+	app.cfg.App.Federation = r.FormValue("federation") == "on"
+	app.cfg.App.PublicStats = r.FormValue("public_stats") == "on"
+	app.cfg.App.Private = r.FormValue("private") == "on"
+
+	m := "?cm=Configuration+saved."
+	err = config.Save(app.cfg)
+	if err != nil {
+		m = "?cm=" + err.Error()
+	}
+	return impart.HTTPError{http.StatusFound, "/admin" + m + "#config"}
 }
 
 func updateAppStats() {

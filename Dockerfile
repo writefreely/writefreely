@@ -22,6 +22,7 @@ RUN mkdir /stage && \
 
 FROM alpine:3.8
 
+RUN apk add --no-cache openssl ca-certificates
 COPY --from=build --chown=daemon:daemon /stage /go
 
 WORKDIR /go

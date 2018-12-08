@@ -7,6 +7,9 @@ ul.pagenav {list-style: none;}
 form {
 	margin: 0 0 2em;
 }
+form dt {
+	line-height: inherit;
+}
 .ui.divider:not(.vertical):not(.horizontal) {
 	border-top: 1px solid rgba(34,36,38,.15);
 	border-bottom: 1px solid rgba(255,255,255,.1);
@@ -25,6 +28,9 @@ form {
 	user-select: none;
 	-webkit-tap-highlight-color: transparent;
 	font-size: 1rem;
+}
+.invisible {
+	display: none;
 }
 </style>
 
@@ -47,6 +53,7 @@ function savePage(el) {
 		<li><a href="#page-privacy">Edit Privacy page</a></li>
 		{{end}}
 		<li><a href="#reset-pass">Reset user password</a></li>
+		<li><a href="#config">Configuration</a></li>
 		<li><a href="#monitor">Application monitor</a></li>
 	</ul>
 
@@ -56,14 +63,14 @@ function savePage(el) {
 	<h2>Site</h2>
 
 	<h3 id="page-about">About page</h3>
-	<p>Describe what your instance is <a href="/about">about</a>. <em>Accepts Markdown</em>.</p>
+	<p>Describe what your instance is <a href="/about" target="page">about</a>. <em>Accepts Markdown</em>.</p>
 	<form method="post" action="/admin/update/about" onsubmit="savePage(this)">
 		<textarea id="about-editor" class="section codable norm edit-page" name="content">{{.AboutPage}}</textarea>
 		<input type="submit" value="Save" />
 	</form>
 
 	<h3 id="page-privacy">Privacy page</h3>
-	<p>Outline your <a href="/privacy">privacy policy</a>. <em>Accepts Markdown</em>.</p>
+	<p>Outline your <a href="/privacy" target="page">privacy policy</a>. <em>Accepts Markdown</em>.</p>
 	<form method="post" action="/admin/update/privacy" onsubmit="savePage(this)">
 		<textarea id="privacy-editor" class="section codable norm edit-page" name="content">{{.PrivacyPage}}</textarea>
 		<input type="submit" value="Save" />
@@ -76,6 +83,40 @@ function savePage(el) {
 
 	<h3><a name="reset-pass"></a>reset password</h3>
 	<pre><code>writefreely --reset-pass &lt;username&gt;</code></pre>
+
+	<hr />
+
+	<h2><a name="config"></a>App Configuration</h2>
+
+	{{if .ConfigMessage}}<p class="success" style="text-align: center">{{.ConfigMessage}}</p>{{end}}
+
+	<form action="/admin/update/config" method="post">
+	<div class="ui attached table segment">
+		<dl class="dl-horizontal admin-dl-horizontal">
+			<dt{{if .Config.SingleUser}} class="invisible"{{end}}>Site Name</dt>
+			<dd{{if .Config.SingleUser}} class="invisible"{{end}}><input type="text" name="site_name" id="site_name" class="inline" value="{{.Config.SiteName}}" style="width: 14em;" /></dd>
+			<dt{{if .Config.SingleUser}} class="invisible"{{end}}>Site Description</dt>
+			<dd{{if .Config.SingleUser}} class="invisible"{{end}}><input type="text" name="site_desc" id="site_desc" class="inline" value="{{.Config.SiteDesc}}" style="width: 14em;" /></dd>
+			<dt>Host</dt>
+			<dd>{{.Config.Host}}</dd>
+			<dt>User Mode</dt>
+			<dd>{{if .Config.SingleUser}}Single user{{else}}Multiple users{{end}}</dd>
+			<dt{{if .Config.SingleUser}} class="invisible"{{end}}><label for="open_registration">Open Registrations</label></dt>
+			<dd{{if .Config.SingleUser}} class="invisible"{{end}}><input type="checkbox" name="open_registration" id="open_registration" {{if .Config.OpenRegistration}}checked="checked"{{end}} /></dd>
+			<dt><label for="min_username_len">Minimum Username Length</label></dt>
+			<dd><input type="number" name="min_username_len" id="min_username_len" class="inline" min="1" max="100" value="{{.Config.MinUsernameLen}}" /></dd>
+			<dt{{if .Config.SingleUser}} class="invisible"{{end}}><label for="max_blogs">Maximum Blogs per User</label></dt>
+			<dd{{if .Config.SingleUser}} class="invisible"{{end}}><input type="number" name="max_blogs" id="max_blogs" class="inline" min="1" value="{{.Config.MaxBlogs}}" /></dd>
+			<dt><label for="federation">Federation</label></dt>
+			<dd><input type="checkbox" name="federation" id="federation" {{if .Config.Federation}}checked="checked"{{end}} /></dd>
+			<dt><label for="public_stats">Public Stats</label></dt>
+			<dd><input type="checkbox" name="public_stats" id="public_stats" {{if .Config.PublicStats}}checked="checked"{{end}} /></dd>
+			<dt><label for="private">Private Instance</label></dt>
+			<dd><input type="checkbox" name="private" id="private" {{if .Config.Private}}checked="checked"{{end}} /></dd>
+		</dl>
+		<input type="submit" value="Save Configuration" />
+	</div>
+	</form>
 
 	<hr />
 
@@ -146,6 +187,10 @@ function savePage(el) {
 		</dl>
 	</div>
 </div>
+
+<script>
+history.replaceState(null, "", "/admin"+window.location.hash);
+</script>
 
 {{template "footer" .}}
 
