@@ -128,7 +128,7 @@ func handleAdminUpdateConfig(app *app, u *User, w http.ResponseWriter, r *http.R
 	app.cfg.App.Private = r.FormValue("private") == "on"
 
 	m := "?cm=Configuration+saved."
-	err = config.Save(app.cfg)
+	err = config.Save(app.cfg, app.cfgFile)
 	if err != nil {
 		m = "?cm=" + err.Error()
 	}
