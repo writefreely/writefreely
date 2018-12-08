@@ -22,6 +22,7 @@ type (
 
 	DatabaseCfg struct {
 		Type     string `ini:"type"`
+		FileName string `ini:"filename"`
 		User     string `ini:"username"`
 		Password string `ini:"password"`
 		Database string `ini:"database"`

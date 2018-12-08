@@ -4,4 +4,4 @@
 
 build
 config.ini
-writefreely.db
+*.db
