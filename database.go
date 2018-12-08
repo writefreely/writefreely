@@ -113,6 +113,13 @@ func (db *datastore) now() string {
 	return "NOW()"
 }
 
+func (db *datastore) clip(field string, l int) string {
+	if db.driverName == driverSQLite {
+		return fmt.Sprintf("SUBSTR(%s, 0, %d)", field, l)
+	}
+	return fmt.Sprintf("LEFT(%s, %d)", field, l)
+}
+
 func (db *datastore) CreateUser(u *User, collectionTitle string) error {
 	// New users get a `users` and `collections` row.
 	t, err := db.Begin()
@@ -1474,11 +1481,8 @@ func (db *datastore) GetLastPinnedPostPos(collID int64) int64 {
 }
 
 func (db *datastore) GetPinnedPosts(coll *CollectionObj) (*[]PublicPost, error) {
-	clipFunction := "LEFT"
-	if db.driverName == "sqlite3" {
-		clipFunction = "SUBSTR"
-	}
-	rows, err := db.Query("SELECT id, slug, title, "+clipFunction+"(content, 80), pinned_position FROM posts WHERE collection_id = ? AND pinned_position IS NOT NULL ORDER BY pinned_position ASC", coll.ID)
+	// FIXME: sqlite-backed instances don't include ellipsis on truncated titles
+	rows, err := db.Query("SELECT id, slug, title, "+db.clip("content", 80)+", pinned_position FROM posts WHERE collection_id = ? AND pinned_position IS NOT NULL ORDER BY pinned_position ASC", coll.ID)
 	if err != nil {
 		log.Error("Failed selecting pinned posts: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve pinned posts."}
