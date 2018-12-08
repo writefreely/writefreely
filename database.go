@@ -24,6 +24,9 @@ import (
 
 const (
 	mySQLErrDuplicateKey = 1062
+
+	driverMySQL  = "mysql"
+	driverSQLite = "sqlite3"
 )
 
 type writestore interface {
@@ -101,6 +104,13 @@ type writestore interface {
 type datastore struct {
 	*sql.DB
 	driverName string
+}
+
+func (db *datastore) now() string {
+	if db.driverName == driverSQLite {
+		return "strftime('%Y-%m-%d %H-%M-%S','now')"
+	}
+	return "NOW()"
 }
 
 func (db *datastore) CreateUser(u *User, collectionTitle string) error {
@@ -572,12 +582,7 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 		}
 	}
 
-	timeFunction := "NOW()"
-	if db.driverName == "sqlite3" {
-		timeFunction = "strftime('%Y-%m-%d %H-%M-%S','now')"
-	}
-
-	stmt, err := db.Prepare("INSERT INTO posts (id, slug, title, content, text_appearance, language, rtl, privacy, owner_id, collection_id, created, updated, view_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, " + timeFunction + ", ?)")
+	stmt, err := db.Prepare("INSERT INTO posts (id, slug, title, content, text_appearance, language, rtl, privacy, owner_id, collection_id, created, updated, view_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, " + db.now() + ", ?)")
 	if err != nil {
 		return nil, err
 	}
@@ -674,13 +679,7 @@ func (db *datastore) UpdateOwnedPost(post *AuthenticatedPost, userID int64) erro
 		return ErrPostNoUpdatableVals
 	}
 
-	timeFunction := "NOW()"
-
-	if db.driverName == "sqlite3" {
-		timeFunction = "strftime('%Y-%m-%d %H-%M-%S','now')"
-	}
-
-	queryUpdates += sep + "updated = " + timeFunction
+	queryUpdates += sep + "updated = " + db.now()
 
 	res, err := db.Exec("UPDATE posts SET "+queryUpdates+" WHERE id = ? AND "+authCondition, params...)
 	if err != nil {
@@ -995,11 +994,7 @@ func (db *datastore) GetPostsCount(c *CollectionObj, includeFuture bool) {
 	var count int64
 	timeCondition := ""
 	if !includeFuture {
-		timeCondition = "AND created <= NOW()"
-
-		if db.driverName == "sqlite3" {
-			timeCondition = "AND created <= strftime('%Y-%m-%d %H-%M-%S','now')"
-		}
+		timeCondition = "AND created <= " + db.now()
 	}
 	err := db.QueryRow("SELECT COUNT(*) FROM posts WHERE collection_id = ? AND pinned_position IS NULL "+timeCondition, c.ID).Scan(&count)
 	switch {
@@ -1038,11 +1033,7 @@ func (db *datastore) GetPosts(c *Collection, page int, includeFuture, forceRecen
 	}
 	timeCondition := ""
 	if !includeFuture {
-		timeCondition = "AND created <= NOW()"
-
-		if db.driverName == "sqlite3" {
-			timeCondition = "AND created <= strftime('%Y-%m-%d %H-%M-%S','now')"
-		}
+		timeCondition = "AND created <= " + db.now()
 	}
 	rows, err := db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND pinned_position IS NULL "+timeCondition+" ORDER BY created "+order+limitStr, collID)
 	if err != nil {
@@ -1099,11 +1090,7 @@ func (db *datastore) GetPostsTagged(c *Collection, tag string, page int, include
 	}
 	timeCondition := ""
 	if !includeFuture {
-		timeCondition = "AND created <= NOW()"
-
-		if db.driverName == "sqlite3" {
-			timeCondition = "AND created <= strftime('%Y-%m-%d %H-%M-%S','now')"
-		}
+		timeCondition = "AND created <= " + db.now()
 	}
 	rows, err := db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND LOWER(content) RLIKE ? "+timeCondition+" ORDER BY created "+order+limitStr, collID, "#"+strings.ToLower(tag)+"[[:>:]]")
 	if err != nil {
@@ -2169,13 +2156,7 @@ func (db *datastore) GetDynamicContent(id string) (string, *time.Time, error) {
 }
 
 func (db *datastore) UpdateDynamicContent(id, content string) error {
-	timeFunction := "NOW()"
-
-	if db.driverName == "sqlite3" {
-		timeFunction = "strftime('%Y-%m-%d %H-%M-%S','now')"
-	}
-
-	_, err := db.Exec("INSERT INTO appcontent (id, content, updated) VALUES (?, ?, "+timeFunction+") ON DUPLICATE KEY UPDATE content = ?, updated = "+timeFunction, id, content, content)
+	_, err := db.Exec("INSERT INTO appcontent (id, content, updated) VALUES (?, ?, "+db.now()+") ON DUPLICATE KEY UPDATE content = ?, updated = "+db.now(), id, content, content)
 	if err != nil {
 		log.Error("Unable to INSERT appcontent for '%s': %v", id, err)
 	}
