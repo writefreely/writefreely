@@ -108,7 +108,7 @@ type datastore struct {
 
 func (db *datastore) now() string {
 	if db.driverName == driverSQLite {
-		return "strftime('%Y-%m-%d %H-%M-%S','now')"
+		return "strftime('%Y-%m-%d %H:%M:%S','now')"
 	}
 	return "NOW()"
 }
