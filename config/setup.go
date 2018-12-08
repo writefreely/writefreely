@@ -20,10 +20,12 @@ func Configure() (*SetupData, error) {
 
 	data.Config, err = Load()
 	var action string
+	isNewCfg := false
 	if err != nil {
 		fmt.Println("No configuration yet. Creating new.")
 		data.Config = New()
 		action = "generate"
+		isNewCfg = true
 	} else {
 		fmt.Println("Configuration loaded.")
 		action = "update"
@@ -126,62 +128,91 @@ func Configure() (*SetupData, error) {
 	title(" Database setup ")
 	fmt.Println()
 
-	prompt = promptui.Prompt{
-		Templates: tmpls,
-		Label:     "Username",
-		Validate:  validateNonEmpty,
-		Default:   data.Config.Database.User,
+	selPrompt = promptui.Select{
+		Templates: selTmpls,
+		Label:     "Database driver",
+		Items:     []string{"MySQL", "SQLite"},
 	}
-	data.Config.Database.User, err = prompt.Run()
+	sel, _, err := selPrompt.Run()
 	if err != nil {
 		return data, err
 	}
 
-	prompt = promptui.Prompt{
-		Templates: tmpls,
-		Label:     "Password",
-		Validate:  validateNonEmpty,
-		Default:   data.Config.Database.Password,
-		Mask:      '*',
-	}
-	data.Config.Database.Password, err = prompt.Run()
-	if err != nil {
-		return data, err
-	}
+	if sel == 0 {
+		// Configure for MySQL
+		data.Config.UseMySQL(isNewCfg)
 
-	prompt = promptui.Prompt{
-		Templates: tmpls,
-		Label:     "Database name",
-		Validate:  validateNonEmpty,
-		Default:   data.Config.Database.Database,
-	}
-	data.Config.Database.Database, err = prompt.Run()
-	if err != nil {
-		return data, err
-	}
+		prompt = promptui.Prompt{
+			Templates: tmpls,
+			Label:     "Username",
+			Validate:  validateNonEmpty,
+			Default:   data.Config.Database.User,
+		}
+		data.Config.Database.User, err = prompt.Run()
+		if err != nil {
+			return data, err
+		}
 
-	prompt = promptui.Prompt{
-		Templates: tmpls,
-		Label:     "Host",
-		Validate:  validateNonEmpty,
-		Default:   data.Config.Database.Host,
-	}
-	data.Config.Database.Host, err = prompt.Run()
-	if err != nil {
-		return data, err
-	}
+		prompt = promptui.Prompt{
+			Templates: tmpls,
+			Label:     "Password",
+			Validate:  validateNonEmpty,
+			Default:   data.Config.Database.Password,
+			Mask:      '*',
+		}
+		data.Config.Database.Password, err = prompt.Run()
+		if err != nil {
+			return data, err
+		}
 
-	prompt = promptui.Prompt{
-		Templates: tmpls,
-		Label:     "Port",
-		Validate:  validatePort,
-		Default:   fmt.Sprintf("%d", data.Config.Database.Port),
+		prompt = promptui.Prompt{
+			Templates: tmpls,
+			Label:     "Database name",
+			Validate:  validateNonEmpty,
+			Default:   data.Config.Database.Database,
+		}
+		data.Config.Database.Database, err = prompt.Run()
+		if err != nil {
+			return data, err
+		}
+
+		prompt = promptui.Prompt{
+			Templates: tmpls,
+			Label:     "Host",
+			Validate:  validateNonEmpty,
+			Default:   data.Config.Database.Host,
+		}
+		data.Config.Database.Host, err = prompt.Run()
+		if err != nil {
+			return data, err
+		}
+
+		prompt = promptui.Prompt{
+			Templates: tmpls,
+			Label:     "Port",
+			Validate:  validatePort,
+			Default:   fmt.Sprintf("%d", data.Config.Database.Port),
+		}
+		dbPort, err := prompt.Run()
+		if err != nil {
+			return data, err
+		}
+		data.Config.Database.Port, _ = strconv.Atoi(dbPort) // Ignore error, as we've already validated number
+	} else if sel == 1 {
+		// Configure for SQLite
+		data.Config.UseSQLite(isNewCfg)
+
+		prompt = promptui.Prompt{
+			Templates: tmpls,
+			Label:     "Filename",
+			Validate:  validateNonEmpty,
+			Default:   data.Config.Database.FileName,
+		}
+		data.Config.Database.FileName, err = prompt.Run()
+		if err != nil {
+			return data, err
+		}
 	}
-	dbPort, err := prompt.Run()
-	if err != nil {
-		return data, err
-	}
-	data.Config.Database.Port, _ = strconv.Atoi(dbPort) // Ignore error, as we've already validated number
 
 	fmt.Println()
 	title(" App setup ")
