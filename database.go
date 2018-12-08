@@ -120,6 +120,16 @@ func (db *datastore) clip(field string, l int) string {
 	return fmt.Sprintf("LEFT(%s, %d)", field, l)
 }
 
+func (db *datastore) upsert(indexedCols ...string) string {
+	if db.driverName == driverSQLite {
+		// NOTE: SQLite UPSERT syntax only works in v3.24.0 (2018-06-04) or later
+		// Leaving this for whenever we can upgrade and include it in our binary
+		cc := strings.Join(indexedCols, ", ")
+		return "ON CONFLICT(" + cc + ") DO UPDATE SET"
+	}
+	return "ON DUPLICATE KEY UPDATE"
+}
+
 func (db *datastore) CreateUser(u *User, collectionTitle string) error {
 	// New users get a `users` and `collections` row.
 	t, err := db.Begin()
@@ -815,7 +825,11 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 
 	// Update MathJax value
 	if c.MathJax {
-		_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?", collID, "render_mathjax", "1", "1")
+		if db.driverName == driverSQLite {
+			_, err = db.Exec("INSERT OR REPLACE INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?)", collID, "render_mathjax", "1")
+		} else {
+			_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) "+db.upsert("collection_id", "attribute")+" value = ?", collID, "render_mathjax", "1", "1")
+		}
 		if err != nil {
 			log.Error("Unable to insert render_mathjax value: %v", err)
 			return err
@@ -857,7 +871,11 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 			log.Error("Unable to create hash: %s", err)
 			return impart.HTTPError{http.StatusInternalServerError, "Could not create password hash."}
 		}
-		_, err = db.Exec("INSERT INTO collectionpasswords (collection_id, password) VALUES ((SELECT id FROM collections WHERE alias = ?), ?) ON DUPLICATE KEY UPDATE password = ?", alias, hashedPass, hashedPass)
+		if db.driverName == driverSQLite {
+			_, err = db.Exec("INSERT OR REPLACE INTO collectionpasswords (collection_id, password) VALUES ((SELECT id FROM collections WHERE alias = ?), ?)", alias, hashedPass)
+		} else {
+			_, err = db.Exec("INSERT INTO collectionpasswords (collection_id, password) VALUES ((SELECT id FROM collections WHERE alias = ?), ?) "+db.upsert("collection_id")+" password = ?", alias, hashedPass, hashedPass)
+		}
 		if err != nil {
 			return err
 		}
@@ -2168,7 +2186,12 @@ func (db *datastore) GetDynamicContent(id string) (string, *time.Time, error) {
 }
 
 func (db *datastore) UpdateDynamicContent(id, content string) error {
-	_, err := db.Exec("INSERT INTO appcontent (id, content, updated) VALUES (?, ?, "+db.now()+") ON DUPLICATE KEY UPDATE content = ?, updated = "+db.now(), id, content, content)
+	var err error
+	if db.driverName == driverSQLite {
+		_, err = db.Exec("INSERT OR REPLACE INTO appcontent (id, content, updated) VALUES (?, ?, "+db.now()+")", id, content)
+	} else {
+		_, err = db.Exec("INSERT INTO appcontent (id, content, updated) VALUES (?, ?, "+db.now()+") "+db.upsert("id")+" content = ?, updated = "+db.now(), id, content, content)
+	}
 	if err != nil {
 		log.Error("Unable to INSERT appcontent for '%s': %v", id, err)
 	}
