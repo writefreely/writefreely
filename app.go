@@ -248,19 +248,13 @@ func Serve() {
 
 		os.Exit(errStatus)
 	} else if *createSchema {
-		log.Info("Loading configuration...")
-		cfg, err := config.Load()
-		if err != nil {
-			log.Error("Unable to load configuration: %v", err)
-			os.Exit(1)
-		}
-		app.cfg = cfg
+		loadConfig(app)
 		connectToDatabase(app)
 		defer shutdown(app)
 
 		schemaFileName := "schema.sql"
 
-		if cfg.Database.Type == "sqlite3" {
+		if app.cfg.Database.Type == "sqlite3" {
 			schemaFileName = "sqlite.sql"
 		}
 
@@ -299,13 +293,7 @@ func Serve() {
 			os.Exit(1)
 		}
 
-		log.Info("Loading configuration...")
-		cfg, err := config.Load()
-		if err != nil {
-			log.Error("Unable to load configuration: %v", err)
-			os.Exit(1)
-		}
-		app.cfg = cfg
+		loadConfig(app)
 		connectToDatabase(app)
 		defer shutdown(app)
 
@@ -341,13 +329,7 @@ func Serve() {
 		os.Exit(0)
 	} else if *resetPassUser != "" {
 		// Connect to the database
-		log.Info("Loading configuration...")
-		cfg, err := config.Load()
-		if err != nil {
-			log.Error("Unable to load configuration: %v", err)
-			os.Exit(1)
-		}
-		app.cfg = cfg
+		loadConfig(app)
 		connectToDatabase(app)
 		defer shutdown(app)
 
@@ -385,23 +367,17 @@ func Serve() {
 
 	log.Info("Initializing...")
 
-	log.Info("Loading configuration...")
-	cfg, err := config.Load()
-	if err != nil {
-		log.Error("Unable to load configuration: %v", err)
-		os.Exit(1)
-	}
-	app.cfg = cfg
+	loadConfig(app)
 
-	hostName = cfg.App.Host
-	isSingleUser = cfg.App.SingleUser
+	hostName = app.cfg.App.Host
+	isSingleUser = app.cfg.App.SingleUser
 	app.cfg.Server.Dev = *debugPtr
 
 	initTemplates()
 
 	// Load keys
 	log.Info("Loading encryption keys...")
-	err = initKeys(app)
+	err := initKeys(app)
 	if err != nil {
 		log.Error("\n%s\n", err)
 	}
@@ -489,6 +465,16 @@ func Serve() {
 		log.Error("Unable to start: %v", err)
 		os.Exit(1)
 	}
+}
+
+func loadConfig(app *app) {
+	log.Info("Loading configuration...")
+	cfg, err := config.Load()
+	if err != nil {
+		log.Error("Unable to load configuration: %v", err)
+		os.Exit(1)
+	}
+	app.cfg = cfg
 }
 
 func connectToDatabase(app *app) {
