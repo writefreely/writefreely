@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
+	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
 	"net/http"
 	"runtime"
@@ -126,6 +127,11 @@ func handleAdminUpdateConfig(app *app, u *User, w http.ResponseWriter, r *http.R
 	app.cfg.App.Federation = r.FormValue("federation") == "on"
 	app.cfg.App.PublicStats = r.FormValue("public_stats") == "on"
 	app.cfg.App.Private = r.FormValue("private") == "on"
+	app.cfg.App.LocalTimeline = r.FormValue("local_timeline") == "on"
+	if app.cfg.App.LocalTimeline && app.timeline == nil {
+		log.Info("Initializing local timeline...")
+		initLocalTimeline(app)
+	}
 
 	m := "?cm=Configuration+saved."
 	err = config.Save(app.cfg, app.cfgFile)

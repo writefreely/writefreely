@@ -16,6 +16,7 @@
 						<h3><a class="home" href="/">{{.SiteName}}</a></h3>
 						<ul>
 							<li><a href="/about">about</a></li>
+							{{if and (not .SingleUser) .LocalTimeline}}<a href="/read">reader</a>{{end}}
 							<li><a href="/privacy">privacy</a></li>
 						</ul>
 					</div>

@@ -1,0 +1,127 @@
+{{define "head"}}<title>{{.SiteName}} Reader</title>
+		
+		<link rel="alternate" type="application/rss+xml" title="{{.SiteName}} Reader" href="/read/feed/" />
+		{{if gt .CurrentPage 1}}<link rel="prev" href="{{.PrevPageURL .CurrentPage}}">{{end}}
+		{{if lt .CurrentPage .TotalPages}}<link rel="next" href="{{.NextPageURL .CurrentPage}}">{{end}}
+
+		<meta name="description" content="Read the latest posts from {{.SiteName}}.">
+		<meta itemprop="name" content="{{.SiteName}} Reader">
+		<meta itemprop="description" content="Read the latest posts from {{.SiteName}}.">
+		<meta name="twitter:card" content="summary_large_image">
+		<meta name="twitter:title" content="{{.SiteName}} Reader">
+		<meta name="twitter:description" content="Read the latest posts from {{.SiteName}}.">
+		<meta property="og:title" content="{{.SiteName}} Reader" />
+		<meta property="og:type" content="object" />
+		<meta property="og:description" content="Read the latest posts from {{.SiteName}}." />
+
+		<style>
+		.heading h1 {
+			font-weight: 300;
+			text-align: center;
+			margin: 3em 0 0;
+		}
+		.heading p {
+			text-align: center;
+			margin: 1.5em 0 4.5em;
+			font-size: 1.1em;
+			color: #777;
+		}
+		#wrapper {
+			font-size: 1.2em;
+		}
+		.preview {
+			max-height: 180px;
+			overflow: hidden;
+			position: relative;
+		}
+		.preview .over {
+			position: absolute;
+			top: 5em;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			/* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#ffffff+0,ffffff+100&0+0,1+100 */
+			background: -moz-linear-gradient(top, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%); /* FF3.6-15 */
+			background: -webkit-linear-gradient(top, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 100%); /* Chrome10-25,Safari5.1-6 */
+			background: linear-gradient(to bottom, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+			filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00ffffff', endColorstr='#ffffff',GradientType=0 ); /* IE6-9 */
+		}
+		p.source {
+			font-size: 0.86em;
+			margin-top: 0.25em;
+			margin-bottom: 0;
+		}
+		.attention-box {
+			text-align: center;
+			font-size: 1.1em;
+		}
+		.attention-box hr { margin: 4rem auto; }
+		hr { max-width: 40rem; }
+		header {
+			padding: 0 !important;
+			text-align: left !important;
+			margin: 1em !important;
+			max-width: 100% !important;
+		}
+		body#collection header nav {
+			display: inline !important;
+			margin: 0 0 0 1em !important;
+		}
+		header nav#user-nav {
+			margin-left: 0 !important;
+		}
+		</style>
+{{end}}
+{{define "body-attrs"}}id="collection"{{end}}
+{{define "content"}}
+	<div class="content-container snug" style="max-width: 40rem;">
+		<h1 style="text-align:center">Reader</h1>
+		<p>Read the latest posts from {{.SiteName}}. {{if .Username}}To showcase your writing here, go to your <a href="/me/c/">blog</a> settings and select the <em>Public</em> option.{{end}}</p>
+	</div>
+		<div id="wrapper">
+		{{ if gt (len .Posts) 0 }}
+		<section itemscope itemtype="http://schema.org/Blog">
+			{{range .Posts}}<article class="{{.Font}} h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+			{{if .Title.String}}<h2 class="post-title" itemprop="name" class="p-name"><a href="{{if .Slug.String}}{{.Collection.CanonicalURL}}{{.Slug.String}}{{else}}{{.CanonicalURL}}.md{{end}}" itemprop="url" class="u-url">{{.PlainDisplayTitle}}</a></h2>
+			<time class="dt-published" datetime="{{.Created}}" pubdate itemprop="datePublished" content="{{.Created}}">{{if not .Title.String}}<a href="{{.Collection.CanonicalURL}}{{.Slug.String}}" itemprop="url">{{end}}{{.DisplayDate}}{{if not .Title.String}}</a>{{end}}</time>
+			{{else}}
+			<h2 class="post-title" itemprop="name"><time class="dt-published" datetime="{{.Created}}" pubdate itemprop="datePublished" content="{{.Created}}"><a href="{{if .Collection}}{{.Collection.CanonicalURL}}{{.Slug.String}}{{else}}{{.CanonicalURL}}.md{{end}}" itemprop="url" class="u-url">{{.DisplayDate}}</a></time></h2>
+			{{end}}
+			<p class="source">{{if .Collection}}from <a href="{{.Collection.CanonicalURL}}">{{.Collection.DisplayTitle}}</a>{{else}}<em>Anonymous</em>{{end}}</p>
+			{{if .Excerpt}}<div class="p-summary" {{if .Language}}lang="{{.Language.String}}"{{end}} dir="{{.Direction}}">{{.Excerpt}}</div>
+		
+			<a class="read-more" href="{{if .Collection}}{{.Collection.CanonicalURL}}{{.Slug.String}}{{else}}{{.CanonicalURL}}.md{{end}}">{{localstr "Read more..." .Language.String}}</a>{{else}}<div class="e-content preview" {{if .Language}}lang="{{.Language.String}}"{{end}} dir="{{.Direction}}">{{ if not .HTMLContent }}<p id="post-body" class="e-content preview">{{.Content}}</p>{{ else }}{{.HTMLContent}}{{ end }}<div class="over">&nbsp;</div></div>
+			
+			<a class="read-more maybe" href="{{if .Collection}}{{.Collection.CanonicalURL}}{{.Slug.String}}{{else}}{{.CanonicalURL}}.md{{end}}">{{localstr "Read more..." .Language.String}}</a>{{end}}</article>
+			{{end}}
+		</section>
+		{{ else }}
+		<div class="attention-box">
+			<p>No posts here yet!</p>
+		</div>
+		{{ end }}
+
+		{{if gt .TotalPages 1}}<nav id="paging" class="content-container clearfix">
+			{{if lt .CurrentPage .TotalPages}}<a href="{{.NextPageURL .CurrentPage}}">&#8672; Older</a>{{end}}
+			{{if gt .CurrentPage 1}}<a style="float:right;" href="{{.PrevPageURL .CurrentPage}}">Newer &#8674;</a>{{end}}
+		</nav>{{end}}
+
+		</div>
+
+<script type="text/javascript">
+(function() {
+	var $articles = document.querySelectorAll('article');
+	for (var i=0; i<$articles.length; i++) {
+		var $art = $articles[i];
+		var $more = $art.querySelector('.read-more.maybe');
+		if ($more != null) {
+			if ($art.querySelector('.e-content.preview').clientHeight < 180) {
+				$more.parentNode.removeChild($more);
+				var $overlay = $art.querySelector('.over');
+				$overlay.parentNode.removeChild($overlay);
+			}
+		}
+	}
+})();
+</script>
+{{end}}

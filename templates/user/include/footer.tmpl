@@ -9,6 +9,7 @@
 		<nav>
 			<a class="home" href="/">{{.SiteName}}</a>
 			<a href="/about">about</a>
+			{{if and (not .SingleUser) .LocalTimeline}}<a href="/read">reader</a>{{end}}
 			<a href="https://writefreely.org/guide" target="guide">writer's guide</a>
 			<a href="/privacy">privacy</a>
 			<a href="https://writefreely.org">writefreely {{.Version}}</a>

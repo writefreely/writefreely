@@ -60,6 +60,8 @@ type app struct {
 	keys         *keychain
 	sessionStore *sessions.CookieStore
 	formDecoder  *schema.Decoder
+
+	timeline *localTimeline
 }
 
 // handleViewHome shows page at root path. Will be the Pad if logged in and the
@@ -422,6 +424,12 @@ func Serve() {
 
 	// Handle app routes
 	initRoutes(handler, r, app.cfg, app.db)
+
+	// Handle local timeline, if enabled
+	if app.cfg.App.LocalTimeline {
+		log.Info("Initializing local timeline...")
+		initLocalTimeline(app)
+	}
 
 	// Handle static files
 	fs := http.FileServer(http.Dir(staticDir))

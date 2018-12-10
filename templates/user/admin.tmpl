@@ -113,6 +113,8 @@ function savePage(el) {
 			<dd><input type="checkbox" name="public_stats" id="public_stats" {{if .Config.PublicStats}}checked="checked"{{end}} /></dd>
 			<dt><label for="private">Private Instance</label></dt>
 			<dd><input type="checkbox" name="private" id="private" {{if .Config.Private}}checked="checked"{{end}} /></dd>
+			<dt{{if .Config.SingleUser}} class="invisible"{{end}}><label for="local_timeline">Local Timeline</label></dt>
+			<dd{{if .Config.SingleUser}} class="invisible"{{end}}><input type="checkbox" name="local_timeline" id="local_timeline" {{if .Config.LocalTimeline}}checked="checked"{{end}} /></dd>
 		</dl>
 		<input type="submit" value="Save Configuration" />
 	</div>

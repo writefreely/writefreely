@@ -132,6 +132,13 @@ func (db *datastore) upsert(indexedCols ...string) string {
 	return "ON DUPLICATE KEY UPDATE"
 }
 
+func (db *datastore) dateSub(l int, unit string) string {
+	if db.driverName == driverSQLite {
+		return fmt.Sprintf("DATETIME('now', '-%d %s')", l, unit)
+	}
+	return fmt.Sprintf("DATE_SUB(NOW(), INTERVAL %d %s)", l, unit)
+}
+
 func (db *datastore) isDuplicateKeyErr(err error) bool {
 	if db.driverName == driverSQLite {
 		if err, ok := err.(sqlite3.Error); ok {

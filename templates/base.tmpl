@@ -10,7 +10,7 @@
 		<meta name="application-url" content="{{.Host}}">
 		<meta property="og:site_name" content="{{.SiteName}}" />
 	</head>
-	<body>
+	<body {{template "body-attrs" .}}>
 		<div id="overlay"></div>
 		<header>
 			<h2><a href="/">{{.SiteName}}</a></h2>
@@ -18,6 +18,7 @@
 			<nav id="user-nav">
 				<nav class="tabs">
 					<a href="/about"{{if eq .Path "/about"}} class="selected"{{end}}>About</a>
+					{{if and (not .SingleUser) .LocalTimeline}}<a href="/read"{{if eq .Path "/read"}} class="selected"{{end}}>Reader</a>{{end}}
 					{{if and (not .SingleUser) (not .Username)}}<a href="/login"{{if eq .Path "/login"}} class="selected"{{end}}>Log in</a>{{end}}
 				</nav>
 			</nav>
@@ -53,3 +54,4 @@
 		{{end}}
 	</body>
 </html>{{end}}
+{{define "body-attrs"}}{{end}}

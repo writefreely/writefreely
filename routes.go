@@ -121,6 +121,12 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 
 	// Handle special pages first
 	write.HandleFunc("/login", handler.Web(viewLogin, UserLevelNoneRequired))
+	// TODO: show a reader-specific 404 page if the function is disabled
+	// TODO: change this based on configuration for either public or private-to-this-instance
+	readPerm := UserLevelOptional
+
+	write.HandleFunc("/read", handler.Web(viewLocalTimeline, readPerm))
+	RouteRead(handler, readPerm, write.PathPrefix("/read").Subrouter())
 
 	draftEditPrefix := ""
 	if cfg.App.SingleUser {
@@ -157,4 +163,14 @@ func RouteCollections(handler *Handler, r *mux.Router) {
 	r.HandleFunc("/{slug}/edit", handler.Web(handleViewPad, UserLevelUser))
 	r.HandleFunc("/{slug}/edit/meta", handler.Web(handleViewMeta, UserLevelUser))
 	r.HandleFunc("/{slug}/", handler.Web(handleCollectionPostRedirect, UserLevelOptional)).Methods("GET")
+}
+
+func RouteRead(handler *Handler, readPerm UserLevel, r *mux.Router) {
+	r.HandleFunc("/api/posts", handler.Web(viewLocalTimelineAPI, readPerm))
+	r.HandleFunc("/p/{page}", handler.Web(viewLocalTimeline, readPerm))
+	r.HandleFunc("/feed/", handler.Web(viewLocalTimelineFeed, readPerm))
+	r.HandleFunc("/t/{tag}", handler.Web(viewLocalTimeline, readPerm))
+	r.HandleFunc("/a/{post}", handler.Web(handlePostIDRedirect, readPerm))
+	r.HandleFunc("/{author}", handler.Web(viewLocalTimeline, readPerm))
+	r.HandleFunc("/", handler.Web(viewLocalTimeline, readPerm))
 }
