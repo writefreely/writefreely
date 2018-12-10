@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS `accesstokens` (
   one_time INTEGER NOT NULL DEFAULT '0',
   created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   expires DATETIME DEFAULT NULL,
-  user_agent TEXT NOT NULL
+  user_agent TEXT DEFAULT NULL
 );
 
 -- --------------------------------------------------------

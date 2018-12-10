@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS `accesstokens` (
   `one_time` tinyint(1) NOT NULL DEFAULT '0',
   `created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `expires` datetime DEFAULT NULL,
-  `user_agent` varchar(255) NOT NULL,
+  `user_agent` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
