@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/mattn/go-sqlite3"
+
 	"github.com/guregu/null"
 	"github.com/guregu/null/zero"
 	uuid "github.com/nu7hatch/gouuid"
@@ -24,6 +26,9 @@ import (
 
 const (
 	mySQLErrDuplicateKey = 1062
+
+	driverMySQL  = "mysql"
+	driverSQLite = "sqlite3"
 )
 
 type writestore interface {
@@ -100,6 +105,47 @@ type writestore interface {
 
 type datastore struct {
 	*sql.DB
+	driverName string
+}
+
+func (db *datastore) now() string {
+	if db.driverName == driverSQLite {
+		return "strftime('%Y-%m-%d %H:%M:%S','now')"
+	}
+	return "NOW()"
+}
+
+func (db *datastore) clip(field string, l int) string {
+	if db.driverName == driverSQLite {
+		return fmt.Sprintf("SUBSTR(%s, 0, %d)", field, l)
+	}
+	return fmt.Sprintf("LEFT(%s, %d)", field, l)
+}
+
+func (db *datastore) upsert(indexedCols ...string) string {
+	if db.driverName == driverSQLite {
+		// NOTE: SQLite UPSERT syntax only works in v3.24.0 (2018-06-04) or later
+		// Leaving this for whenever we can upgrade and include it in our binary
+		cc := strings.Join(indexedCols, ", ")
+		return "ON CONFLICT(" + cc + ") DO UPDATE SET"
+	}
+	return "ON DUPLICATE KEY UPDATE"
+}
+
+func (db *datastore) isDuplicateKeyErr(err error) bool {
+	if db.driverName == driverSQLite {
+		if err, ok := err.(sqlite3.Error); ok {
+			return err.Code == sqlite3.ErrConstraint
+		}
+	} else if db.driverName == driverMySQL {
+		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
+			return mysqlErr.Number == mySQLErrDuplicateKey
+		}
+	} else {
+		log.Error("isDuplicateKeyErr: failed check for unrecognized driver '%s'", db.driverName)
+	}
+
+	return false
 }
 
 func (db *datastore) CreateUser(u *User, collectionTitle string) error {
@@ -115,13 +161,11 @@ func (db *datastore) CreateUser(u *User, collectionTitle string) error {
 
 	// 1. Add to `users` table
 	// NOTE: Assumes User's Password is already hashed!
-	res, err := t.Exec("INSERT INTO users (username, password, email, created) VALUES (?, ?, ?, NOW())", u.Username, u.HashedPass, u.Email)
+	res, err := t.Exec("INSERT INTO users (username, password, email) VALUES (?, ?, ?)", u.Username, u.HashedPass, u.Email)
 	if err != nil {
 		t.Rollback()
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-			if mysqlErr.Number == mySQLErrDuplicateKey {
-				return impart.HTTPError{http.StatusConflict, "Username is already taken."}
-			}
+		if db.isDuplicateKeyErr(err) {
+			return impart.HTTPError{http.StatusConflict, "Username is already taken."}
 		}
 
 		log.Error("Rolling back users INSERT: %v\n", err)
@@ -141,10 +185,8 @@ func (db *datastore) CreateUser(u *User, collectionTitle string) error {
 	res, err = t.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", u.Username, collectionTitle, "", CollUnlisted, u.ID, 0)
 	if err != nil {
 		t.Rollback()
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-			if mysqlErr.Number == mySQLErrDuplicateKey {
-				return impart.HTTPError{http.StatusConflict, "Username is already taken."}
-			}
+		if db.isDuplicateKeyErr(err) {
+			return impart.HTTPError{http.StatusConflict, "Username is already taken."}
 		}
 		log.Error("Rolling back collections INSERT: %v\n", err)
 		return err
@@ -213,10 +255,8 @@ func (db *datastore) CreateCollection(alias, title string, userID int64) (*Colle
 	// All good, so create new collection
 	res, err := db.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", alias, title, "", CollUnlisted, userID, 0)
 	if err != nil {
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-			if mysqlErr.Number == mySQLErrDuplicateKey {
-				return nil, impart.HTTPError{http.StatusConflict, "Collection already exists."}
-			}
+		if db.isDuplicateKeyErr(err) {
+			return nil, impart.HTTPError{http.StatusConflict, "Collection already exists."}
 		}
 		log.Error("Couldn't add to collections: %v\n", err)
 		return nil, err
@@ -478,7 +518,7 @@ func (db *datastore) GetTemporaryOneTimeAccessToken(userID int64, validSecs int,
 		expirationVal = fmt.Sprintf("DATE_ADD(NOW(), INTERVAL %d SECOND)", validSecs)
 	}
 
-	_, err = db.Exec("INSERT INTO accesstokens (token, user_id, created, one_time, expires) VALUES (?, ?, NOW(), ?, "+expirationVal+")", string(binTok), userID, oneTime)
+	_, err = db.Exec("INSERT INTO accesstokens (token, user_id, one_time, expires) VALUES (?, ?, ?, "+expirationVal+")", string(binTok), userID, oneTime)
 	if err != nil {
 		log.Error("Couldn't INSERT accesstoken: %v", err)
 		return "", err
@@ -563,32 +603,36 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 	}
 
 	created := time.Now()
+	if db.driverName == driverSQLite {
+		// SQLite stores datetimes in UTC, so convert time.Now() to it here
+		created = created.UTC()
+	}
 	if post.Created != nil {
 		created, err = time.Parse("2006-01-02T15:04:05Z", *post.Created)
 		if err != nil {
 			log.Error("Unable to parse Created time '%s': %v", *post.Created, err)
 			created = time.Now()
+			if db.driverName == driverSQLite {
+				// SQLite stores datetimes in UTC, so convert time.Now() to it here
+				created = created.UTC()
+			}
 		}
 	}
 
-	stmt, err := db.Prepare("INSERT INTO posts (id, slug, title, content, text_appearance, language, rtl, privacy, owner_id, collection_id, created, updated, view_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)")
+	stmt, err := db.Prepare("INSERT INTO posts (id, slug, title, content, text_appearance, language, rtl, privacy, owner_id, collection_id, created, updated, view_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, " + db.now() + ", ?)")
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
 	_, err = stmt.Exec(friendlyID, slug, post.Title, post.Content, appearance, post.Language, post.IsRTL, 0, ownerID, ownerCollID, created, 0)
 	if err != nil {
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-			if mysqlErr.Number == mySQLErrDuplicateKey {
-				// Duplicate entry error; try a new slug
-				// TODO: make this a little more robust
-				slug = sql.NullString{id.GenSafeUniqueSlug(slug.String), true}
-				_, err = stmt.Exec(friendlyID, slug, post.Title, post.Content, appearance, post.Language, post.IsRTL, 0, ownerID, ownerCollID, created, 0)
-				if err != nil {
-					return nil, handleFailedPostInsert(fmt.Errorf("Retried slug generation, still failed: %v", err))
-				}
-			} else {
-				return nil, handleFailedPostInsert(err)
+		if db.isDuplicateKeyErr(err) {
+			// Duplicate entry error; try a new slug
+			// TODO: make this a little more robust
+			slug = sql.NullString{id.GenSafeUniqueSlug(slug.String), true}
+			_, err = stmt.Exec(friendlyID, slug, post.Title, post.Content, appearance, post.Language, post.IsRTL, 0, ownerID, ownerCollID, created, 0)
+			if err != nil {
+				return nil, handleFailedPostInsert(fmt.Errorf("Retried slug generation, still failed: %v", err))
 			}
 		} else {
 			return nil, handleFailedPostInsert(err)
@@ -668,7 +712,7 @@ func (db *datastore) UpdateOwnedPost(post *AuthenticatedPost, userID int64) erro
 		return ErrPostNoUpdatableVals
 	}
 
-	queryUpdates += sep + "updated = NOW()"
+	queryUpdates += sep + "updated = " + db.now()
 
 	res, err := db.Exec("UPDATE posts SET "+queryUpdates+" WHERE id = ? AND "+authCondition, params...)
 	if err != nil {
@@ -789,7 +833,11 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 
 	// Update MathJax value
 	if c.MathJax {
-		_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?", collID, "render_mathjax", "1", "1")
+		if db.driverName == driverSQLite {
+			_, err = db.Exec("INSERT OR REPLACE INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?)", collID, "render_mathjax", "1")
+		} else {
+			_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) "+db.upsert("collection_id", "attribute")+" value = ?", collID, "render_mathjax", "1", "1")
+		}
 		if err != nil {
 			log.Error("Unable to insert render_mathjax value: %v", err)
 			return err
@@ -831,7 +879,11 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 			log.Error("Unable to create hash: %s", err)
 			return impart.HTTPError{http.StatusInternalServerError, "Could not create password hash."}
 		}
-		_, err = db.Exec("INSERT INTO collectionpasswords (collection_id, password) VALUES ((SELECT id FROM collections WHERE alias = ?), ?) ON DUPLICATE KEY UPDATE password = ?", alias, hashedPass, hashedPass)
+		if db.driverName == driverSQLite {
+			_, err = db.Exec("INSERT OR REPLACE INTO collectionpasswords (collection_id, password) VALUES ((SELECT id FROM collections WHERE alias = ?), ?)", alias, hashedPass)
+		} else {
+			_, err = db.Exec("INSERT INTO collectionpasswords (collection_id, password) VALUES ((SELECT id FROM collections WHERE alias = ?), ?) "+db.upsert("collection_id")+" password = ?", alias, hashedPass, hashedPass)
+		}
 		if err != nil {
 			return err
 		}
@@ -983,7 +1035,7 @@ func (db *datastore) GetPostsCount(c *CollectionObj, includeFuture bool) {
 	var count int64
 	timeCondition := ""
 	if !includeFuture {
-		timeCondition = "AND created <= NOW()"
+		timeCondition = "AND created <= " + db.now()
 	}
 	err := db.QueryRow("SELECT COUNT(*) FROM posts WHERE collection_id = ? AND pinned_position IS NULL "+timeCondition, c.ID).Scan(&count)
 	switch {
@@ -1022,7 +1074,7 @@ func (db *datastore) GetPosts(c *Collection, page int, includeFuture, forceRecen
 	}
 	timeCondition := ""
 	if !includeFuture {
-		timeCondition = "AND created <= NOW()"
+		timeCondition = "AND created <= " + db.now()
 	}
 	rows, err := db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND pinned_position IS NULL "+timeCondition+" ORDER BY created "+order+limitStr, collID)
 	if err != nil {
@@ -1079,7 +1131,7 @@ func (db *datastore) GetPostsTagged(c *Collection, tag string, page int, include
 	}
 	timeCondition := ""
 	if !includeFuture {
-		timeCondition = "AND created <= NOW()"
+		timeCondition = "AND created <= " + db.now()
 	}
 	rows, err := db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND LOWER(content) RLIKE ? "+timeCondition+" ORDER BY created "+order+limitStr, collID, "#"+strings.ToLower(tag)+"[[:>:]]")
 	if err != nil {
@@ -1154,17 +1206,15 @@ func (db *datastore) CanCollect(cpr *ClaimPostRequest, userID int64) bool {
 func (db *datastore) AttemptClaim(p *ClaimPostRequest, query string, params []interface{}, slugIdx int) (sql.Result, error) {
 	qRes, err := db.Exec(query, params...)
 	if err != nil {
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-			if mysqlErr.Number == mySQLErrDuplicateKey && slugIdx > -1 {
-				s := id.GenSafeUniqueSlug(p.Slug)
-				if s == p.Slug {
-					// Sanity check to prevent infinite recursion
-					return qRes, fmt.Errorf("GenSafeUniqueSlug generated nothing unique: %s", s)
-				}
-				p.Slug = s
-				params[slugIdx] = p.Slug
-				return db.AttemptClaim(p, query, params, slugIdx)
+		if db.isDuplicateKeyErr(err) && slugIdx > -1 {
+			s := id.GenSafeUniqueSlug(p.Slug)
+			if s == p.Slug {
+				// Sanity check to prevent infinite recursion
+				return qRes, fmt.Errorf("GenSafeUniqueSlug generated nothing unique: %s", s)
 			}
+			p.Slug = s
+			params[slugIdx] = p.Slug
+			return db.AttemptClaim(p, query, params, slugIdx)
 		}
 		return qRes, fmt.Errorf("attemptClaim: %s", err)
 	}
@@ -1455,7 +1505,8 @@ func (db *datastore) GetLastPinnedPostPos(collID int64) int64 {
 }
 
 func (db *datastore) GetPinnedPosts(coll *CollectionObj) (*[]PublicPost, error) {
-	rows, err := db.Query("SELECT id, slug, title, LEFT(content, 80), pinned_position FROM posts WHERE collection_id = ? AND pinned_position IS NOT NULL ORDER BY pinned_position ASC", coll.ID)
+	// FIXME: sqlite-backed instances don't include ellipsis on truncated titles
+	rows, err := db.Query("SELECT id, slug, title, "+db.clip("content", 80)+", pinned_position FROM posts WHERE collection_id = ? AND pinned_position IS NOT NULL ORDER BY pinned_position ASC", coll.ID)
 	if err != nil {
 		log.Error("Failed selecting pinned posts: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve pinned posts."}
@@ -1734,10 +1785,8 @@ func (db *datastore) ChangeSettings(app *app, u *User, s *userSettings) error {
 		_, err = t.Exec("UPDATE users SET username = ? WHERE id = ?", newUsername, u.ID)
 		if err != nil {
 			t.Rollback()
-			if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-				if mysqlErr.Number == mySQLErrDuplicateKey {
-					return impart.HTTPError{http.StatusConflict, "Username is already taken."}
-				}
+			if db.isDuplicateKeyErr(err) {
+				return impart.HTTPError{http.StatusConflict, "Username is already taken."}
 			}
 			log.Error("Unable to update users table: %v", err)
 			return ErrInternalGeneral
@@ -1746,10 +1795,8 @@ func (db *datastore) ChangeSettings(app *app, u *User, s *userSettings) error {
 		_, err = t.Exec("UPDATE collections SET alias = ? WHERE alias = ? AND owner_id = ?", newUsername, u.Username, u.ID)
 		if err != nil {
 			t.Rollback()
-			if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-				if mysqlErr.Number == mySQLErrDuplicateKey {
-					return impart.HTTPError{http.StatusConflict, "Username is already taken."}
-				}
+			if db.isDuplicateKeyErr(err) {
+				return impart.HTTPError{http.StatusConflict, "Username is already taken."}
 			}
 			log.Error("Unable to update collection: %v", err)
 			return ErrInternalGeneral
@@ -2141,7 +2188,12 @@ func (db *datastore) GetDynamicContent(id string) (string, *time.Time, error) {
 }
 
 func (db *datastore) UpdateDynamicContent(id, content string) error {
-	_, err := db.Exec("INSERT INTO appcontent (id, content, updated) VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE content = ?, updated = NOW()", id, content, content)
+	var err error
+	if db.driverName == driverSQLite {
+		_, err = db.Exec("INSERT OR REPLACE INTO appcontent (id, content, updated) VALUES (?, ?, "+db.now()+")", id, content)
+	} else {
+		_, err = db.Exec("INSERT INTO appcontent (id, content, updated) VALUES (?, ?, "+db.now()+") "+db.upsert("id")+" content = ?, updated = "+db.now(), id, content, content)
+	}
 	if err != nil {
 		log.Error("Unable to INSERT appcontent for '%s': %v", id, err)
 	}

@@ -22,6 +22,7 @@ type (
 
 	DatabaseCfg struct {
 		Type     string `ini:"type"`
+		FileName string `ini:"filename"`
 		User     string `ini:"username"`
 		Password string `ini:"password"`
 		Database string `ini:"database"`
@@ -59,15 +60,10 @@ type (
 )
 
 func New() *Config {
-	return &Config{
+	c := &Config{
 		Server: ServerCfg{
 			Port: 8080,
 			Bind: "localhost", /* IPV6 support when not using localhost? */
-		},
-		Database: DatabaseCfg{
-			Type: "mysql",
-			Host: "localhost",
-			Port: 3306,
 		},
 		App: AppCfg{
 			Host:           "http://localhost:8080",
@@ -79,6 +75,25 @@ func New() *Config {
 			Federation:     true,
 			PublicStats:    true,
 		},
+	}
+	c.UseMySQL(true)
+	return c
+}
+
+// UseMySQL resets the Config's Database to use default values for a MySQL setup.
+func (cfg *Config) UseMySQL(fresh bool) {
+	cfg.Database.Type = "mysql"
+	if fresh {
+		cfg.Database.Host = "localhost"
+		cfg.Database.Port = 3306
+	}
+}
+
+// UseSQLite resets the Config's Database to use default values for a SQLite setup.
+func (cfg *Config) UseSQLite(fresh bool) {
+	cfg.Database.Type = "sqlite3"
+	if fresh {
+		cfg.Database.FileName = "writefreely.db"
 	}
 }
 

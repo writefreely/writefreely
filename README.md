@@ -46,11 +46,11 @@ First, download the [latest release](https://github.com/writeas/writefreely/rele
 Now extract the files from the archive, change into the directory, and do the following steps:
 
 ```bash
-# 1) Log into MySQL and run:
-# CREATE DATABASE writefreely;
-#
-# 2) Configure your blog
+# 1) Configure your blog
 ./writefreely --config
+
+# 2) (if you chose MySQL in the previous step) Log into MySQL and run:
+# CREATE DATABASE writefreely;
 
 # 3) Import the schema with:
 ./writefreely --init-db

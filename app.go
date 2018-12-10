@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -15,6 +14,9 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
@@ -246,19 +248,19 @@ func Serve() {
 
 		os.Exit(errStatus)
 	} else if *createSchema {
-		log.Info("Loading configuration...")
-		cfg, err := config.Load()
-		if err != nil {
-			log.Error("Unable to load configuration: %v", err)
-			os.Exit(1)
-		}
-		app.cfg = cfg
+		loadConfig(app)
 		connectToDatabase(app)
 		defer shutdown(app)
 
-		schema, err := ioutil.ReadFile("schema.sql")
+		schemaFileName := "schema.sql"
+
+		if app.cfg.Database.Type == "sqlite3" {
+			schemaFileName = "sqlite.sql"
+		}
+
+		schema, err := ioutil.ReadFile(schemaFileName)
 		if err != nil {
-			log.Error("Unable to load schema.sql: %v", err)
+			log.Error("Unable to load schema file: %v", err)
 			os.Exit(1)
 		}
 
@@ -291,13 +293,7 @@ func Serve() {
 			os.Exit(1)
 		}
 
-		log.Info("Loading configuration...")
-		cfg, err := config.Load()
-		if err != nil {
-			log.Error("Unable to load configuration: %v", err)
-			os.Exit(1)
-		}
-		app.cfg = cfg
+		loadConfig(app)
 		connectToDatabase(app)
 		defer shutdown(app)
 
@@ -333,13 +329,7 @@ func Serve() {
 		os.Exit(0)
 	} else if *resetPassUser != "" {
 		// Connect to the database
-		log.Info("Loading configuration...")
-		cfg, err := config.Load()
-		if err != nil {
-			log.Error("Unable to load configuration: %v", err)
-			os.Exit(1)
-		}
-		app.cfg = cfg
+		loadConfig(app)
 		connectToDatabase(app)
 		defer shutdown(app)
 
@@ -377,23 +367,17 @@ func Serve() {
 
 	log.Info("Initializing...")
 
-	log.Info("Loading configuration...")
-	cfg, err := config.Load()
-	if err != nil {
-		log.Error("Unable to load configuration: %v", err)
-		os.Exit(1)
-	}
-	app.cfg = cfg
+	loadConfig(app)
 
-	hostName = cfg.App.Host
-	isSingleUser = cfg.App.SingleUser
+	hostName = app.cfg.App.Host
+	isSingleUser = app.cfg.App.SingleUser
 	app.cfg.Server.Dev = *debugPtr
 
 	initTemplates()
 
 	// Load keys
 	log.Info("Loading encryption keys...")
-	err = initKeys(app)
+	err := initKeys(app)
 	if err != nil {
 		log.Error("\n%s\n", err)
 	}
@@ -483,20 +467,40 @@ func Serve() {
 	}
 }
 
-func connectToDatabase(app *app) {
-	if app.cfg.Database.Type != "mysql" {
-		log.Error("Invalid database type '%s'. Only 'mysql' is supported right now.", app.cfg.Database.Type)
+func loadConfig(app *app) {
+	log.Info("Loading configuration...")
+	cfg, err := config.Load()
+	if err != nil {
+		log.Error("Unable to load configuration: %v", err)
 		os.Exit(1)
 	}
+	app.cfg = cfg
+}
 
+func connectToDatabase(app *app) {
 	log.Info("Connecting to %s database...", app.cfg.Database.Type)
-	db, err := sql.Open(app.cfg.Database.Type, fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String())))
+
+	var db *sql.DB
+	var err error
+	if app.cfg.Database.Type == "mysql" {
+		db, err = sql.Open(app.cfg.Database.Type, fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String())))
+		db.SetMaxOpenConns(50)
+	} else if app.cfg.Database.Type == "sqlite3" {
+		if app.cfg.Database.FileName == "" {
+			log.Error("SQLite database filename value in config.ini is empty.")
+			os.Exit(1)
+		}
+		db, err = sql.Open("sqlite3", app.cfg.Database.FileName+"?parseTime=true&cached=shared")
+		db.SetMaxOpenConns(1)
+	} else {
+		log.Error("Invalid database type '%s'. Only 'mysql' and 'sqlite3' are supported right now.", app.cfg.Database.Type)
+		os.Exit(1)
+	}
 	if err != nil {
 		log.Error("%s", err)
 		os.Exit(1)
 	}
-	app.db = &datastore{db}
-	app.db.SetMaxOpenConns(50)
+	app.db = &datastore{db, app.cfg.Database.Type}
 }
 
 func shutdown(app *app) {
