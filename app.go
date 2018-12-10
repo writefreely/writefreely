@@ -43,7 +43,7 @@ var (
 	debugging bool
 
 	// Software version can be set from git env using -ldflags
-	softwareVer = "0.5.0"
+	softwareVer = "0.6.0"
 
 	// DEPRECATED VARS
 	// TODO: pass app.cfg into GetCollection* calls so we can get these values
