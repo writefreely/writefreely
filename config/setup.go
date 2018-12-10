@@ -14,20 +14,23 @@ type SetupData struct {
 	Config *Config
 }
 
-func Configure() (*SetupData, error) {
+func Configure(fname string) (*SetupData, error) {
 	data := &SetupData{}
 	var err error
+	if fname == "" {
+		fname = FileName
+	}
 
-	data.Config, err = Load()
+	data.Config, err = Load(fname)
 	var action string
 	isNewCfg := false
 	if err != nil {
-		fmt.Println("No configuration yet. Creating new.")
+		fmt.Printf("No %s configuration yet. Creating new.\n", fname)
 		data.Config = New()
 		action = "generate"
 		isNewCfg = true
 	} else {
-		fmt.Println("Configuration loaded.")
+		fmt.Printf("Loaded configuration %s.\n", fname)
 		action = "update"
 	}
 	title := color.New(color.Bold, color.BgGreen).PrintFunc()
@@ -36,7 +39,7 @@ func Configure() (*SetupData, error) {
 	fmt.Println()
 	intro("  ✍ Write Freely Configuration ✍")
 	fmt.Println()
-	fmt.Println(wordwrap.WrapString("  This quick configuration process will "+action+" the application's config file, "+FileName+".\n\n  It validates your input along the way, so you can be sure any future errors aren't caused by a bad configuration. If you'd rather configure your server manually, instead run: writefreely --create-config and edit that file.", 75))
+	fmt.Println(wordwrap.WrapString("  This quick configuration process will "+action+" the application's config file, "+fname+".\n\n  It validates your input along the way, so you can be sure any future errors aren't caused by a bad configuration. If you'd rather configure your server manually, instead run: writefreely --create-config and edit that file.", 75))
 	fmt.Println()
 
 	title(" Server setup ")
@@ -345,5 +348,5 @@ func Configure() (*SetupData, error) {
 		data.Config.App.Private = fedStatsType == "Private"
 	}
 
-	return data, Save(data.Config)
+	return data, Save(data.Config, fname)
 }

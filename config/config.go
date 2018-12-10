@@ -101,8 +101,11 @@ func (cfg *Config) IsSecureStandalone() bool {
 	return cfg.Server.Port == 443 && cfg.Server.TLSCertPath != "" && cfg.Server.TLSKeyPath != ""
 }
 
-func Load() (*Config, error) {
-	cfg, err := ini.Load(FileName)
+func Load(fname string) (*Config, error) {
+	if fname == "" {
+		fname = FileName
+	}
+	cfg, err := ini.Load(fname)
 	if err != nil {
 		return nil, err
 	}
@@ -116,12 +119,15 @@ func Load() (*Config, error) {
 	return uc, nil
 }
 
-func Save(uc *Config) error {
+func Save(uc *Config, fname string) error {
 	cfg := ini.Empty()
 	err := ini.ReflectFrom(cfg, uc)
 	if err != nil {
 		return err
 	}
 
-	return cfg.SaveTo(FileName)
+	if fname == "" {
+		fname = FileName
+	}
+	return cfg.SaveTo(fname)
 }

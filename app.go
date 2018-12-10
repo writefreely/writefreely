@@ -56,6 +56,7 @@ type app struct {
 	router       *mux.Router
 	db           *datastore
 	cfg          *config.Config
+	cfgFile      string
 	keys         *keychain
 	sessionStore *sessions.CookieStore
 	formDecoder  *schema.Decoder
@@ -183,12 +184,15 @@ func Serve() {
 	createSchema := flag.Bool("init-db", false, "Initialize app database")
 	createAdmin := flag.String("create-admin", "", "Create an admin with the given username:password")
 	resetPassUser := flag.String("reset-pass", "", "Reset the given user's password")
+	configFile := flag.String("c", "config.ini", "The configuration file to use")
 	outputVersion := flag.Bool("v", false, "Output the current version")
 	flag.Parse()
 
 	debugging = *debugPtr
 
-	app := &app{}
+	app := &app{
+		cfgFile: *configFile,
+	}
 
 	if *outputVersion {
 		fmt.Println(serverSoftware + " " + softwareVer)
@@ -196,15 +200,15 @@ func Serve() {
 	} else if *createConfig {
 		log.Info("Creating configuration...")
 		c := config.New()
-		log.Info("Saving configuration...")
-		err := config.Save(c)
+		log.Info("Saving configuration %s...", app.cfgFile)
+		err := config.Save(c, app.cfgFile)
 		if err != nil {
 			log.Error("Unable to save configuration: %v", err)
 			os.Exit(1)
 		}
 		os.Exit(0)
 	} else if *doConfig {
-		d, err := config.Configure()
+		d, err := config.Configure(app.cfgFile)
 		if err != nil {
 			log.Error("Unable to configure: %v", err)
 			os.Exit(1)
@@ -468,8 +472,8 @@ func Serve() {
 }
 
 func loadConfig(app *app) {
-	log.Info("Loading configuration...")
-	cfg, err := config.Load()
+	log.Info("Loading %s configuration...", app.cfgFile)
+	cfg, err := config.Load(app.cfgFile)
 	if err != nil {
 		log.Error("Unable to load configuration: %v", err)
 		os.Exit(1)
