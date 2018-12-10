@@ -28,6 +28,7 @@ var reservedUsernames = map[string]bool{
 	"categories":       true,
 	"category":         true,
 	"changes":          true,
+	"community":        true,
 	"create":           true,
 	"css":              true,
 	"data":             true,
