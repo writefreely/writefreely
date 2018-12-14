@@ -413,6 +413,12 @@ func Serve() {
 	connectToDatabase(app)
 	defer shutdown(app)
 
+	// Test database connection
+	err = db.Ping()
+	if err != nil {
+		log.Error("Database ping failed: %s", err)
+	}
+
 	r := mux.NewRouter()
 	handler := NewHandler(app)
 	handler.SetErrorPages(&ErrorPages{
