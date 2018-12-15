@@ -414,7 +414,7 @@ func Serve() {
 	defer shutdown(app)
 
 	// Test database connection
-	err = db.Ping()
+	err = app.db.Ping()
 	if err != nil {
 		log.Error("Database ping failed: %s", err)
 	}
