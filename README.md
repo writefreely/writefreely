@@ -33,11 +33,18 @@ It's designed to be flexible and share your writing widely, so it's built around
 
 * Start a blog for yourself, or host a community of writers
 * Form larger federated networks, and interact over modern protocols like ActivityPub
-* Write on a dead-simple, distraction-free and super fast editor
+* Write on a fast, dead-simple, and distraction-free editor
+* Format text with Markdown, and organize posts with hashtags
 * Publish drafts and let others proofread them by sharing a private link
+* Create multiple lightweight blogs under a single account
+* Export all data in plain text files
+* Read a stream of other posts in your writing community
 * Build more advanced apps and extensions with the [well-documented API](https://developers.write.as/docs/api/)
+* Designed around user privacy and consent
 
 ## Quick start
+
+WriteFreely has minimal requirements to get up and running — you only need to be able to run an executable.
 
 > **Note** this is currently alpha software. We're quickly moving out of this v0.x stage, but while we're in it, there are no guarantees that this is ready for production use.
 
