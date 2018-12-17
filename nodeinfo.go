@@ -1,9 +1,9 @@
 package writefreely
 
 import (
-	"github.com/writeas/go-nodeinfo"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
+	"github.com/writefreely/go-nodeinfo"
 	"strings"
 )
 
@@ -38,6 +38,7 @@ func nodeInfoConfig(db *datastore, cfg *config.Config) *nodeinfo.Config {
 				GitHub:   "https://github.com/writeas/writefreely",
 				Follow:   "https://writing.exchange/@write_as",
 			},
+			MaxBlogs: cfg.App.MaxBlogs,
 		},
 		Protocols: []nodeinfo.NodeProtocol{
 			nodeinfo.ProtocolActivityPub,

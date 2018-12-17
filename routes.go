@@ -2,10 +2,10 @@ package writefreely
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/writeas/go-nodeinfo"
 	"github.com/writeas/go-webfinger"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
+	"github.com/writefreely/go-nodeinfo"
 	"net/http"
 	"strings"
 )
