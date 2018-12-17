@@ -292,47 +292,7 @@ func Serve() {
 		}
 		os.Exit(0)
 	} else if *createAdmin != "" {
-		// Create an admin user with --create-admin
-		creds := strings.Split(*createAdmin, ":")
-		if len(creds) != 2 {
-			log.Error("usage: writefreely --create-admin username:password")
-			os.Exit(1)
-		}
-
-		loadConfig(app)
-		connectToDatabase(app)
-		defer shutdown(app)
-
-		// Ensure an admin / first user doesn't already exist
-		if u, _ := app.db.GetUserByID(1); u != nil {
-			log.Error("Admin user already exists (%s). Aborting.", u.Username)
-			os.Exit(1)
-		}
-
-		// Create the user
-		username := creds[0]
-		password := creds[1]
-
-		hashedPass, err := auth.HashPass([]byte(password))
-		if err != nil {
-			log.Error("Unable to hash password: %v", err)
-			os.Exit(1)
-		}
-
-		u := &User{
-			Username:   username,
-			HashedPass: hashedPass,
-			Created:    time.Now().Truncate(time.Second).UTC(),
-		}
-
-		log.Info("Creating user %s...\n", u.Username)
-		err = app.db.CreateUser(u, "")
-		if err != nil {
-			log.Error("Unable to create user: %s", err)
-			os.Exit(1)
-		}
-		log.Info("Done!")
-		os.Exit(0)
+		adminCreateUser(app, *createAdmin, true)
 	} else if *resetPassUser != "" {
 		// Connect to the database
 		loadConfig(app)
@@ -524,4 +484,48 @@ func connectToDatabase(app *app) {
 func shutdown(app *app) {
 	log.Info("Closing database connection...")
 	app.db.Close()
+}
+
+func adminCreateUser(app *app, credStr string, isAdmin bool) {
+	// Create an admin user with --create-admin
+	creds := strings.Split(credStr, ":")
+	if len(creds) != 2 {
+		log.Error("usage: writefreely --create-admin username:password")
+		os.Exit(1)
+	}
+
+	loadConfig(app)
+	connectToDatabase(app)
+	defer shutdown(app)
+
+	// Ensure an admin / first user doesn't already exist
+	if u, _ := app.db.GetUserByID(1); u != nil {
+		log.Error("Admin user already exists (%s). Aborting.", u.Username)
+		os.Exit(1)
+	}
+
+	// Create the user
+	username := creds[0]
+	password := creds[1]
+
+	hashedPass, err := auth.HashPass([]byte(password))
+	if err != nil {
+		log.Error("Unable to hash password: %v", err)
+		os.Exit(1)
+	}
+
+	u := &User{
+		Username:   username,
+		HashedPass: hashedPass,
+		Created:    time.Now().Truncate(time.Second).UTC(),
+	}
+
+	log.Info("Creating user %s...", u.Username)
+	err = app.db.CreateUser(u, "")
+	if err != nil {
+		log.Error("Unable to create user: %s", err)
+		os.Exit(1)
+	}
+	log.Info("Done!")
+	os.Exit(0)
 }
