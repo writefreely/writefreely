@@ -1,6 +1,6 @@
 FROM golang:1.11.2-alpine3.8 as build
 
-RUN apk add --update nodejs nodejs-npm make git
+RUN apk add --update nodejs nodejs-npm make g++ git sqlite-dev
 RUN npm install -g less
 RUN npm install -g less-plugin-clean-css
 
