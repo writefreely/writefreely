@@ -26,6 +26,7 @@ import (
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/converter"
 	"github.com/writeas/web-core/log"
+	"github.com/writeas/writefreely/author"
 	"github.com/writeas/writefreely/config"
 	"github.com/writeas/writefreely/page"
 )
@@ -508,6 +509,21 @@ func adminCreateUser(app *app, credStr string, isAdmin bool) {
 	username := creds[0]
 	password := creds[1]
 
+	// Normalize and validate username
+	desiredUsername := username
+	username = getSlug(username, "")
+
+	usernameDesc := username
+	if username != desiredUsername {
+		usernameDesc += " (originally: " + desiredUsername + ")"
+	}
+
+	if !author.IsValidUsername(app.cfg, username) {
+		log.Error("Username %s is invalid, reserved, or shorter than configured minimum length (%d characters).", usernameDesc, app.cfg.App.MinUsernameLen)
+		os.Exit(1)
+	}
+
+	// Hash the password
 	hashedPass, err := auth.HashPass([]byte(password))
 	if err != nil {
 		log.Error("Unable to hash password: %v", err)
