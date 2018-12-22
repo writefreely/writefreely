@@ -186,6 +186,7 @@ func Serve() {
 	genKeys := flag.Bool("gen-keys", false, "Generate encryption and authentication keys")
 	createSchema := flag.Bool("init-db", false, "Initialize app database")
 	createAdmin := flag.String("create-admin", "", "Create an admin with the given username:password")
+	createUser := flag.String("create-user", "", "Create a regular user with the given username:password")
 	resetPassUser := flag.String("reset-pass", "", "Reset the given user's password")
 	configFile := flag.String("c", "config.ini", "The configuration file to use")
 	outputVersion := flag.Bool("v", false, "Output the current version")
@@ -294,6 +295,8 @@ func Serve() {
 		os.Exit(0)
 	} else if *createAdmin != "" {
 		adminCreateUser(app, *createAdmin, true)
+	} else if *createUser != "" {
+		adminCreateUser(app, *createUser, false)
 	} else if *resetPassUser != "" {
 		// Connect to the database
 		loadConfig(app)
@@ -500,9 +503,19 @@ func adminCreateUser(app *app, credStr string, isAdmin bool) {
 	defer shutdown(app)
 
 	// Ensure an admin / first user doesn't already exist
-	if u, _ := app.db.GetUserByID(1); u != nil {
-		log.Error("Admin user already exists (%s). Aborting.", u.Username)
-		os.Exit(1)
+	firstUser, _ := app.db.GetUserByID(1)
+	if isAdmin {
+		// Abort if trying to create admin user, but one already exists
+		if firstUser != nil {
+			log.Error("Admin user already exists (%s). Create a regular user with: writefreely --create-user", firstUser.Username)
+			os.Exit(1)
+		}
+	} else {
+		// Abort if trying to create regular user, but no admin exists yet
+		if firstUser == nil {
+			log.Error("No admin user exists yet. Create an admin first with: writefreely --create-admin")
+			os.Exit(1)
+		}
 	}
 
 	// Create the user
@@ -536,8 +549,12 @@ func adminCreateUser(app *app, credStr string, isAdmin bool) {
 		Created:    time.Now().Truncate(time.Second).UTC(),
 	}
 
-	log.Info("Creating user %s...", u.Username)
-	err = app.db.CreateUser(u, "")
+	userType := "user"
+	if isAdmin {
+		userType = "admin"
+	}
+	log.Info("Creating %s %s...", userType, usernameDesc)
+	err = app.db.CreateUser(u, desiredUsername)
 	if err != nil {
 		log.Error("Unable to create user: %s", err)
 		os.Exit(1)
