@@ -6,3 +6,4 @@ WriteFreely is built by [Matt Baer](https://github.com/thebaer), with contributi
 * [Ben Overmyer](https://github.com/BenOvermyer)
 * [Marcel van der Boom](https://github.com/mrvdb)
 * [Brad Koehn](https://github.com/koehn)
+* [kaiyou](https://github.com/kaiyou)
