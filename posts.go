@@ -686,6 +686,10 @@ func existingPost(app *app, w http.ResponseWriter, r *http.Request) error {
 			collPre = ""
 		}
 		redirect = collPre + "/" + pRes.Slug.String + "/edit/meta"
+	} else {
+		if app.cfg.App.SingleUser {
+			redirect = "/d" + redirect
+		}
 	}
 	w.Header().Set("Location", redirect)
 	w.WriteHeader(http.StatusFound)
