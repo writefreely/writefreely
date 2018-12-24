@@ -3,7 +3,7 @@
 	<head prefix="og: http://ogp.me/ns#">
 		<meta charset="utf-8">
 
-		<title>{{if .Title}}{{.Title}}{{else}}{{.GenTitle}}{{end}} &mdash; {{.SiteName}}</title>
+		<title>{{if .Title}}{{.Title}}{{else}}{{.GenTitle}}{{end}} {{localhtml "title dash" .Language}} {{.SiteName}}</title>
 		
 		{{if .IsCode}}
 		<link rel="stylesheet" href="/css/lib/mono-blue.min.css">

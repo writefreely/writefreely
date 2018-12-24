@@ -3,14 +3,14 @@
 	<head prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article#">
 		<meta charset="utf-8">
 
-		<title>{{.PlainDisplayTitle}} &mdash; {{.Collection.DisplayTitle}}</title>
+		<title>{{.PlainDisplayTitle}} {{localhtml "title dash" .Language.String}} {{.Collection.DisplayTitle}}</title>
 		
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="canonical" href="{{.CanonicalURL}}" />
 		<meta name="generator" content="Write Freely">
-		<meta name="title" content="{{.PlainDisplayTitle}} &mdash; {{if .Collection.Title}}{{.Collection.Title}}{{else}}{{.Collection.Alias}}{{end}}">
+		<meta name="title" content="{{.PlainDisplayTitle}} {{localhtml "title dash" .Language.String}} {{if .Collection.Title}}{{.Collection.Title}}{{else}}{{.Collection.Alias}}{{end}}">
 		<meta name="description" content="{{.Summary}}">
 		{{if gt .Views 1}}<meta name="twitter:label1" value="Views">
 		<meta name="twitter:data1" value="{{largeNumFmt .Views}}">{{end}}
@@ -19,7 +19,7 @@
 		<meta itemprop="datePublished" content="{{.CreatedDate}}" />
 		<meta name="twitter:card" content="summary">
 		<meta name="twitter:description" content="{{.Summary}}">
-		<meta name="twitter:title" content="{{.PlainDisplayTitle}} &mdash; {{if .Collection.Title}}{{.Collection.Title}}{{else}}{{.Collection.Alias}}{{end}}">
+		<meta name="twitter:title" content="{{.PlainDisplayTitle}} {{localhtml "title dash" .Language.String}} {{if .Collection.Title}}{{.Collection.Title}}{{else}}{{.Collection.Alias}}{{end}}">
 		{{if gt (len .Images) 0}}<meta name="twitter:image" content="{{index .Images 0}}">{{else}}<meta name="twitter:image" content="{{.Collection.AvatarURL}}">{{end}}
 		<meta property="og:title" content="{{.PlainDisplayTitle}}" />
 		<meta property="og:description" content="{{.Summary}}" />
