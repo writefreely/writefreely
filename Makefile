@@ -64,7 +64,7 @@ release : clean ui
 	rm build/$(BINARY_NAME)
 	$(MAKE) build-darwin
 	mv build/$(BINARY_NAME)-darwin-10.6-amd64 build/$(BINARY_NAME)
-	cd build; tar -cvzf ../$(BINARY_NAME)_$(GITREV)_darwin_amd64.tar.gz *
+	cd build; tar -cvzf ../$(BINARY_NAME)_$(GITREV)_macos_amd64.tar.gz *
 	rm build/$(BINARY_NAME)
 	$(MAKE) build-windows
 	mv build/$(BINARY_NAME)-windows-4.0-amd64.exe build/$(BINARY_NAME).exe
