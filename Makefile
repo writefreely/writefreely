@@ -12,7 +12,7 @@ IMAGE_NAME=writeas/writefreely
 
 all : build
 
-build: deps
+build: assets deps
 	cd cmd/writefreely; $(GOBUILD) -v
 
 build-linux: deps
@@ -50,11 +50,10 @@ install : build
 	cmd/writefreely/$(BINARY_NAME) --gen-keys
 	cd less/; $(MAKE) install $(MFLAGS)
 
-release : clean ui
+release : clean ui assets
 	mkdir build
 	cp -r templates build
 	cp -r pages build
-	cp -r static build
 	mkdir build/keys
 	cp schema.sql build
 	cp sqlite.sql build
@@ -77,6 +76,17 @@ release-docker :
 	
 ui : force_look
 	cd less/; $(MAKE) $(MFLAGS)
+
+assets : generate
+	go-bindata -pkg writefreely -ignore=\\.gitignore static/...
+
+dev-assets : generate
+	go-bindata -pkg writefreely -ignore=\\.gitignore -debug static/...
+
+generate :
+	@hash go-bindata > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+		$(GOGET) -u github.com/jteeuwen/go-bindata/...; \
+	fi
 
 clean :
 	-rm -rf build

@@ -27,6 +27,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
@@ -41,7 +42,7 @@ import (
 )
 
 const (
-	staticDir       = "static/"
+	staticDir       = "static"
 	assumedTitleLen = 80
 	postsPerPage    = 10
 
@@ -411,7 +412,7 @@ func Serve() {
 	}
 
 	// Handle static files
-	fs := http.FileServer(http.Dir(staticDir))
+	fs := http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, AssetInfo: AssetInfo, Prefix: staticDir})
 	shttp.Handle("/", fs)
 	r.PathPrefix("/").Handler(fs)
 

@@ -5,3 +5,5 @@
 build
 config.ini
 *.db
+
+bindata.go
