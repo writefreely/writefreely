@@ -7,6 +7,7 @@
  * it under the terms of the GNU Affero General Public License, included
  * in the LICENSE file in this source code package.
  */
+
 // package page provides mechanisms and data for generating a WriteFreely page.
 package page
 
