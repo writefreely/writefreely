@@ -1365,7 +1365,7 @@ func (rp *RawPost) Created8601() string {
 	return rp.Created.Format("2006-01-02T15:04:05Z")
 }
 
-var imageURLRegex = regexp.MustCompile(`(?i)^https?:\/\/[^ ]*\.(gif|png|jpg|jpeg)$`)
+var imageURLRegex = regexp.MustCompile(`(?i)^https?:\/\/[^ ]*\.(gif|png|jpg|jpeg|image)$`)
 
 func (p *Post) extractImages() {
 	matches := extract.ExtractUrls(p.Content)
