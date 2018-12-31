@@ -14,7 +14,6 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -270,12 +269,11 @@ func Serve() {
 		defer shutdown(app)
 
 		schemaFileName := "schema.sql"
-
 		if app.cfg.Database.Type == "sqlite3" {
 			schemaFileName = "sqlite.sql"
 		}
 
-		schema, err := ioutil.ReadFile(schemaFileName)
+		schema, err := Asset(schemaFileName)
 		if err != nil {
 			log.Error("Unable to load schema file: %v", err)
 			os.Exit(1)
