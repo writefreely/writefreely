@@ -25,7 +25,6 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
@@ -476,6 +475,10 @@ func connectToDatabase(app *app) {
 		db, err = sql.Open(app.cfg.Database.Type, fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String())))
 		db.SetMaxOpenConns(50)
 	} else if app.cfg.Database.Type == "sqlite3" {
+		if !SQLiteEnabled {
+			log.Error("Invalid database type '%s'. Binary wasn't compiled with SQLite3 support.", app.cfg.Database.Type)
+			os.Exit(1)
+		}
 		if app.cfg.Database.FileName == "" {
 			log.Error("SQLite database filename value in config.ini is empty.")
 			os.Exit(1)
