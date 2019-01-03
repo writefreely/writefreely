@@ -538,6 +538,7 @@ func (h *Handler) handleHTTPError(w http.ResponseWriter, r *http.Request, err er
 			h.errors.Gone.ExecuteTemplate(w, "base", p)
 			return
 		} else if err.Status == http.StatusNotFound {
+			w.WriteHeader(err.Status)
 			h.errors.NotFound.ExecuteTemplate(w, "base", pageForReq(h.app, r))
 			return
 		} else if err.Status == http.StatusInternalServerError {
