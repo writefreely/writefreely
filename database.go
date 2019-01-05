@@ -113,6 +113,7 @@ type writestore interface {
 	GetDynamicContent(id string) (string, *time.Time, error)
 	UpdateDynamicContent(id, content string) error
 	GetAllUsers(page uint) (*[]User, error)
+	GetAllUsersCount() int64
 	GetUserLastPostTime(id int64) (*time.Time, error)
 	GetCollectionLastPostTime(id int64) (*time.Time, error)
 }
@@ -2220,10 +2221,9 @@ func (db *datastore) UpdateDynamicContent(id, content string) error {
 }
 
 func (db *datastore) GetAllUsers(page uint) (*[]User, error) {
-	const usersPerPage = 30
-	limitStr := fmt.Sprintf("0, %d", usersPerPage)
+	limitStr := fmt.Sprintf("0, %d", adminUsersPerPage)
 	if page > 1 {
-		limitStr = fmt.Sprintf("%d, %d", (page-1)*usersPerPage, usersPerPage)
+		limitStr = fmt.Sprintf("%d, %d", (page-1)*adminUsersPerPage, adminUsersPerPage)
 	}
 
 	rows, err := db.Query("SELECT id, username, created FROM users ORDER BY created DESC LIMIT " + limitStr)
@@ -2244,6 +2244,20 @@ func (db *datastore) GetAllUsers(page uint) (*[]User, error) {
 		users = append(users, u)
 	}
 	return &users, nil
+}
+
+func (db *datastore) GetAllUsersCount() int64 {
+	var count int64
+	err := db.QueryRow("SELECT COUNT(*) FROM users").Scan(&count)
+	switch {
+	case err == sql.ErrNoRows:
+		return 0
+	case err != nil:
+		log.Error("Failed selecting all users count: %v", err)
+		return 0
+	}
+
+	return count
 }
 
 func (db *datastore) GetUserLastPostTime(id int64) (*time.Time, error) {

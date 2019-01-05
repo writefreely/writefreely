@@ -4,9 +4,9 @@
 <div class="snug content-container">
 	{{template "admin-header" .}}
 
-	<h2 id="posts-header">Users</h2>
+	<h2 id="posts-header" style="display: flex; justify-content: space-between;">Users <span style="font-style: italic; font-size: 0.75em;">{{.TotalUsers}} total</strong></h2>
 
-	<table class="classy export">
+	<table class="classy export" style="width:100%">
 		<tr>
 			<th>User</th>
 			<th>Joined</th>
@@ -20,6 +20,10 @@
 		</tr>
 		{{end}}
 	</table>
+
+	<nav class="pager">
+		{{range $n := .TotalPages}}<a href="/admin/users{{if ne $n 1}}?p={{$n}}{{end}}" {{if eq $.CurPage $n}}class="selected"{{end}}>{{$n}}</a>{{end}}
+	</nav>
 
 </div>
 

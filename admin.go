@@ -29,6 +29,8 @@ var (
 	sysStatus    systemStatus
 )
 
+const adminUsersPerPage = 30
+
 type systemStatus struct {
 	Uptime       string
 	NumGoroutine int
@@ -116,15 +118,32 @@ func handleViewAdminUsers(app *app, u *User, w http.ResponseWriter, r *http.Requ
 		Config  config.AppCfg
 		Message string
 
-		Users *[]User
+		Users      *[]User
+		CurPage    int
+		TotalUsers int64
+		TotalPages []int
 	}{
 		UserPage: NewUserPage(app, r, u, "Users", nil),
 		Config:   app.cfg.App,
 		Message:  r.FormValue("m"),
 	}
 
+	p.TotalUsers = app.db.GetAllUsersCount()
+	ttlPages := p.TotalUsers / adminUsersPerPage
+	p.TotalPages = []int{}
+	for i := 1; i <= int(ttlPages); i++ {
+		p.TotalPages = append(p.TotalPages, i)
+	}
+
 	var err error
-	p.Users, err = app.db.GetAllUsers(1)
+	p.CurPage, err = strconv.Atoi(r.FormValue("p"))
+	if err != nil || p.CurPage < 1 {
+		p.CurPage = 1
+	} else if p.CurPage > int(ttlPages) {
+		p.CurPage = int(ttlPages)
+	}
+
+	p.Users, err = app.db.GetAllUsers(uint(p.CurPage))
 	if err != nil {
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get users: %v", err)}
 	}

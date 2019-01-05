@@ -9,3 +9,23 @@ header.admin {
 		margin-left: 1em;
 	}
 }
+.pager {
+	display: flex;
+	justify-content: center;
+
+	a {
+		color: #333;
+		font-family: @sansFont;
+		font-size: 0.86em;
+		padding: 0.5em 1em;
+		border: 1px solid #ccc;
+		&:hover {
+			text-decoration: none;
+			background: #efefef;
+		}
+		&.selected {
+			cursor: default;
+			background: #ccc;
+		}
+	}
+}
