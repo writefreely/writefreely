@@ -370,7 +370,7 @@ func Serve() {
 	app.formDecoder.RegisterConverter(sql.NullFloat64{}, converter.ConvertSQLNullFloat64)
 
 	// Check database configuration
-	if app.cfg.Database.User == "" || app.cfg.Database.Password == "" {
+	if app.cfg.Database.Type == "mysql" && (app.cfg.Database.User == "" || app.cfg.Database.Password == "") {
 		log.Error("Database user or password not set.")
 		os.Exit(1)
 	}
