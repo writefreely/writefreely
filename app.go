@@ -269,7 +269,7 @@ func Serve() {
 		defer shutdown(app)
 
 		schemaFileName := "schema.sql"
-		if app.cfg.Database.Type == "sqlite3" {
+		if app.cfg.Database.Type == driverSQLite {
 			schemaFileName = "sqlite.sql"
 		}
 
@@ -370,7 +370,7 @@ func Serve() {
 	app.formDecoder.RegisterConverter(sql.NullFloat64{}, converter.ConvertSQLNullFloat64)
 
 	// Check database configuration
-	if app.cfg.Database.Type == "mysql" && (app.cfg.Database.User == "" || app.cfg.Database.Password == "") {
+	if app.cfg.Database.Type == driverMySQL && (app.cfg.Database.User == "" || app.cfg.Database.Password == "") {
 		log.Error("Database user or password not set.")
 		os.Exit(1)
 	}
@@ -471,10 +471,10 @@ func connectToDatabase(app *app) {
 
 	var db *sql.DB
 	var err error
-	if app.cfg.Database.Type == "mysql" {
+	if app.cfg.Database.Type == driverMySQL {
 		db, err = sql.Open(app.cfg.Database.Type, fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String())))
 		db.SetMaxOpenConns(50)
-	} else if app.cfg.Database.Type == "sqlite3" {
+	} else if app.cfg.Database.Type == driverSQLite {
 		if !SQLiteEnabled {
 			log.Error("Invalid database type '%s'. Binary wasn't compiled with SQLite3 support.", app.cfg.Database.Type)
 			os.Exit(1)
