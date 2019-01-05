@@ -44,7 +44,7 @@ run: dev-assets
 	$(BINARY_NAME) --debug
 
 deps :
-	$(GOGET) -v ./...
+	$(GOGET) -tags='sqlite' -v ./...
 
 install : build
 	cmd/writefreely/$(BINARY_NAME) --gen-keys
