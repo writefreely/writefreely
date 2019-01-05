@@ -2223,7 +2223,7 @@ func (db *datastore) GetAllUsers(page uint) (*[]User, error) {
 	const usersPerPage = 30
 	limitStr := fmt.Sprintf("0, %d", usersPerPage)
 	if page > 1 {
-		limitStr = fmt.Sprintf("%d, %d", page*usersPerPage, page*usersPerPage+usersPerPage)
+		limitStr = fmt.Sprintf("%d, %d", (page-1)*usersPerPage, usersPerPage)
 	}
 
 	rows, err := db.Query("SELECT id, username, created FROM users ORDER BY created DESC LIMIT " + limitStr)
