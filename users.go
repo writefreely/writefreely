@@ -95,6 +95,15 @@ func (u *User) EmailClear(keys *keychain) string {
 	return ""
 }
 
+func (u User) CreatedFriendly() string {
+	/*
+		// TODO: accept a locale in this method and use that for the format
+		var loc monday.Locale = monday.LocaleEnUS
+		return monday.Format(u.Created, monday.DateTimeFormatsByLocale[loc], loc)
+	*/
+	return u.Created.Format("January 2, 2006, 3:04 PM")
+}
+
 // Cookie strips down an AuthUser to contain only information necessary for
 // cookies.
 func (u User) Cookie() *User {

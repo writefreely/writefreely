@@ -70,6 +70,12 @@ type systemStatus struct {
 	NumGC        uint32
 }
 
+type inspectedCollection struct {
+	CollectionObj
+	Followers int
+	LastPost  string
+}
+
 func handleViewAdminDash(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
 	updateAppStats()
 	p := struct {
@@ -101,6 +107,101 @@ func handleViewAdminDash(app *app, u *User, w http.ResponseWriter, r *http.Reque
 	}
 
 	showUserPage(w, "admin", p)
+	return nil
+}
+
+func handleViewAdminUsers(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+	p := struct {
+		*UserPage
+		Config  config.AppCfg
+		Message string
+
+		Users *[]User
+	}{
+		UserPage: NewUserPage(app, r, u, "Users", nil),
+		Config:   app.cfg.App,
+		Message:  r.FormValue("m"),
+	}
+
+	var err error
+	p.Users, err = app.db.GetAllUsers(1)
+	if err != nil {
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get users: %v", err)}
+	}
+
+	showUserPage(w, "users", p)
+	return nil
+}
+
+func handleViewAdminUser(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	username := vars["username"]
+	if username == "" {
+		return impart.HTTPError{http.StatusFound, "/admin/users"}
+	}
+
+	p := struct {
+		*UserPage
+		Config  config.AppCfg
+		Message string
+
+		User     *User
+		Colls    []inspectedCollection
+		LastPost string
+
+		TotalPosts int64
+	}{
+		Config:  app.cfg.App,
+		Message: r.FormValue("m"),
+		Colls:   []inspectedCollection{},
+	}
+
+	var err error
+	p.User, err = app.db.GetUserForAuth(username)
+	if err != nil {
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get user: %v", err)}
+	}
+	p.UserPage = NewUserPage(app, r, u, p.User.Username, nil)
+	p.TotalPosts = app.db.GetUserPostsCount(p.User.ID)
+	lp, err := app.db.GetUserLastPostTime(p.User.ID)
+	if err != nil {
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get user's last post time: %v", err)}
+	}
+	if lp != nil {
+		p.LastPost = lp.Format("January 2, 2006, 3:04 PM")
+	}
+
+	colls, err := app.db.GetCollections(p.User)
+	if err != nil {
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get user's collections: %v", err)}
+	}
+	for _, c := range *colls {
+		ic := inspectedCollection{
+			CollectionObj: CollectionObj{Collection: c},
+		}
+
+		if app.cfg.App.Federation {
+			folls, err := app.db.GetAPFollowers(&c)
+			if err == nil {
+				// TODO: handle error here (at least log it)
+				ic.Followers = len(*folls)
+			}
+		}
+
+		app.db.GetPostsCount(&ic.CollectionObj, true)
+
+		lp, err := app.db.GetCollectionLastPostTime(c.ID)
+		if err != nil {
+			log.Error("Didn't get last post time for collection %d: %v", c.ID, err)
+		}
+		if lp != nil {
+			ic.LastPost = lp.Format("January 2, 2006, 3:04 PM")
+		}
+
+		p.Colls = append(p.Colls, ic)
+	}
+
+	showUserPage(w, "view-user", p)
 	return nil
 }
 

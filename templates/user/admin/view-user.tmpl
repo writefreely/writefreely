@@ -1,0 +1,88 @@
+{{define "view-user"}}
+{{template "header" .}}
+<style>
+table.classy th {
+	text-align: left;
+}
+h3 {
+	font-weight: normal;
+}
+</style>
+<div class="snug content-container">
+	{{template "admin-header" .}}
+	<p><a href="/admin/users">View Users</a></p>
+
+	<h2 id="posts-header">{{.User.Username}}</h2>
+
+	<table class="classy export">
+		<tr>
+			<th>No.</th>
+			<td>{{.User.ID}}</td>
+		</tr>
+		<tr>
+			<th>Type</th>
+			<td>{{if .User.IsAdmin}}Admin{{else}}User{{end}}</td>
+		</tr>
+		<tr>
+			<th>Username</th>
+			<td>{{.User.Username}}</td>
+		</tr>
+		<tr>
+			<th>Joined</th>
+			<td>{{.User.CreatedFriendly}}</td>
+		</tr>
+		<tr>
+			<th>Total Posts</th>
+			<td>{{.TotalPosts}}</td>
+		</tr>
+		<tr>
+			<th>Last Post</th>
+			<td>{{if .LastPost}}{{.LastPost}}{{else}}Never{{end}}</td>
+		</tr>
+	</table>
+
+	<h2>Blogs</h2>
+
+	{{range .Colls}}
+	<h3><a href="/{{.Alias}}/">{{.Title}}</a></h3>
+	<table class="classy export">
+		<tr>
+			<th>Alias</th>
+			<td>{{.Alias}}</td>
+		</tr>
+		<tr>
+			<th>Title</th>
+			<td>{{.Title}}</td>
+		</tr>
+		<tr>
+			<th>Description</th>
+			<td>{{.Description}}</td>
+		</tr>
+		<tr>
+			<th>Visibility</th>
+			<td>{{.FriendlyVisibility}}</td>
+		</tr>
+		<tr>
+			<th>Views</th>
+			<td>{{.Views}}</td>
+		</tr>
+		<tr>
+			<th>Posts</th>
+			<td>{{.TotalPosts}}</td>
+		</tr>
+		<tr>
+			<th>Last Post</th>
+			<td>{{if .LastPost}}{{.LastPost}}{{else}}Never{{end}}</td>
+		</tr>
+		{{if $.Config.Federation}}
+		<tr>
+			<th>Fediverse Followers</th>
+			<td>{{.Followers}}</td>
+		</tr>
+		{{end}}
+	</table>
+	{{end}}
+</div>
+
+{{template "footer" .}}
+{{end}}

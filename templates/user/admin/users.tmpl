@@ -1,0 +1,27 @@
+{{define "users"}}
+{{template "header" .}}
+
+<div class="snug content-container">
+	{{template "admin-header" .}}
+
+	<h2 id="posts-header">Users</h2>
+
+	<table class="classy export">
+		<tr>
+			<th>User</th>
+			<th>Joined</th>
+			<th>Type</th>
+		</tr>
+		{{range .Users}}
+		<tr>
+			<td><a href="/admin/user/{{.Username}}">{{.Username}}</a></td>
+			<td>{{.CreatedFriendly}}</td>
+			<td style="text-align:center">{{if .IsAdmin}}Admin{{else}}User{{end}}</td>
+		</tr>
+		{{end}}
+	</table>
+
+</div>
+
+{{template "footer" .}}
+{{end}}
