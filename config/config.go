@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -8,6 +8,7 @@
  * in the LICENSE file in this source code package.
  */
 
+// Package config holds and assists in the configuration of a writefreely instance.
 package config
 
 import (
@@ -15,10 +16,12 @@ import (
 )
 
 const (
+	// FileName is the default configuration file name
 	FileName = "config.ini"
 )
 
 type (
+	// ServerCfg holds values that affect how the HTTP server runs
 	ServerCfg struct {
 		HiddenHost string `ini:"hidden_host"`
 		Port       int    `ini:"port"`
@@ -30,6 +33,7 @@ type (
 		Dev bool `ini:"-"`
 	}
 
+	// DatabaseCfg holds values that determine how the application connects to a datastore
 	DatabaseCfg struct {
 		Type     string `ini:"type"`
 		FileName string `ini:"filename"`
@@ -40,6 +44,7 @@ type (
 		Port     int    `ini:"port"`
 	}
 
+	// AppCfg holds values that affect how the application functions
 	AppCfg struct {
 		SiteName string `ini:"site_name"`
 		SiteDesc string `ini:"site_description"`
@@ -65,6 +70,7 @@ type (
 		LocalTimeline bool `ini:"local_timeline"`
 	}
 
+	// Config holds the complete configuration for running a writefreely instance
 	Config struct {
 		Server   ServerCfg   `ini:"server"`
 		Database DatabaseCfg `ini:"database"`
@@ -72,6 +78,7 @@ type (
 	}
 )
 
+// New creates a new Config with sane defaults
 func New() *Config {
 	c := &Config{
 		Server: ServerCfg{
@@ -110,10 +117,13 @@ func (cfg *Config) UseSQLite(fresh bool) {
 	}
 }
 
+// IsSecureStandalone returns whether or not the application is running as a
+// standalone server with TLS enabled.
 func (cfg *Config) IsSecureStandalone() bool {
 	return cfg.Server.Port == 443 && cfg.Server.TLSCertPath != "" && cfg.Server.TLSKeyPath != ""
 }
 
+// Load reads the given configuration file, then parses and returns it as a Config.
 func Load(fname string) (*Config, error) {
 	if fname == "" {
 		fname = FileName
@@ -132,6 +142,7 @@ func Load(fname string) (*Config, error) {
 	return uc, nil
 }
 
+// Save writes the given Config to the given file.
 func Save(uc *Config, fname string) error {
 	cfg := ini.Empty()
 	err := ini.ReflectFrom(cfg, uc)
