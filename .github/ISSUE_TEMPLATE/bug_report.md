@@ -18,6 +18,7 @@ What should've happened?
 
 ### Application configuration
  - **Single mode or Multi-user mode?** 
+ - **Database?** [mysql/sqlite]
  - **Open registration?** [yes/no]
  - **Federation enabled?** [yes/no]
 
