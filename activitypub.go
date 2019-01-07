@@ -408,7 +408,7 @@ func handleFetchCollectionInbox(app *app, w http.ResponseWriter, r *http.Request
 			}
 
 			// Add follow
-			_, err = t.Exec("INSERT INTO remotefollows (collection_id, remote_user_id, created) VALUES (?, ?, NOW())", c.ID, followerID)
+			_, err = t.Exec("INSERT INTO remotefollows (collection_id, remote_user_id, created) VALUES (?, ?, "+app.db.now()+")", c.ID, followerID)
 			if err != nil {
 				if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 					if mysqlErr.Number != mySQLErrDuplicateKey {
