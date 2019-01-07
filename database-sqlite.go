@@ -13,13 +13,24 @@
 package writefreely
 
 import (
+	"database/sql"
 	"github.com/go-sql-driver/mysql"
 	"github.com/mattn/go-sqlite3"
 	"github.com/writeas/web-core/log"
+	"regexp"
 )
 
 func init() {
 	SQLiteEnabled = true
+
+	regex := func(re, s string) (bool, error) {
+		return regexp.MatchString(re, s)
+	}
+	sql.Register("sqlite3_with_regex", &sqlite3.SQLiteDriver{
+		ConnectHook: func(conn *sqlite3.SQLiteConn) error {
+			return conn.RegisterFunc("regexp", regex, true)
+		},
+	})
 }
 
 func (db *datastore) isDuplicateKeyErr(err error) bool {
