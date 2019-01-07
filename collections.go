@@ -262,7 +262,7 @@ func (c *Collection) ForPublic() {
 	c.URL = c.CanonicalURL()
 }
 
-var isLowerLetter = regexp.MustCompile("[a-z]").MatchString
+var isAvatarChar = regexp.MustCompile("[a-z0-9]").MatchString
 
 func (c *Collection) PersonObject(ids ...int64) *activitystreams.Person {
 	accountRoot := c.FederatedAccount()
@@ -297,7 +297,7 @@ func (c *Collection) PersonObject(ids ...int64) *activitystreams.Person {
 
 func (c *Collection) AvatarURL() string {
 	fl := string(unicode.ToLower([]rune(c.DisplayTitle())[0]))
-	if !isLowerLetter(fl) {
+	if !isAvatarChar(fl) {
 		return ""
 	}
 	return hostName + "/img/avatars/" + fl + ".png"
