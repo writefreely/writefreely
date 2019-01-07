@@ -155,14 +155,14 @@ func (db *datastore) dateSub(l int, unit string) string {
 }
 
 func (db *datastore) CreateUser(u *User, collectionTitle string) error {
+	if db.PostIDExists(u.Username) {
+		return impart.HTTPError{http.StatusConflict, "Invalid collection name."}
+	}
+
 	// New users get a `users` and `collections` row.
 	t, err := db.Begin()
 	if err != nil {
 		return err
-	}
-
-	if db.PostIDExists(u.Username) {
-		return impart.HTTPError{http.StatusConflict, "Invalid collection name."}
 	}
 
 	// 1. Add to `users` table
