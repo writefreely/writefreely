@@ -5,5 +5,6 @@
 build
 config.ini
 *.db
+/tmp
 
 bindata.go

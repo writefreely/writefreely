@@ -5,36 +5,39 @@ GOCMD=go
 GOINSTALL=$(GOCMD) install $(LDFLAGS)
 GOBUILD=$(GOCMD) build $(LDFLAGS)
 GOTEST=$(GOCMD) test $(LDFLAGS)
-GOGET=$(GOCMD) get
 BINARY_NAME=writefreely
 DOCKERCMD=docker
 IMAGE_NAME=writeas/writefreely
+TMPBIN=./tmp
 
 all : build
 
 build: assets deps
 	cd cmd/writefreely; $(GOBUILD) -v -tags='sqlite'
 
-build-linux: deps
-	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u github.com/karalabe/xgo; \
-	fi
-	xgo --targets=linux/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
+$(TMPBIN):
+	mkdir -p $(TMPBIN)
 
-build-windows: deps
-	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u github.com/karalabe/xgo; \
-	fi
-	xgo --targets=windows/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
+$(TMPBIN)/xgo: deps $(TMPBIN)
+	$(GOBUILD) -o $(TMPBIN)/xgo github.com/karalabe/xgo
 
-build-darwin: deps
-	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u github.com/karalabe/xgo; \
-	fi
-	xgo --targets=darwin/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
+$(TMPBIN)/go-bindata: deps $(TMPBIN)
+	$(GOBUILD) -o $(TMPBIN)/go-bindata github.com/jteeuwen/go-bindata/go-bindata
+
+build-linux: deps $(TMPBIN)/xgo
+	$(TMPBIN)/xgo --targets=linux/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
+
+build-windows: deps $(TMPBIN)/xgo
+	$(TMPBIN)/xgo --targets=windows/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
+
+build-darwin: deps $(TMPBIN)/xgo
+	$(TMPBIN)/xgo --targets=darwin/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
 
 build-docker :
 	$(DOCKERCMD) build -t $(IMAGE_NAME):latest -t $(IMAGE_NAME):$(GITREV) .
+
+deps:
+	go mod download
 
 test:
 	$(GOTEST) -v ./...
@@ -42,9 +45,6 @@ test:
 run: dev-assets
 	$(GOINSTALL) -tags='sqlite' ./...
 	$(BINARY_NAME) --debug
-
-deps :
-	$(GOGET) -tags='sqlite' -v ./...
 
 install : build
 	cmd/writefreely/$(BINARY_NAME) --gen-keys
@@ -76,20 +76,16 @@ release-docker :
 ui : force_look
 	cd less/; $(MAKE) $(MFLAGS)
 
-assets : generate
-	go-bindata -pkg writefreely -ignore=\\.gitignore schema.sql sqlite.sql
+assets : $(TMPBIN)/go-bindata
+	$(TMPBIN)/go-bindata -pkg writefreely -ignore=\\.gitignore schema.sql sqlite.sql
 
-dev-assets : generate
-	go-bindata -pkg writefreely -ignore=\\.gitignore -debug schema.sql sqlite.sql
-
-generate :
-	@hash go-bindata > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u github.com/jteeuwen/go-bindata/...; \
-	fi
+dev-assets : $(TMPBIN)/go-bindata
+	$(TMPBIN)/go-bindata -pkg writefreely -ignore=\\.gitignore -debug schema.sql sqlite.sql
 
 clean :
 	-rm -rf build
+	-rm -rf tmp
 	cd less/; $(MAKE) clean $(MFLAGS)
 
-force_look : 
+force_look :
 	true

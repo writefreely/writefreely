@@ -10,7 +10,6 @@ COPY . .
 RUN make assets
 RUN make install
 RUN make ui
-RUN make deps
 
 RUN mkdir /stage && \
     cp -R /go/bin \
