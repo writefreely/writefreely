@@ -1,10 +1,22 @@
-GITREV=`git describe --tags | cut -c 2-`
-LDFLAGS=-ldflags="-X 'github.com/writeas/writefreely.softwareVer=$(GITREV)'"
+# make(1) from NetBSD (bmake on many Linux's) uses $(.CURDIR), but GNU Make uses
+# $(CURDIR). Normalize on $(.CURDIR) by setting it to $(CURDIR) if not set, and
+# then $(PWD) if still not set.
+.CURDIR ?= $(CURDIR)
+.CURDIR ?= $(PWD)
+
+# For reproducible builds, don't store the current build directory by default;
+# instead store only the path from the root of the repo (so there is still
+# enough info in debug messages to find the correct file).
+GCFLAGS  = -gcflags="all=-trimpath=$(.CURDIR)"
+ASMFLAGS = -asmflags="all=-trimpath=$(.CURDIR)"
+
+GITREV!=git describe --tags | cut -c 2-
+GOLDFLAGS=-ldflags="-X 'github.com/writeas/writefreely.softwareVer=$(GITREV)' -extldflags '$(LDFLAGS)'"
 
 GOCMD=go
-GOINSTALL=$(GOCMD) install $(LDFLAGS)
-GOBUILD=$(GOCMD) build $(LDFLAGS)
-GOTEST=$(GOCMD) test $(LDFLAGS)
+GOINSTALL=$(GOCMD) install $(GOLDFLAGS) $(GCFLAGS) $(ASMFLAGS)
+GOBUILD=$(GOCMD) build $(GOLDFLAGS) $(GCFLAGS) $(ASMFLAGS)
+GOTEST=$(GOCMD) test $(GOLDFLAGS) $(GCFLAGS) $(ASMFLAGS)
 GOGET=$(GOCMD) get
 BINARY_NAME=writefreely
 DOCKERCMD=docker
@@ -19,19 +31,19 @@ build-linux: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOGET) -u github.com/karalabe/xgo; \
 	fi
-	xgo --targets=linux/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
+	xgo --targets=linux/amd64, -dest build/ $(GOLDFLAGS) $(GCFLAGS) $(ASMFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
 
 build-windows: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOGET) -u github.com/karalabe/xgo; \
 	fi
-	xgo --targets=windows/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
+	xgo --targets=windows/amd64, -dest build/ $(GOLDFLAGS) $(GCFLAGS) $(ASMFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
 
 build-darwin: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOGET) -u github.com/karalabe/xgo; \
 	fi
-	xgo --targets=darwin/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
+	xgo --targets=darwin/amd64, -dest build/ $(GOLDFLAGS) $(GCFLAGS) $(ASMFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
 
 build-docker :
 	$(DOCKERCMD) build -t $(IMAGE_NAME):latest -t $(IMAGE_NAME):$(GITREV) .
