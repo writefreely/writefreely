@@ -76,6 +76,17 @@ release : clean ui assets
 	$(MAKE) build-docker
 	$(MAKE) release-docker
 
+# This assumes you're on linux/amd64
+release-linux : clean ui
+	mkdir build
+	cp -r templates build
+	cp -r pages build
+	cp -r static build
+	mkdir build/keys
+	$(MAKE) build-no-sqlite
+	mv cmd/writefreely/$(BINARY_NAME) build/$(BINARY_NAME)
+	cd build; tar -cvzf ../$(BINARY_NAME)_$(GITREV)_linux_amd64.tar.gz *
+
 release-docker :
 	$(DOCKERCMD) push $(IMAGE_NAME)
 	
