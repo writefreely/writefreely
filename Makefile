@@ -15,6 +15,9 @@ all : build
 build: assets deps
 	cd cmd/writefreely; $(GOBUILD) -v -tags='sqlite'
 
+build-no-sqlite: assets-no-sqlite deps-no-sqlite
+	cd cmd/writefreely; $(GOBUILD) -v -o $(BINARY_NAME)
+
 build-linux: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOGET) -u github.com/karalabe/xgo; \
@@ -45,6 +48,9 @@ run: dev-assets
 
 deps :
 	$(GOGET) -tags='sqlite' -v ./...
+
+deps-no-sqlite:
+	$(GOGET) -v ./...
 
 install : build
 	cmd/writefreely/$(BINARY_NAME) --gen-keys
@@ -78,6 +84,9 @@ ui : force_look
 
 assets : generate
 	go-bindata -pkg writefreely -ignore=\\.gitignore schema.sql sqlite.sql
+
+assets-no-sqlite: generate
+	go-bindata -pkg writefreely -ignore=\\.gitignore schema.sql
 
 dev-assets : generate
 	go-bindata -pkg writefreely -ignore=\\.gitignore -debug schema.sql sqlite.sql
