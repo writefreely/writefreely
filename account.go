@@ -796,9 +796,7 @@ func viewEditCollection(app *app, u *User, w http.ResponseWriter, r *http.Reques
 		Collection: c,
 	}
 
-	if err := userPages["user/collection.tmpl"].ExecuteTemplate(w, "collection", obj); err != nil {
-		log.Error("Error parsing user collection: %v", err)
-	}
+	showUserPage(w, "collection", obj)
 	return nil
 }
 
