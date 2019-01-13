@@ -116,6 +116,8 @@ type writestore interface {
 	GetAllUsersCount() int64
 	GetUserLastPostTime(id int64) (*time.Time, error)
 	GetCollectionLastPostTime(id int64) (*time.Time, error)
+
+	DatabaseInitialized() bool
 }
 
 type datastore struct {
@@ -2291,6 +2293,28 @@ func (db *datastore) GetCollectionLastPostTime(id int64) (*time.Time, error) {
 		return nil, err
 	}
 	return &t, nil
+}
+
+// DatabaseInitialized returns whether or not the current datastore has been
+// initialized with the correct schema.
+// Currently, it checks to see if the `users` table exists.
+func (db *datastore) DatabaseInitialized() bool {
+	var dummy string
+	var err error
+	if db.driverName == driverSQLite {
+		err = db.QueryRow("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'users'").Scan(&dummy)
+	} else {
+		err = db.QueryRow("SHOW TABLES LIKE 'users'").Scan(&dummy)
+	}
+	switch {
+	case err == sql.ErrNoRows:
+		return false
+	case err != nil:
+		log.Error("Couldn't SHOW TABLES: %v", err)
+		return false
+	}
+
+	return true
 }
 
 func stringLogln(log *string, s string, v ...interface{}) {

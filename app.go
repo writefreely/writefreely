@@ -230,6 +230,10 @@ func Serve() {
 			connectToDatabase(app)
 			defer shutdown(app)
 
+			if !app.db.DatabaseInitialized() {
+				adminInitDatabase(app)
+			}
+
 			u := &User{
 				Username:   d.User.Username,
 				HashedPass: d.User.HashedPass,
@@ -267,39 +271,7 @@ func Serve() {
 		loadConfig(app)
 		connectToDatabase(app)
 		defer shutdown(app)
-
-		schemaFileName := "schema.sql"
-		if app.cfg.Database.Type == driverSQLite {
-			schemaFileName = "sqlite.sql"
-		}
-
-		schema, err := Asset(schemaFileName)
-		if err != nil {
-			log.Error("Unable to load schema file: %v", err)
-			os.Exit(1)
-		}
-
-		tblReg := regexp.MustCompile("CREATE TABLE (IF NOT EXISTS )?`([a-z_]+)`")
-
-		queries := strings.Split(string(schema), ";\n")
-		for _, q := range queries {
-			if strings.TrimSpace(q) == "" {
-				continue
-			}
-			parts := tblReg.FindStringSubmatch(q)
-			if len(parts) >= 3 {
-				log.Info("Creating table %s...", parts[2])
-			} else {
-				log.Info("Creating table ??? (Weird query) No match in: %v", parts)
-			}
-			_, err = app.db.Exec(q)
-			if err != nil {
-				log.Error("%s", err)
-			} else {
-				log.Info("Created.")
-			}
-		}
-		os.Exit(0)
+		adminInitDatabase(app)
 	} else if *createAdmin != "" {
 		adminCreateUser(app, *createAdmin, true)
 	} else if *createUser != "" {
@@ -571,5 +543,40 @@ func adminCreateUser(app *app, credStr string, isAdmin bool) {
 		os.Exit(1)
 	}
 	log.Info("Done!")
+	os.Exit(0)
+}
+
+func adminInitDatabase(app *app) {
+	schemaFileName := "schema.sql"
+	if app.cfg.Database.Type == driverSQLite {
+		schemaFileName = "sqlite.sql"
+	}
+
+	schema, err := Asset(schemaFileName)
+	if err != nil {
+		log.Error("Unable to load schema file: %v", err)
+		os.Exit(1)
+	}
+
+	tblReg := regexp.MustCompile("CREATE TABLE (IF NOT EXISTS )?`([a-z_]+)`")
+
+	queries := strings.Split(string(schema), ";\n")
+	for _, q := range queries {
+		if strings.TrimSpace(q) == "" {
+			continue
+		}
+		parts := tblReg.FindStringSubmatch(q)
+		if len(parts) >= 3 {
+			log.Info("Creating table %s...", parts[2])
+		} else {
+			log.Info("Creating table ??? (Weird query) No match in: %v", parts)
+		}
+		_, err = app.db.Exec(q)
+		if err != nil {
+			log.Error("%s", err)
+		} else {
+			log.Info("Created.")
+		}
+	}
 	os.Exit(0)
 }
