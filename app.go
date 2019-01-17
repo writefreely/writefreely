@@ -36,6 +36,7 @@ import (
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/author"
 	"github.com/writeas/writefreely/config"
+	"github.com/writeas/writefreely/migrations"
 	"github.com/writeas/writefreely/page"
 )
 
@@ -193,6 +194,7 @@ func Serve() {
 	doConfig := flag.Bool("config", false, "Run the configuration process")
 	genKeys := flag.Bool("gen-keys", false, "Generate encryption and authentication keys")
 	createSchema := flag.Bool("init-db", false, "Initialize app database")
+	migrate := flag.Bool("migrate", false, "Migrate the database")
 	createAdmin := flag.String("create-admin", "", "Create an admin with the given username:password")
 	createUser := flag.String("create-user", "", "Create a regular user with the given username:password")
 	resetPassUser := flag.String("reset-pass", "", "Reset the given user's password")
@@ -311,6 +313,18 @@ func Serve() {
 			os.Exit(1)
 		}
 		log.Info("Success.")
+		os.Exit(0)
+	} else if *migrate {
+		loadConfig(app)
+		connectToDatabase(app)
+		defer shutdown(app)
+
+		err := migrations.Migrate(migrations.NewDatastore(app.db.DB, app.db.driverName))
+		if err != nil {
+			log.Error("migrate: %s", err)
+			os.Exit(1)
+		}
+
 		os.Exit(0)
 	}
 
