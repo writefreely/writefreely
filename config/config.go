@@ -35,6 +35,11 @@ type (
 		TLSCertPath string `ini:"tls_cert_path"`
 		TLSKeyPath  string `ini:"tls_key_path"`
 
+		TemplatesParentDir string `ini:"templates_parent_dir"`
+		StaticParentDir    string `ini:"static_parent_dir"`
+		PagesParentDir     string `ini:"pages_parent_dir"`
+		KeysParentDir      string `ini:"keys_parent_dir"`
+
 		Dev bool `ini:"-"`
 	}
 

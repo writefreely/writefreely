@@ -11,10 +11,10 @@
 package writefreely
 
 import (
-	"fmt"
 	"github.com/dustin/go-humanize"
 	"github.com/writeas/web-core/l10n"
 	"github.com/writeas/web-core/log"
+	"github.com/writeas/writefreely/config"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -54,53 +54,53 @@ func showUserPage(w http.ResponseWriter, name string, obj interface{}) {
 	}
 }
 
-func initTemplate(name string) {
+func initTemplate(parentDir, name string) {
 	if debugging {
-		log.Info("  %s%s%s.tmpl", templatesDir, string(filepath.Separator), name)
+		log.Info("  " + filepath.Join(parentDir, templatesDir, name+".tmpl"))
 	}
 
 	files := []string{
-		filepath.Join(templatesDir, name+".tmpl"),
-		filepath.Join(templatesDir, "include", "footer.tmpl"),
-		filepath.Join(templatesDir, "base.tmpl"),
+		filepath.Join(parentDir, templatesDir, name+".tmpl"),
+		filepath.Join(parentDir, templatesDir, "include", "footer.tmpl"),
+		filepath.Join(parentDir, templatesDir, "base.tmpl"),
 	}
 	if name == "collection" || name == "collection-tags" {
 		// These pages list out collection posts, so we also parse templatesDir + "include/posts.tmpl"
-		files = append(files, filepath.Join(templatesDir, "include", "posts.tmpl"))
+		files = append(files, filepath.Join(parentDir, templatesDir, "include", "posts.tmpl"))
 	}
 	if name == "collection" || name == "collection-tags" || name == "collection-post" || name == "post" {
-		files = append(files, filepath.Join(templatesDir, "include", "post-render.tmpl"))
+		files = append(files, filepath.Join(parentDir, templatesDir, "include", "post-render.tmpl"))
 	}
 	templates[name] = template.Must(template.New("").Funcs(funcMap).ParseFiles(files...))
 }
 
-func initPage(path, key string) {
+func initPage(parentDir, path, key string) {
 	if debugging {
-		log.Info("  %s", key)
+		log.Info("  [%s] %s", key, path)
 	}
 
 	pages[key] = template.Must(template.New("").Funcs(funcMap).ParseFiles(
 		path,
-		filepath.Join(templatesDir, "include", "footer.tmpl"),
-		filepath.Join(templatesDir, "base.tmpl"),
+		filepath.Join(parentDir, templatesDir, "include", "footer.tmpl"),
+		filepath.Join(parentDir, templatesDir, "base.tmpl"),
 	))
 }
 
-func initUserPage(path, key string) {
+func initUserPage(parentDir, path, key string) {
 	if debugging {
-		log.Info("  %s", key)
+		log.Info("  [%s] %s", key, path)
 	}
 
 	userPages[key] = template.Must(template.New(key).Funcs(funcMap).ParseFiles(
 		path,
-		filepath.Join(templatesDir, "user", "include", "header.tmpl"),
-		filepath.Join(templatesDir, "user", "include", "footer.tmpl"),
+		filepath.Join(parentDir, templatesDir, "user", "include", "header.tmpl"),
+		filepath.Join(parentDir, templatesDir, "user", "include", "footer.tmpl"),
 	))
 }
 
-func initTemplates() error {
+func initTemplates(cfg *config.Config) error {
 	log.Info("Loading templates...")
-	tmplFiles, err := ioutil.ReadDir(templatesDir)
+	tmplFiles, err := ioutil.ReadDir(filepath.Join(cfg.Server.TemplatesParentDir, templatesDir))
 	if err != nil {
 		return err
 	}
@@ -109,20 +109,16 @@ func initTemplates() error {
 		if !f.IsDir() && !strings.HasPrefix(f.Name(), ".") {
 			parts := strings.Split(f.Name(), ".")
 			key := parts[0]
-			initTemplate(key)
+			initTemplate(cfg.Server.TemplatesParentDir, key)
 		}
 	}
 
 	log.Info("Loading pages...")
 	// Initialize all static pages that use the base template
-	filepath.Walk(pagesDir, func(path string, i os.FileInfo, err error) error {
+	filepath.Walk(filepath.Join(cfg.Server.PagesParentDir, pagesDir), func(path string, i os.FileInfo, err error) error {
 		if !i.IsDir() && !strings.HasPrefix(i.Name(), ".") {
-			parts := strings.Split(path, string(filepath.Separator))
 			key := i.Name()
-			if len(parts) > 2 {
-				key = fmt.Sprintf("%s%s%s", parts[1], string(filepath.Separator), i.Name())
-			}
-			initPage(path, key)
+			initPage(cfg.Server.PagesParentDir, path, key)
 		}
 
 		return nil
@@ -130,14 +126,18 @@ func initTemplates() error {
 
 	log.Info("Loading user pages...")
 	// Initialize all user pages that use base templates
-	filepath.Walk(filepath.Join(templatesDir, "user"), func(path string, f os.FileInfo, err error) error {
+	filepath.Walk(filepath.Join(cfg.Server.TemplatesParentDir, templatesDir, "user"), func(path string, f os.FileInfo, err error) error {
 		if !f.IsDir() && !strings.HasPrefix(f.Name(), ".") {
-			parts := strings.Split(path, string(filepath.Separator))
+			corePath := path
+			if cfg.Server.TemplatesParentDir != "" {
+				corePath = corePath[len(cfg.Server.TemplatesParentDir)+1:]
+			}
+			parts := strings.Split(corePath, string(filepath.Separator))
 			key := f.Name()
 			if len(parts) > 2 {
 				key = filepath.Join(parts[1], f.Name())
 			}
-			initUserPage(path, key)
+			initUserPage(cfg.Server.TemplatesParentDir, path, key)
 		}
 
 		return nil
