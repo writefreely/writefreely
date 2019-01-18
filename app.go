@@ -19,6 +19,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"syscall"
@@ -41,7 +42,7 @@ import (
 )
 
 const (
-	staticDir       = "static/"
+	staticDir       = "static"
 	assumedTitleLen = 80
 	postsPerPage    = 10
 
@@ -336,7 +337,7 @@ func Serve() {
 	isSingleUser = app.cfg.App.SingleUser
 	app.cfg.Server.Dev = *debugPtr
 
-	initTemplates()
+	initTemplates(app.cfg)
 
 	// Load keys
 	log.Info("Loading encryption keys...")
@@ -395,7 +396,7 @@ func Serve() {
 	}
 
 	// Handle static files
-	fs := http.FileServer(http.Dir(staticDir))
+	fs := http.FileServer(http.Dir(filepath.Join(app.cfg.Server.StaticParentDir, staticDir)))
 	shttp.Handle("/", fs)
 	r.PathPrefix("/").Handler(fs)
 
