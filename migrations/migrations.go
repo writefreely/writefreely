@@ -104,7 +104,7 @@ func (db *datastore) tableExists(t string) bool {
 	if db.driverName == driverSQLite {
 		err = db.QueryRow("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", t).Scan(&dummy)
 	} else {
-		err = db.QueryRow("SHOW TABLES LIKE ?", t).Scan(&dummy)
+		err = db.QueryRow("SHOW TABLES LIKE '" + t + "'").Scan(&dummy)
 	}
 	switch {
 	case err == sql.ErrNoRows:
