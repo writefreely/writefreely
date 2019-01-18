@@ -189,6 +189,21 @@ CREATE TABLE IF NOT EXISTS `userattributes` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `userinvites`
+--
+
+CREATE TABLE `userinvites` (
+  `id` char(6) NOT NULL,
+  `owner_id` int(11) NOT NULL,
+  `max_uses` smallint(6) DEFAULT NULL,
+  `created` datetime NOT NULL,
+  `expires` datetime DEFAULT NULL,
+  `inactive` tinyint(1) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `users`
 --
 
@@ -200,4 +215,15 @@ CREATE TABLE IF NOT EXISTS `users` (
   `created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `usersinvited`
+--
+
+CREATE TABLE `usersinvited` (
+  `invite_id` char(6) NOT NULL,
+  `user_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

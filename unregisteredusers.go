@@ -46,6 +46,10 @@ func handleWebSignup(app *app, w http.ResponseWriter, r *http.Request) error {
 	ur.Web = true
 	ur.Normalize = true
 
+	to := "/"
+	if ur.InviteCode != "" {
+		to = "/invite/" + ur.InviteCode
+	}
 	_, err := signupWithRegistration(app, ur, w, r)
 	if err != nil {
 		if err, ok := err.(impart.HTTPError); ok {
@@ -53,12 +57,12 @@ func handleWebSignup(app *app, w http.ResponseWriter, r *http.Request) error {
 			if session != nil {
 				session.AddFlash(err.Message)
 				session.Save(r, w)
-				return impart.HTTPError{http.StatusFound, "/"}
+				return impart.HTTPError{http.StatusFound, to}
 			}
 		}
 		return err
 	}
-	return impart.HTTPError{http.StatusFound, "/"}
+	return impart.HTTPError{http.StatusFound, to}
 }
 
 // { "username": "asdf" }

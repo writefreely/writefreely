@@ -31,9 +31,10 @@ type (
 
 	userRegistration struct {
 		userCredentials
-		Honeypot  string `json:"fullname" schema:"fullname"`
-		Normalize bool   `json:"normalize" schema:"normalize"`
-		Signup    bool   `json:"signup" schema:"signup"`
+		InviteCode string `json:"invite_code" schema:"invite_code"`
+		Honeypot   string `json:"fullname" schema:"fullname"`
+		Normalize  bool   `json:"normalize" schema:"normalize"`
+		Signup     bool   `json:"signup" schema:"signup"`
 	}
 
 	// AuthUser contains information for a newly authenticated user (either

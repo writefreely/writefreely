@@ -262,6 +262,10 @@ func handleAdminUpdateConfig(app *app, u *User, w http.ResponseWriter, r *http.R
 		log.Info("Initializing local timeline...")
 		initLocalTimeline(app)
 	}
+	app.cfg.App.UserInvites = r.FormValue("user_invites")
+	if app.cfg.App.UserInvites == "none" {
+		app.cfg.App.UserInvites = ""
+	}
 
 	m := "?cm=Configuration+saved."
 	err = config.Save(app.cfg, app.cfgFile)

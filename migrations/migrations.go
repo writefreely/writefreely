@@ -54,7 +54,9 @@ func (m *migration) Migrate(db *datastore) error {
 	return m.migrate(db)
 }
 
-var migrations = []Migration{}
+var migrations = []Migration{
+	New("support user invites", supportUserInvites), // -> V1 (v0.8.0)
+}
 
 func Migrate(db *datastore) error {
 	var version int

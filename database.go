@@ -109,6 +109,11 @@ type writestore interface {
 
 	GetAPFollowers(c *Collection) (*[]RemoteUser, error)
 	GetAPActorKeys(collectionID int64) ([]byte, []byte)
+	CreateUserInvite(id string, userID int64, maxUses int, expires *time.Time) error
+	GetUserInvites(userID int64) (*[]Invite, error)
+	GetUserInvite(id string) (*Invite, error)
+	GetUsersInvitedCount(id string) int64
+	CreateInvitedUser(inviteID string, userID int64) error
 
 	GetDynamicContent(id string) (string, *time.Time, error)
 	UpdateDynamicContent(id, content string) error
@@ -2200,6 +2205,61 @@ func (db *datastore) GetAPActorKeys(collectionID int64) ([]byte, []byte) {
 	}
 
 	return pub, priv
+}
+
+func (db *datastore) CreateUserInvite(id string, userID int64, maxUses int, expires *time.Time) error {
+	_, err := db.Exec("INSERT INTO userinvites (id, owner_id, max_uses, created, expires, inactive) VALUES (?, ?, ?, "+db.now()+", ?, 0)", id, userID, maxUses, expires)
+	return err
+}
+
+func (db *datastore) GetUserInvites(userID int64) (*[]Invite, error) {
+	rows, err := db.Query("SELECT id, max_uses, created, expires, inactive FROM userinvites WHERE owner_id = ? ORDER BY created DESC", userID)
+	if err != nil {
+		log.Error("Failed selecting from userinvites: %v", err)
+		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve user invites."}
+	}
+	defer rows.Close()
+
+	is := []Invite{}
+	for rows.Next() {
+		i := Invite{}
+		err = rows.Scan(&i.ID, &i.MaxUses, &i.Created, &i.Expires, &i.Inactive)
+		is = append(is, i)
+	}
+	return &is, nil
+}
+
+func (db *datastore) GetUserInvite(id string) (*Invite, error) {
+	var i Invite
+	err := db.QueryRow("SELECT id, max_uses, created, expires, inactive FROM userinvites WHERE id = ?", id).Scan(&i.ID, &i.MaxUses, &i.Created, &i.Expires, &i.Inactive)
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, nil
+	case err != nil:
+		log.Error("Failed selecting invite: %v", err)
+		return nil, err
+	}
+
+	return &i, nil
+}
+
+func (db *datastore) GetUsersInvitedCount(id string) int64 {
+	var count int64
+	err := db.QueryRow("SELECT COUNT(*) FROM usersinvited WHERE invite_id = ?", id).Scan(&count)
+	switch {
+	case err == sql.ErrNoRows:
+		return 0
+	case err != nil:
+		log.Error("Failed selecting users invited count: %v", err)
+		return 0
+	}
+
+	return count
+}
+
+func (db *datastore) CreateInvitedUser(inviteID string, userID int64) error {
+	_, err := db.Exec("INSERT INTO usersinvited (invite_id, user_id) VALUES (?, ?)", inviteID, userID)
+	return err
 }
 
 func (db *datastore) GetDynamicContent(id string) (string, *time.Time, error) {

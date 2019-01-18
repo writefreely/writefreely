@@ -43,6 +43,7 @@
 				<ul><li><a>{{.Username}}</a> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /><ul>
 						<li><a href="/me/settings">Account settings</a></li>
 						<li><a href="/me/export">Export</a></li>
+						{{if .CanInvite}}<li><a href="/me/invites">Invite people</a></li>{{end}}
 						<li class="separator"><hr /></li>
 						<li><a href="/me/logout">Log out</a></li>
 					</ul></li>
