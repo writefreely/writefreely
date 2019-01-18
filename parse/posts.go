@@ -8,6 +8,7 @@
  * in the LICENSE file in this source code package.
  */
 
+// Package parse assists in the parsing of plain text posts
 package parse
 
 import (
