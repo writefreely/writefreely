@@ -189,16 +189,21 @@ var shttp = http.NewServeMux()
 var fileRegex = regexp.MustCompile("/([^/]*\\.[^/]*)$")
 
 func Serve() {
+	// General options usable with other commands
 	debugPtr := flag.Bool("debug", false, "Enables debug logging.")
+	configFile := flag.String("c", "config.ini", "The configuration file to use")
+
+	// Setup actions
 	createConfig := flag.Bool("create-config", false, "Creates a basic configuration and exits")
 	doConfig := flag.Bool("config", false, "Run the configuration process")
 	genKeys := flag.Bool("gen-keys", false, "Generate encryption and authentication keys")
 	createSchema := flag.Bool("init-db", false, "Initialize app database")
 	migrate := flag.Bool("migrate", false, "Migrate the database")
+
+	// Admin actions
 	createAdmin := flag.String("create-admin", "", "Create an admin with the given username:password")
 	createUser := flag.String("create-user", "", "Create a regular user with the given username:password")
 	resetPassUser := flag.String("reset-pass", "", "Reset the given user's password")
-	configFile := flag.String("c", "config.ini", "The configuration file to use")
 	outputVersion := flag.Bool("v", false, "Output the current version")
 	flag.Parse()
 
