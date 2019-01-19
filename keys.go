@@ -38,16 +38,28 @@ func initKeys(app *app) error {
 	var err error
 	app.keys = &keychain{}
 
+	emailKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, emailKeyPath)
+	if debugging {
+		log.Info("  %s", emailKeyPath)
+	}
 	app.keys.emailKey, err = ioutil.ReadFile(emailKeyPath)
 	if err != nil {
 		return err
 	}
 
+	cookieAuthKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, cookieAuthKeyPath)
+	if debugging {
+		log.Info("  %s", cookieAuthKeyPath)
+	}
 	app.keys.cookieAuthKey, err = ioutil.ReadFile(cookieAuthKeyPath)
 	if err != nil {
 		return err
 	}
 
+	cookieKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, cookieKeyPath)
+	if debugging {
+		log.Info("  %s", cookieKeyPath)
+	}
 	app.keys.cookieKey, err = ioutil.ReadFile(cookieKeyPath)
 	if err != nil {
 		return err
