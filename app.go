@@ -337,11 +337,15 @@ func Serve() {
 	isSingleUser = app.cfg.App.SingleUser
 	app.cfg.Server.Dev = *debugPtr
 
-	initTemplates(app.cfg)
+	err := initTemplates(app.cfg)
+	if err != nil {
+		log.Error("load templates: %s", err)
+		os.Exit(1)
+	}
 
 	// Load keys
 	log.Info("Loading encryption keys...")
-	err := initKeys(app)
+	err = initKeys(app)
 	if err != nil {
 		log.Error("\n%s\n", err)
 	}
