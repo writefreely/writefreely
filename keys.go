@@ -73,9 +73,12 @@ func initKeys(app *app) error {
 // keys, this won't overwrite any existing key, and instead outputs a message.
 func generateKey(path string) error {
 	// Check if key file exists
-	if _, err := os.Stat(path); !os.IsNotExist(err) {
+	if _, err := os.Stat(path); err == nil {
 		log.Info("%s already exists. rm the file if you understand the consquences.", path)
 		return nil
+	} else if !os.IsNotExist(err) {
+		log.Error("%s", err)
+		return err
 	}
 
 	log.Info("Generating %s.", path)
