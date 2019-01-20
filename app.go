@@ -256,6 +256,21 @@ func Serve() {
 	} else if *genKeys {
 		errStatus := 0
 
+		// Read keys path from config
+		loadConfig(app)
+
+		// Create keys dir if it doesn't exist yet
+		fullKeysDir := filepath.Join(app.cfg.Server.KeysParentDir, keysDir)
+		if _, err := os.Stat(fullKeysDir); os.IsNotExist(err) {
+			err = os.Mkdir(fullKeysDir, 0700)
+			if err != nil {
+				log.Error("%s", err)
+				os.Exit(1)
+			}
+		}
+
+		// Generate keys
+		initKeyPaths(app)
 		err := generateKey(emailKeyPath)
 		if err != nil {
 			errStatus = 1
@@ -345,6 +360,7 @@ func Serve() {
 
 	// Load keys
 	log.Info("Loading encryption keys...")
+	initKeyPaths(app)
 	err = initKeys(app)
 	if err != nil {
 		log.Error("\n%s\n", err)
