@@ -34,11 +34,16 @@ type keychain struct {
 	emailKey, cookieAuthKey, cookieKey []byte
 }
 
+func initKeyPaths(app *app) {
+	emailKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, emailKeyPath)
+	cookieAuthKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, cookieAuthKeyPath)
+	cookieKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, cookieKeyPath)
+}
+
 func initKeys(app *app) error {
 	var err error
 	app.keys = &keychain{}
 
-	emailKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, emailKeyPath)
 	if debugging {
 		log.Info("  %s", emailKeyPath)
 	}
@@ -47,7 +52,6 @@ func initKeys(app *app) error {
 		return err
 	}
 
-	cookieAuthKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, cookieAuthKeyPath)
 	if debugging {
 		log.Info("  %s", cookieAuthKeyPath)
 	}
@@ -56,7 +60,6 @@ func initKeys(app *app) error {
 		return err
 	}
 
-	cookieKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, cookieKeyPath)
 	if debugging {
 		log.Info("  %s", cookieKeyPath)
 	}
@@ -73,9 +76,12 @@ func initKeys(app *app) error {
 // keys, this won't overwrite any existing key, and instead outputs a message.
 func generateKey(path string) error {
 	// Check if key file exists
-	if _, err := os.Stat(path); !os.IsNotExist(err) {
+	if _, err := os.Stat(path); err == nil {
 		log.Info("%s already exists. rm the file if you understand the consquences.", path)
 		return nil
+	} else if !os.IsNotExist(err) {
+		log.Error("%s", err)
+		return err
 	}
 
 	log.Info("Generating %s.", path)
