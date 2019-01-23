@@ -54,7 +54,9 @@ func (m *migration) Migrate(db *datastore) error {
 	return m.migrate(db)
 }
 
-var migrations = []Migration{}
+var migrations = []Migration{
+	New("support user invites", supportUserInvites), // -> V1 (v0.8.0)
+}
 
 func Migrate(db *datastore) error {
 	var version int
@@ -102,7 +104,7 @@ func (db *datastore) tableExists(t string) bool {
 	if db.driverName == driverSQLite {
 		err = db.QueryRow("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", t).Scan(&dummy)
 	} else {
-		err = db.QueryRow("SHOW TABLES LIKE ?", t).Scan(&dummy)
+		err = db.QueryRow("SHOW TABLES LIKE '" + t + "'").Scan(&dummy)
 	}
 	switch {
 	case err == sql.ErrNoRows:

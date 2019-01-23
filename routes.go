@@ -79,6 +79,7 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 	me.HandleFunc("/export", handler.User(viewExportOptions)).Methods("GET")
 	me.HandleFunc("/export.json", handler.Download(viewExportFull, UserLevelUser)).Methods("GET")
 	me.HandleFunc("/settings", handler.User(viewSettings)).Methods("GET")
+	me.HandleFunc("/invites", handler.User(handleViewUserInvites)).Methods("GET")
 	me.HandleFunc("/logout", handler.Web(viewLogout, UserLevelNone)).Methods("GET")
 
 	write.HandleFunc("/api/me", handler.All(viewMeAPI)).Methods("GET")
@@ -88,6 +89,7 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 	apiMe.HandleFunc("/collections", handler.UserAPI(viewMyCollectionsAPI)).Methods("GET")
 	apiMe.HandleFunc("/password", handler.All(updatePassphrase)).Methods("POST")
 	apiMe.HandleFunc("/self", handler.All(updateSettings)).Methods("POST")
+	apiMe.HandleFunc("/invites", handler.User(handleCreateUserInvite)).Methods("POST")
 
 	// Sign up validation
 	write.HandleFunc("/api/alias", handler.All(handleUsernameCheck)).Methods("POST")
@@ -120,9 +122,7 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 	posts.HandleFunc("/claim", handler.All(addPost)).Methods("POST")
 	posts.HandleFunc("/disperse", handler.All(dispersePost)).Methods("POST")
 
-	if cfg.App.OpenRegistration {
-		write.HandleFunc("/auth/signup", handler.Web(handleWebSignup, UserLevelNoneRequired)).Methods("POST")
-	}
+	write.HandleFunc("/auth/signup", handler.Web(handleWebSignup, UserLevelNoneRequired)).Methods("POST")
 	write.HandleFunc("/auth/login", handler.Web(webLogin, UserLevelNoneRequired)).Methods("POST")
 
 	write.HandleFunc("/admin", handler.Admin(handleViewAdminDash)).Methods("GET")
@@ -133,6 +133,7 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 
 	// Handle special pages first
 	write.HandleFunc("/login", handler.Web(viewLogin, UserLevelNoneRequired))
+	write.HandleFunc("/invite/{code}", handler.Web(handleViewInvite, UserLevelNoneRequired)).Methods("GET")
 	// TODO: show a reader-specific 404 page if the function is disabled
 	// TODO: change this based on configuration for either public or private-to-this-instance
 	readPerm := UserLevelOptional

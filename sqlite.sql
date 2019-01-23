@@ -179,6 +179,21 @@ CREATE TABLE IF NOT EXISTS `userattributes` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `userinvites`
+--
+
+CREATE TABLE `userinvites` (
+  `id` TEXT NOT NULL,
+  `owner_id` INTEGER NOT NULL,
+  `max_uses` INTEGER DEFAULT NULL,
+  `created` DATETIME NOT NULL,
+  `expires` DATETIME DEFAULT NULL,
+  `inactive` INTEGER NOT NULL
+);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table users
 --
 
@@ -188,4 +203,15 @@ CREATE TABLE IF NOT EXISTS `users` (
   password TEXT NOT NULL,
   email TEXT DEFAULT NULL,
   created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `usersinvited`
+--
+
+CREATE TABLE `usersinvited` (
+  `invite_id` TEXT NOT NULL,
+  `user_id` INTEGER NOT NULL
 );

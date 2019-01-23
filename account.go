@@ -45,6 +45,7 @@ type (
 		PageTitle string
 		Separator template.HTML
 		IsAdmin   bool
+		CanInvite bool
 	}
 )
 
@@ -57,6 +58,8 @@ func NewUserPage(app *app, r *http.Request, u *User, title string, flashes []str
 	up.Flashes = flashes
 	up.Path = r.URL.Path
 	up.IsAdmin = u.IsAdmin()
+	up.CanInvite = app.cfg.App.UserInvites != "" &&
+		(up.IsAdmin || app.cfg.App.UserInvites != "admin")
 	return up
 }
 
@@ -162,6 +165,18 @@ func signupWithRegistration(app *app, signup userRegistration, w http.ResponseWr
 	// Create actual user
 	if err := app.db.CreateUser(u, desiredUsername); err != nil {
 		return nil, err
+	}
+
+	// Log invite if needed
+	if signup.InviteCode != "" {
+		cu, err := app.db.GetUserForAuth(signup.Alias)
+		if err != nil {
+			return nil, err
+		}
+		err = app.db.CreateInvitedUser(signup.InviteCode, cu.ID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Add back unencrypted data for response

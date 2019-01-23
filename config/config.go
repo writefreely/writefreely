@@ -18,9 +18,14 @@ import (
 const (
 	// FileName is the default configuration file name
 	FileName = "config.ini"
+
+	UserNormal UserType = "user"
+	UserAdmin           = "admin"
 )
 
 type (
+	UserType string
+
 	// ServerCfg holds values that affect how the HTTP server runs
 	ServerCfg struct {
 		HiddenHost string `ini:"hidden_host"`
@@ -72,7 +77,8 @@ type (
 		Private     bool `ini:"private"`
 
 		// Additional functions
-		LocalTimeline bool `ini:"local_timeline"`
+		LocalTimeline bool   `ini:"local_timeline"`
+		UserInvites   string `ini:"user_invites"`
 	}
 
 	// Config holds the complete configuration for running a writefreely instance
