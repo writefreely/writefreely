@@ -42,6 +42,18 @@ It's designed to be flexible and share your writing widely, so it's built around
 * Build more advanced apps and extensions with the [well-documented API](https://developers.write.as/docs/api/)
 * Designed around user privacy and consent
 
+## Hosting
+
+We offer two kinds of hosting services that make WriteFreely deployment painless: [Write.as](https://write.as) for individuals, and [WriteFreely.host](https://writefreely.host) for communities. Besides saving you time, as a customer you directly help fund WriteFreely development.
+
+### [![Write.as](https://write.as/img/writeas-wf-readme.png)](https://write.as/)
+
+Start a personal blog on [Write.as](https://write.as), our flagship instance. Built to eliminate setup friction and preserve your privacy, Write.as helps you start a blog in seconds. It supports custom domains (with SSL) and multiple blogs / pen names per account. [Read more here](https://write.as/privacy).
+
+### [![WriteFreely.host](https://writefreely.host/img/wfhost-wf-readme.png)](https://writefreely.host)
+
+[WriteFreely.host](https://writefreely.host) makes it easy to start a close-knit community — to share knowledge, complement your Mastodon instance, or publish updates in your organization. We take care of the hosting, upgrades, backups, and maintenance so you can focus on writing.
+
 ## Quick start
 
 WriteFreely has minimal requirements to get up and running — you only need to be able to run an executable.
