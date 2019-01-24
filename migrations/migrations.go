@@ -58,6 +58,19 @@ var migrations = []Migration{
 	New("support user invites", supportUserInvites), // -> V1 (v0.8.0)
 }
 
+// CurrentVer returns the current migration version the application is on
+func CurrentVer() int {
+	return len(migrations)
+}
+
+func SetInitialMigrations(db *datastore) error {
+	_, err := db.Exec("INSERT INTO appmigrations (version, migrated, result) VALUES (?, "+db.now()+", ?)", CurrentVer(), "")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func Migrate(db *datastore) error {
 	var version int
 	var err error

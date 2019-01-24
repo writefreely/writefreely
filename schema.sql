@@ -35,6 +35,18 @@ CREATE TABLE IF NOT EXISTS `appcontent` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `appmigrations`
+--
+
+CREATE TABLE `appmigrations` (
+  `version` int(11) NOT NULL,
+  `migrated` datetime NOT NULL,
+  `result` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `collectionattributes`
 --
 
