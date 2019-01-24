@@ -23,11 +23,9 @@ WriteFreely is a beautifully pared-down blogging platform that's simple on the s
 
 It's designed to be flexible and share your writing widely, so it's built around plain text and can publish to the _fediverse_ via ActivityPub. It's easy to install and light enough to run on a Raspberry Pi.
 
-**[Start a blog on our instance](https://write.as/new/blog/federated)**
-
 [Try the editor](https://write.as/new)
 
-[Find another instance](https://writefreely.org/instances)
+[Find an instance](https://writefreely.org/instances)
 
 ## Features
 
