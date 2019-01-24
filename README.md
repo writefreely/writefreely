@@ -69,7 +69,7 @@ Now extract the files from the archive, change into the directory, and do the fo
 # 2) (if you chose MySQL in the previous step) Log into MySQL and run:
 # CREATE DATABASE writefreely;
 
-# 3) Import the schema with:
+# 3) (if you chose Multi-user setup) Import the schema with:
 ./writefreely --init-db
 
 # 4) Generate data encryption keys
