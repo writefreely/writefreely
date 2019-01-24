@@ -3,7 +3,7 @@
 *.swo
 
 build
-config.ini
+*.ini
 *.db
 
 bindata.go
