@@ -33,6 +33,18 @@ CREATE TABLE IF NOT EXISTS `appcontent` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table appmigrations
+--
+
+CREATE TABLE `appmigrations` (
+  `version` INT NOT NULL,
+  `migrated` DATETIME NOT NULL,
+  `result` TEXT NOT NULL
+);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table collectionattributes
 --
 

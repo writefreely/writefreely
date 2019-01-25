@@ -8,3 +8,4 @@ WriteFreely is built by [Matt Baer](https://github.com/thebaer), with contributi
 * [Brad Koehn](https://github.com/koehn)
 * [kaiyou](https://github.com/kaiyou)
 * [Aaron Ogle](https://github.com/geekgonecrazy)
+* [Norman](https://github.com/nkoehring)
