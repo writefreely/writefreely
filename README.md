@@ -46,7 +46,7 @@ We offer two kinds of hosting services that make WriteFreely deployment painless
 
 ### [![Write.as](https://write.as/img/writeas-wf-readme.png)](https://write.as/)
 
-Start a personal blog on [Write.as](https://write.as), our flagship instance. Built to eliminate setup friction and preserve your privacy, Write.as helps you start a blog in seconds. It supports custom domains (with SSL) and multiple blogs / pen names per account. [Read more here](https://write.as/privacy).
+Start a personal blog on [Write.as](https://write.as), our flagship instance. Built to eliminate setup friction and preserve your privacy, Write.as helps you start a blog in seconds. It supports custom domains (with SSL) and multiple blogs / pen names per account. [Read more here](https://write.as/pricing).
 
 ### [![WriteFreely.host](https://writefreely.host/img/wfhost-wf-readme.png)](https://writefreely.host)
 
