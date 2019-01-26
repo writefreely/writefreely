@@ -300,9 +300,19 @@ func Serve() {
 		}
 		os.Exit(0)
 	} else if *createAdmin != "" {
-		adminCreateUser(app, *createAdmin, true)
+		err := adminCreateUser(app, *createAdmin, true)
+		if err != nil {
+			log.Error(err.Error())
+			os.Exit(1)
+		}
+		os.Exit(0)
 	} else if *createUser != "" {
-		adminCreateUser(app, *createUser, false)
+		err := adminCreateUser(app, *createUser, false)
+		if err != nil {
+			log.Error(err.Error())
+			os.Exit(1)
+		}
+		os.Exit(0)
 	} else if *resetPassUser != "" {
 		// Connect to the database
 		loadConfig(app)
@@ -517,12 +527,11 @@ func shutdown(app *app) {
 	app.db.Close()
 }
 
-func adminCreateUser(app *app, credStr string, isAdmin bool) {
+func adminCreateUser(app *app, credStr string, isAdmin bool) error {
 	// Create an admin user with --create-admin
 	creds := strings.Split(credStr, ":")
 	if len(creds) != 2 {
-		log.Error("usage: writefreely --create-admin username:password")
-		os.Exit(1)
+		return fmt.Errorf("usage: writefreely --create-admin username:password")
 	}
 
 	loadConfig(app)
@@ -534,14 +543,12 @@ func adminCreateUser(app *app, credStr string, isAdmin bool) {
 	if isAdmin {
 		// Abort if trying to create admin user, but one already exists
 		if firstUser != nil {
-			log.Error("Admin user already exists (%s). Create a regular user with: writefreely --create-user", firstUser.Username)
-			os.Exit(1)
+			return fmt.Errorf("Admin user already exists (%s). Create a regular user with: writefreely --create-user", firstUser.Username)
 		}
 	} else {
 		// Abort if trying to create regular user, but no admin exists yet
 		if firstUser == nil {
-			log.Error("No admin user exists yet. Create an admin first with: writefreely --create-admin")
-			os.Exit(1)
+			return fmt.Errorf("No admin user exists yet. Create an admin first with: writefreely --create-admin")
 		}
 	}
 
@@ -559,15 +566,13 @@ func adminCreateUser(app *app, credStr string, isAdmin bool) {
 	}
 
 	if !author.IsValidUsername(app.cfg, username) {
-		log.Error("Username %s is invalid, reserved, or shorter than configured minimum length (%d characters).", usernameDesc, app.cfg.App.MinUsernameLen)
-		os.Exit(1)
+		return fmt.Errorf("Username %s is invalid, reserved, or shorter than configured minimum length (%d characters).", usernameDesc, app.cfg.App.MinUsernameLen)
 	}
 
 	// Hash the password
 	hashedPass, err := auth.HashPass([]byte(password))
 	if err != nil {
-		log.Error("Unable to hash password: %v", err)
-		os.Exit(1)
+		return fmt.Errorf("Unable to hash password: %v", err)
 	}
 
 	u := &User{
@@ -583,11 +588,10 @@ func adminCreateUser(app *app, credStr string, isAdmin bool) {
 	log.Info("Creating %s %s...", userType, usernameDesc)
 	err = app.db.CreateUser(u, desiredUsername)
 	if err != nil {
-		log.Error("Unable to create user: %s", err)
-		os.Exit(1)
+		return fmt.Errorf("Unable to create user: %s", err)
 	}
 	log.Info("Done!")
-	os.Exit(0)
+	return nil
 }
 
 func adminInitDatabase(app *app) error {
