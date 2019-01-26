@@ -234,7 +234,11 @@ func Serve() {
 			defer shutdown(app)
 
 			if !app.db.DatabaseInitialized() {
-				adminInitDatabase(app)
+				err = adminInitDatabase(app)
+				if err != nil {
+					log.Error(err.Error())
+					os.Exit(1)
+				}
 			}
 
 			u := &User{
@@ -289,7 +293,12 @@ func Serve() {
 		loadConfig(app)
 		connectToDatabase(app)
 		defer shutdown(app)
-		adminInitDatabase(app)
+		err := adminInitDatabase(app)
+		if err != nil {
+			log.Error(err.Error())
+			os.Exit(1)
+		}
+		os.Exit(0)
 	} else if *createAdmin != "" {
 		adminCreateUser(app, *createAdmin, true)
 	} else if *createUser != "" {
@@ -581,7 +590,7 @@ func adminCreateUser(app *app, credStr string, isAdmin bool) {
 	os.Exit(0)
 }
 
-func adminInitDatabase(app *app) {
+func adminInitDatabase(app *app) error {
 	schemaFileName := "schema.sql"
 	if app.cfg.Database.Type == driverSQLite {
 		schemaFileName = "sqlite.sql"
@@ -589,8 +598,7 @@ func adminInitDatabase(app *app) {
 
 	schema, err := Asset(schemaFileName)
 	if err != nil {
-		log.Error("Unable to load schema file: %v", err)
-		os.Exit(1)
+		return fmt.Errorf("Unable to load schema file: %v", err)
 	}
 
 	tblReg := regexp.MustCompile("CREATE TABLE (IF NOT EXISTS )?`([a-z_]+)`")
@@ -618,10 +626,9 @@ func adminInitDatabase(app *app) {
 	log.Info("Updating appmigrations table...")
 	err = migrations.SetInitialMigrations(migrations.NewDatastore(app.db.DB, app.db.driverName))
 	if err != nil {
-		log.Error("Unable to set initial migrations: %v", err)
-		os.Exit(1)
+		return fmt.Errorf("Unable to set initial migrations: %v", err)
 	}
-	log.Info("Done.")
 
-	os.Exit(0)
+	log.Info("Done.")
+	return nil
 }
