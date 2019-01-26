@@ -102,7 +102,7 @@ Ready to hack on your site? Here's a quick overview.
 ### Setting up
 
 ```bash
-go get github.com/writeas/writefreely/cmd/writefreely
+go get -d github.com/writeas/writefreely/cmd/writefreely
 ```
 
 Configure your site, create your database, and import the schema [as shown above](#quick-start). Then generate the remaining files you'll need:
