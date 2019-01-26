@@ -32,7 +32,9 @@ It's designed to be flexible and share your writing widely, so it's built around
 * Start a blog for yourself, or host a community of writers
 * Form larger federated networks, and interact over modern protocols like ActivityPub
 * Write on a fast, dead-simple, and distraction-free editor
-* Format text with Markdown, and organize posts with hashtags
+* [Format text](https://howto.write.as/getting-started) with Markdown
+* [Organize posts](https://howto.write.as/organization) with hashtags
+* Create [static pages](https://howto.write.as/creating-a-static-page)
 * Publish drafts and let others proofread them by sharing a private link
 * Create multiple lightweight blogs under a single account
 * Export all data in plain text files
