@@ -531,7 +531,11 @@ func adminCreateUser(app *app, credStr string, isAdmin bool) error {
 	// Create an admin user with --create-admin
 	creds := strings.Split(credStr, ":")
 	if len(creds) != 2 {
-		return fmt.Errorf("usage: writefreely --create-admin username:password")
+		c := "user"
+		if isAdmin {
+			c = "admin"
+		}
+		return fmt.Errorf("usage: writefreely --create-%s username:password", c)
 	}
 
 	loadConfig(app)
