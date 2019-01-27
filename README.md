@@ -150,7 +150,7 @@ working on it, though!
 
 ## Contributing
 
-We gladly welcome contributions to WriteFreely, whether in the form of [code](https://github.com/writeas/writefreely/blob/master/CONTRIBUTING.md#contributing-to-writefreely), [bug reports](https://github.com/writeas/writefreely/issues/new?template=bug_report.md), [feature requests](https://discuss.write.as/c/feedback/feature-requests), [translations](https://poeditor.com/join/project/TIZ6HFRFdE), or documentation improvements.
+We gladly welcome contributions to WriteFreely, whether in the form of [code](https://github.com/writeas/writefreely/blob/master/CONTRIBUTING.md#contributing-to-writefreely), [bug reports](https://github.com/writeas/writefreely/issues/new?template=bug_report.md), [feature requests](https://discuss.write.as/c/feedback/feature-requests), [translations](https://poeditor.com/join/project/TIZ6HFRFdE), or [documentation](https://github.com/writefreely/documentation) improvements.
 
 Before contributing anything, please read our [Contributing Guide](https://github.com/writeas/writefreely/blob/master/CONTRIBUTING.md#contributing-to-writefreely). It describes the correct channels for submitting contributions and any potential requirements.
 
