@@ -48,7 +48,8 @@ func nodeInfoConfig(db *datastore, cfg *config.Config) *nodeinfo.Config {
 				GitHub:   "https://github.com/writeas/writefreely",
 				Follow:   "https://writing.exchange/@write_as",
 			},
-			MaxBlogs: cfg.App.MaxBlogs,
+			MaxBlogs:     cfg.App.MaxBlogs,
+			PublicReader: cfg.App.LocalTimeline,
 		},
 		Protocols: []nodeinfo.NodeProtocol{
 			nodeinfo.ProtocolActivityPub,
