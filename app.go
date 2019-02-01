@@ -15,6 +15,7 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -604,7 +605,7 @@ func adminInitDatabase(app *app) error {
 		schemaFileName = "sqlite.sql"
 	}
 
-	schema, err := Asset(schemaFileName)
+	schema, err := ioutil.ReadFile(schemaFileName)
 	if err != nil {
 		return fmt.Errorf("Unable to load schema file: %v", err)
 	}
