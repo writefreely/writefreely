@@ -5,8 +5,8 @@
 
 		<title>{{.Tag}} &mdash; {{.Collection.DisplayTitle}}</title>
 		
-		<link rel="stylesheet" type="text/css" href="{{if .IsCustomDomain}}https://files.writeas.org{{end}}/css/write.css" />
-		<link rel="shortcut icon" href="{{ if .Collection.ShowFooterBranding }}{{if .IsCustomDomain}}https://files.writeas.org{{end}}/favicon.ico{{ else }}/none.ico{{ end }}" />
+		<link rel="stylesheet" type="text/css" href="/css/write.css" />
+		<link rel="shortcut icon" href="/favicon.ico" />
 		{{if not .Collection.IsPrivate}}<link rel="alternate" type="application/rss+xml" title="{{.Tag}} posts on {{.DisplayTitle}}" href="{{.CanonicalURL}}tag:{{.Tag}}/feed/" />{{end}}
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="canonical" href="{{.CanonicalURL}}tag:{{.Tag | tolower}}" />
@@ -179,11 +179,11 @@ function pinPost(e, postID, slug, title) {
 {{end}}
 	try { // Fonts
 	  WebFontConfig = {
-		custom: { families: [ 'Lora:400,700:latin', 'Open+Sans:400,700:latin' ], urls: [ '{{if .IsCustomDomain}}https://files.writeas.org{{end}}/css/fonts.css' ] }
+		custom: { families: [ 'Lora:400,700:latin', 'Open+Sans:400,700:latin' ], urls: [ '/css/fonts.css' ] }
 	  };
 	  (function() {
 		var wf = document.createElement('script');
-		wf.src = '{{if .IsCustomDomain}}https://files.writeas.org{{end}}/js/webfont.js';
+		wf.src = '/js/webfont.js';
 		wf.type = 'text/javascript';
 		wf.async = 'true';
 		var s = document.getElementsByTagName('script')[0];
