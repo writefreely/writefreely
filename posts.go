@@ -368,7 +368,7 @@ func handleViewPost(app *app, w http.ResponseWriter, r *http.Request) error {
 			Direction:   d,
 		}
 		if !isRaw {
-			post.HTMLContent = template.HTML(applyMarkdown([]byte(content)))
+			post.HTMLContent = template.HTML(applyMarkdown([]byte(content), ""))
 		}
 	}
 

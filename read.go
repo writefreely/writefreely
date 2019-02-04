@@ -95,7 +95,7 @@ func (db *datastore) FetchPublicPosts() (interface{}, error) {
 		}
 
 		p.extractData()
-		p.HTMLContent = template.HTML(applyMarkdown([]byte(p.Content)))
+		p.HTMLContent = template.HTML(applyMarkdown([]byte(p.Content), ""))
 		fp := p.processPost()
 		if isCollectionPost {
 			fp.Collection = &CollectionObj{Collection: *c}
@@ -283,7 +283,7 @@ func viewLocalTimelineFeed(app *app, w http.ResponseWriter, req *http.Request) e
 			Title:       title,
 			Link:        &Link{Href: permalink},
 			Description: "<![CDATA[" + stripmd.Strip(p.Content) + "]]>",
-			Content:     applyMarkdown([]byte(p.Content)),
+			Content:     applyMarkdown([]byte(p.Content), ""),
 			Author:      &Author{author, ""},
 			Created:     p.Created,
 			Updated:     p.Updated,

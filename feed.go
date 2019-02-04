@@ -93,7 +93,7 @@ func ViewFeed(app *app, w http.ResponseWriter, req *http.Request) error {
 			Title:       title,
 			Link:        &Link{Href: permalink},
 			Description: "<![CDATA[" + stripmd.Strip(p.Content) + "]]>",
-			Content:     applyMarkdown([]byte(p.Content)),
+			Content:     applyMarkdown([]byte(p.Content), ""),
 			Author:      &Author{author, ""},
 			Created:     p.Created,
 			Updated:     p.Updated,

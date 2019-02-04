@@ -142,7 +142,7 @@ func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *te
 		if err != nil {
 			return err
 		}
-		p.Content = template.HTML(applyMarkdown([]byte(c)))
+		p.Content = template.HTML(applyMarkdown([]byte(c), ""))
 		p.PlainContent = shortPostDescription(stripmd.Strip(c))
 		if updated != nil {
 			p.Updated = updated.Format("January 2, 2006")
