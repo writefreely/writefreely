@@ -13,14 +13,11 @@
 	<a href="https://travis-ci.org/writeas/writefreely">
 		<img src="https://travis-ci.org/writeas/writefreely.svg" alt="Build status" />
 	</a>
-	<a href="https://hub.docker.com/r/writeas/writefreely/">
-		<img src="https://img.shields.io/docker/pulls/writeas/writefreely.svg" />
-	</a>
 	<a href="https://github.com/writeas/writefreely/releases/latest">
 		<img src="https://img.shields.io/github/downloads/writeas/writefreely/total.svg" />
 	</a>
-	<a href="http://webchat.freenode.net/?channels=writefreely">
-		<img alt="#writefreely on freenode" src="https://img.shields.io/badge/freenode-%23writefreely-blue.svg" />
+	<a href="https://hub.docker.com/r/writeas/writefreely/">
+		<img src="https://img.shields.io/docker/pulls/writeas/writefreely.svg" />
 	</a>
 </p>
 &nbsp;
