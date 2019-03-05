@@ -22,8 +22,12 @@
         var sc = document.createElement('script');
         sc.src = uri;
         sc.async = false; // critical?
+	// Set callback on last script
         if (uris.indexOf(uri) == uris.length-1) {
-          sc.onload = callback;
+	  // Set callback regardless
+	  // so we're sure it will run if last element had error
+	  // (we only know after loading, so we've had load time already)
+          sc.onload  = callback; sc.onerror = callback;
         }
         document.head.appendChild(sc);
       });
