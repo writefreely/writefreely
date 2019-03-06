@@ -112,8 +112,7 @@ func IsValidUsername(cfg *config.Config, username string) bool {
 	// Username is invalid if page with the same name exists. So traverse
 	// available pages, adding them to reservedUsernames map that'll be checked
 	// later.
-	// TODO: use pagesDir const
-	filepath.Walk("pages/", func(path string, i os.FileInfo, err error) error {
+	filepath.Walk(filepath.Join(cfg.Server.PagesParentDir, "pages"), func(path string, i os.FileInfo, err error) error {
 		reservedUsernames[i.Name()] = true
 		return nil
 	})
