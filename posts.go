@@ -18,6 +18,7 @@ import (
 	"github.com/guregu/null"
 	"github.com/guregu/null/zero"
 	"github.com/kylemcc/twitter-text-go/extract"
+	"github.com/microcosm-cc/bluemonday"
 	stripmd "github.com/writeas/go-strip-markdown"
 	"github.com/writeas/impart"
 	"github.com/writeas/monday"
@@ -205,6 +206,9 @@ func (p Post) Summary() string {
 	if p.Content == "" {
 		return ""
 	}
+	// Strip out HTML
+	p.Content = bluemonday.StrictPolicy().Sanitize(p.Content)
+	// and Markdown
 	p.Content = stripmd.Strip(p.Content)
 
 	title := p.Title.String
