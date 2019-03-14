@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Let us know what went wrong.
-
+labels: ❓ bug
 ---
 
 ### Describe the bug
