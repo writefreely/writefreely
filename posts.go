@@ -1021,7 +1021,10 @@ func fetchPost(app *app, w http.ResponseWriter, r *http.Request) error {
 
 		p.Collection = &CollectionObj{Collection: *coll}
 		po := p.ActivityObject()
-		po.Context = []interface{}{activitystreams.Namespace}
+		po.Context = []interface{}{
+			activitystreams.Namespace,
+			activitystreams.Extensions,
+		}
 		return impart.RenderActivityJSON(w, po, http.StatusOK)
 	}
 
@@ -1091,6 +1094,9 @@ func (p *PublicPost) ActivityObject() *activitystreams.Object {
 			})
 		}
 	}
+
+	o.CommentsEnabled = false
+
 	return o
 }
 
@@ -1300,7 +1306,10 @@ func viewCollectionPost(app *app, w http.ResponseWriter, r *http.Request) error 
 	} else if strings.Contains(r.Header.Get("Accept"), "application/activity+json") {
 		p.extractData()
 		ap := p.ActivityObject()
-		ap.Context = []interface{}{activitystreams.Namespace}
+		ap.Context = []interface{}{
+			activitystreams.Namespace,
+			activitystreams.Extensions,
+		}
 		return impart.RenderActivityJSON(w, ap, http.StatusOK)
 	} else {
 		p.extractData()
