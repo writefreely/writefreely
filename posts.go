@@ -871,7 +871,9 @@ func addPost(app *app, w http.ResponseWriter, r *http.Request) error {
 			if pRes.Code != http.StatusOK {
 				continue
 			}
-			go federatePost(app, pRes.Post, pRes.Post.Collection.ID, false)
+			if !pRes.Post.Created.After(time.Now()) {
+				go federatePost(app, pRes.Post, pRes.Post.Collection.ID, false)
+			}
 		}
 	}
 	return impart.WriteSuccess(w, res, http.StatusOK)
