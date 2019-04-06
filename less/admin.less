@@ -9,6 +9,19 @@ header.admin {
 		margin-left: 1em;
 	}
 }
+nav#admin {
+	display: block;
+	margin: 0.5em 0;
+	a {
+		color: @primary;
+		&:first-child {
+			margin-left: 0;
+		}
+		&.selected {
+			font-weight: bold;
+		}
+	}
+}
 .pager {
 	display: flex;
 	justify-content: center;

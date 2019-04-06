@@ -43,13 +43,13 @@ function savePage(el) {
 </script>
 
 <div class="content-container snug">
-	<h1>Admin Dashboard</h1>
+	{{template "admin-header" .}}
 
 	{{if .Message}}<p>{{.Message}}</p>{{end}}
 
+	<h2>On this page</h2>
 	<ul class="pagenav">
 		{{if not .SingleUser}}
-		<li><a href="/admin/users">View Users</a></li>
 		<li><a href="#page-about">Edit About page</a></li>
 		<li><a href="#page-privacy">Edit Privacy page</a></li>
 		{{end}}
