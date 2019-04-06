@@ -13,8 +13,8 @@ TMPBIN=./tmp
 
 all : build
 
-ci: ci-assets deps
-	cd cmd/writefreely; $(GOBUILD) -v -tags='sqlite'
+ci: ci-assets deps $(TMPBIN)/xgo
+	$(TMPBIN)/xgo -v -tags='sqlite' ./cmd/writefreely
 
 build: assets deps
 	cd cmd/writefreely; $(GOBUILD) -v -tags='sqlite'
@@ -116,6 +116,9 @@ $(TMPBIN):
 
 $(TMPBIN)/go-bindata: deps $(TMPBIN)
 	$(GOBUILD) -o $(TMPBIN)/go-bindata github.com/jteeuwen/go-bindata/go-bindata
+
+$(TMPBIN)/xgo: deps $(TMPBIN)
+	$(GOBUILD) -o $(TMPBIN)/xgo github.com/karalabe/xgo
 
 ci-assets : $(TMPBIN)/go-bindata
 	$(TMPBIN)/go-bindata -pkg writefreely -ignore=\\.gitignore schema.sql sqlite.sql
