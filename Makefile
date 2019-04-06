@@ -13,8 +13,8 @@ TMPBIN=./tmp
 
 all : build
 
-ci: ci-assets deps $(TMPBIN)/xgo
-	$(TMPBIN)/xgo -v -tags='sqlite' ./cmd/writefreely
+ci: ci-assets deps
+	cd cmd/writefreely; $(GOBUILD) -v
 
 build: assets deps
 	cd cmd/writefreely; $(GOBUILD) -v -tags='sqlite'
