@@ -3,6 +3,7 @@
 *.swo
 
 build
+tmp
 *.ini
 *.db
 

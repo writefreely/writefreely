@@ -5,3 +5,5 @@ go:
 
 env:
   - GO111MODULE=on
+
+script: make ci
