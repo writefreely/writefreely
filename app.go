@@ -124,8 +124,7 @@ func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *te
 		StaticPage: pageForReq(app, r),
 	}
 	if r.URL.Path == "/about" || r.URL.Path == "/privacy" {
-		var c string
-		var updated *time.Time
+		var c *instanceContent
 		var err error
 
 		if r.URL.Path == "/about" {
@@ -136,16 +135,16 @@ func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *te
 			p.AboutStats.NumPosts, _ = app.db.GetTotalPosts()
 			p.AboutStats.NumBlogs, _ = app.db.GetTotalCollections()
 		} else {
-			c, updated, err = getPrivacyPage(app)
+			c, err = getPrivacyPage(app)
 		}
 
 		if err != nil {
 			return err
 		}
-		p.Content = template.HTML(applyMarkdown([]byte(c), ""))
-		p.PlainContent = shortPostDescription(stripmd.Strip(c))
-		if updated != nil {
-			p.Updated = updated.Format("January 2, 2006")
+		p.Content = template.HTML(applyMarkdown([]byte(c.Content), ""))
+		p.PlainContent = shortPostDescription(stripmd.Strip(c.Content))
+		if !c.Updated.IsZero() {
+			p.Updated = c.Updated.Format("January 2, 2006")
 		}
 	}
 

@@ -115,7 +115,7 @@ type writestore interface {
 	GetUsersInvitedCount(id string) int64
 	CreateInvitedUser(inviteID string, userID int64) error
 
-	GetDynamicContent(id string) (string, *time.Time, error)
+	GetDynamicContent(id string) (*instanceContent, error)
 	UpdateDynamicContent(id, content string) error
 	GetAllUsers(page uint) (*[]User, error)
 	GetAllUsersCount() int64
@@ -2262,18 +2262,45 @@ func (db *datastore) CreateInvitedUser(inviteID string, userID int64) error {
 	return err
 }
 
-func (db *datastore) GetDynamicContent(id string) (string, *time.Time, error) {
-	var c string
-	var u *time.Time
-	err := db.QueryRow("SELECT content, updated FROM appcontent WHERE id = ?", id).Scan(&c, &u)
+func (db *datastore) GetInstancePages() ([]*instanceContent, error) {
+	rows, err := db.Query("SELECT id, content, updated FROM appcontent")
+	if err != nil {
+		log.Error("Failed selecting from appcontent: %v", err)
+		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve instance pages."}
+	}
+	defer rows.Close()
+
+	pages := []*instanceContent{}
+	for rows.Next() {
+		c := &instanceContent{}
+		err = rows.Scan(&c.ID, &c.Content, &c.Updated)
+		if err != nil {
+			log.Error("Failed scanning row: %v", err)
+			break
+		}
+		pages = append(pages, c)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Error("Error after Next() on rows: %v", err)
+	}
+
+	return pages, nil
+}
+
+func (db *datastore) GetDynamicContent(id string) (*instanceContent, error) {
+	c := &instanceContent{
+		ID: id,
+	}
+	err := db.QueryRow("SELECT content, updated FROM appcontent WHERE id = ?", id).Scan(&c.Content, &c.Updated)
 	switch {
 	case err == sql.ErrNoRows:
-		return "", nil, nil
+		return nil, nil
 	case err != nil:
 		log.Error("Couldn't SELECT FROM appcontent for id '%s': %v", id, err)
-		return "", nil, err
+		return nil, err
 	}
-	return c, u, nil
+	return c, nil
 }
 
 func (db *datastore) UpdateDynamicContent(id, content string) error {

@@ -1,0 +1,34 @@
+{{define "view-page"}}
+{{template "header" .}}
+<div class="snug content-container">
+	{{template "admin-header" .}}
+
+	<h2 id="posts-header">{{.Content.ID}} page</h2>
+
+	{{if .Message}}<p>{{.Message}}</p>{{end}}
+
+	{{if eq .Content.ID "about"}}
+	<p>Describe what your instance is <a href="/about" target="page">about</a>. <em>Accepts Markdown</em>.</p>
+	{{else if eq .Content.ID "privacy"}}
+	<p>Outline your <a href="/privacy" target="page">privacy policy</a>. <em>Accepts Markdown</em>.</p>
+	{{else}}
+	<p><em>Accepts Markdown and HTML</em>.</p>
+	{{end}}
+
+	<form method="post" action="/admin/update/{{.Content.ID}}" onsubmit="savePage(this)">
+		<textarea id="about-editor" class="section codable norm edit-page" name="content">{{.Content.Content}}</textarea>
+		<input type="submit" value="Save" />
+	</form>
+
+</div>
+
+<script>
+function savePage(el) {
+	var $btn = el.querySelector('input[type=submit]');
+	$btn.value = 'Saving...';
+	$btn.disabled = true;
+}
+</script>
+
+{{template "footer" .}}
+{{end}}

@@ -64,7 +64,10 @@
 	<h1>Admin</h1>
 	<nav id="admin">
 		<a href="/admin" {{if eq .Path "/admin"}}class="selected"{{end}}>Dashboard</a>
-		{{if not .SingleUser}}<a href="/admin/users" {{if eq .Path "/admin/users"}}class="selected"{{end}}>Users</a>{{end}}
+		{{if not .SingleUser}}
+		<a href="/admin/users" {{if eq .Path "/admin/users"}}class="selected"{{end}}>Users</a>
+		<a href="/admin/pages" {{if eq .Path "/admin/pages"}}class="selected"{{end}}>Pages</a>
+		{{end}}
 	</nav>
 </header>
 {{end}}

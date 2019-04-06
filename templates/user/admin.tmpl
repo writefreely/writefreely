@@ -34,14 +34,6 @@ form dt {
 }
 </style>
 
-<script>
-function savePage(el) {
-	var $btn = el.querySelector('input[type=submit]');
-	$btn.value = 'Saving...';
-	$btn.disabled = true;
-}
-</script>
-
 <div class="content-container snug">
 	{{template "admin-header" .}}
 
@@ -49,36 +41,12 @@ function savePage(el) {
 
 	<h2>On this page</h2>
 	<ul class="pagenav">
-		{{if not .SingleUser}}
-		<li><a href="#page-about">Edit About page</a></li>
-		<li><a href="#page-privacy">Edit Privacy page</a></li>
-		{{end}}
 		<li><a href="#reset-pass">Reset user password</a></li>
 		<li><a href="#config">Configuration</a></li>
 		<li><a href="#monitor">Application monitor</a></li>
 	</ul>
 
 	<hr />
-
-	{{if not .SingleUser}}
-	<h2>Site</h2>
-
-	<h3 id="page-about">About page</h3>
-	<p>Describe what your instance is <a href="/about" target="page">about</a>. <em>Accepts Markdown</em>.</p>
-	<form method="post" action="/admin/update/about" onsubmit="savePage(this)">
-		<textarea id="about-editor" class="section codable norm edit-page" name="content">{{.AboutPage}}</textarea>
-		<input type="submit" value="Save" />
-	</form>
-
-	<h3 id="page-privacy">Privacy page</h3>
-	<p>Outline your <a href="/privacy" target="page">privacy policy</a>. <em>Accepts Markdown</em>.</p>
-	<form method="post" action="/admin/update/privacy" onsubmit="savePage(this)">
-		<textarea id="privacy-editor" class="section codable norm edit-page" name="content">{{.PrivacyPage}}</textarea>
-		<input type="submit" value="Save" />
-	</form>
-
-	<hr />
-	{{end}}
 
 	<h2>Users</h2>
 
