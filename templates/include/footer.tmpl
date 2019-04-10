@@ -4,7 +4,7 @@
 			{{if .SingleUser}}
 			<nav>
 				<a class="home" href="/">{{.SiteName}}</a>
-				<a href="https://writefreely.org/guide" target="guide">writer's guide</a>
+				<a href="https://writefreely.org/guide/{{.OfficialVersion}}" target="guide">writer's guide</a>
 				<a href="https://developers.write.as/" title="Build on Write Freely with our open developer API.">developers</a>
 				<a href="https://github.com/writeas/writefreely">source code</a>
 				<a href="https://writefreely.org">writefreely {{.Version}}</a>
@@ -23,7 +23,7 @@
 					<div class="half">
 						<h3><a href="https://writefreely.org" style="color:#444;text-transform:lowercase;">WriteFreely</a></h3>
 						<ul>
-							<li><a href="https://writefreely.org/guide" target="guide">writer's guide</a></li>
+							<li><a href="https://writefreely.org/guide/{{.OfficialVersion}}" target="guide">writer's guide</a></li>
 							<li><a href="https://developers.write.as/" title="Build on Write Freely with our open developer API.">developers</a></li>
 							<li><a href="https://github.com/writeas/writefreely">source code</a></li>
 							<li style="margin-top:0.8em">{{.Version}}</li>

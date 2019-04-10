@@ -37,3 +37,8 @@ func (sp *StaticPage) SanitizeHost(cfg *config.Config) {
 		sp.Host = cfg.Server.HiddenHost
 	}
 }
+
+func (sp StaticPage) OfficialVersion() string {
+	p := strings.Split(sp.Version, "-")
+	return p[0]
+}
