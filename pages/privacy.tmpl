@@ -1,8 +1,8 @@
-{{define "head"}}<title>{{.SiteName}} Privacy Policy</title>
+{{define "head"}}<title>{{.ContentTitle}} &mdash; {{.SiteName}}</title>
 <meta name="description" content="{{.PlainContent}}">
 {{end}}
 {{define "content"}}<div class="content-container snug">
-	<h1>Privacy Policy</h1>
+	<h1>{{.ContentTitle}}</h1>
 		<p style="font-style:italic">Last updated {{.Updated}}</p>
 
 		{{.Content}}

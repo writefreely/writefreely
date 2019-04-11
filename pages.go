@@ -11,6 +11,7 @@
 package writefreely
 
 import (
+	"database/sql"
 	"github.com/writeas/writefreely/config"
 	"time"
 )
@@ -25,10 +26,18 @@ func getAboutPage(app *app) (*instanceContent, error) {
 	if c == nil {
 		c = &instanceContent{
 			ID:      "about",
+			Type:    "page",
 			Content: defaultAboutPage(app.cfg),
 		}
 	}
+	if !c.Title.Valid {
+		c.Title = defaultAboutTitle(app.cfg)
+	}
 	return c, nil
+}
+
+func defaultAboutTitle(cfg *config.Config) sql.NullString {
+	return sql.NullString{String: "About " + cfg.App.SiteName, Valid: true}
 }
 
 func getPrivacyPage(app *app) (*instanceContent, error) {
@@ -39,11 +48,19 @@ func getPrivacyPage(app *app) (*instanceContent, error) {
 	if c == nil {
 		c = &instanceContent{
 			ID:      "privacy",
+			Type:    "page",
 			Content: defaultPrivacyPolicy(app.cfg),
 			Updated: defaultPageUpdatedTime,
 		}
 	}
+	if !c.Title.Valid {
+		c.Title = defaultPrivacyTitle()
+	}
 	return c, nil
+}
+
+func defaultPrivacyTitle() sql.NullString {
+	return sql.NullString{String: "Privacy Policy", Valid: true}
 }
 
 func defaultAboutPage(cfg *config.Config) string {

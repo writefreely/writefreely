@@ -47,6 +47,13 @@ func (db *datastore) typeChar(l int) string {
 	return fmt.Sprintf("CHAR(%d)", l)
 }
 
+func (db *datastore) typeVarChar(l int) string {
+	if db.driverName == driverSQLite {
+		return "TEXT"
+	}
+	return fmt.Sprintf("VARCHAR(%d)", l)
+}
+
 func (db *datastore) typeBool() string {
 	if db.driverName == driverSQLite {
 		return "INTEGER"
@@ -56,6 +63,13 @@ func (db *datastore) typeBool() string {
 
 func (db *datastore) typeDateTime() string {
 	return "DATETIME"
+}
+
+func (db *datastore) collateMultiByte() string {
+	if db.driverName == driverSQLite {
+		return ""
+	}
+	return " COLLATE utf8_bin"
 }
 
 func (db *datastore) engine() string {

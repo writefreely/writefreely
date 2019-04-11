@@ -115,6 +115,7 @@ func handleViewHome(app *app, w http.ResponseWriter, r *http.Request) error {
 func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *template.Template) error {
 	p := struct {
 		page.StaticPage
+		ContentTitle string
 		Content      template.HTML
 		PlainContent string
 		Updated      string
@@ -141,6 +142,7 @@ func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *te
 		if err != nil {
 			return err
 		}
+		p.ContentTitle = c.Title.String
 		p.Content = template.HTML(applyMarkdown([]byte(c.Content), ""))
 		p.PlainContent = shortPostDescription(stripmd.Strip(c.Content))
 		if !c.Updated.IsZero() {
