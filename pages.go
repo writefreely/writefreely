@@ -71,7 +71,7 @@ func defaultAboutPage(cfg *config.Config) string {
 }
 
 func defaultPrivacyPolicy(cfg *config.Config) string {
-	return `[Write Freely](https://writefreely.org), the software that powers this site, is built to enforce your right to privacy by default.
+	return `[WriteFreely](https://writefreely.org), the software that powers this site, is built to enforce your right to privacy by default.
 
 It retains as little data about you as possible, not even requiring an email address to sign up. However, if you _do_ give us your email address, it is stored encrypted in our database. We salt and hash your account's password.
 

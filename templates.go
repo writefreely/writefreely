@@ -188,6 +188,6 @@ func localHTML(term, lang string) template.HTML {
 	if s == "" {
 		s = l10n.Strings("")[term]
 	}
-	s = strings.Replace(s, "write.as", "<a href=\"https://writefreely.org\">write freely</a>", 1)
+	s = strings.Replace(s, "write.as", "<a href=\"https://writefreely.org\">writefreely</a>", 1)
 	return template.HTML(s)
 }
