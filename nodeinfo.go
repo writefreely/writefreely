@@ -50,6 +50,7 @@ func nodeInfoConfig(db *datastore, cfg *config.Config) *nodeinfo.Config {
 			},
 			MaxBlogs:     cfg.App.MaxBlogs,
 			PublicReader: cfg.App.LocalTimeline,
+			Invites:      cfg.App.UserInvites != "",
 		},
 		Protocols: []nodeinfo.NodeProtocol{
 			nodeinfo.ProtocolActivityPub,
