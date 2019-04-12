@@ -10,7 +10,7 @@
 		{{end}}
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
 		<link rel="shortcut icon" href="/favicon.ico" />
-		<link rel="canonical" href="{{.Host}}/{{.ID}}" />
+		<link rel="canonical" href="{{.Host}}/{{if .SingleUser}}d/{{end}}{{.ID}}" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 		<meta name="generator" content="{{.SiteName}}">
@@ -23,13 +23,13 @@
 		<meta name="twitter:description" content="{{.Description}}">
 		{{if gt .Views 1}}<meta name="twitter:label1" value="Views">
 		<meta name="twitter:data1" value="{{largeNumFmt .Views}}">{{end}}
-		<meta name="twitter:image" content="https://write.as/img/w-sq-light.png">
+		<meta name="twitter:image" content="{{.Host}}/img/wf-sq.png">
 		<meta property="og:title" content="{{if .Title}}{{.Title}}{{else}}{{.GenTitle}}{{end}}" />
 		<meta property="og:site_name" content="{{.SiteName}}" />
 		<meta property="og:type" content="article" />
-		<meta property="og:url" content="https://write.as/{{.ID}}" />
+		<meta property="og:url" content="{{.Host}}/{{if .SingleUser}}d/{{end}}{{.ID}}" />
 		<meta property="og:description" content="{{.Description}}" />
-		<meta property="og:image" content="https://write.as/img/w-sq-light.png">
+		<meta property="og:image" content="{{.Host}}/img/wf-sq.png">
 		{{if .Author}}<meta property="article:author" content="https://{{.Author}}" />{{end}}
 		<!-- Add highlighting logic -->
 		{{template "highlighting" .}}
