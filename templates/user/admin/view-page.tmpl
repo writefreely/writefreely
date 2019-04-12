@@ -1,22 +1,53 @@
 {{define "view-page"}}
 {{template "header" .}}
+<style>
+label {
+	display: block;
+	margin-top: 1em;
+	padding: 0 0 1em;
+	color: #666;
+}
+.content-desc {
+	font-size: 0.95em;
+}
+.page-desc {
+	margin: 0 0 0.5em;
+}
+textarea + .content-desc {
+	margin: 0.5em 0 1em;
+	font-style: italic;
+}
+input[type=text] {
+	/* Match textarea color. TODO: y is it like this thooo */
+	border-color: #ccc;
+}
+</style>
 <div class="snug content-container">
 	{{template "admin-header" .}}
 
 	<h2 id="posts-header">{{.Content.ID}} page</h2>
 
-	{{if .Message}}<p>{{.Message}}</p>{{end}}
-
 	{{if eq .Content.ID "about"}}
-	<p>Describe what your instance is <a href="/about" target="page">about</a>. <em>Accepts Markdown</em>.</p>
+	<p class="page-desc content-desc">Describe what your instance is <a href="/about" target="page">about</a>.</p>
 	{{else if eq .Content.ID "privacy"}}
-	<p>Outline your <a href="/privacy" target="page">privacy policy</a>. <em>Accepts Markdown</em>.</p>
-	{{else}}
-	<p><em>Accepts Markdown and HTML</em>.</p>
+	<p class="page-desc content-desc">Outline your <a href="/privacy" target="page">privacy policy</a>.</p>
 	{{end}}
 
+	{{if .Message}}<p>{{.Message}}</p>{{end}}
+
 	<form method="post" action="/admin/update/{{.Content.ID}}" onsubmit="savePage(this)">
-		<textarea id="about-editor" class="section codable norm edit-page" name="content">{{.Content.Content}}</textarea>
+		<label for="title">
+			Title
+		</label>
+		<input type="text" name="title" id="title" value="{{.Content.Title.String}}" />
+		<label for="content">
+			Content
+		</label>
+
+		<textarea id="content" class="section codable norm edit-page" name="content">{{.Content.Content}}</textarea>
+
+		<p class="content-desc">Accepts Markdown and HTML.</p>
+
 		<input type="submit" value="Save" />
 	</form>
 

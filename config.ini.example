@@ -11,7 +11,7 @@ host     = db
 port     = 3306
 
 [app]
-site_name         = Write Freely Example Blog!
+site_name         = WriteFreely Example Blog!
 host              = http://localhost:8080
 theme             = write
 disable_js        = false

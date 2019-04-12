@@ -32,6 +32,9 @@ form dt {
 .invisible {
 	display: none;
 }
+p.docs {
+	font-size: 0.86em;
+}
 </style>
 
 <div class="content-container snug">
@@ -41,21 +44,19 @@ form dt {
 
 	<h2>On this page</h2>
 	<ul class="pagenav">
-		<li><a href="#reset-pass">Reset user password</a></li>
 		<li><a href="#config">Configuration</a></li>
 		<li><a href="#monitor">Application monitor</a></li>
 	</ul>
 
-	<hr />
-
-	<h2>Users</h2>
-
-	<h3><a name="reset-pass"></a>reset password</h3>
-	<pre><code>writefreely --reset-pass &lt;username&gt;</code></pre>
+	<h2>Resources</h2>
+	<ul class="pagenav">
+		<li><a href="https://writefreely.org/docs/{{.OfficialVersion}}/admin">Admin Guide</a></li>
+	</ul>
 
 	<hr />
 
 	<h2><a name="config"></a>App Configuration</h2>
+	<p class="docs">Read more in the <a href="https://writefreely.org/docs/{{.OfficialVersion}}/admin/config">configuration docs</a>.</p>
 
 	{{if .ConfigMessage}}<p class="success" style="text-align: center">{{.ConfigMessage}}</p>{{end}}
 

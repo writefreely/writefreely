@@ -11,6 +11,7 @@
 package writefreely
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/gogits/gogs/pkg/tool"
 	"github.com/gorilla/mux"
@@ -81,7 +82,7 @@ type inspectedCollection struct {
 type instanceContent struct {
 	ID      string
 	Type    string
-	Title   string
+	Title   sql.NullString
 	Content string
 	Updated time.Time
 }
@@ -249,19 +250,26 @@ func handleViewAdminPages(app *app, u *User, w http.ResponseWriter, r *http.Requ
 
 	// Add in default pages
 	var hasAbout, hasPrivacy bool
-	for _, c := range p.Pages {
+	for i, c := range p.Pages {
 		if hasAbout && hasPrivacy {
 			break
 		}
 		if c.ID == "about" {
 			hasAbout = true
+			if !c.Title.Valid {
+				p.Pages[i].Title = defaultAboutTitle(app.cfg)
+			}
 		} else if c.ID == "privacy" {
 			hasPrivacy = true
+			if !c.Title.Valid {
+				p.Pages[i].Title = defaultPrivacyTitle()
+			}
 		}
 	}
 	if !hasAbout {
 		p.Pages = append(p.Pages, &instanceContent{
 			ID:      "about",
+			Title:   defaultAboutTitle(app.cfg),
 			Content: defaultAboutPage(app.cfg),
 			Updated: defaultPageUpdatedTime,
 		})
@@ -269,6 +277,7 @@ func handleViewAdminPages(app *app, u *User, w http.ResponseWriter, r *http.Requ
 	if !hasPrivacy {
 		p.Pages = append(p.Pages, &instanceContent{
 			ID:      "privacy",
+			Title:   defaultPrivacyTitle(),
 			Content: defaultPrivacyPolicy(app.cfg),
 			Updated: defaultPageUpdatedTime,
 		})
@@ -308,7 +317,13 @@ func handleViewAdminPage(app *app, u *User, w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get page: %v", err)}
 	}
-	p.UserPage = NewUserPage(app, r, u, p.Content.ID, nil)
+	title := "New page"
+	if p.Content != nil {
+		title = "Edit " + p.Content.ID
+	} else {
+		p.Content = &instanceContent{}
+	}
+	p.UserPage = NewUserPage(app, r, u, title, nil)
 
 	showUserPage(w, "view-page", p)
 	return nil
@@ -325,7 +340,7 @@ func handleAdminUpdateSite(app *app, u *User, w http.ResponseWriter, r *http.Req
 
 	// Update page
 	m := ""
-	err := app.db.UpdateDynamicContent(id, r.FormValue("content"))
+	err := app.db.UpdateDynamicContent(id, r.FormValue("title"), r.FormValue("content"), "page")
 	if err != nil {
 		m = "?m=" + err.Error()
 	}

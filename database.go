@@ -116,7 +116,7 @@ type writestore interface {
 	CreateInvitedUser(inviteID string, userID int64) error
 
 	GetDynamicContent(id string) (*instanceContent, error)
-	UpdateDynamicContent(id, content string) error
+	UpdateDynamicContent(id, title, content, contentType string) error
 	GetAllUsers(page uint) (*[]User, error)
 	GetAllUsersCount() int64
 	GetUserLastPostTime(id int64) (*time.Time, error)
@@ -2263,7 +2263,17 @@ func (db *datastore) CreateInvitedUser(inviteID string, userID int64) error {
 }
 
 func (db *datastore) GetInstancePages() ([]*instanceContent, error) {
-	rows, err := db.Query("SELECT id, content, updated FROM appcontent")
+	return db.GetAllDynamicContent("page")
+}
+
+func (db *datastore) GetAllDynamicContent(t string) ([]*instanceContent, error) {
+	where := ""
+	params := []interface{}{}
+	if t != "" {
+		where = " WHERE content_type = ?"
+		params = append(params, t)
+	}
+	rows, err := db.Query("SELECT id, title, content, updated, content_type FROM appcontent"+where, params...)
 	if err != nil {
 		log.Error("Failed selecting from appcontent: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve instance pages."}
@@ -2273,7 +2283,7 @@ func (db *datastore) GetInstancePages() ([]*instanceContent, error) {
 	pages := []*instanceContent{}
 	for rows.Next() {
 		c := &instanceContent{}
-		err = rows.Scan(&c.ID, &c.Content, &c.Updated)
+		err = rows.Scan(&c.ID, &c.Title, &c.Content, &c.Updated, &c.Type)
 		if err != nil {
 			log.Error("Failed scanning row: %v", err)
 			break
@@ -2292,7 +2302,7 @@ func (db *datastore) GetDynamicContent(id string) (*instanceContent, error) {
 	c := &instanceContent{
 		ID: id,
 	}
-	err := db.QueryRow("SELECT content, updated FROM appcontent WHERE id = ?", id).Scan(&c.Content, &c.Updated)
+	err := db.QueryRow("SELECT title, content, updated, content_type FROM appcontent WHERE id = ?", id).Scan(&c.Title, &c.Content, &c.Updated, &c.Type)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, nil
@@ -2303,12 +2313,12 @@ func (db *datastore) GetDynamicContent(id string) (*instanceContent, error) {
 	return c, nil
 }
 
-func (db *datastore) UpdateDynamicContent(id, content string) error {
+func (db *datastore) UpdateDynamicContent(id, title, content, contentType string) error {
 	var err error
 	if db.driverName == driverSQLite {
-		_, err = db.Exec("INSERT OR REPLACE INTO appcontent (id, content, updated) VALUES (?, ?, "+db.now()+")", id, content)
+		_, err = db.Exec("INSERT OR REPLACE INTO appcontent (id, title, content, updated, content_type) VALUES (?, ?, ?, "+db.now()+", ?)", id, title, content, contentType)
 	} else {
-		_, err = db.Exec("INSERT INTO appcontent (id, content, updated) VALUES (?, ?, "+db.now()+") "+db.upsert("id")+" content = ?, updated = "+db.now(), id, content, content)
+		_, err = db.Exec("INSERT INTO appcontent (id, title, content, updated, content_type) VALUES (?, ?, ?, "+db.now()+", ?) "+db.upsert("id")+" title = ?, content = ?, updated = "+db.now(), id, title, content, contentType, title, content)
 	}
 	if err != nil {
 		log.Error("Unable to INSERT appcontent for '%s': %v", id, err)

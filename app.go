@@ -54,7 +54,7 @@ var (
 	debugging bool
 
 	// Software version can be set from git env using -ldflags
-	softwareVer = "0.8.1"
+	softwareVer = "0.9.0"
 
 	// DEPRECATED VARS
 	// TODO: pass app.cfg into GetCollection* calls so we can get these values
@@ -115,6 +115,7 @@ func handleViewHome(app *app, w http.ResponseWriter, r *http.Request) error {
 func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *template.Template) error {
 	p := struct {
 		page.StaticPage
+		ContentTitle string
 		Content      template.HTML
 		PlainContent string
 		Updated      string
@@ -141,6 +142,7 @@ func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *te
 		if err != nil {
 			return err
 		}
+		p.ContentTitle = c.Title.String
 		p.Content = template.HTML(applyMarkdown([]byte(c.Content), ""))
 		p.PlainContent = shortPostDescription(stripmd.Strip(c.Content))
 		if !c.Updated.IsZero() {

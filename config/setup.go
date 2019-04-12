@@ -47,7 +47,7 @@ func Configure(fname string) (*SetupData, error) {
 
 	intro := color.New(color.Bold, color.FgWhite).PrintlnFunc()
 	fmt.Println()
-	intro("  ✍ Write Freely Configuration ✍")
+	intro("  ✍ WriteFreely Configuration ✍")
 	fmt.Println()
 	fmt.Println(wordwrap.WrapString("  This quick configuration process will "+action+" the application's config file, "+fname+".\n\n  It validates your input along the way, so you can be sure any future errors aren't caused by a bad configuration. If you'd rather configure your server manually, instead run: writefreely --create-config and edit that file.", 75))
 	fmt.Println()

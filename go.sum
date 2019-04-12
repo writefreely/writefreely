@@ -164,6 +164,8 @@ github.com/writeas/web-core v1.0.0 h1:5VKkCakQgdKZcbfVKJXtRpc5VHrkflusCl/KRCPzpQ
 github.com/writeas/web-core v1.0.0/go.mod h1:Si3chV7VWgY8CsV+3gRolMXSO2Vx1ZFAQ/mkrpvmyEE=
 github.com/writefreely/go-nodeinfo v1.1.0 h1:dp/ieEu0/gTeNKFvJTYhzBBouyFn7aiWtWzkb8J1JLg=
 github.com/writefreely/go-nodeinfo v1.1.0/go.mod h1:UTvE78KpcjYOlRHupZIiSEFcXHioTXuacCbHU+CAcPg=
+github.com/writefreely/go-nodeinfo v1.2.0 h1:La+YbTCvmpTwFhBSlebWDDL81N88Qf/SCAvRLR7F8ss=
+github.com/writefreely/go-nodeinfo v1.2.0/go.mod h1:UTvE78KpcjYOlRHupZIiSEFcXHioTXuacCbHU+CAcPg=
 golang.org/x/crypto v0.0.0-20180527072434-ab813273cd59 h1:hk3yo72LXLapY9EXVttc3Z1rLOxT9IuAPPX3GpY2+jo=
 golang.org/x/crypto v0.0.0-20180527072434-ab813273cd59/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/crypto v0.0.0-20190208162236-193df9c0f06f h1:ETU2VEl7TnT5bl7IvuKEzTDpplg5wzGYsOCAPhdoEIg=
