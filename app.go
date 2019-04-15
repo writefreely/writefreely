@@ -637,10 +637,16 @@ func adminInitDatabase(app *app) error {
 	}
 
 	// Set up migrations table
-	log.Info("Updating appmigrations table...")
+	log.Info("Initializing appmigrations table...")
 	err = migrations.SetInitialMigrations(migrations.NewDatastore(app.db.DB, app.db.driverName))
 	if err != nil {
 		return fmt.Errorf("Unable to set initial migrations: %v", err)
+	}
+
+	log.Info("Running migrations...")
+	err = migrations.Migrate(migrations.NewDatastore(app.db.DB, app.db.driverName))
+	if err != nil {
+		return fmt.Errorf("migrate: %s", err)
 	}
 
 	log.Info("Done.")

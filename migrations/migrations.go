@@ -65,7 +65,8 @@ func CurrentVer() int {
 }
 
 func SetInitialMigrations(db *datastore) error {
-	_, err := db.Exec("INSERT INTO appmigrations (version, migrated, result) VALUES (?, "+db.now()+", ?)", CurrentVer(), "")
+	// Included schema files represent changes up to V1, so note that in the database
+	_, err := db.Exec("INSERT INTO appmigrations (version, migrated, result) VALUES (?, "+db.now()+", ?)", 1, "")
 	if err != nil {
 		return err
 	}
