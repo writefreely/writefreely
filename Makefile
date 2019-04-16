@@ -57,7 +57,9 @@ deps-no-sqlite:
 	$(GOGET) -d -v ./...
 
 install : build
+	cmd/writefreely/$(BINARY_NAME) --config
 	cmd/writefreely/$(BINARY_NAME) --gen-keys
+	cmd/writefreely/$(BINARY_NAME) --init-db
 	cd less/; $(MAKE) install $(MFLAGS)
 
 release : clean ui assets

@@ -97,26 +97,7 @@ WriteFreely is available in these package repositories:
 
 ## Development
 
-Ready to hack on your site? Here's a quick overview.
-
-### Prerequisites
-
-* [Go 1.10+](https://golang.org/dl/)
-* [Node.js](https://nodejs.org/en/download/)
-
-### Setting up
-
-```bash
-go get -d github.com/writeas/writefreely/cmd/writefreely
-```
-
-Configure your site, create your database, and import the schema [as shown above](#quick-start). Then generate the remaining files you'll need:
-
-```bash
-make install # Generates encryption keys; installs LESS compiler
-make ui      # Generates CSS (run this whenever you update your styles)
-make run     # Runs the application
-```
+Ready to hack on your site? Get started with our [developer guide](https://writefreely.org/docs/latest/developer).
 
 ## Docker
 
