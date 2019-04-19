@@ -18,6 +18,7 @@ RUN mkdir /stage && \
       /go/src/github.com/writeas/writefreely/static \
       /go/src/github.com/writeas/writefreely/pages \
       /go/src/github.com/writeas/writefreely/keys \
+      /go/src/github.com/writeas/writefreely/cmd \
       /stage
 
 # Final image
@@ -31,4 +32,4 @@ VOLUME /go/keys
 EXPOSE 8080
 USER daemon
 
-CMD ["bin/writefreely"]
+ENTRYPOINT ["cmd/writefreely/writefreely"]
