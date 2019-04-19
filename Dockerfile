@@ -1,13 +1,15 @@
 # Build image
-FROM golang:1.11.2-alpine3.8 as build
+FROM golang:1.12-alpine as build
 
 RUN apk add --update nodejs nodejs-npm make g++ git sqlite-dev
 RUN npm install -g less less-plugin-clean-css
+RUN go get -u github.com/jteeuwen/go-bindata/...
 
 RUN mkdir -p /go/src/github.com/writeas/writefreely
 WORKDIR /go/src/github.com/writeas/writefreely
 COPY . .
 
+ENV GO111MODULE=on
 RUN make build \
  && make ui
 RUN mkdir /stage && \
