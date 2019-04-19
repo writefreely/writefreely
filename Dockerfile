@@ -1,13 +1,15 @@
 # Build image
-FROM golang:1.11.2-alpine3.8 as build
+FROM golang:1.12-alpine as build
 
 RUN apk add --update nodejs nodejs-npm make g++ git sqlite-dev
 RUN npm install -g less less-plugin-clean-css
+RUN go get -u github.com/jteeuwen/go-bindata/...
 
 RUN mkdir -p /go/src/github.com/writeas/writefreely
 WORKDIR /go/src/github.com/writeas/writefreely
 COPY . .
 
+ENV GO111MODULE=on
 RUN make build \
  && make ui
 RUN mkdir /stage && \
@@ -16,6 +18,7 @@ RUN mkdir /stage && \
       /go/src/github.com/writeas/writefreely/static \
       /go/src/github.com/writeas/writefreely/pages \
       /go/src/github.com/writeas/writefreely/keys \
+      /go/src/github.com/writeas/writefreely/cmd \
       /stage
 
 # Final image
@@ -29,4 +32,4 @@ VOLUME /go/keys
 EXPOSE 8080
 USER daemon
 
-CMD ["bin/writefreely"]
+ENTRYPOINT ["cmd/writefreely/writefreely"]
