@@ -1057,6 +1057,8 @@ func (p *PublicPost) CanonicalURL() string {
 	return p.Collection.CanonicalURL() + p.Slug.String
 }
 
+var newlineRegex = regexp.MustCompile(`\r?\n`)
+
 func (p *PublicPost) ActivityObject() *activitystreams.Object {
 	o := activitystreams.NewArticleObject()
 	o.ID = p.Collection.FederatedAPIBase() + "api/posts/" + p.ID
@@ -1070,7 +1072,8 @@ func (p *PublicPost) ActivityObject() *activitystreams.Object {
 	if p.HTMLContent == template.HTML("") {
 		p.formatContent(false)
 	}
-	o.Content = string(p.HTMLContent)
+	strippedHTML := newlineRegex.ReplaceAllString(string(p.HTMLContent), "")
+	o.Content = strippedHTML
 	if p.Language.Valid {
 		o.ContentMap = map[string]string{
 			p.Language.String: string(p.HTMLContent),
