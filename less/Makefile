@@ -2,6 +2,8 @@ ifeq ($(shell which lessc),/usr/bin/lessc)
 	LESSC=/usr/bin/lessc
 else ifeq ($(shell which lessc),/usr/local/bin/lessc)
 	LESSC=/usr/local/bin/lessc
+else ifeq ($(shell which lessc),/bin/lessc)
+	LESSC=/bin/lessc
 else
 	LESSC=node_modules/.bin/lessc
 endif
@@ -14,7 +16,7 @@ all :
 	$(LESSC) fonts.less --clean-css="--s1 --advanced" $(CSSDIR)fonts.css
 	$(LESSC) icons.less --clean-css="--s1 --advanced" $(CSSDIR)icons.css
 
-install : 
+install :
 	./install-less.sh
 	$(MAKE) all
 
