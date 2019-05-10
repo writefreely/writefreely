@@ -12,7 +12,6 @@ package writefreely
 
 import (
 	"database/sql"
-	"flag"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -190,184 +189,8 @@ func pageForReq(app *app, r *http.Request) page.StaticPage {
 var shttp = http.NewServeMux()
 var fileRegex = regexp.MustCompile("/([^/]*\\.[^/]*)$")
 
-func Serve() {
-	// General options usable with other commands
-	debugPtr := flag.Bool("debug", false, "Enables debug logging.")
-	configFile := flag.String("c", "config.ini", "The configuration file to use")
-
-	// Setup actions
-	createConfig := flag.Bool("create-config", false, "Creates a basic configuration and exits")
-	doConfig := flag.Bool("config", false, "Run the configuration process")
-	genKeys := flag.Bool("gen-keys", false, "Generate encryption and authentication keys")
-	createSchema := flag.Bool("init-db", false, "Initialize app database")
-	migrate := flag.Bool("migrate", false, "Migrate the database")
-
-	// Admin actions
-	createAdmin := flag.String("create-admin", "", "Create an admin with the given username:password")
-	createUser := flag.String("create-user", "", "Create a regular user with the given username:password")
-	resetPassUser := flag.String("reset-pass", "", "Reset the given user's password")
-	outputVersion := flag.Bool("v", false, "Output the current version")
-	flag.Parse()
-
-	debugging = *debugPtr
-
-	app := &app{
-		cfgFile: *configFile,
-	}
-
-	if *outputVersion {
-		fmt.Println(serverSoftware + " " + softwareVer)
-		os.Exit(0)
-	} else if *createConfig {
-		log.Info("Creating configuration...")
-		c := config.New()
-		log.Info("Saving configuration %s...", app.cfgFile)
-		err := config.Save(c, app.cfgFile)
-		if err != nil {
-			log.Error("Unable to save configuration: %v", err)
-			os.Exit(1)
-		}
-		os.Exit(0)
-	} else if *doConfig {
-		d, err := config.Configure(app.cfgFile)
-		if err != nil {
-			log.Error("Unable to configure: %v", err)
-			os.Exit(1)
-		}
-		if d.User != nil {
-			app.cfg = d.Config
-			connectToDatabase(app)
-			defer shutdown(app)
-
-			if !app.db.DatabaseInitialized() {
-				err = adminInitDatabase(app)
-				if err != nil {
-					log.Error(err.Error())
-					os.Exit(1)
-				}
-			}
-
-			u := &User{
-				Username:   d.User.Username,
-				HashedPass: d.User.HashedPass,
-				Created:    time.Now().Truncate(time.Second).UTC(),
-			}
-
-			// Create blog
-			log.Info("Creating user %s...\n", u.Username)
-			err = app.db.CreateUser(u, app.cfg.App.SiteName)
-			if err != nil {
-				log.Error("Unable to create user: %s", err)
-				os.Exit(1)
-			}
-			log.Info("Done!")
-		}
-		os.Exit(0)
-	} else if *genKeys {
-		errStatus := 0
-
-		// Read keys path from config
-		loadConfig(app)
-
-		// Create keys dir if it doesn't exist yet
-		fullKeysDir := filepath.Join(app.cfg.Server.KeysParentDir, keysDir)
-		if _, err := os.Stat(fullKeysDir); os.IsNotExist(err) {
-			err = os.Mkdir(fullKeysDir, 0700)
-			if err != nil {
-				log.Error("%s", err)
-				os.Exit(1)
-			}
-		}
-
-		// Generate keys
-		initKeyPaths(app)
-		err := generateKey(emailKeyPath)
-		if err != nil {
-			errStatus = 1
-		}
-		err = generateKey(cookieAuthKeyPath)
-		if err != nil {
-			errStatus = 1
-		}
-		err = generateKey(cookieKeyPath)
-		if err != nil {
-			errStatus = 1
-		}
-
-		os.Exit(errStatus)
-	} else if *createSchema {
-		loadConfig(app)
-		connectToDatabase(app)
-		defer shutdown(app)
-		err := adminInitDatabase(app)
-		if err != nil {
-			log.Error(err.Error())
-			os.Exit(1)
-		}
-		os.Exit(0)
-	} else if *createAdmin != "" {
-		err := adminCreateUser(app, *createAdmin, true)
-		if err != nil {
-			log.Error(err.Error())
-			os.Exit(1)
-		}
-		os.Exit(0)
-	} else if *createUser != "" {
-		err := adminCreateUser(app, *createUser, false)
-		if err != nil {
-			log.Error(err.Error())
-			os.Exit(1)
-		}
-		os.Exit(0)
-	} else if *resetPassUser != "" {
-		// Connect to the database
-		loadConfig(app)
-		connectToDatabase(app)
-		defer shutdown(app)
-
-		// Fetch user
-		u, err := app.db.GetUserForAuth(*resetPassUser)
-		if err != nil {
-			log.Error("Get user: %s", err)
-			os.Exit(1)
-		}
-
-		// Prompt for new password
-		prompt := promptui.Prompt{
-			Templates: &promptui.PromptTemplates{
-				Success: "{{ . | bold | faint }}: ",
-			},
-			Label: "New password",
-			Mask:  '*',
-		}
-		newPass, err := prompt.Run()
-		if err != nil {
-			log.Error("%s", err)
-			os.Exit(1)
-		}
-
-		// Do the update
-		log.Info("Updating...")
-		err = adminResetPassword(app, u, newPass)
-		if err != nil {
-			log.Error("%s", err)
-			os.Exit(1)
-		}
-		log.Info("Success.")
-		os.Exit(0)
-	} else if *migrate {
-		loadConfig(app)
-		connectToDatabase(app)
-		defer shutdown(app)
-
-		err := migrations.Migrate(migrations.NewDatastore(app.db.DB, app.db.driverName))
-		if err != nil {
-			log.Error("migrate: %s", err)
-			os.Exit(1)
-		}
-
-		os.Exit(0)
-	}
+func Serve(app *app, debug bool) {
+	debugging = debug
 
 	log.Info("Initializing...")
 
@@ -375,7 +198,7 @@ func Serve() {
 
 	hostName = app.cfg.App.Host
 	isSingleUser = app.cfg.App.SingleUser
-	app.cfg.Server.Dev = *debugPtr
+	app.cfg.Server.Dev = debugging
 
 	err := initTemplates(app.cfg)
 	if err != nil {
@@ -488,6 +311,165 @@ func Serve() {
 	}
 }
 
+// OutputVersion prints out the version of the application.
+func OutputVersion() {
+	fmt.Println(serverSoftware + " " + softwareVer)
+}
+
+// NewApp creates a new app instance.
+func NewApp(cfgFile string) *app {
+	return &app{
+		cfgFile: cfgFile,
+	}
+}
+
+// CreateConfig creates a default configuration and saves it to the app's cfgFile.
+func CreateConfig(app *app) error {
+	log.Info("Creating configuration...")
+	c := config.New()
+	log.Info("Saving configuration %s...", app.cfgFile)
+	err := config.Save(c, app.cfgFile)
+	if err != nil {
+		return fmt.Errorf("Unable to save configuration: %v", err)
+	}
+	return nil
+}
+
+// DoConfig runs the interactive configuration process.
+func DoConfig(app *app) {
+	d, err := config.Configure(app.cfgFile)
+	if err != nil {
+		log.Error("Unable to configure: %v", err)
+		os.Exit(1)
+	}
+	if d.User != nil {
+		app.cfg = d.Config
+		connectToDatabase(app)
+		defer shutdown(app)
+
+		if !app.db.DatabaseInitialized() {
+			err = adminInitDatabase(app)
+			if err != nil {
+				log.Error(err.Error())
+				os.Exit(1)
+			}
+		}
+
+		u := &User{
+			Username:   d.User.Username,
+			HashedPass: d.User.HashedPass,
+			Created:    time.Now().Truncate(time.Second).UTC(),
+		}
+
+		// Create blog
+		log.Info("Creating user %s...\n", u.Username)
+		err = app.db.CreateUser(u, app.cfg.App.SiteName)
+		if err != nil {
+			log.Error("Unable to create user: %s", err)
+			os.Exit(1)
+		}
+		log.Info("Done!")
+	}
+	os.Exit(0)
+}
+
+// GenerateKeys creates app encryption keys and saves them into the configured KeysParentDir.
+func GenerateKeys(app *app) error {
+	// Read keys path from config
+	loadConfig(app)
+
+	// Create keys dir if it doesn't exist yet
+	fullKeysDir := filepath.Join(app.cfg.Server.KeysParentDir, keysDir)
+	if _, err := os.Stat(fullKeysDir); os.IsNotExist(err) {
+		err = os.Mkdir(fullKeysDir, 0700)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Generate keys
+	initKeyPaths(app)
+	var keyErrs error
+	err := generateKey(emailKeyPath)
+	if err != nil {
+		keyErrs = err
+	}
+	err = generateKey(cookieAuthKeyPath)
+	if err != nil {
+		keyErrs = err
+	}
+	err = generateKey(cookieKeyPath)
+	if err != nil {
+		keyErrs = err
+	}
+
+	return keyErrs
+}
+
+// CreateSchema creates all database tables needed for the application.
+func CreateSchema(app *app) error {
+	loadConfig(app)
+	connectToDatabase(app)
+	defer shutdown(app)
+	err := adminInitDatabase(app)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Migrate runs all necessary database migrations.
+func Migrate(app *app) error {
+	loadConfig(app)
+	connectToDatabase(app)
+	defer shutdown(app)
+
+	err := migrations.Migrate(migrations.NewDatastore(app.db.DB, app.db.driverName))
+	if err != nil {
+		return fmt.Errorf("migrate: %s", err)
+	}
+	return nil
+}
+
+// ResetPassword runs the interactive password reset process.
+func ResetPassword(app *app, username string) error {
+	// Connect to the database
+	loadConfig(app)
+	connectToDatabase(app)
+	defer shutdown(app)
+
+	// Fetch user
+	u, err := app.db.GetUserForAuth(username)
+	if err != nil {
+		log.Error("Get user: %s", err)
+		os.Exit(1)
+	}
+
+	// Prompt for new password
+	prompt := promptui.Prompt{
+		Templates: &promptui.PromptTemplates{
+			Success: "{{ . | bold | faint }}: ",
+		},
+		Label: "New password",
+		Mask:  '*',
+	}
+	newPass, err := prompt.Run()
+	if err != nil {
+		log.Error("%s", err)
+		os.Exit(1)
+	}
+
+	// Do the update
+	log.Info("Updating...")
+	err = adminResetPassword(app, u, newPass)
+	if err != nil {
+		log.Error("%s", err)
+		os.Exit(1)
+	}
+	log.Info("Success.")
+	return nil
+}
+
 func loadConfig(app *app) {
 	log.Info("Loading %s configuration...", app.cfgFile)
 	cfg, err := config.Load(app.cfgFile)
@@ -533,7 +515,8 @@ func shutdown(app *app) {
 	app.db.Close()
 }
 
-func adminCreateUser(app *app, credStr string, isAdmin bool) error {
+// CreateUser creates a new admin or normal user from the given username:password string.
+func CreateUser(app *app, credStr string, isAdmin bool) error {
 	// Create an admin user with --create-admin
 	creds := strings.Split(credStr, ":")
 	if len(creds) != 2 {
