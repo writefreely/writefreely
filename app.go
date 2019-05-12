@@ -68,7 +68,7 @@ type App struct {
 	db           *datastore
 	cfg          *config.Config
 	cfgFile      string
-	keys         *keychain
+	keys         *Keychain
 	sessionStore *sessions.CookieStore
 	formDecoder  *schema.Decoder
 

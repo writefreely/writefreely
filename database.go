@@ -44,7 +44,7 @@ var (
 
 type writestore interface {
 	CreateUser(*User, string) error
-	UpdateUserEmail(keys *keychain, userID int64, email string) error
+	UpdateUserEmail(keys *Keychain, userID int64, email string) error
 	UpdateEncryptedUserEmail(int64, []byte) error
 	GetUserByID(int64) (*User, error)
 	GetUserForAuth(string) (*User, error)
@@ -219,7 +219,7 @@ func (db *datastore) CreateUser(u *User, collectionTitle string) error {
 
 // FIXME: We're returning errors inconsistently in this file. Do we use Errorf
 // for returned value, or impart?
-func (db *datastore) UpdateUserEmail(keys *keychain, userID int64, email string) error {
+func (db *datastore) UpdateUserEmail(keys *Keychain, userID int64, email string) error {
 	encEmail, err := data.Encrypt(keys.emailKey, email)
 	if err != nil {
 		return fmt.Errorf("Couldn't encrypt email %s: %s\n", email, err)

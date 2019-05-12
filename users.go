@@ -79,7 +79,7 @@ type (
 
 // EmailClear decrypts and returns the user's email, caching it in the user
 // object.
-func (u *User) EmailClear(keys *keychain) string {
+func (u *User) EmailClear(keys *Keychain) string {
 	if u.clearEmail != "" {
 		return u.clearEmail
 	}

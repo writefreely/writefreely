@@ -30,7 +30,7 @@ var (
 	cookieKeyPath     = filepath.Join(keysDir, "cookies_enc.aes256")
 )
 
-type keychain struct {
+type Keychain struct {
 	emailKey, cookieAuthKey, cookieKey []byte
 }
 
@@ -42,7 +42,7 @@ func initKeyPaths(app *App) {
 
 func initKeys(app *App) error {
 	var err error
-	app.keys = &keychain{}
+	app.keys = &Keychain{}
 
 	if debugging {
 		log.Info("  %s", emailKeyPath)
