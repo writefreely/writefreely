@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -62,7 +62,7 @@ func (ru *RemoteUser) AsPerson() *activitystreams.Person {
 	}
 }
 
-func handleFetchCollectionActivities(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Server", serverSoftware)
 
 	vars := mux.Vars(r)
@@ -86,7 +86,7 @@ func handleFetchCollectionActivities(app *app, w http.ResponseWriter, r *http.Re
 	return impart.RenderActivityJSON(w, p, http.StatusOK)
 }
 
-func handleFetchCollectionOutbox(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Server", serverSoftware)
 
 	vars := mux.Vars(r)
@@ -138,7 +138,7 @@ func handleFetchCollectionOutbox(app *app, w http.ResponseWriter, r *http.Reques
 	return impart.RenderActivityJSON(w, ocp, http.StatusOK)
 }
 
-func handleFetchCollectionFollowers(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Server", serverSoftware)
 
 	vars := mux.Vars(r)
@@ -183,7 +183,7 @@ func handleFetchCollectionFollowers(app *app, w http.ResponseWriter, r *http.Req
 	return impart.RenderActivityJSON(w, ocp, http.StatusOK)
 }
 
-func handleFetchCollectionFollowing(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Server", serverSoftware)
 
 	vars := mux.Vars(r)
@@ -218,7 +218,7 @@ func handleFetchCollectionFollowing(app *app, w http.ResponseWriter, r *http.Req
 	return impart.RenderActivityJSON(w, ocp, http.StatusOK)
 }
 
-func handleFetchCollectionInbox(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Server", serverSoftware)
 
 	vars := mux.Vars(r)
@@ -531,7 +531,7 @@ func resolveIRI(url string) ([]byte, error) {
 	return body, nil
 }
 
-func deleteFederatedPost(app *app, p *PublicPost, collID int64) error {
+func deleteFederatedPost(app *App, p *PublicPost, collID int64) error {
 	if debugging {
 		log.Info("Deleting federated post!")
 	}
@@ -569,7 +569,7 @@ func deleteFederatedPost(app *app, p *PublicPost, collID int64) error {
 	return nil
 }
 
-func federatePost(app *app, p *PublicPost, collID int64, isUpdate bool) error {
+func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 	if debugging {
 		if isUpdate {
 			log.Info("Federating updated post!")
@@ -619,7 +619,7 @@ func federatePost(app *app, p *PublicPost, collID int64, isUpdate bool) error {
 	return nil
 }
 
-func getRemoteUser(app *app, actorID string) (*RemoteUser, error) {
+func getRemoteUser(app *App, actorID string) (*RemoteUser, error) {
 	u := RemoteUser{ActorID: actorID}
 	err := app.db.QueryRow("SELECT id, inbox, shared_inbox FROM remoteusers WHERE actor_id = ?", actorID).Scan(&u.ID, &u.Inbox, &u.SharedInbox)
 	switch {
@@ -633,7 +633,7 @@ func getRemoteUser(app *app, actorID string) (*RemoteUser, error) {
 	return &u, nil
 }
 
-func getActor(app *app, actorIRI string) (*activitystreams.Person, *RemoteUser, error) {
+func getActor(app *App, actorIRI string) (*activitystreams.Person, *RemoteUser, error) {
 	log.Info("Fetching actor %s locally", actorIRI)
 	actor := &activitystreams.Person{}
 	remoteUser, err := getRemoteUser(app, actorIRI)

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -20,7 +20,7 @@ import (
 	"time"
 )
 
-func ViewFeed(app *app, w http.ResponseWriter, req *http.Request) error {
+func ViewFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 	alias := collectionAliasFromReq(req)
 
 	// Display collection if this is a collection

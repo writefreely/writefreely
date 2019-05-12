@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -62,7 +62,8 @@ var (
 	isSingleUser bool
 )
 
-type app struct {
+// App holds data and configuration for an individual WriteFreely instance.
+type App struct {
 	router       *mux.Router
 	db           *datastore
 	cfg          *config.Config
@@ -76,7 +77,7 @@ type app struct {
 
 // handleViewHome shows page at root path. Will be the Pad if logged in and the
 // catch-all landing page otherwise.
-func handleViewHome(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 	if app.cfg.App.SingleUser {
 		// Render blog index
 		return handleViewCollection(app, w, r)
@@ -111,7 +112,7 @@ func handleViewHome(app *app, w http.ResponseWriter, r *http.Request) error {
 	return renderPage(w, "landing.tmpl", p)
 }
 
-func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *template.Template) error {
+func handleTemplatedPage(app *App, w http.ResponseWriter, r *http.Request, t *template.Template) error {
 	p := struct {
 		page.StaticPage
 		ContentTitle string
@@ -157,7 +158,7 @@ func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *te
 	return nil
 }
 
-func pageForReq(app *app, r *http.Request) page.StaticPage {
+func pageForReq(app *App, r *http.Request) page.StaticPage {
 	p := page.StaticPage{
 		AppCfg:  app.cfg.App,
 		Path:    r.URL.Path,
@@ -189,7 +190,7 @@ func pageForReq(app *app, r *http.Request) page.StaticPage {
 var shttp = http.NewServeMux()
 var fileRegex = regexp.MustCompile("/([^/]*\\.[^/]*)$")
 
-func Serve(app *app, debug bool) {
+func Serve(app *App, debug bool) {
 	debugging = debug
 
 	log.Info("Initializing...")
@@ -317,14 +318,14 @@ func OutputVersion() {
 }
 
 // NewApp creates a new app instance.
-func NewApp(cfgFile string) *app {
-	return &app{
+func NewApp(cfgFile string) *App {
+	return &App{
 		cfgFile: cfgFile,
 	}
 }
 
 // CreateConfig creates a default configuration and saves it to the app's cfgFile.
-func CreateConfig(app *app) error {
+func CreateConfig(app *App) error {
 	log.Info("Creating configuration...")
 	c := config.New()
 	log.Info("Saving configuration %s...", app.cfgFile)
@@ -336,7 +337,7 @@ func CreateConfig(app *app) error {
 }
 
 // DoConfig runs the interactive configuration process.
-func DoConfig(app *app) {
+func DoConfig(app *App) {
 	d, err := config.Configure(app.cfgFile)
 	if err != nil {
 		log.Error("Unable to configure: %v", err)
@@ -374,7 +375,7 @@ func DoConfig(app *app) {
 }
 
 // GenerateKeys creates app encryption keys and saves them into the configured KeysParentDir.
-func GenerateKeys(app *app) error {
+func GenerateKeys(app *App) error {
 	// Read keys path from config
 	loadConfig(app)
 
@@ -407,7 +408,7 @@ func GenerateKeys(app *app) error {
 }
 
 // CreateSchema creates all database tables needed for the application.
-func CreateSchema(app *app) error {
+func CreateSchema(app *App) error {
 	loadConfig(app)
 	connectToDatabase(app)
 	defer shutdown(app)
@@ -419,7 +420,7 @@ func CreateSchema(app *app) error {
 }
 
 // Migrate runs all necessary database migrations.
-func Migrate(app *app) error {
+func Migrate(app *App) error {
 	loadConfig(app)
 	connectToDatabase(app)
 	defer shutdown(app)
@@ -432,7 +433,7 @@ func Migrate(app *app) error {
 }
 
 // ResetPassword runs the interactive password reset process.
-func ResetPassword(app *app, username string) error {
+func ResetPassword(app *App, username string) error {
 	// Connect to the database
 	loadConfig(app)
 	connectToDatabase(app)
@@ -470,7 +471,7 @@ func ResetPassword(app *app, username string) error {
 	return nil
 }
 
-func loadConfig(app *app) {
+func loadConfig(app *App) {
 	log.Info("Loading %s configuration...", app.cfgFile)
 	cfg, err := config.Load(app.cfgFile)
 	if err != nil {
@@ -480,7 +481,7 @@ func loadConfig(app *app) {
 	app.cfg = cfg
 }
 
-func connectToDatabase(app *app) {
+func connectToDatabase(app *App) {
 	log.Info("Connecting to %s database...", app.cfg.Database.Type)
 
 	var db *sql.DB
@@ -510,13 +511,13 @@ func connectToDatabase(app *app) {
 	app.db = &datastore{db, app.cfg.Database.Type}
 }
 
-func shutdown(app *app) {
+func shutdown(app *App) {
 	log.Info("Closing database connection...")
 	app.db.Close()
 }
 
 // CreateUser creates a new admin or normal user from the given username:password string.
-func CreateUser(app *app, credStr string, isAdmin bool) error {
+func CreateUser(app *App, credStr string, isAdmin bool) error {
 	// Create an admin user with --create-admin
 	creds := strings.Split(credStr, ":")
 	if len(creds) != 2 {
@@ -587,7 +588,7 @@ func CreateUser(app *app, credStr string, isAdmin bool) error {
 	return nil
 }
 
-func adminInitDatabase(app *app) error {
+func adminInitDatabase(app *App) error {
 	schemaFileName := "schema.sql"
 	if app.cfg.Database.Type == driverSQLite {
 		schemaFileName = "sqlite.sql"

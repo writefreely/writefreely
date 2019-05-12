@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -18,7 +18,7 @@ import (
 	"net/http"
 )
 
-func handleWebSignup(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleWebSignup(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r.Header.Get("Content-Type"))
 
 	// Get params
@@ -67,7 +67,7 @@ func handleWebSignup(app *app, w http.ResponseWriter, r *http.Request) error {
 
 // { "username": "asdf" }
 // result: { code: 204 }
-func handleUsernameCheck(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleUsernameCheck(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r.Header.Get("Content-Type"))
 
 	// Get params
@@ -112,7 +112,7 @@ func handleUsernameCheck(app *app, w http.ResponseWriter, r *http.Request) error
 	return impart.HTTPError{http.StatusConflict, "Username is already taken."}
 }
 
-func getValidUsername(app *app, reqName, prevName string) (string, *impart.HTTPError) {
+func getValidUsername(app *App, reqName, prevName string) (string, *impart.HTTPError) {
 	// Check if username is okay
 	finalUsername := getSlug(reqName, "")
 	if finalUsername == "" {

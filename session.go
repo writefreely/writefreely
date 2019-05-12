@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -29,7 +29,7 @@ const (
 
 // initSession creates the cookie store. It depends on the keychain already
 // being loaded.
-func initSession(app *app) *sessions.CookieStore {
+func initSession(app *App) *sessions.CookieStore {
 	// Register complex data types we'll be storing in cookies
 	gob.Register(&User{})
 
@@ -44,7 +44,7 @@ func initSession(app *app) *sessions.CookieStore {
 	return store
 }
 
-func getSessionFlashes(app *app, w http.ResponseWriter, r *http.Request, session *sessions.Session) ([]string, error) {
+func getSessionFlashes(app *App, w http.ResponseWriter, r *http.Request, session *sessions.Session) ([]string, error) {
 	var err error
 	if session == nil {
 		session, err = app.sessionStore.Get(r, cookieName)
@@ -66,7 +66,7 @@ func getSessionFlashes(app *app, w http.ResponseWriter, r *http.Request, session
 	return f, nil
 }
 
-func addSessionFlash(app *app, w http.ResponseWriter, r *http.Request, m string, session *sessions.Session) error {
+func addSessionFlash(app *App, w http.ResponseWriter, r *http.Request, m string, session *sessions.Session) error {
 	var err error
 	if session == nil {
 		session, err = app.sessionStore.Get(r, cookieName)
@@ -82,7 +82,7 @@ func addSessionFlash(app *app, w http.ResponseWriter, r *http.Request, m string,
 	return nil
 }
 
-func getUserAndSession(app *app, r *http.Request) (*User, *sessions.Session) {
+func getUserAndSession(app *App, r *http.Request) (*User, *sessions.Session) {
 	session, err := app.sessionStore.Get(r, cookieName)
 	if err == nil {
 		// Got the currently logged-in user
@@ -97,12 +97,12 @@ func getUserAndSession(app *app, r *http.Request) (*User, *sessions.Session) {
 	return nil, nil
 }
 
-func getUserSession(app *app, r *http.Request) *User {
+func getUserSession(app *App, r *http.Request) *User {
 	u, _ := getUserAndSession(app, r)
 	return u
 }
 
-func saveUserSession(app *app, r *http.Request, w http.ResponseWriter) error {
+func saveUserSession(app *App, r *http.Request, w http.ResponseWriter) error {
 	session, err := app.sessionStore.Get(r, cookieName)
 	if err != nil {
 		return ErrInternalCookieSession
@@ -127,7 +127,7 @@ func saveUserSession(app *app, r *http.Request, w http.ResponseWriter) error {
 	return err
 }
 
-func getFullUserSession(app *app, r *http.Request) *User {
+func getFullUserSession(app *App, r *http.Request) *User {
 	u := getUserSession(app, r)
 	if u == nil {
 		return nil

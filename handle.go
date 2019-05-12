@@ -36,16 +36,16 @@ const (
 )
 
 type (
-	handlerFunc     func(app *app, w http.ResponseWriter, r *http.Request) error
-	userHandlerFunc func(app *app, u *User, w http.ResponseWriter, r *http.Request) error
-	dataHandlerFunc func(app *app, w http.ResponseWriter, r *http.Request) ([]byte, string, error)
-	authFunc        func(app *app, r *http.Request) (*User, error)
+	handlerFunc     func(app *App, w http.ResponseWriter, r *http.Request) error
+	userHandlerFunc func(app *App, u *User, w http.ResponseWriter, r *http.Request) error
+	dataHandlerFunc func(app *App, w http.ResponseWriter, r *http.Request) ([]byte, string, error)
+	authFunc        func(app *App, r *http.Request) (*User, error)
 )
 
 type Handler struct {
 	errors       *ErrorPages
 	sessionStore *sessions.CookieStore
-	app          *app
+	app          *App
 }
 
 // ErrorPages hold template HTML error pages for displaying errors to the user.
@@ -59,7 +59,7 @@ type ErrorPages struct {
 
 // NewHandler returns a new Handler instance, using the given StaticPage data,
 // and saving alias to the application's CookieStore.
-func NewHandler(app *app) *Handler {
+func NewHandler(app *App) *Handler {
 	h := &Handler{
 		errors: &ErrorPages{
 			NotFound:            template.Must(template.New("").Parse("{{define \"base\"}}<html><head><title>404</title></head><body><p>Not found.</p></body></html>{{end}}")),
@@ -160,7 +160,7 @@ func (h *Handler) Admin(f userHandlerFunc) http.HandlerFunc {
 // UserAPI handles requests made in the API by the authenticated user.
 // This provides user-friendly HTML pages and actions that work in the browser.
 func (h *Handler) UserAPI(f userHandlerFunc) http.HandlerFunc {
-	return h.UserAll(false, f, func(app *app, r *http.Request) (*User, error) {
+	return h.UserAll(false, f, func(app *App, r *http.Request) (*User, error) {
 		// Authorize user from Authorization header
 		t := r.Header.Get("Authorization")
 		if t == "" {
@@ -222,7 +222,7 @@ func (h *Handler) UserAll(web bool, f userHandlerFunc, a authFunc) http.HandlerF
 }
 
 func (h *Handler) RedirectOnErr(f handlerFunc, loc string) handlerFunc {
-	return func(app *app, w http.ResponseWriter, r *http.Request) error {
+	return func(app *App, w http.ResponseWriter, r *http.Request) error {
 		err := f(app, w, r)
 		if err != nil {
 			if ie, ok := err.(impart.HTTPError); ok {
@@ -239,7 +239,7 @@ func (h *Handler) RedirectOnErr(f handlerFunc, loc string) handlerFunc {
 }
 
 func (h *Handler) Page(n string) http.HandlerFunc {
-	return h.Web(func(app *app, w http.ResponseWriter, r *http.Request) error {
+	return h.Web(func(app *App, w http.ResponseWriter, r *http.Request) error {
 		t, ok := pages[n]
 		if !ok {
 			return impart.HTTPError{http.StatusNotFound, "Page not found."}

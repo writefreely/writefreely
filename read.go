@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -49,7 +49,7 @@ type readPublication struct {
 	TotalPages  int
 }
 
-func initLocalTimeline(app *app) {
+func initLocalTimeline(app *App) {
 	app.timeline = &localTimeline{
 		postsPerPage: tlPostsPerPage,
 		m:            memo.New(app.db.FetchPublicPosts, 10*time.Minute),
@@ -108,7 +108,7 @@ func (db *datastore) FetchPublicPosts() (interface{}, error) {
 	return posts, nil
 }
 
-func viewLocalTimelineAPI(app *app, w http.ResponseWriter, r *http.Request) error {
+func viewLocalTimelineAPI(app *App, w http.ResponseWriter, r *http.Request) error {
 	updateTimelineCache(app.timeline)
 
 	skip, _ := strconv.Atoi(r.FormValue("skip"))
@@ -121,7 +121,7 @@ func viewLocalTimelineAPI(app *app, w http.ResponseWriter, r *http.Request) erro
 	return impart.WriteSuccess(w, posts, http.StatusOK)
 }
 
-func viewLocalTimeline(app *app, w http.ResponseWriter, r *http.Request) error {
+func viewLocalTimeline(app *App, w http.ResponseWriter, r *http.Request) error {
 	if !app.cfg.App.LocalTimeline {
 		return impart.HTTPError{http.StatusNotFound, "Page doesn't exist."}
 	}
@@ -153,7 +153,7 @@ func updateTimelineCache(tl *localTimeline) {
 	}
 }
 
-func showLocalTimeline(app *app, w http.ResponseWriter, r *http.Request, page int, author, tag string) error {
+func showLocalTimeline(app *App, w http.ResponseWriter, r *http.Request, page int, author, tag string) error {
 	updateTimelineCache(app.timeline)
 
 	pl := len(*(app.timeline.posts))
@@ -226,7 +226,7 @@ func (c *readPublication) PrevPageURL(n int) string {
 
 // handlePostIDRedirect handles a route where a post ID is given and redirects
 // the user to the canonical post URL.
-func handlePostIDRedirect(app *app, w http.ResponseWriter, r *http.Request) error {
+func handlePostIDRedirect(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	postID := vars["post"]
 	p, err := app.db.GetPost(postID, 0)
@@ -249,7 +249,7 @@ func handlePostIDRedirect(app *app, w http.ResponseWriter, r *http.Request) erro
 	return impart.HTTPError{http.StatusFound, c.CanonicalURL() + p.Slug.String}
 }
 
-func viewLocalTimelineFeed(app *app, w http.ResponseWriter, req *http.Request) error {
+func viewLocalTimelineFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 	if !app.cfg.App.LocalTimeline {
 		return impart.HTTPError{http.StatusNotFound, "Page doesn't exist."}
 	}

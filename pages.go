@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -18,7 +18,7 @@ import (
 
 var defaultPageUpdatedTime = time.Date(2018, 11, 8, 12, 0, 0, 0, time.Local)
 
-func getAboutPage(app *app) (*instanceContent, error) {
+func getAboutPage(app *App) (*instanceContent, error) {
 	c, err := app.db.GetDynamicContent("about")
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func defaultAboutTitle(cfg *config.Config) sql.NullString {
 	return sql.NullString{String: "About " + cfg.App.SiteName, Valid: true}
 }
 
-func getPrivacyPage(app *app) (*instanceContent, error) {
+func getPrivacyPage(app *App) (*instanceContent, error) {
 	c, err := app.db.GetDynamicContent("privacy")
 	if err != nil {
 		return nil, err

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -34,7 +34,7 @@ func buildSitemap(host, alias string) *stm.Sitemap {
 	return sm
 }
 
-func handleViewSitemap(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleViewSitemap(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 
 	// Determine canonical blog URL

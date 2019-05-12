@@ -316,7 +316,7 @@ func (c *Collection) RenderMathJax() bool {
 	return c.db.CollectionHasAttribute(c.ID, "render_mathjax")
 }
 
-func newCollection(app *app, w http.ResponseWriter, r *http.Request) error {
+func newCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r.Header.Get("Content-Type"))
 	alias := r.FormValue("alias")
 	title := r.FormValue("title")
@@ -399,7 +399,7 @@ func newCollection(app *app, w http.ResponseWriter, r *http.Request) error {
 	return impart.HTTPError{http.StatusFound, redirectTo}
 }
 
-func apiCheckCollectionPermissions(app *app, r *http.Request, c *Collection) (int64, error) {
+func apiCheckCollectionPermissions(app *App, r *http.Request, c *Collection) (int64, error) {
 	accessToken := r.Header.Get("Authorization")
 	var userID int64 = -1
 	if accessToken != "" {
@@ -419,7 +419,7 @@ func apiCheckCollectionPermissions(app *app, r *http.Request, c *Collection) (in
 }
 
 // fetchCollection handles the API endpoint for retrieving collection data.
-func fetchCollection(app *app, w http.ResponseWriter, r *http.Request) error {
+func fetchCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 	accept := r.Header.Get("Accept")
 	if strings.Contains(accept, "application/activity+json") {
 		return handleFetchCollectionActivities(app, w, r)
@@ -467,7 +467,7 @@ func fetchCollection(app *app, w http.ResponseWriter, r *http.Request) error {
 
 // fetchCollectionPosts handles an API endpoint for retrieving a collection's
 // posts.
-func fetchCollectionPosts(app *app, w http.ResponseWriter, r *http.Request) error {
+func fetchCollectionPosts(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	alias := vars["alias"]
 
@@ -563,7 +563,7 @@ func processCollectionRequest(cr *collectionReq, vars map[string]string, w http.
 // domain that doesn't yet have a collection associated, or if a collection
 // requires a password. In either case, this will return nil, nil -- thus both
 // values should ALWAYS be checked to determine whether or not to continue.
-func processCollectionPermissions(app *app, cr *collectionReq, u *User, w http.ResponseWriter, r *http.Request) (*Collection, error) {
+func processCollectionPermissions(app *App, cr *collectionReq, u *User, w http.ResponseWriter, r *http.Request) (*Collection, error) {
 	// Display collection if this is a collection
 	var c *Collection
 	var err error
@@ -654,7 +654,7 @@ func processCollectionPermissions(app *app, cr *collectionReq, u *User, w http.R
 	return c, nil
 }
 
-func checkUserForCollection(app *app, cr *collectionReq, r *http.Request, isPostReq bool) (*User, error) {
+func checkUserForCollection(app *App, cr *collectionReq, r *http.Request, isPostReq bool) (*User, error) {
 	u := getUserSession(app, r)
 	return u, nil
 }
@@ -682,7 +682,7 @@ func getCollectionPage(vars map[string]string) int {
 }
 
 // handleViewCollection displays the requested Collection
-func handleViewCollection(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	cr := &collectionReq{}
 
@@ -788,7 +788,7 @@ func handleViewCollection(app *app, w http.ResponseWriter, r *http.Request) erro
 	return err
 }
 
-func handleViewCollectionTag(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	tag := vars["tag"]
 
@@ -867,7 +867,7 @@ func handleViewCollectionTag(app *app, w http.ResponseWriter, r *http.Request) e
 	return nil
 }
 
-func handleCollectionPostRedirect(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleCollectionPostRedirect(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	slug := vars["slug"]
 
@@ -885,7 +885,7 @@ func handleCollectionPostRedirect(app *app, w http.ResponseWriter, r *http.Reque
 	return impart.HTTPError{http.StatusFound, loc}
 }
 
-func existingCollection(app *app, w http.ResponseWriter, r *http.Request) error {
+func existingCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r.Header.Get("Content-Type"))
 	vars := mux.Vars(r)
 	collAlias := vars["alias"]
@@ -980,7 +980,7 @@ func collectionAliasFromReq(r *http.Request) string {
 	return alias
 }
 
-func handleWebCollectionUnlock(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleWebCollectionUnlock(app *App, w http.ResponseWriter, r *http.Request) error {
 	var readReq struct {
 		Alias string `schema:"alias" json:"alias"`
 		Pass  string `schema:"password" json:"password"`
@@ -1047,7 +1047,7 @@ func handleWebCollectionUnlock(app *app, w http.ResponseWriter, r *http.Request)
 	return impart.HTTPError{http.StatusFound, next}
 }
 
-func isAuthorizedForCollection(app *app, alias string, r *http.Request) bool {
+func isAuthorizedForCollection(app *App, alias string, r *http.Request) bool {
 	authd := false
 	session, err := app.sessionStore.Get(r, blogPassCookieName)
 	if err == nil {

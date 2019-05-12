@@ -60,7 +60,7 @@ type writestore interface {
 	GetTemporaryAccessToken(userID int64, validSecs int) (string, error)
 	GetTemporaryOneTimeAccessToken(userID int64, validSecs int, oneTime bool) (string, error)
 	DeleteAccount(userID int64) (l *string, err error)
-	ChangeSettings(app *app, u *User, s *userSettings) error
+	ChangeSettings(app *App, u *User, s *userSettings) error
 	ChangePassphrase(userID int64, sudo bool, curPass string, hashedPass []byte) error
 
 	GetCollections(u *User) (*[]Collection, error)
@@ -1774,7 +1774,7 @@ func (db *datastore) GetUserPostsCount(userID int64) int64 {
 
 // ChangeSettings takes a User and applies the changes in the given
 // userSettings, MODIFYING THE USER with successful changes.
-func (db *datastore) ChangeSettings(app *app, u *User, s *userSettings) error {
+func (db *datastore) ChangeSettings(app *App, u *User, s *userSettings) error {
 	var errPass error
 	q := query.NewUpdate()
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -96,7 +96,7 @@ func (c instanceContent) UpdatedFriendly() string {
 	return c.Updated.Format("January 2, 2006, 3:04 PM")
 }
 
-func handleViewAdminDash(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+func handleViewAdminDash(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	updateAppStats()
 	p := struct {
 		*UserPage
@@ -117,7 +117,7 @@ func handleViewAdminDash(app *app, u *User, w http.ResponseWriter, r *http.Reque
 	return nil
 }
 
-func handleViewAdminUsers(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+func handleViewAdminUsers(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	p := struct {
 		*UserPage
 		Config  config.AppCfg
@@ -157,7 +157,7 @@ func handleViewAdminUsers(app *app, u *User, w http.ResponseWriter, r *http.Requ
 	return nil
 }
 
-func handleViewAdminUser(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	username := vars["username"]
 	if username == "" {
@@ -229,7 +229,7 @@ func handleViewAdminUser(app *app, u *User, w http.ResponseWriter, r *http.Reque
 	return nil
 }
 
-func handleViewAdminPages(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+func handleViewAdminPages(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	p := struct {
 		*UserPage
 		Config  config.AppCfg
@@ -287,7 +287,7 @@ func handleViewAdminPages(app *app, u *User, w http.ResponseWriter, r *http.Requ
 	return nil
 }
 
-func handleViewAdminPage(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+func handleViewAdminPage(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	slug := vars["slug"]
 	if slug == "" {
@@ -329,7 +329,7 @@ func handleViewAdminPage(app *app, u *User, w http.ResponseWriter, r *http.Reque
 	return nil
 }
 
-func handleAdminUpdateSite(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+func handleAdminUpdateSite(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	id := vars["page"]
 
@@ -347,7 +347,7 @@ func handleAdminUpdateSite(app *app, u *User, w http.ResponseWriter, r *http.Req
 	return impart.HTTPError{http.StatusFound, "/admin/page/" + id + m}
 }
 
-func handleAdminUpdateConfig(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+func handleAdminUpdateConfig(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	app.cfg.App.SiteName = r.FormValue("site_name")
 	app.cfg.App.SiteDesc = r.FormValue("site_desc")
 	app.cfg.App.OpenRegistration = r.FormValue("open_registration") == "on"
@@ -418,7 +418,7 @@ func updateAppStats() {
 	sysStatus.NumGC = m.NumGC
 }
 
-func adminResetPassword(app *app, u *User, newPass string) error {
+func adminResetPassword(app *App, u *User, newPass string) error {
 	hashedPass, err := auth.HashPass([]byte(newPass))
 	if err != nil {
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not create password hash: %v", err)}

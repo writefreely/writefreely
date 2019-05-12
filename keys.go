@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -34,13 +34,13 @@ type keychain struct {
 	emailKey, cookieAuthKey, cookieKey []byte
 }
 
-func initKeyPaths(app *app) {
+func initKeyPaths(app *App) {
 	emailKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, emailKeyPath)
 	cookieAuthKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, cookieAuthKeyPath)
 	cookieKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, cookieKeyPath)
 }
 
-func initKeys(app *app) error {
+func initKeys(app *App) error {
 	var err error
 	app.keys = &keychain{}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -260,7 +260,7 @@ func (p *Post) HasTitleLink() bool {
 	return hasLink
 }
 
-func handleViewPost(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	friendlyID := vars["post"]
 
@@ -466,7 +466,7 @@ func handleViewPost(app *app, w http.ResponseWriter, r *http.Request) error {
 //   /posts
 //   /posts?collection={alias}
 // ? /collections/{alias}/posts
-func newPost(app *app, w http.ResponseWriter, r *http.Request) error {
+func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r.Header.Get("Content-Type"))
 	vars := mux.Vars(r)
 	collAlias := vars["alias"]
@@ -591,7 +591,7 @@ func newPost(app *app, w http.ResponseWriter, r *http.Request) error {
 	return response
 }
 
-func existingPost(app *app, w http.ResponseWriter, r *http.Request) error {
+func existingPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r.Header.Get("Content-Type"))
 	vars := mux.Vars(r)
 	postID := vars["post"]
@@ -711,7 +711,7 @@ func existingPost(app *app, w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func deletePost(app *app, w http.ResponseWriter, r *http.Request) error {
+func deletePost(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	friendlyID := vars["post"]
 	editToken := r.FormValue("token")
@@ -830,7 +830,7 @@ func deletePost(app *app, w http.ResponseWriter, r *http.Request) error {
 }
 
 // addPost associates a post with the authenticated user.
-func addPost(app *app, w http.ResponseWriter, r *http.Request) error {
+func addPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	var ownerID int64
 
 	// Authenticate user
@@ -879,7 +879,7 @@ func addPost(app *app, w http.ResponseWriter, r *http.Request) error {
 	return impart.WriteSuccess(w, res, http.StatusOK)
 }
 
-func dispersePost(app *app, w http.ResponseWriter, r *http.Request) error {
+func dispersePost(app *App, w http.ResponseWriter, r *http.Request) error {
 	var ownerID int64
 
 	// Authenticate user
@@ -923,7 +923,7 @@ type (
 )
 
 // pinPost pins a post to a blog
-func pinPost(app *app, w http.ResponseWriter, r *http.Request) error {
+func pinPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	var userID int64
 
 	// Authenticate user
@@ -981,7 +981,7 @@ func pinPost(app *app, w http.ResponseWriter, r *http.Request) error {
 	return impart.WriteSuccess(w, res, http.StatusOK)
 }
 
-func fetchPost(app *app, w http.ResponseWriter, r *http.Request) error {
+func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	var collID int64
 	var coll *Collection
 	var err error
@@ -1030,7 +1030,7 @@ func fetchPost(app *app, w http.ResponseWriter, r *http.Request) error {
 	return impart.WriteSuccess(w, p, http.StatusOK)
 }
 
-func fetchPostProperty(app *app, w http.ResponseWriter, r *http.Request) error {
+func fetchPostProperty(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	p, err := app.db.GetPostProperty(vars["post"], 0, vars["property"])
 	if err != nil {
@@ -1128,7 +1128,7 @@ func (p *SubmittedPost) isFontValid() bool {
 	return valid
 }
 
-func getRawPost(app *app, friendlyID string) *RawPost {
+func getRawPost(app *App, friendlyID string) *RawPost {
 	var content, font, title string
 	var isRTL sql.NullBool
 	var lang sql.NullString
@@ -1148,7 +1148,7 @@ func getRawPost(app *app, friendlyID string) *RawPost {
 }
 
 // TODO; return a Post!
-func getRawCollectionPost(app *app, slug, collAlias string) *RawPost {
+func getRawCollectionPost(app *App, slug, collAlias string) *RawPost {
 	var id, title, content, font string
 	var isRTL sql.NullBool
 	var lang sql.NullString
@@ -1185,7 +1185,7 @@ func getRawCollectionPost(app *app, slug, collAlias string) *RawPost {
 	}
 }
 
-func viewCollectionPost(app *app, w http.ResponseWriter, r *http.Request) error {
+func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	slug := vars["slug"]
 
