@@ -12,9 +12,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -66,14 +68,24 @@ func main() {
 		}
 		os.Exit(0)
 	} else if *createAdmin != "" {
-		err := writefreely.CreateUser(app, *createAdmin, true)
+		username, password, err := userPass(*createAdmin, true)
+		if err != nil {
+			log.Error(err.Error())
+			os.Exit(1)
+		}
+		err = writefreely.CreateUser(app, username, password, true)
 		if err != nil {
 			log.Error(err.Error())
 			os.Exit(1)
 		}
 		os.Exit(0)
 	} else if *createUser != "" {
-		err := writefreely.CreateUser(app, *createUser, false)
+		username, password, err := userPass(*createUser, false)
+		if err != nil {
+			log.Error(err.Error())
+			os.Exit(1)
+		}
+		err = writefreely.CreateUser(app, username, password, false)
 		if err != nil {
 			log.Error(err.Error())
 			os.Exit(1)
@@ -96,4 +108,20 @@ func main() {
 	}
 
 	writefreely.Serve(app, *debugPtr)
+}
+
+func userPass(credStr string, isAdmin bool) (user string, pass string, err error) {
+	creds := strings.Split(credStr, ":")
+	if len(creds) != 2 {
+		c := "user"
+		if isAdmin {
+			c = "admin"
+		}
+		err = fmt.Errorf("usage: writefreely --create-%s username:password", c)
+		return
+	}
+
+	user = creds[0]
+	pass = creds[1]
+	return
 }

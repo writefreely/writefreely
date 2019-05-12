@@ -516,18 +516,9 @@ func shutdown(app *App) {
 	app.db.Close()
 }
 
-// CreateUser creates a new admin or normal user from the given username:password string.
-func CreateUser(app *App, credStr string, isAdmin bool) error {
+// CreateUser creates a new admin or normal user from the given credentials.
+func CreateUser(app *App, username, password string, isAdmin bool) error {
 	// Create an admin user with --create-admin
-	creds := strings.Split(credStr, ":")
-	if len(creds) != 2 {
-		c := "user"
-		if isAdmin {
-			c = "admin"
-		}
-		return fmt.Errorf("usage: writefreely --create-%s username:password", c)
-	}
-
 	loadConfig(app)
 	connectToDatabase(app)
 	defer shutdown(app)
@@ -547,9 +538,6 @@ func CreateUser(app *App, credStr string, isAdmin bool) error {
 	}
 
 	// Create the user
-	username := creds[0]
-	password := creds[1]
-
 	// Normalize and validate username
 	desiredUsername := username
 	username = getSlug(username, "")
