@@ -31,6 +31,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/manifoldco/promptui"
 	"github.com/writeas/go-strip-markdown"
+	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/converter"
 	"github.com/writeas/web-core/log"
@@ -88,6 +89,10 @@ func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 	if u != nil {
 		// User is logged in, so show the Pad
 		return handleViewPad(app, w, r)
+	}
+
+	if land := app.cfg.App.LandingPath(); land != "/" {
+		return impart.HTTPError{http.StatusFound, land}
 	}
 
 	p := struct {
