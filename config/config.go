@@ -13,6 +13,7 @@ package config
 
 import (
 	"gopkg.in/ini.v1"
+	"strings"
 )
 
 const (
@@ -64,6 +65,7 @@ type (
 		Theme      string `ini:"theme"`
 		JSDisabled bool   `ini:"disable_js"`
 		WebFonts   bool   `ini:"webfonts"`
+		Landing    string `ini:"landing"`
 
 		// Users
 		SingleUser       bool `ini:"single_user"`
@@ -132,6 +134,13 @@ func (cfg *Config) UseSQLite(fresh bool) {
 // standalone server with TLS enabled.
 func (cfg *Config) IsSecureStandalone() bool {
 	return cfg.Server.Port == 443 && cfg.Server.TLSCertPath != "" && cfg.Server.TLSKeyPath != ""
+}
+
+func (ac *AppCfg) LandingPath() string {
+	if !strings.HasPrefix(ac.Landing, "/") {
+		return "/" + ac.Landing
+	}
+	return ac.Landing
 }
 
 // Load reads the given configuration file, then parses and returns it as a Config.
