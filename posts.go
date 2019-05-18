@@ -304,7 +304,7 @@ func handleViewPost(app *app, w http.ResponseWriter, r *http.Request) error {
 	var content string
 	var font string
 	var language []byte
-	var rtl []byte
+	var rtl int
 	var views int64
 	var post *AnonymousPost
 	var found bool
@@ -519,12 +519,13 @@ func newPost(app *app, w http.ResponseWriter, r *http.Request) error {
 		post := r.FormValue("body")
 		appearance := r.FormValue("font")
 		title := r.FormValue("title")
+
 		if r.FormValue("rtl") == "auto" {
-			rtlValue = 2
+			rtlValue := 2
 		} else if r.FormValue("rtl") == "true" {
-			rtlValue = 1
+			rtlValue := 1
 		} else {
-			rtlValue = 0
+			rtlValue := 0
 		}
 		langValue := r.FormValue("lang")
 		if strings.TrimSpace(post) == "" {

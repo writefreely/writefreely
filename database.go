@@ -658,7 +658,7 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 		Slug:         null.NewString(slug.String, slug.Valid),
 		Font:         appearance,
 		Language:     zero.NewString(post.Language.String, post.Language.Valid),
-		RTL:          zero.NewInt(post.IsRTL, true),
+		RTL:          post.IsRTL,
 		OwnerID:      null.NewInt(userID, true),
 		CollectionID: null.NewInt(userID, true),
 		Created:      created.Truncate(time.Second).UTC(),
