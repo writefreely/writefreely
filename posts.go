@@ -90,7 +90,7 @@ type (
 		Slug           null.String   `db:"slug" json:"slug,omitempty"`
 		Font           string        `db:"text_appearance" json:"appearance"`
 		Language       zero.String   `db:"language" json:"language"`
-		RTL            zero.Int      `db:"rtl" json:"rtl"`
+		RTL            int           `db:"rtl" json:"rtl"`
 		Privacy        int64         `db:"privacy" json:"-"`
 		OwnerID        null.Int      `db:"owner_id" json:"-"`
 		CollectionID   null.Int      `db:"collection_id" json:"-"`
@@ -519,13 +519,13 @@ func newPost(app *app, w http.ResponseWriter, r *http.Request) error {
 		post := r.FormValue("body")
 		appearance := r.FormValue("font")
 		title := r.FormValue("title")
-
+		var rtlValue int
 		if r.FormValue("rtl") == "auto" {
-			rtlValue := 2
+			rtlValue = 2
 		} else if r.FormValue("rtl") == "true" {
-			rtlValue := 1
+			rtlValue = 1
 		} else {
-			rtlValue := 0
+			rtlValue = 0
 		}
 		langValue := r.FormValue("lang")
 		if strings.TrimSpace(post) == "" {
