@@ -255,7 +255,7 @@
 						</select>
 					</dd>
 					<dt><label for="rtl">Direction</label></dt>
-					<dd><input type="checkbox" id="rtl" name="rtl" value="true" {{if .Post.IsRTL.Bool}}checked="checked"{{end}} /><label for="rtl"> right-to-left</label></dd>
+					<dd><input type="checkbox" id="rtl" name="rtl" value="true" {{if eq 1 .Post.IsRTL }}checked="checked"{{end}} /><label for="rtl"> right-to-left</label></dd>
 					<dt><label for="created">Created</label></dt>
 					<dd>
 						<input type="text" id="created" name="created" value="{{.Post.UserFacingCreated}}" data-time="{{.Post.Created8601}}" placeholder="YYYY-MM-DD HH:MM:SS" maxlength="19" /> <span id="tz">UTC</span> <a href="#" id="set-now">now</a>

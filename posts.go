@@ -79,7 +79,7 @@ type (
 		Title    *string                  `json:"title" schema:"title"`
 		Content  *string                  `json:"body" schema:"body"`
 		Font     string                   `json:"font" schema:"font"`
-		IsRTL    converter.NullJSONBool   `json:"rtl" schema:"rtl"`
+		IsRTL    int                      `json:"rtl" schema:"rtl"`
 		Language converter.NullJSONString `json:"lang" schema:"lang"`
 		Created  *string                  `json:"created" schema:"created"`
 	}
@@ -90,7 +90,7 @@ type (
 		Slug           null.String   `db:"slug" json:"slug,omitempty"`
 		Font           string        `db:"text_appearance" json:"appearance"`
 		Language       zero.String   `db:"language" json:"language"`
-		RTL            zero.Bool     `db:"rtl" json:"rtl"`
+		RTL            zero.Int      `db:"rtl" json:"rtl"`
 		Privacy        int64         `db:"privacy" json:"-"`
 		OwnerID        null.Int      `db:"owner_id" json:"-"`
 		CollectionID   null.Int      `db:"collection_id" json:"-"`
@@ -131,7 +131,7 @@ type (
 		Views        int64
 		Font         string
 		Created      time.Time
-		IsRTL        sql.NullBool
+		IsRTL        int
 		Language     sql.NullString
 		OwnerID      int64
 		CollectionID sql.NullInt64
@@ -161,13 +161,13 @@ type (
 )
 
 func (p *Post) Direction() string {
-	if p.RTL.Valid {
-		if p.RTL.Bool {
-			return "rtl"
-		}
+	if p.RTL == 0 {
 		return "ltr"
+	} else if p.RTL == 1 {
+		return "rtl"
+	} else {
+		return "auto"
 	}
-	return "auto"
 }
 
 // DisplayTitle dynamically generates a title from the Post's contents if it
@@ -337,13 +337,12 @@ func handleViewPost(app *app, w http.ResponseWriter, r *http.Request) error {
 		found = true
 
 		var d string
-		if len(rtl) == 0 {
-			d = "auto"
-		} else if rtl[0] == 49 {
-			// TODO: find a cleaner way to get this (possibly NULL) value
+		if rtl == 1 {
 			d = "rtl"
-		} else {
+		} else if rtl == 0 {
 			d = "ltr"
+		} else {
+			d = "auto"
 		}
 		generatedTitle := friendlyPostTitle(content, friendlyID)
 		sanitizedContent := content
@@ -520,27 +519,33 @@ func newPost(app *app, w http.ResponseWriter, r *http.Request) error {
 		post := r.FormValue("body")
 		appearance := r.FormValue("font")
 		title := r.FormValue("title")
-		rtlValue := r.FormValue("rtl")
+		if r.FormValue("rtl") == "auto" {
+			rtlValue = 2
+		} else if r.FormValue("rtl") == "true" {
+			rtlValue = 1
+		} else {
+			rtlValue = 0
+		}
 		langValue := r.FormValue("lang")
 		if strings.TrimSpace(post) == "" {
 			return ErrNoPublishableContent
 		}
 
-		var isRTL, rtlValid bool
-		if rtlValue == "auto" && langValue != "" {
-			isRTL = i18n.LangIsRTL(langValue)
-			rtlValid = true
-		} else {
-			isRTL = rtlValue == "true"
-			rtlValid = rtlValue != "" && langValue != ""
-		}
+		// var isRTL, rtlValid bool
+		// if rtlValue == "auto" && langValue != "" {
+		// 	isRTL = i18n.LangIsRTL(langValue)
+		// 	rtlValid = true
+		// } else {
+		// 	isRTL = rtlValue == "true"
+		// 	rtlValid = rtlValue != "" && langValue != ""
+		// }
 
 		// Create a new post
 		p = &SubmittedPost{
 			Title:    &title,
 			Content:  &post,
 			Font:     appearance,
-			IsRTL:    converter.NullJSONBool{sql.NullBool{Bool: isRTL, Valid: rtlValid}},
+			IsRTL:    rtlValue,
 			Language: converter.NullJSONString{sql.NullString{String: langValue, Valid: langValue != ""}},
 		}
 	}
@@ -1130,7 +1135,7 @@ func (p *SubmittedPost) isFontValid() bool {
 
 func getRawPost(app *app, friendlyID string) *RawPost {
 	var content, font, title string
-	var isRTL sql.NullBool
+	var isRTL int
 	var lang sql.NullString
 	var ownerID sql.NullInt64
 	var created time.Time
@@ -1150,7 +1155,7 @@ func getRawPost(app *app, friendlyID string) *RawPost {
 // TODO; return a Post!
 func getRawCollectionPost(app *app, slug, collAlias string) *RawPost {
 	var id, title, content, font string
-	var isRTL sql.NullBool
+	var isRTL int
 	var lang sql.NullString
 	var created time.Time
 	var ownerID null.Int

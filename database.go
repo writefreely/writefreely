@@ -658,7 +658,7 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 		Slug:         null.NewString(slug.String, slug.Valid),
 		Font:         appearance,
 		Language:     zero.NewString(post.Language.String, post.Language.Valid),
-		RTL:          zero.NewBool(post.IsRTL.Bool, post.IsRTL.Valid),
+		RTL:          zero.NewInt(post.IsRTL, true),
 		OwnerID:      null.NewInt(userID, true),
 		CollectionID: null.NewInt(userID, true),
 		Created:      created.Truncate(time.Second).UTC(),
@@ -693,10 +693,10 @@ func (db *datastore) UpdateOwnedPost(post *AuthenticatedPost, userID int64) erro
 		sep = ", "
 		params = append(params, post.Language.String)
 	}
-	if post.IsRTL.Valid {
+	if post.IsRTL != -1 {
 		queryUpdates += sep + "rtl = ?"
 		sep = ", "
-		params = append(params, post.IsRTL.Bool)
+		params = append(params, post.IsRTL)
 	}
 	if post.Font != "" {
 		queryUpdates += sep + "text_appearance = ?"
