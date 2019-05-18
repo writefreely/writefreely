@@ -26,7 +26,7 @@ import (
 	"github.com/writeas/web-core/activitystreams"
 	"github.com/writeas/web-core/bots"
 	"github.com/writeas/web-core/converter"
-	"github.com/writeas/web-core/i18n"
+	//"github.com/writeas/web-core/i18n"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/tags"
 	"github.com/writeas/writefreely/page"
