@@ -67,7 +67,8 @@ type (
 	}
 
 	AuthenticatedPost struct {
-		ID string `json:"id" schema:"id"`
+		ID  string `json:"id" schema:"id"`
+		Web bool   `json:"web" schema:"web"`
 		*SubmittedPost
 	}
 
@@ -621,6 +622,10 @@ func existingPost(app *app, w http.ResponseWriter, r *http.Request) error {
 			log.Error("Couldn't decode post update form request: %v\n", err)
 			return ErrBadFormData
 		}
+	}
+
+	if p.Web {
+		p.IsRTL.Valid = true
 	}
 
 	if p.SubmittedPost == nil {
