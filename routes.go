@@ -11,13 +11,14 @@
 package writefreely
 
 import (
+	"net/http"
+	"strings"
+
 	"github.com/gorilla/mux"
 	"github.com/writeas/go-webfinger"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
 	"github.com/writefreely/go-nodeinfo"
-	"net/http"
-	"strings"
 )
 
 func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datastore) {
@@ -78,6 +79,7 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 	me.HandleFunc("/posts/export.json", handler.Download(viewExportPosts, UserLevelUser)).Methods("GET")
 	me.HandleFunc("/export", handler.User(viewExportOptions)).Methods("GET")
 	me.HandleFunc("/export.json", handler.Download(viewExportFull, UserLevelUser)).Methods("GET")
+	me.HandleFunc("/import", handler.User(viewImportOptions)).Methods("GET")
 	me.HandleFunc("/settings", handler.User(viewSettings)).Methods("GET")
 	me.HandleFunc("/invites", handler.User(handleViewUserInvites)).Methods("GET")
 	me.HandleFunc("/logout", handler.Web(viewLogout, UserLevelNone)).Methods("GET")

@@ -13,6 +13,13 @@ package writefreely
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
+	"net/http"
+	"regexp"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/guregu/null/zero"
@@ -22,12 +29,6 @@ import (
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/author"
 	"github.com/writeas/writefreely/page"
-	"html/template"
-	"net/http"
-	"regexp"
-	"strings"
-	"sync"
-	"time"
 )
 
 type (
@@ -653,6 +654,14 @@ func viewExportFull(app *app, w http.ResponseWriter, r *http.Request) ([]byte, s
 		data, err = json.Marshal(exportUser)
 	}
 	return data, filename, err
+}
+
+func viewImportOptions(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+	// Fetch extra user data
+	p := NewUserPage(app, r, u, "Import", nil)
+
+	showUserPage(w, "import", p)
+	return nil
 }
 
 func viewMeAPI(app *app, w http.ResponseWriter, r *http.Request) error {
