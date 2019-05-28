@@ -104,7 +104,7 @@ type writestore interface {
 	ClaimPosts(userID int64, collAlias string, posts *[]ClaimPostRequest) (*[]ClaimPostResult, error)
 
 	GetPostsCount(c *CollectionObj, includeFuture bool)
-	GetPosts(c *Collection, page int, includeFuture, forceRecentFirst bool) (*[]PublicPost, error)
+	GetPosts(c *Collection, page int, includeFuture, forceRecentFirst, includePinned bool) (*[]PublicPost, error)
 	GetPostsTagged(c *Collection, tag string, page int, includeFuture bool) (*[]PublicPost, error)
 
 	GetAPFollowers(c *Collection) (*[]RemoteUser, error)
@@ -1065,7 +1065,7 @@ func (db *datastore) GetPostsCount(c *CollectionObj, includeFuture bool) {
 // GetPosts retrieves all standard (non-pinned) posts for the given Collection.
 // It will return future posts if `includeFuture` is true.
 // TODO: change includeFuture to isOwner, since that's how it's used
-func (db *datastore) GetPosts(c *Collection, page int, includeFuture, forceRecentFirst bool) (*[]PublicPost, error) {
+func (db *datastore) GetPosts(c *Collection, page int, includeFuture, forceRecentFirst, includePinned bool) (*[]PublicPost, error) {
 	collID := c.ID
 
 	cf := c.NewFormat()
@@ -1089,7 +1089,11 @@ func (db *datastore) GetPosts(c *Collection, page int, includeFuture, forceRecen
 	if !includeFuture {
 		timeCondition = "AND created <= " + db.now()
 	}
-	rows, err := db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND pinned_position IS NULL "+timeCondition+" ORDER BY created "+order+limitStr, collID)
+	pinnedCondition := ""
+	if !includePinned {
+		pinnedCondition = "AND pinned_position IS NULL"
+	}
+	rows, err := db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? "+pinnedCondition+" "+timeCondition+" ORDER BY created "+order+limitStr, collID)
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve collection posts."}

@@ -492,7 +492,7 @@ func fetchCollectionPosts(app *app, w http.ResponseWriter, r *http.Request) erro
 		}
 	}
 
-	posts, err := app.db.GetPosts(c, page, isCollOwner, false)
+	posts, err := app.db.GetPosts(c, page, isCollOwner, false, false)
 	if err != nil {
 		return err
 	}
@@ -723,7 +723,7 @@ func handleViewCollection(app *app, w http.ResponseWriter, r *http.Request) erro
 		return impart.HTTPError{http.StatusFound, redirURL}
 	}
 
-	coll.Posts, _ = app.db.GetPosts(c, page, cr.isCollOwner, false)
+	coll.Posts, _ = app.db.GetPosts(c, page, cr.isCollOwner, false, false)
 
 	// Serve collection
 	displayPage := CollectionPage{
