@@ -1062,8 +1062,9 @@ func (db *datastore) GetPostsCount(c *CollectionObj, includeFuture bool) {
 	c.TotalPosts = int(count)
 }
 
-// GetPosts retrieves all standard (non-pinned) posts for the given Collection.
+// GetPosts retrieves all posts for the given Collection.
 // It will return future posts if `includeFuture` is true.
+// It will include only standard (non-pinned) posts unless `includePinned` is true.
 // TODO: change includeFuture to isOwner, since that's how it's used
 func (db *datastore) GetPosts(c *Collection, page int, includeFuture, forceRecentFirst, includePinned bool) (*[]PublicPost, error) {
 	collID := c.ID
