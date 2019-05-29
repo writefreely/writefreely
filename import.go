@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-type userInfo struct {
+type importUser struct {
 	Username    string             `json:"username"`
 	HasPass     bool               `json:"has_pass"`
 	Email       string             `json:"email"`
@@ -16,18 +16,18 @@ type userInfo struct {
 }
 
 type importCollection struct {
-	Alias       string `json:"alias"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	StyleSheet  string `json:"style_sheet"`
-	Public      bool   `json:"public"`
-	Views       int    `json:"views"`
-	URL         string `json:"url"`
-	Total       int    `json:"total_posts"`
-	Posts       []post `json:"posts"`
+	Alias       string       `json:"alias"`
+	Title       string       `json:"title"`
+	Description string       `json:"description"`
+	StyleSheet  string       `json:"style_sheet"`
+	Public      bool         `json:"public"`
+	Views       int          `json:"views"`
+	URL         string       `json:"url"`
+	Total       int          `json:"total_posts"`
+	Posts       []importPost `json:"posts"`
 }
 
-type post struct {
+type importPost struct {
 	ID         string   `json:"id"`
 	Slug       string   `json:"slug"`
 	Appearance string   `json:"appearance"`
@@ -42,26 +42,37 @@ type post struct {
 }
 
 func jsonReader() {
-	// Open our jsonFile
+	// Open the jsonFile
 	jsonFile, err := os.Open("skye-201905250022.json")
-	// if we os.Open returns an error then handle it
+	// If os.Open returns an error then handle it
 	if err != nil {
 		fmt.Println(err)
 	}
 	fmt.Println("Successfully Opened users.json")
-	// defer the closing of our jsonFile so that we can parse it later on
+	// Defer the closing of our jsonFile so it can be parsed later
 	defer jsonFile.Close()
 
-	// read our opened xmlFile as a byte array.
+	// Read the opened xmlFile as a byte array.
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 
-	// we initialize our collections array
-	var u userInfo
+	// Initialize the collections array
+	var u importUser
 
-	// we unmarshal our byteArray which contains our
-	// jsonFile's content into 'users' which we defined above
+	// Unmarshal the byteArray which contains the
+	// jsonFile's content into 'importUser'
 	json.Unmarshal(byteValue, &u)
-	fmt.Println(u.Collections[0].Posts)
+
+	fmt.Printf("Top level data is: %+v", u)
+	fmt.Println("Collection data is: ")
+	for _, c := range u.Collections {
+		fmt.Println(c)
+	}
+	fmt.Println("Posts data are: ")
+	for _, coll := range u.Collections {
+		for _, p := range coll.Posts {
+			fmt.Println(p)
+		}
+	}
 
 	return
 	// for _, p := range u.Collections[0].Posts {
