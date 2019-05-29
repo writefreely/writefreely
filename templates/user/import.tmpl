@@ -3,11 +3,39 @@
 
 <div class="snug content-container">
 	<h2 id="posts-header">Import</h2>
+	<p>You may import your data from another instance here.  Please choose the same option for import as you did for export.</p>
+	<div class="formContainer">
+		<form id="importPosts" class="import">
+			<h3>Posts</h3>
+			<p>csv</p>
+			<input class="fileInput" type="file" accept="text/csv"/>
+			<br />
+			<input type="submit" value="Import" />
+			<br />
+			<p>txt</p>
+			<input class="fileInput" type="file" accept="text/txt"/>
+			<br />
+			<input type="submit" value="Import" />
+		</form>
+	</div>
+	<div class="formContainer">
+		<form id="importAll" class="import">
+			<h3>User + Blogs + Posts</h3>
+			<p>json/Prettified</p>
+			<input class="fileInput" type="file" accept="text/JSON"/>
+			<br />
+			<input type="submit" value="Import" />
+		</form>
+	</div>
+</div>
+
+<!-- <div class="snug content-container">
+	<h2 id="posts-header">Import</h2>
 	<p>You may import your data from another instance here.</p>
 
 	<table class="classy export">
 		<tr>
-			<th style="width: 40%">Export</th>
+			<th style="width: 40%">Import</th>
 			<th colspan="2">Format</th>
 		</tr>
 		<tr>
@@ -17,13 +45,16 @@
 		</tr>
 		<tr>
 			<th>User + Blogs + Posts</th>
-			<!-- TODO: Add inputs like: <td><input type="file" accept="text/JSON">JSON<input/></td> -->
+			<div>
+				<td><input type="file" accept="text/JSON"/></td>
+			</div>
 			<td><p class="text-cta"><a href="">JSON</a></p></td>
 			<td><p class="text-cta"><a href="">Prettified</a></p></td>
 		</tr>
 	</table>
+	<input type="submit">
 
-</div>
+</div> -->
 
 {{template "footer" .}}
 {{end}}
