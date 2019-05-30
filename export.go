@@ -44,8 +44,9 @@ func exportPostsCSV(u *User, posts *[]PublicPost) []byte {
 }
 
 type exportedTxt struct {
-	Name, Body string
-	Mod        time.Time
+	Name, Title, Body string
+
+	Mod time.Time
 }
 
 func exportPostsZip(u *User, posts *[]PublicPost) []byte {
@@ -67,7 +68,7 @@ func exportPostsZip(u *User, posts *[]PublicPost) []byte {
 			filename += p.Slug.String + "_"
 		}
 		filename += p.ID + ".txt"
-		files = append(files, exportedTxt{filename, p.Content, p.Created})
+		files = append(files, exportedTxt{filename, p.Title.String, p.Content, p.Created})
 	}
 
 	for _, file := range files {
@@ -77,7 +78,12 @@ func exportPostsZip(u *User, posts *[]PublicPost) []byte {
 		if err != nil {
 			log.Error("export zip header: %v", err)
 		}
-		_, err = f.Write([]byte(file.Body))
+		var fullPost string
+		if file.Title != "" {
+			fullPost = "# " + file.Title + "\n\n"
+		}
+		fullPost += file.Body
+		_, err = f.Write([]byte(fullPost))
 		if err != nil {
 			log.Error("export zip write: %v", err)
 		}
