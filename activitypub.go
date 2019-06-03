@@ -17,6 +17,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"strconv"
+	"time"
+
 	"github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	"github.com/writeas/activity/streams"
@@ -26,12 +33,6 @@ import (
 	"github.com/writeas/web-core/activitypub"
 	"github.com/writeas/web-core/activitystreams"
 	"github.com/writeas/web-core/log"
-	"io/ioutil"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
-	"strconv"
-	"time"
 )
 
 const (
@@ -548,10 +549,14 @@ func deleteFederatedPost(app *app, p *PublicPost, collID int64) error {
 
 	inboxes := map[string][]string{}
 	for _, f := range *followers {
-		if _, ok := inboxes[f.SharedInbox]; ok {
-			inboxes[f.SharedInbox] = append(inboxes[f.SharedInbox], f.ActorID)
+		inbox := f.SharedInbox
+		if inbox == "" {
+			inbox = f.Inbox
+		}
+		if _, ok := inboxes[inbox]; ok {
+			inboxes[inbox] = append(inboxes[inbox], f.ActorID)
 		} else {
-			inboxes[f.SharedInbox] = []string{f.ActorID}
+			inboxes[inbox] = []string{f.ActorID}
 		}
 	}
 
@@ -591,10 +596,14 @@ func federatePost(app *app, p *PublicPost, collID int64, isUpdate bool) error {
 
 	inboxes := map[string][]string{}
 	for _, f := range *followers {
-		if _, ok := inboxes[f.SharedInbox]; ok {
-			inboxes[f.SharedInbox] = append(inboxes[f.SharedInbox], f.ActorID)
+		inbox := f.SharedInbox
+		if inbox == "" {
+			inbox = f.Inbox
+		}
+		if _, ok := inboxes[inbox]; ok {
+			inboxes[inbox] = append(inboxes[inbox], f.ActorID)
 		} else {
-			inboxes[f.SharedInbox] = []string{f.ActorID}
+			inboxes[inbox] = []string{f.ActorID}
 		}
 	}
 
@@ -647,8 +656,7 @@ func getActor(app *app, actorIRI string) (*activitystreams.Person, *RemoteUser, 
 					log.Error("Unable to get actor! %v", err)
 					return nil, nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't fetch actor."}
 				}
-				if err := json.Unmarshal(actorResp, &actor); err != nil {
-					// FIXME: Hubzilla has an object for the Actor's url: cannot unmarshal object into Go struct field Person.url of type string
+				if err := unmarshalActor(actorResp, actor); err != nil {
 					log.Error("Unable to unmarshal actor! %v", err)
 					return nil, nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't parse actor."}
 				}
@@ -662,4 +670,49 @@ func getActor(app *app, actorIRI string) (*activitystreams.Person, *RemoteUser, 
 		actor = remoteUser.AsPerson()
 	}
 	return actor, remoteUser, nil
+}
+
+// unmarshal actor normalizes the actor response to conform to
+// the type Person from github.com/writeas/web-core/activitysteams
+//
+// some implementations return different context field types
+// this converts any non-slice contexts into a slice
+func unmarshalActor(actorResp []byte, actor *activitystreams.Person) error {
+	// FIXME: Hubzilla has an object for the Actor's url: cannot unmarshal object into Go struct field Person.url of type string
+
+	// flexActor overrides the Context field to allow
+	// all valid representations during unmarshal
+	flexActor := struct {
+		activitystreams.Person
+		Context json.RawMessage `json:"@context,omitempty"`
+	}{}
+	if err := json.Unmarshal(actorResp, &flexActor); err != nil {
+		return err
+	}
+
+	actor.Endpoints = flexActor.Endpoints
+	actor.Followers = flexActor.Followers
+	actor.Following = flexActor.Following
+	actor.ID = flexActor.ID
+	actor.Icon = flexActor.Icon
+	actor.Inbox = flexActor.Inbox
+	actor.Name = flexActor.Name
+	actor.Outbox = flexActor.Outbox
+	actor.PreferredUsername = flexActor.PreferredUsername
+	actor.PublicKey = flexActor.PublicKey
+	actor.Summary = flexActor.Summary
+	actor.Type = flexActor.Type
+	actor.URL = flexActor.URL
+
+	func(val interface{}) {
+		switch val.(type) {
+		case []interface{}:
+			// already a slice, do nothing
+			actor.Context = val.([]interface{})
+		default:
+			actor.Context = []interface{}{val}
+		}
+	}(flexActor.Context)
+
+	return nil
 }
