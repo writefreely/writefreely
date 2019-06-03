@@ -549,10 +549,14 @@ func deleteFederatedPost(app *app, p *PublicPost, collID int64) error {
 
 	inboxes := map[string][]string{}
 	for _, f := range *followers {
-		if _, ok := inboxes[f.SharedInbox]; ok {
-			inboxes[f.SharedInbox] = append(inboxes[f.SharedInbox], f.ActorID)
+		inbox := f.SharedInbox
+		if inbox == "" {
+			inbox = f.Inbox
+		}
+		if _, ok := inboxes[inbox]; ok {
+			inboxes[inbox] = append(inboxes[inbox], f.ActorID)
 		} else {
-			inboxes[f.SharedInbox] = []string{f.ActorID}
+			inboxes[inbox] = []string{f.ActorID}
 		}
 	}
 
@@ -592,10 +596,14 @@ func federatePost(app *app, p *PublicPost, collID int64, isUpdate bool) error {
 
 	inboxes := map[string][]string{}
 	for _, f := range *followers {
-		if _, ok := inboxes[f.SharedInbox]; ok {
-			inboxes[f.SharedInbox] = append(inboxes[f.SharedInbox], f.ActorID)
+		inbox := f.SharedInbox
+		if inbox == "" {
+			inbox = f.Inbox
+		}
+		if _, ok := inboxes[inbox]; ok {
+			inboxes[inbox] = append(inboxes[inbox], f.ActorID)
 		} else {
-			inboxes[f.SharedInbox] = []string{f.ActorID}
+			inboxes[inbox] = []string{f.ActorID}
 		}
 	}
 
