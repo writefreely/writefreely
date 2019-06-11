@@ -54,7 +54,7 @@ func ViewFeed(app *app, w http.ResponseWriter, req *http.Request) error {
 
 	tag := mux.Vars(req)["tag"]
 	if tag != "" {
-		coll.Posts, _ = app.db.GetPostsTagged(c, tag, 1, false)
+		coll.Posts, _ = app.db.GetPostsTagged(c, tag, 1, false, false)
 	} else {
 		coll.Posts, _ = app.db.GetPosts(c, 1, false, true, false)
 	}

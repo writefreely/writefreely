@@ -93,6 +93,7 @@ type (
 	}
 	CollectionFormat struct {
 		Format string
+		Reversed bool
 	}
 
 	collectionReq struct {
@@ -126,6 +127,9 @@ const (
 )
 
 func (cf *CollectionFormat) Ascending() bool {
+	if cf.Reversed {
+		return cf.Format != "novel"
+	}
 	return cf.Format == "novel"
 }
 func (cf *CollectionFormat) ShowDates() bool {
@@ -146,8 +150,8 @@ func (cf *CollectionFormat) Valid() bool {
 }
 
 // NewFormat creates a new CollectionFormat object from the Collection.
-func (c *Collection) NewFormat() *CollectionFormat {
-	cf := &CollectionFormat{Format: c.Format}
+func (c *Collection) NewFormat(reversed bool) *CollectionFormat {
+	cf := &CollectionFormat{Format: c.Format, Reversed: reversed}
 
 	// Fill in default format
 	if cf.Format == "" {
@@ -659,13 +663,13 @@ func checkUserForCollection(app *app, cr *collectionReq, r *http.Request, isPost
 	return u, nil
 }
 
-func newDisplayCollection(c *Collection, cr *collectionReq, page int) *DisplayCollection {
+func newDisplayCollection(c *Collection, cr *collectionReq, page int, reversed bool) *DisplayCollection {
 	coll := &DisplayCollection{
 		CollectionObj: &CollectionObj{Collection: *c},
 		CurrentPage:   page,
 		Prefix:        cr.prefix,
 		IsTopLevel:    isSingleUser,
-		Format:        c.NewFormat(),
+		Format:        c.NewFormat(reversed),
 	}
 	c.db.GetPostsCount(coll.CollectionObj, cr.isCollOwner)
 	return coll
@@ -712,7 +716,7 @@ func handleViewCollection(app *app, w http.ResponseWriter, r *http.Request) erro
 
 	// Fetch extra data about the Collection
 	// TODO: refactor out this logic, shared in collection.go:fetchCollection()
-	coll := newDisplayCollection(c, cr, page)
+	coll := newDisplayCollection(c, cr, page, strings.HasSuffix(r.URL.Path, "/rev") || strings.HasSuffix(r.URL.Path, "/rev"))
 
 	coll.TotalPages = int(math.Ceil(float64(coll.TotalPosts) / float64(coll.Format.PostsPerPage())))
 	if coll.TotalPages > 0 && page > coll.TotalPages {
@@ -810,9 +814,10 @@ func handleViewCollectionTag(app *app, w http.ResponseWriter, r *http.Request) e
 		return err
 	}
 
-	coll := newDisplayCollection(c, cr, page)
+	rev := strings.HasSuffix(r.URL.Path, "/rev") || strings.HasSuffix(r.URL.Path, "/rev")
+	coll := newDisplayCollection(c, cr, page, rev)
 
-	coll.Posts, _ = app.db.GetPostsTagged(c, tag, page, cr.isCollOwner)
+	coll.Posts, _ = app.db.GetPostsTagged(c, tag, page, cr.isCollOwner, rev)
 	if coll.Posts != nil && len(*coll.Posts) == 0 {
 		return ErrCollectionPageNotFound
 	}

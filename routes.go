@@ -170,6 +170,7 @@ func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datasto
 func RouteCollections(handler *Handler, r *mux.Router) {
 	r.HandleFunc("/page/{page:[0-9]+}", handler.Web(handleViewCollection, UserLevelOptional))
 	r.HandleFunc("/tag:{tag}", handler.Web(handleViewCollectionTag, UserLevelOptional))
+	r.HandleFunc("/tag:{tag}/rev", handler.Web(handleViewCollectionTag, UserLevelOptional))
 	r.HandleFunc("/tag:{tag}/feed/", handler.Web(ViewFeed, UserLevelOptional))
 	r.HandleFunc("/tags/{tag}", handler.Web(handleViewCollectionTag, UserLevelOptional))
 	r.HandleFunc("/sitemap.xml", handler.All(handleViewSitemap))
