@@ -17,7 +17,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	"github.com/writeas/activity/streams"
 	"github.com/writeas/httpsig"
@@ -370,13 +369,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 				// Add follower locally, since it wasn't found before
 				res, err := t.Exec("INSERT INTO remoteusers (actor_id, inbox, shared_inbox) VALUES (?, ?, ?)", fullActor.ID, fullActor.Inbox, fullActor.Endpoints.SharedInbox)
 				if err != nil {
-					if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-						if mysqlErr.Number != mySQLErrDuplicateKey {
-							t.Rollback()
-							log.Error("Couldn't add new remoteuser in DB: %v\n", err)
-							return
-						}
-					} else {
+					if !app.db.isDuplicateKeyErr(err) {
 						t.Rollback()
 						log.Error("Couldn't add new remoteuser in DB: %v\n", err)
 						return
@@ -393,13 +386,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 				// Add in key
 				_, err = t.Exec("INSERT INTO remoteuserkeys (id, remote_user_id, public_key) VALUES (?, ?, ?)", fullActor.PublicKey.ID, followerID, fullActor.PublicKey.PublicKeyPEM)
 				if err != nil {
-					if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-						if mysqlErr.Number != mySQLErrDuplicateKey {
-							t.Rollback()
-							log.Error("Couldn't add follower keys in DB: %v\n", err)
-							return
-						}
-					} else {
+					if !app.db.isDuplicateKeyErr(err) {
 						t.Rollback()
 						log.Error("Couldn't add follower keys in DB: %v\n", err)
 						return
@@ -410,13 +397,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			// Add follow
 			_, err = t.Exec("INSERT INTO remotefollows (collection_id, remote_user_id, created) VALUES (?, ?, "+app.db.now()+")", c.ID, followerID)
 			if err != nil {
-				if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-					if mysqlErr.Number != mySQLErrDuplicateKey {
-						t.Rollback()
-						log.Error("Couldn't add follower in DB: %v\n", err)
-						return
-					}
-				} else {
+				if !app.db.isDuplicateKeyErr(err) {
 					t.Rollback()
 					log.Error("Couldn't add follower in DB: %v\n", err)
 					return
