@@ -11,8 +11,8 @@
 package writefreely
 
 import (
-	"crypto/rand"
 	"github.com/writeas/web-core/log"
+	"github.com/writeas/writefreely/key"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -20,8 +20,6 @@ import (
 
 const (
 	keysDir = "keys"
-
-	encKeysBytes = 32
 )
 
 var (
@@ -30,9 +28,6 @@ var (
 	cookieKeyPath     = filepath.Join(keysDir, "cookies_enc.aes256")
 )
 
-type Keychain struct {
-	emailKey, cookieAuthKey, cookieKey []byte
-}
 
 func initKeyPaths(app *App) {
 	emailKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, emailKeyPath)
@@ -42,12 +37,12 @@ func initKeyPaths(app *App) {
 
 func initKeys(app *App) error {
 	var err error
-	app.keys = &Keychain{}
+	app.keys = &key.Keychain{}
 
 	if debugging {
 		log.Info("  %s", emailKeyPath)
 	}
-	app.keys.emailKey, err = ioutil.ReadFile(emailKeyPath)
+	app.keys.EmailKey, err = ioutil.ReadFile(emailKeyPath)
 	if err != nil {
 		return err
 	}
@@ -55,7 +50,7 @@ func initKeys(app *App) error {
 	if debugging {
 		log.Info("  %s", cookieAuthKeyPath)
 	}
-	app.keys.cookieAuthKey, err = ioutil.ReadFile(cookieAuthKeyPath)
+	app.keys.CookieAuthKey, err = ioutil.ReadFile(cookieAuthKeyPath)
 	if err != nil {
 		return err
 	}
@@ -63,7 +58,7 @@ func initKeys(app *App) error {
 	if debugging {
 		log.Info("  %s", cookieKeyPath)
 	}
-	app.keys.cookieKey, err = ioutil.ReadFile(cookieKeyPath)
+	app.keys.CookieKey, err = ioutil.ReadFile(cookieKeyPath)
 	if err != nil {
 		return err
 	}
@@ -85,7 +80,7 @@ func generateKey(path string) error {
 	}
 
 	log.Info("Generating %s.", path)
-	b, err := generateBytes(encKeysBytes)
+	b, err := key.GenerateBytes(key.EncKeysBytes)
 	if err != nil {
 		log.Error("FAILED. %s. Run writefreely --gen-keys again.", err)
 		return err
@@ -97,15 +92,4 @@ func generateKey(path string) error {
 	}
 	log.Info("Success.")
 	return nil
-}
-
-// generateBytes returns securely generated random bytes.
-func generateBytes(n int) ([]byte, error) {
-	b := make([]byte, n)
-	_, err := rand.Read(b)
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
 }

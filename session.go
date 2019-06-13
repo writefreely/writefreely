@@ -34,7 +34,7 @@ func initSession(app *App) *sessions.CookieStore {
 	gob.Register(&User{})
 
 	// Create the cookie store
-	store := sessions.NewCookieStore(app.keys.cookieAuthKey, app.keys.cookieKey)
+	store := sessions.NewCookieStore(app.keys.CookieAuthKey, app.keys.CookieKey)
 	store.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   sessionLength,

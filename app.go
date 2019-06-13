@@ -37,6 +37,7 @@ import (
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/author"
 	"github.com/writeas/writefreely/config"
+	"github.com/writeas/writefreely/key"
 	"github.com/writeas/writefreely/migrations"
 	"github.com/writeas/writefreely/page"
 )
@@ -69,11 +70,15 @@ type App struct {
 	db           *datastore
 	cfg          *config.Config
 	cfgFile      string
-	keys         *Keychain
+	keys         *key.Keychain
 	sessionStore *sessions.CookieStore
 	formDecoder  *schema.Decoder
 
 	timeline *localTimeline
+}
+
+func (app *App) SetKeys(k *key.Keychain) {
+	app.keys = k
 }
 
 // handleViewHome shows page at root path. Will be the Pad if logged in and the

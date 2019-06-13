@@ -154,7 +154,7 @@ func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWr
 		Created:    time.Now().Truncate(time.Second).UTC(),
 	}
 	if signup.Email != "" {
-		encEmail, err := data.Encrypt(app.keys.emailKey, signup.Email)
+		encEmail, err := data.Encrypt(app.keys.EmailKey, signup.Email)
 		if err != nil {
 			log.Error("Unable to encrypt email: %s\n", err)
 		} else {

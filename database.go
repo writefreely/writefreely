@@ -29,6 +29,7 @@ import (
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/query"
 	"github.com/writeas/writefreely/author"
+	"github.com/writeas/writefreely/key"
 )
 
 const (
@@ -44,7 +45,7 @@ var (
 
 type writestore interface {
 	CreateUser(*User, string) error
-	UpdateUserEmail(keys *Keychain, userID int64, email string) error
+	UpdateUserEmail(keys *key.Keychain, userID int64, email string) error
 	UpdateEncryptedUserEmail(int64, []byte) error
 	GetUserByID(int64) (*User, error)
 	GetUserForAuth(string) (*User, error)
@@ -219,8 +220,8 @@ func (db *datastore) CreateUser(u *User, collectionTitle string) error {
 
 // FIXME: We're returning errors inconsistently in this file. Do we use Errorf
 // for returned value, or impart?
-func (db *datastore) UpdateUserEmail(keys *Keychain, userID int64, email string) error {
-	encEmail, err := data.Encrypt(keys.emailKey, email)
+func (db *datastore) UpdateUserEmail(keys *key.Keychain, userID int64, email string) error {
+	encEmail, err := data.Encrypt(keys.EmailKey, email)
 	if err != nil {
 		return fmt.Errorf("Couldn't encrypt email %s: %s\n", email, err)
 	}
@@ -1780,7 +1781,7 @@ func (db *datastore) ChangeSettings(app *App, u *User, s *userSettings) error {
 
 	// Update email if given
 	if s.Email != "" {
-		encEmail, err := data.Encrypt(app.keys.emailKey, s.Email)
+		encEmail, err := data.Encrypt(app.keys.EmailKey, s.Email)
 		if err != nil {
 			log.Error("Couldn't encrypt email %s: %s\n", s.Email, err)
 			return impart.HTTPError{http.StatusInternalServerError, "Unable to encrypt email address."}

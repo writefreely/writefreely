@@ -16,6 +16,7 @@ import (
 	"github.com/guregu/null/zero"
 	"github.com/writeas/web-core/data"
 	"github.com/writeas/web-core/log"
+	"github.com/writeas/writefreely/key"
 )
 
 type (
@@ -79,13 +80,13 @@ type (
 
 // EmailClear decrypts and returns the user's email, caching it in the user
 // object.
-func (u *User) EmailClear(keys *Keychain) string {
+func (u *User) EmailClear(keys *key.Keychain) string {
 	if u.clearEmail != "" {
 		return u.clearEmail
 	}
 
 	if u.Email.Valid && u.Email.String != "" {
-		email, err := data.Decrypt(keys.emailKey, []byte(u.Email.String))
+		email, err := data.Decrypt(keys.EmailKey, []byte(u.Email.String))
 		if err != nil {
 			log.Error("Error decrypting user email: %v", err)
 		} else {
