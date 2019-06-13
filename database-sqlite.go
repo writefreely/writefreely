@@ -1,4 +1,4 @@
-// +build sqlite
+// +build sqlite,!wflib
 
 /*
  * Copyright © 2019 A Bunch Tell LLC.
