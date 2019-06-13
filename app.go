@@ -65,6 +65,7 @@ var (
 // App holds data and configuration for an individual WriteFreely instance.
 type App struct {
 	router       *mux.Router
+	shttp        *http.ServeMux
 	db           *datastore
 	cfg          *config.Config
 	cfgFile      string
@@ -195,7 +196,6 @@ func pageForReq(app *App, r *http.Request) page.StaticPage {
 	return p
 }
 
-var shttp = http.NewServeMux()
 var fileRegex = regexp.MustCompile("/([^/]*\\.[^/]*)$")
 
 func Serve(app *App, debug bool) {
@@ -272,10 +272,6 @@ func Serve(app *App, debug bool) {
 		initLocalTimeline(app)
 	}
 
-	// Handle static files
-	fs := http.FileServer(http.Dir(filepath.Join(app.cfg.Server.StaticParentDir, staticDir)))
-	shttp.Handle("/", fs)
-	r.PathPrefix("/").Handler(fs)
 
 	// Handle shutdown
 	c := make(chan os.Signal, 2)

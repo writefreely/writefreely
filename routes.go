@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -17,8 +17,19 @@ import (
 	"github.com/writeas/writefreely/config"
 	"github.com/writefreely/go-nodeinfo"
 	"net/http"
+	"path/filepath"
 	"strings"
 )
+
+// InitStaticRoutes adds routes for serving static files.
+// TODO: this should just be a func, not method
+func (app *App) InitStaticRoutes(r *mux.Router) {
+	// Handle static files
+	fs := http.FileServer(http.Dir(filepath.Join(app.cfg.Server.StaticParentDir, staticDir)))
+	app.shttp = http.NewServeMux()
+	app.shttp.Handle("/", fs)
+	r.PathPrefix("/").Handler(fs)
+}
 
 func initRoutes(handler *Handler, r *mux.Router, cfg *config.Config, db *datastore) {
 	hostSubroute := cfg.App.Host[strings.Index(cfg.App.Host, "://")+3:]

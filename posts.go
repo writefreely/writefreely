@@ -275,7 +275,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		return handleTemplatedPage(app, w, r, t)
 	} else if (strings.Contains(r.URL.Path, ".") && !isRaw && !isMarkdown) || r.URL.Path == "/robots.txt" || r.URL.Path == "/manifest.json" {
 		// Serve static file
-		shttp.ServeHTTP(w, r)
+		app.shttp.ServeHTTP(w, r)
 		return nil
 	}
 
@@ -1196,7 +1196,7 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 
 	if strings.Contains(r.URL.Path, ".") && !isRaw {
 		// Serve static file
-		shttp.ServeHTTP(w, r)
+		app.shttp.ServeHTTP(w, r)
 		return nil
 	}
 
