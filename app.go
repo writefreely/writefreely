@@ -14,6 +14,7 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -76,8 +77,107 @@ type App struct {
 	timeline *localTimeline
 }
 
+// DB returns the App's datastore
+func (app *App) DB() *datastore {
+	return app.db
+}
+
+// Router returns the App's router
+func (app *App) Router() *mux.Router {
+	return app.router
+}
+
+// Config returns the App's current configuration.
+func (app *App) Config() *config.Config {
+	return app.cfg
+}
+
+// SetConfig updates the App's Config to the given value.
+func (app *App) SetConfig(cfg *config.Config) {
+	app.cfg = cfg
+}
+
+// SetKeys updates the App's Keychain to the given value.
 func (app *App) SetKeys(k *key.Keychain) {
 	app.keys = k
+}
+
+// Apper is the interface for getting data into and out of a WriteFreely
+// instance (or "App").
+//
+// App returns the App for the current instance.
+//
+// LoadConfig reads an app configuration into the App, returning any error
+// encountered.
+//
+// SaveConfig persists the current App configuration.
+//
+// LoadKeys reads the App's encryption keys and loads them into its
+// key.Keychain.
+type Apper interface {
+	App() *App
+
+	LoadConfig() error
+	SaveConfig(*config.Config) error
+
+	LoadKeys() error
+}
+
+// App returns the App
+func (app *App) App() *App {
+	return app
+}
+
+// LoadConfig loads and parses a config file.
+func (app *App) LoadConfig() error {
+	log.Info("Loading %s configuration...", app.cfgFile)
+	cfg, err := config.Load(app.cfgFile)
+	if err != nil {
+		log.Error("Unable to load configuration: %v", err)
+		os.Exit(1)
+		return err
+	}
+	app.cfg = cfg
+	return nil
+}
+
+// SaveConfig saves the given Config to disk -- namely, to the App's cfgFile.
+func (app *App) SaveConfig(c *config.Config) error {
+	return config.Save(c, app.cfgFile)
+}
+
+// LoadKeys reads all needed keys from disk into the App. In order to use the
+// configured `Server.KeysParentDir`, you must call initKeyPaths(App) before
+// this.
+func (app *App) LoadKeys() error {
+	var err error
+	app.keys = &key.Keychain{}
+
+	if debugging {
+		log.Info("  %s", emailKeyPath)
+	}
+	app.keys.EmailKey, err = ioutil.ReadFile(emailKeyPath)
+	if err != nil {
+		return err
+	}
+
+	if debugging {
+		log.Info("  %s", cookieAuthKeyPath)
+	}
+	app.keys.CookieAuthKey, err = ioutil.ReadFile(cookieAuthKeyPath)
+	if err != nil {
+		return err
+	}
+
+	if debugging {
+		log.Info("  %s", cookieKeyPath)
+	}
+	app.keys.CookieKey, err = ioutil.ReadFile(cookieKeyPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // handleViewHome shows page at root path. Will be the Pad if logged in and the
@@ -198,80 +298,49 @@ func pageForReq(app *App, r *http.Request) page.StaticPage {
 
 var fileRegex = regexp.MustCompile("/([^/]*\\.[^/]*)$")
 
-func Serve(app *App, debug bool) {
+// Initialize loads the app configuration and initializes templates, keys,
+// session, route handlers, and the database connection.
+func Initialize(apper Apper, debug bool) (*App, error) {
 	debugging = debug
 
-	log.Info("Initializing...")
+	apper.LoadConfig()
 
-	loadConfig(app)
+	// Load templates
+	err := InitTemplates(apper.App().Config())
+	if err != nil {
+		return nil, fmt.Errorf("load templates: %s", err)
+	}
+
+	// Load keys and set up session
+	initKeyPaths(apper.App()) // TODO: find a better way to do this, since it's unneeded in all Apper implementations
+	err = InitKeys(apper)
+	if err != nil {
+		return nil, fmt.Errorf("init keys: %s", err)
+	}
+	apper.App().InitSession()
+
+	apper.App().InitDecoder()
+
+	err = ConnectToDatabase(apper.App())
+	if err != nil {
+		return nil, fmt.Errorf("connect to DB: %s", err)
+	}
+
+	// Handle local timeline, if enabled
+	if apper.App().cfg.App.LocalTimeline {
+		log.Info("Initializing local timeline...")
+		initLocalTimeline(apper.App())
+	}
+
+	return apper.App(), nil
+}
+
+func Serve(app *App, r *mux.Router) {
+	log.Info("Going to serve...")
 
 	hostName = app.cfg.App.Host
 	isSingleUser = app.cfg.App.SingleUser
 	app.cfg.Server.Dev = debugging
-
-	err := initTemplates(app.cfg)
-	if err != nil {
-		log.Error("load templates: %s", err)
-		os.Exit(1)
-	}
-
-	// Load keys
-	log.Info("Loading encryption keys...")
-	initKeyPaths(app)
-	err = initKeys(app)
-	if err != nil {
-		log.Error("\n%s\n", err)
-	}
-
-	// Initialize modules
-	app.sessionStore = initSession(app)
-	app.formDecoder = schema.NewDecoder()
-	app.formDecoder.RegisterConverter(converter.NullJSONString{}, converter.ConvertJSONNullString)
-	app.formDecoder.RegisterConverter(converter.NullJSONBool{}, converter.ConvertJSONNullBool)
-	app.formDecoder.RegisterConverter(sql.NullString{}, converter.ConvertSQLNullString)
-	app.formDecoder.RegisterConverter(sql.NullBool{}, converter.ConvertSQLNullBool)
-	app.formDecoder.RegisterConverter(sql.NullInt64{}, converter.ConvertSQLNullInt64)
-	app.formDecoder.RegisterConverter(sql.NullFloat64{}, converter.ConvertSQLNullFloat64)
-
-	// Check database configuration
-	if app.cfg.Database.Type == driverMySQL && (app.cfg.Database.User == "" || app.cfg.Database.Password == "") {
-		log.Error("Database user or password not set.")
-		os.Exit(1)
-	}
-	if app.cfg.Database.Host == "" {
-		app.cfg.Database.Host = "localhost"
-	}
-	if app.cfg.Database.Database == "" {
-		app.cfg.Database.Database = "writefreely"
-	}
-
-	connectToDatabase(app)
-	defer shutdown(app)
-
-	// Test database connection
-	err = app.db.Ping()
-	if err != nil {
-		log.Error("Database ping failed: %s", err)
-	}
-
-	r := mux.NewRouter()
-	handler := NewHandler(app)
-	handler.SetErrorPages(&ErrorPages{
-		NotFound:            pages["404-general.tmpl"],
-		Gone:                pages["410.tmpl"],
-		InternalServerError: pages["500.tmpl"],
-		Blank:               pages["blank.tmpl"],
-	})
-
-	// Handle app routes
-	initRoutes(handler, r, app.cfg, app.db)
-
-	// Handle local timeline, if enabled
-	if app.cfg.App.LocalTimeline {
-		log.Info("Initializing local timeline...")
-		initLocalTimeline(app)
-	}
-
 
 	// Handle shutdown
 	c := make(chan os.Signal, 2)
@@ -284,13 +353,12 @@ func Serve(app *App, debug bool) {
 		os.Exit(0)
 	}()
 
-	http.Handle("/", r)
-
 	// Start web application server
 	var bindAddress = app.cfg.Server.Bind
 	if bindAddress == "" {
 		bindAddress = "localhost"
 	}
+	var err error
 	if app.cfg.IsSecureStandalone() {
 		log.Info("Serving redirects on http://%s:80", bindAddress)
 		go func() {
@@ -304,16 +372,54 @@ func Serve(app *App, debug bool) {
 		log.Info("Serving on https://%s:443", bindAddress)
 		log.Info("---")
 		err = http.ListenAndServeTLS(
-			fmt.Sprintf("%s:443", bindAddress), app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, nil)
+			fmt.Sprintf("%s:443", bindAddress), app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, r)
 	} else {
 		log.Info("Serving on http://%s:%d\n", bindAddress, app.cfg.Server.Port)
 		log.Info("---")
-		err = http.ListenAndServe(fmt.Sprintf("%s:%d", bindAddress, app.cfg.Server.Port), nil)
+		err = http.ListenAndServe(fmt.Sprintf("%s:%d", bindAddress, app.cfg.Server.Port), r)
 	}
 	if err != nil {
 		log.Error("Unable to start: %v", err)
 		os.Exit(1)
 	}
+}
+
+func (app *App) InitDecoder() {
+	// TODO: do this at the package level, instead of the App level
+	// Initialize modules
+	app.formDecoder = schema.NewDecoder()
+	app.formDecoder.RegisterConverter(converter.NullJSONString{}, converter.ConvertJSONNullString)
+	app.formDecoder.RegisterConverter(converter.NullJSONBool{}, converter.ConvertJSONNullBool)
+	app.formDecoder.RegisterConverter(sql.NullString{}, converter.ConvertSQLNullString)
+	app.formDecoder.RegisterConverter(sql.NullBool{}, converter.ConvertSQLNullBool)
+	app.formDecoder.RegisterConverter(sql.NullInt64{}, converter.ConvertSQLNullInt64)
+	app.formDecoder.RegisterConverter(sql.NullFloat64{}, converter.ConvertSQLNullFloat64)
+}
+
+// ConnectToDatabase validates and connects to the configured database, then
+// tests the connection.
+func ConnectToDatabase(app *App) error {
+	// Check database configuration
+	if app.cfg.Database.Type == driverMySQL && (app.cfg.Database.User == "" || app.cfg.Database.Password == "") {
+		return fmt.Errorf("Database user or password not set.")
+	}
+	if app.cfg.Database.Host == "" {
+		app.cfg.Database.Host = "localhost"
+	}
+	if app.cfg.Database.Database == "" {
+		app.cfg.Database.Database = "writefreely"
+	}
+
+	// TODO: check err
+	connectToDatabase(app)
+
+	// Test database connection
+	err := app.db.Ping()
+	if err != nil {
+		return fmt.Errorf("Database ping failed: %s", err)
+	}
+
+	return nil
 }
 
 // OutputVersion prints out the version of the application.
@@ -378,10 +484,10 @@ func DoConfig(app *App) {
 	os.Exit(0)
 }
 
-// GenerateKeys creates app encryption keys and saves them into the configured KeysParentDir.
-func GenerateKeys(app *App) error {
+// GenerateKeyFiles creates app encryption keys and saves them into the configured KeysParentDir.
+func GenerateKeyFiles(app *App) error {
 	// Read keys path from config
-	loadConfig(app)
+	app.LoadConfig()
 
 	// Create keys dir if it doesn't exist yet
 	fullKeysDir := filepath.Join(app.cfg.Server.KeysParentDir, keysDir)
@@ -412,11 +518,11 @@ func GenerateKeys(app *App) error {
 }
 
 // CreateSchema creates all database tables needed for the application.
-func CreateSchema(app *App) error {
-	loadConfig(app)
-	connectToDatabase(app)
-	defer shutdown(app)
-	err := adminInitDatabase(app)
+func CreateSchema(apper Apper) error {
+	apper.LoadConfig()
+	connectToDatabase(apper.App())
+	defer shutdown(apper.App())
+	err := adminInitDatabase(apper.App())
 	if err != nil {
 		return err
 	}
@@ -425,7 +531,7 @@ func CreateSchema(app *App) error {
 
 // Migrate runs all necessary database migrations.
 func Migrate(app *App) error {
-	loadConfig(app)
+	app.LoadConfig()
 	connectToDatabase(app)
 	defer shutdown(app)
 
@@ -439,7 +545,7 @@ func Migrate(app *App) error {
 // ResetPassword runs the interactive password reset process.
 func ResetPassword(app *App, username string) error {
 	// Connect to the database
-	loadConfig(app)
+	app.LoadConfig()
 	connectToDatabase(app)
 	defer shutdown(app)
 
@@ -473,16 +579,6 @@ func ResetPassword(app *App, username string) error {
 	}
 	log.Info("Success.")
 	return nil
-}
-
-func loadConfig(app *App) {
-	log.Info("Loading %s configuration...", app.cfgFile)
-	cfg, err := config.Load(app.cfgFile)
-	if err != nil {
-		log.Error("Unable to load configuration: %v", err)
-		os.Exit(1)
-	}
-	app.cfg = cfg
 }
 
 func connectToDatabase(app *App) {
@@ -521,14 +617,14 @@ func shutdown(app *App) {
 }
 
 // CreateUser creates a new admin or normal user from the given credentials.
-func CreateUser(app *App, username, password string, isAdmin bool) error {
+func CreateUser(apper Apper, username, password string, isAdmin bool) error {
 	// Create an admin user with --create-admin
-	loadConfig(app)
-	connectToDatabase(app)
-	defer shutdown(app)
+	apper.LoadConfig()
+	connectToDatabase(apper.App())
+	defer shutdown(apper.App())
 
 	// Ensure an admin / first user doesn't already exist
-	firstUser, _ := app.db.GetUserByID(1)
+	firstUser, _ := apper.App().db.GetUserByID(1)
 	if isAdmin {
 		// Abort if trying to create admin user, but one already exists
 		if firstUser != nil {
@@ -551,8 +647,8 @@ func CreateUser(app *App, username, password string, isAdmin bool) error {
 		usernameDesc += " (originally: " + desiredUsername + ")"
 	}
 
-	if !author.IsValidUsername(app.cfg, username) {
-		return fmt.Errorf("Username %s is invalid, reserved, or shorter than configured minimum length (%d characters).", usernameDesc, app.cfg.App.MinUsernameLen)
+	if !author.IsValidUsername(apper.App().cfg, username) {
+		return fmt.Errorf("Username %s is invalid, reserved, or shorter than configured minimum length (%d characters).", usernameDesc, apper.App().cfg.App.MinUsernameLen)
 	}
 
 	// Hash the password
@@ -572,7 +668,7 @@ func CreateUser(app *App, username, password string, isAdmin bool) error {
 		userType = "admin"
 	}
 	log.Info("Creating %s %s...", userType, usernameDesc)
-	err = app.db.CreateUser(u, desiredUsername)
+	err = apper.App().db.CreateUser(u, desiredUsername)
 	if err != nil {
 		return fmt.Errorf("Unable to create user: %s", err)
 	}

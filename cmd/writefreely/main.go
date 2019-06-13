@@ -13,6 +13,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/gorilla/mux"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely"
 	"os"
@@ -54,7 +55,7 @@ func main() {
 		writefreely.DoConfig(app)
 		os.Exit(0)
 	} else if *genKeys {
-		err := writefreely.GenerateKeys(app)
+		err := writefreely.GenerateKeyFiles(app)
 		if err != nil {
 			log.Error(err.Error())
 			os.Exit(1)
@@ -107,7 +108,21 @@ func main() {
 		os.Exit(0)
 	}
 
-	writefreely.Serve(app, *debugPtr)
+	// Initialize the application
+	var err error
+	app, err = writefreely.Initialize(app, *debugPtr)
+	if err != nil {
+		log.Error("%s", err)
+		os.Exit(1)
+	}
+
+	// Set app routes
+	r := mux.NewRouter()
+	app.InitRoutes(r)
+	app.InitStaticRoutes(r)
+
+	// Serve the application
+	writefreely.Serve(app, r)
 }
 
 func userPass(credStr string, isAdmin bool) (user string, pass string, err error) {

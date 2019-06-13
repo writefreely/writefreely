@@ -27,9 +27,9 @@ const (
 	blogPassCookieName = "ub"
 )
 
-// initSession creates the cookie store. It depends on the keychain already
+// InitSession creates the cookie store. It depends on the keychain already
 // being loaded.
-func initSession(app *App) *sessions.CookieStore {
+func (app *App) InitSession() {
 	// Register complex data types we'll be storing in cookies
 	gob.Register(&User{})
 
@@ -41,7 +41,7 @@ func initSession(app *App) *sessions.CookieStore {
 		HttpOnly: true,
 		Secure:   strings.HasPrefix(app.cfg.App.Host, "https://"),
 	}
-	return store
+	app.sessionStore = store
 }
 
 func getSessionFlashes(app *App, w http.ResponseWriter, r *http.Request, session *sessions.Session) ([]string, error) {

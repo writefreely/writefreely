@@ -74,6 +74,19 @@ func NewHandler(app *App) *Handler {
 	return h
 }
 
+// NewWFHandler returns a new Handler instance, using WriteFreely template files.
+// You MUST call writefreely.InitTemplates() before this.
+func NewWFHandler(app *App) *Handler {
+	h := NewHandler(app)
+	h.SetErrorPages(&ErrorPages{
+		NotFound:            pages["404-general.tmpl"],
+		Gone:                pages["410.tmpl"],
+		InternalServerError: pages["500.tmpl"],
+		Blank:               pages["blank.tmpl"],
+	})
+	return h
+}
+
 // SetErrorPages sets the given set of ErrorPages as templates for any errors
 // that come up.
 func (h *Handler) SetErrorPages(e *ErrorPages) {
