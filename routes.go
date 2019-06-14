@@ -31,13 +31,13 @@ func (app *App) InitStaticRoutes(r *mux.Router) {
 }
 
 // InitRoutes adds dynamic routes for the given mux.Router.
-func (app *App) InitRoutes(r *mux.Router) *mux.Router {
+func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	// Create handler
-	handler := NewWFHandler(app)
+	handler := NewWFHandler(apper)
 
 	// Set up routes
-	hostSubroute := app.cfg.App.Host[strings.Index(app.cfg.App.Host, "://")+3:]
-	if app.cfg.App.SingleUser {
+	hostSubroute := apper.App().cfg.App.Host[strings.Index(apper.App().cfg.App.Host, "://")+3:]
+	if apper.App().cfg.App.SingleUser {
 		hostSubroute = "{domain}"
 	} else {
 		if strings.HasPrefix(hostSubroute, "localhost") {
@@ -45,7 +45,7 @@ func (app *App) InitRoutes(r *mux.Router) *mux.Router {
 		}
 	}
 
-	if app.cfg.App.SingleUser {
+	if apper.App().cfg.App.SingleUser {
 		log.Info("Adding %s routes (single user)...", hostSubroute)
 	} else {
 		log.Info("Adding %s routes (multi-user)...", hostSubroute)
@@ -55,7 +55,7 @@ func (app *App) InitRoutes(r *mux.Router) *mux.Router {
 	write := r.PathPrefix("/").Subrouter()
 
 	// Federation endpoint configurations
-	wf := webfinger.Default(wfResolver{app.db, app.cfg})
+	wf := webfinger.Default(wfResolver{apper.App().db, apper.App().cfg})
 	wf.NoTLSHandler = nil
 
 	// Federation endpoints
@@ -64,15 +64,15 @@ func (app *App) InitRoutes(r *mux.Router) *mux.Router {
 	// webfinger
 	write.HandleFunc(webfinger.WebFingerPath, handler.LogHandlerFunc(http.HandlerFunc(wf.Webfinger)))
 	// nodeinfo
-	niCfg := nodeInfoConfig(app.db, app.cfg)
-	ni := nodeinfo.NewService(*niCfg, nodeInfoResolver{app.cfg, app.db})
+	niCfg := nodeInfoConfig(apper.App().db, apper.App().cfg)
+	ni := nodeinfo.NewService(*niCfg, nodeInfoResolver{apper.App().cfg, apper.App().db})
 	write.HandleFunc(nodeinfo.NodeInfoPath, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfoDiscover)))
 	write.HandleFunc(niCfg.InfoURL, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfo)))
 
 	// Set up dyamic page handlers
 	// Handle auth
 	auth := write.PathPrefix("/api/auth/").Subrouter()
-	if app.cfg.App.OpenRegistration {
+	if apper.App().cfg.App.OpenRegistration {
 		auth.HandleFunc("/signup", handler.All(apiSignup)).Methods("POST")
 	}
 	auth.HandleFunc("/login", handler.All(login)).Methods("POST")
@@ -145,7 +145,7 @@ func (app *App) InitRoutes(r *mux.Router) *mux.Router {
 	write.HandleFunc("/admin/user/{username}", handler.Admin(handleViewAdminUser)).Methods("GET")
 	write.HandleFunc("/admin/pages", handler.Admin(handleViewAdminPages)).Methods("GET")
 	write.HandleFunc("/admin/page/{slug}", handler.Admin(handleViewAdminPage)).Methods("GET")
-	write.HandleFunc("/admin/update/config", handler.Admin(handleAdminUpdateConfig)).Methods("POST")
+	write.HandleFunc("/admin/update/config", handler.AdminApper(handleAdminUpdateConfig)).Methods("POST")
 	write.HandleFunc("/admin/update/{page}", handler.Admin(handleAdminUpdateSite)).Methods("POST")
 
 	// Handle special pages first
@@ -159,7 +159,7 @@ func (app *App) InitRoutes(r *mux.Router) *mux.Router {
 	RouteRead(handler, readPerm, write.PathPrefix("/read").Subrouter())
 
 	draftEditPrefix := ""
-	if app.cfg.App.SingleUser {
+	if apper.App().cfg.App.SingleUser {
 		draftEditPrefix = "/d"
 		write.HandleFunc("/me/new", handler.Web(handleViewPad, UserLevelOptional)).Methods("GET")
 	} else {
@@ -170,7 +170,7 @@ func (app *App) InitRoutes(r *mux.Router) *mux.Router {
 	write.HandleFunc(draftEditPrefix+"/{action}/edit", handler.Web(handleViewPad, UserLevelOptional)).Methods("GET")
 	write.HandleFunc(draftEditPrefix+"/{action}/meta", handler.Web(handleViewMeta, UserLevelOptional)).Methods("GET")
 	// Collections
-	if app.cfg.App.SingleUser {
+	if apper.App().cfg.App.SingleUser {
 		RouteCollections(handler, write.PathPrefix("/").Subrouter())
 	} else {
 		write.HandleFunc("/{prefix:[@~$!\\-+]}{collection}", handler.Web(handleViewCollection, UserLevelOptional))

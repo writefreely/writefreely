@@ -118,7 +118,7 @@ func main() {
 
 	// Set app routes
 	r := mux.NewRouter()
-	app.InitRoutes(r)
+	writefreely.InitRoutes(app, r)
 	app.InitStaticRoutes(r)
 
 	// Serve the application
