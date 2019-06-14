@@ -36,6 +36,9 @@ url=`curl -s https://api.github.com/repos/writeas/writefreely/releases/latest | 
 # check current version
 
 current=`./writefreely -v`
+if [ -z "$current" ]; then
+	exit 1
+fi
 
 echo "Current version is v${current:(-5):5}"
 
