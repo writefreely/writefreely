@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -19,7 +19,7 @@ import (
 	"strings"
 )
 
-func handleViewPad(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	action := vars["action"]
 	slug := vars["slug"]
@@ -102,7 +102,7 @@ func handleViewPad(app *app, w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func handleViewMeta(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleViewMeta(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	action := vars["action"]
 	slug := vars["slug"]

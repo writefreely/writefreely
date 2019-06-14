@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -15,7 +15,7 @@ import (
 	"net/http"
 )
 
-func handleViewHostMeta(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleViewHostMeta(app *App, w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Server", serverSoftware)
 	w.Header().Set("Content-Type", "application/xrd+xml; charset=utf-8")
 

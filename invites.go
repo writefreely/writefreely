@@ -45,7 +45,7 @@ func (i Invite) ExpiresFriendly() string {
 	return i.Expires.Format("January 2, 2006, 3:04 PM")
 }
 
-func handleViewUserInvites(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+func handleViewUserInvites(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	// Don't show page if instance doesn't allow it
 	if !(app.cfg.App.UserInvites != "" && (u.IsAdmin() || app.cfg.App.UserInvites != "admin")) {
 		return impart.HTTPError{http.StatusNotFound, ""}
@@ -73,7 +73,7 @@ func handleViewUserInvites(app *app, u *User, w http.ResponseWriter, r *http.Req
 	return nil
 }
 
-func handleCreateUserInvite(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+func handleCreateUserInvite(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	muVal := r.FormValue("uses")
 	expVal := r.FormValue("expires")
 
@@ -106,7 +106,7 @@ func handleCreateUserInvite(app *app, u *User, w http.ResponseWriter, r *http.Re
 	return impart.HTTPError{http.StatusFound, "/me/invites"}
 }
 
-func handleViewInvite(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleViewInvite(app *App, w http.ResponseWriter, r *http.Request) error {
 	inviteCode := mux.Vars(r)["code"]
 
 	i, err := app.db.GetUserInvite(inviteCode)

@@ -100,13 +100,16 @@ ui : force_look
 	cd less/; $(MAKE) $(MFLAGS)
 
 assets : generate
-	go-bindata -pkg writefreely -ignore=\\.gitignore schema.sql sqlite.sql
+	go-bindata -pkg writefreely -ignore=\\.gitignore -tags="!wflib" schema.sql sqlite.sql
 
 assets-no-sqlite: generate
-	go-bindata -pkg writefreely -ignore=\\.gitignore schema.sql
+	go-bindata -pkg writefreely -ignore=\\.gitignore -tags="!wflib" schema.sql
 
 dev-assets : generate
-	go-bindata -pkg writefreely -ignore=\\.gitignore -debug schema.sql sqlite.sql
+	go-bindata -pkg writefreely -ignore=\\.gitignore -debug -tags="!wflib" schema.sql sqlite.sql
+
+lib-assets : generate
+	go-bindata -pkg writefreely -ignore=\\.gitignore -o bindata-lib.go -tags="wflib" schema.sql
 
 generate :
 	@hash go-bindata > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
@@ -123,7 +126,7 @@ $(TMPBIN)/xgo: deps $(TMPBIN)
 	$(GOBUILD) -o $(TMPBIN)/xgo github.com/karalabe/xgo
 
 ci-assets : $(TMPBIN)/go-bindata
-	$(TMPBIN)/go-bindata -pkg writefreely -ignore=\\.gitignore schema.sql sqlite.sql
+	$(TMPBIN)/go-bindata -pkg writefreely -ignore=\\.gitignore -tags="!wflib" schema.sql sqlite.sql
 
 clean :
 	-rm -rf build

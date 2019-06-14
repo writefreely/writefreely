@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -49,7 +49,7 @@ type (
 	}
 )
 
-func NewUserPage(app *app, r *http.Request, u *User, title string, flashes []string) *UserPage {
+func NewUserPage(app *App, r *http.Request, u *User, title string, flashes []string) *UserPage {
 	up := &UserPage{
 		StaticPage: pageForReq(app, r),
 		PageTitle:  title,
@@ -73,12 +73,12 @@ const (
 
 var actuallyUsernameReg = regexp.MustCompile("username is actually ([a-z0-9\\-]+)\\. Please try that, instead")
 
-func apiSignup(app *app, w http.ResponseWriter, r *http.Request) error {
+func apiSignup(app *App, w http.ResponseWriter, r *http.Request) error {
 	_, err := signup(app, w, r)
 	return err
 }
 
-func signup(app *app, w http.ResponseWriter, r *http.Request) (*AuthUser, error) {
+func signup(app *App, w http.ResponseWriter, r *http.Request) (*AuthUser, error) {
 	reqJSON := IsJSON(r.Header.Get("Content-Type"))
 
 	// Get params
@@ -113,7 +113,7 @@ func signup(app *app, w http.ResponseWriter, r *http.Request) (*AuthUser, error)
 	return signupWithRegistration(app, ur, w, r)
 }
 
-func signupWithRegistration(app *app, signup userRegistration, w http.ResponseWriter, r *http.Request) (*AuthUser, error) {
+func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWriter, r *http.Request) (*AuthUser, error) {
 	reqJSON := IsJSON(r.Header.Get("Content-Type"))
 
 	// Validate required params (alias)
@@ -154,7 +154,7 @@ func signupWithRegistration(app *app, signup userRegistration, w http.ResponseWr
 		Created:    time.Now().Truncate(time.Second).UTC(),
 	}
 	if signup.Email != "" {
-		encEmail, err := data.Encrypt(app.keys.emailKey, signup.Email)
+		encEmail, err := data.Encrypt(app.keys.EmailKey, signup.Email)
 		if err != nil {
 			log.Error("Unable to encrypt email: %s\n", err)
 		} else {
@@ -229,7 +229,7 @@ func signupWithRegistration(app *app, signup userRegistration, w http.ResponseWr
 	return resUser, nil
 }
 
-func viewLogout(app *app, w http.ResponseWriter, r *http.Request) error {
+func viewLogout(app *App, w http.ResponseWriter, r *http.Request) error {
 	session, err := app.sessionStore.Get(r, cookieName)
 	if err != nil {
 		return ErrInternalCookieSession
@@ -268,7 +268,7 @@ func viewLogout(app *app, w http.ResponseWriter, r *http.Request) error {
 	return impart.HTTPError{http.StatusFound, "/"}
 }
 
-func handleAPILogout(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleAPILogout(app *App, w http.ResponseWriter, r *http.Request) error {
 	accessToken := r.Header.Get("Authorization")
 	if accessToken == "" {
 		return ErrNoAccessToken
@@ -284,7 +284,7 @@ func handleAPILogout(app *app, w http.ResponseWriter, r *http.Request) error {
 	return impart.HTTPError{Status: http.StatusNoContent}
 }
 
-func viewLogin(app *app, w http.ResponseWriter, r *http.Request) error {
+func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 	var earlyError string
 	oneTimeToken := r.FormValue("with")
 	if oneTimeToken != "" {
@@ -333,7 +333,7 @@ func viewLogin(app *app, w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func webLogin(app *app, w http.ResponseWriter, r *http.Request) error {
+func webLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 	err := login(app, w, r)
 	if err != nil {
 		username := r.FormValue("alias")
@@ -370,7 +370,7 @@ func webLogin(app *app, w http.ResponseWriter, r *http.Request) error {
 
 var loginAttemptUsers = sync.Map{}
 
-func login(app *app, w http.ResponseWriter, r *http.Request) error {
+func login(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r.Header.Get("Content-Type"))
 	oneTimeToken := r.FormValue("with")
 	verbose := r.FormValue("all") == "true" || r.FormValue("verbose") == "1" || r.FormValue("verbose") == "true" || (reqJSON && oneTimeToken != "")
@@ -534,7 +534,7 @@ func login(app *app, w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func getVerboseAuthUser(app *app, token string, u *User, verbose bool) *AuthUser {
+func getVerboseAuthUser(app *App, token string, u *User, verbose bool) *AuthUser {
 	resUser := &AuthUser{
 		AccessToken: token,
 		User:        u,
@@ -563,7 +563,7 @@ func getVerboseAuthUser(app *app, token string, u *User, verbose bool) *AuthUser
 	return resUser
 }
 
-func viewExportOptions(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+func viewExportOptions(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	// Fetch extra user data
 	p := NewUserPage(app, r, u, "Export", nil)
 
@@ -571,7 +571,7 @@ func viewExportOptions(app *app, u *User, w http.ResponseWriter, r *http.Request
 	return nil
 }
 
-func viewExportPosts(app *app, w http.ResponseWriter, r *http.Request) ([]byte, string, error) {
+func viewExportPosts(app *App, w http.ResponseWriter, r *http.Request) ([]byte, string, error) {
 	var filename string
 	var u = &User{}
 	reqJSON := IsJSON(r.Header.Get("Content-Type"))
@@ -635,7 +635,7 @@ func viewExportPosts(app *app, w http.ResponseWriter, r *http.Request) ([]byte, 
 	return data, filename, err
 }
 
-func viewExportFull(app *app, w http.ResponseWriter, r *http.Request) ([]byte, string, error) {
+func viewExportFull(app *App, w http.ResponseWriter, r *http.Request) ([]byte, string, error) {
 	var err error
 	filename := ""
 	u := getUserSession(app, r)
@@ -655,7 +655,7 @@ func viewExportFull(app *app, w http.ResponseWriter, r *http.Request) ([]byte, s
 	return data, filename, err
 }
 
-func viewMeAPI(app *app, w http.ResponseWriter, r *http.Request) error {
+func viewMeAPI(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r.Header.Get("Content-Type"))
 	uObj := struct {
 		ID       int64  `json:"id,omitempty"`
@@ -679,7 +679,7 @@ func viewMeAPI(app *app, w http.ResponseWriter, r *http.Request) error {
 	return impart.WriteSuccess(w, uObj, http.StatusOK)
 }
 
-func viewMyPostsAPI(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+func viewMyPostsAPI(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r.Header.Get("Content-Type"))
 	if !reqJSON {
 		return ErrBadRequestedType
@@ -710,7 +710,7 @@ func viewMyPostsAPI(app *app, u *User, w http.ResponseWriter, r *http.Request) e
 	return impart.WriteSuccess(w, p, http.StatusOK)
 }
 
-func viewMyCollectionsAPI(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+func viewMyCollectionsAPI(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r.Header.Get("Content-Type"))
 	if !reqJSON {
 		return ErrBadRequestedType
@@ -724,7 +724,7 @@ func viewMyCollectionsAPI(app *app, u *User, w http.ResponseWriter, r *http.Requ
 	return impart.WriteSuccess(w, p, http.StatusOK)
 }
 
-func viewArticles(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	p, err := app.db.GetAnonymousPosts(u)
 	if err != nil {
 		log.Error("unable to fetch anon posts: %v", err)
@@ -761,7 +761,7 @@ func viewArticles(app *app, u *User, w http.ResponseWriter, r *http.Request) err
 	return nil
 }
 
-func viewCollections(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+func viewCollections(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	c, err := app.db.GetCollections(u)
 	if err != nil {
 		log.Error("unable to fetch collections: %v", err)
@@ -792,7 +792,7 @@ func viewCollections(app *app, u *User, w http.ResponseWriter, r *http.Request) 
 	return nil
 }
 
-func viewEditCollection(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	c, err := app.db.GetCollection(vars["collection"])
 	if err != nil {
@@ -815,7 +815,7 @@ func viewEditCollection(app *app, u *User, w http.ResponseWriter, r *http.Reques
 	return nil
 }
 
-func updateSettings(app *app, w http.ResponseWriter, r *http.Request) error {
+func updateSettings(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r.Header.Get("Content-Type"))
 
 	var s userSettings
@@ -904,7 +904,7 @@ func updateSettings(app *app, w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func updatePassphrase(app *app, w http.ResponseWriter, r *http.Request) error {
+func updatePassphrase(app *App, w http.ResponseWriter, r *http.Request) error {
 	accessToken := r.Header.Get("Authorization")
 	if accessToken == "" {
 		return ErrNoAccessToken
@@ -943,7 +943,7 @@ func updatePassphrase(app *app, w http.ResponseWriter, r *http.Request) error {
 	return impart.WriteSuccess(w, struct{}{}, http.StatusOK)
 }
 
-func viewStats(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	var c *Collection
 	var err error
 	vars := mux.Vars(r)
@@ -994,7 +994,7 @@ func viewStats(app *app, u *User, w http.ResponseWriter, r *http.Request) error 
 	return nil
 }
 
-func viewSettings(app *app, u *User, w http.ResponseWriter, r *http.Request) error {
+func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	fullUser, err := app.db.GetUserByID(u.ID)
 	if err != nil {
 		log.Error("Unable to get user for settings: %s", err)
@@ -1025,7 +1025,7 @@ func viewSettings(app *app, u *User, w http.ResponseWriter, r *http.Request) err
 	return nil
 }
 
-func saveTempInfo(app *app, key, val string, r *http.Request, w http.ResponseWriter) error {
+func saveTempInfo(app *App, key, val string, r *http.Request, w http.ResponseWriter) error {
 	session, err := app.sessionStore.Get(r, "t")
 	if err != nil {
 		return ErrInternalCookieSession
@@ -1039,7 +1039,7 @@ func saveTempInfo(app *app, key, val string, r *http.Request, w http.ResponseWri
 	return err
 }
 
-func getTempInfo(app *app, key string, r *http.Request, w http.ResponseWriter) string {
+func getTempInfo(app *App, key string, r *http.Request, w http.ResponseWriter) string {
 	session, err := app.sessionStore.Get(r, "t")
 	if err != nil {
 		return ""

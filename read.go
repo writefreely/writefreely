@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -49,20 +49,20 @@ type readPublication struct {
 	TotalPages  int
 }
 
-func initLocalTimeline(app *app) {
+func initLocalTimeline(app *App) {
 	app.timeline = &localTimeline{
 		postsPerPage: tlPostsPerPage,
-		m:            memo.New(app.db.FetchPublicPosts, 10*time.Minute),
+		m:            memo.New(app.FetchPublicPosts, 10*time.Minute),
 	}
 }
 
 // satisfies memo.Func
-func (db *datastore) FetchPublicPosts() (interface{}, error) {
+func (app *App) FetchPublicPosts() (interface{}, error) {
 	// Finds all public posts and posts in a public collection published during the owner's active subscription period and within the last 3 months
-	rows, err := db.Query(`SELECT p.id, alias, c.title, p.slug, p.title, p.content, p.text_appearance, p.language, p.rtl, p.created, p.updated
+	rows, err := app.db.Query(`SELECT p.id, alias, c.title, p.slug, p.title, p.content, p.text_appearance, p.language, p.rtl, p.created, p.updated
 	FROM collections c
 	LEFT JOIN posts p ON p.collection_id = c.id
-	WHERE c.privacy = 1 AND (p.created >= ` + db.dateSub(3, "month") + ` AND p.created <= ` + db.now() + ` AND pinned_position IS NULL)
+	WHERE c.privacy = 1 AND (p.created >= ` + app.db.dateSub(3, "month") + ` AND p.created <= ` + app.db.now() + ` AND pinned_position IS NULL)
 	ORDER BY p.created DESC`)
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)
@@ -82,6 +82,8 @@ func (db *datastore) FetchPublicPosts() (interface{}, error) {
 			log.Error("[READ] Unable to scan row, skipping: %v", err)
 			continue
 		}
+		c.hostName = app.cfg.App.Host
+
 		isCollectionPost := alias.Valid
 		if isCollectionPost {
 			c.Alias = alias.String
@@ -108,7 +110,7 @@ func (db *datastore) FetchPublicPosts() (interface{}, error) {
 	return posts, nil
 }
 
-func viewLocalTimelineAPI(app *app, w http.ResponseWriter, r *http.Request) error {
+func viewLocalTimelineAPI(app *App, w http.ResponseWriter, r *http.Request) error {
 	updateTimelineCache(app.timeline)
 
 	skip, _ := strconv.Atoi(r.FormValue("skip"))
@@ -121,7 +123,7 @@ func viewLocalTimelineAPI(app *app, w http.ResponseWriter, r *http.Request) erro
 	return impart.WriteSuccess(w, posts, http.StatusOK)
 }
 
-func viewLocalTimeline(app *app, w http.ResponseWriter, r *http.Request) error {
+func viewLocalTimeline(app *App, w http.ResponseWriter, r *http.Request) error {
 	if !app.cfg.App.LocalTimeline {
 		return impart.HTTPError{http.StatusNotFound, "Page doesn't exist."}
 	}
@@ -153,7 +155,7 @@ func updateTimelineCache(tl *localTimeline) {
 	}
 }
 
-func showLocalTimeline(app *app, w http.ResponseWriter, r *http.Request, page int, author, tag string) error {
+func showLocalTimeline(app *App, w http.ResponseWriter, r *http.Request, page int, author, tag string) error {
 	updateTimelineCache(app.timeline)
 
 	pl := len(*(app.timeline.posts))
@@ -226,7 +228,7 @@ func (c *readPublication) PrevPageURL(n int) string {
 
 // handlePostIDRedirect handles a route where a post ID is given and redirects
 // the user to the canonical post URL.
-func handlePostIDRedirect(app *app, w http.ResponseWriter, r *http.Request) error {
+func handlePostIDRedirect(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	postID := vars["post"]
 	p, err := app.db.GetPost(postID, 0)
@@ -244,12 +246,13 @@ func handlePostIDRedirect(app *app, w http.ResponseWriter, r *http.Request) erro
 	if err != nil {
 		return err
 	}
+	c.hostName = app.cfg.App.Host
 
 	// Retrieve collection information and send user to canonical URL
 	return impart.HTTPError{http.StatusFound, c.CanonicalURL() + p.Slug.String}
 }
 
-func viewLocalTimelineFeed(app *app, w http.ResponseWriter, req *http.Request) error {
+func viewLocalTimelineFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 	if !app.cfg.App.LocalTimeline {
 		return impart.HTTPError{http.StatusNotFound, "Page doesn't exist."}
 	}

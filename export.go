@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -99,7 +99,7 @@ func exportPostsZip(u *User, posts *[]PublicPost) []byte {
 	return b.Bytes()
 }
 
-func compileFullExport(app *app, u *User) *ExportUser {
+func compileFullExport(app *App, u *User) *ExportUser {
 	exportUser := &ExportUser{
 		User: u,
 	}
