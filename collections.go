@@ -54,7 +54,8 @@ type (
 		PublicOwner bool           `datastore:"public_owner" json:"-"`
 		URL         string         `json:"url,omitempty"`
 
-		db *datastore
+		db       *datastore
+		hostName string
 	}
 	CollectionObj struct {
 		Collection
@@ -211,10 +212,10 @@ func (c *Collection) DisplayCanonicalURL() string {
 
 func (c *Collection) RedirectingCanonicalURL(isRedir bool) string {
 	if isSingleUser {
-		return hostName + "/"
+		return c.hostName + "/"
 	}
 
-	return fmt.Sprintf("%s/%s/", hostName, c.Alias)
+	return fmt.Sprintf("%s/%s/", c.hostName, c.Alias)
 }
 
 // PrevPageURL provides a full URL for the previous page of collection posts,
@@ -300,11 +301,11 @@ func (c *Collection) AvatarURL() string {
 	if !isAvatarChar(fl) {
 		return ""
 	}
-	return hostName + "/img/avatars/" + fl + ".png"
+	return c.hostName + "/img/avatars/" + fl + ".png"
 }
 
 func (c *Collection) FederatedAPIBase() string {
-	return hostName + "/"
+	return c.hostName + "/"
 }
 
 func (c *Collection) FederatedAccount() string {
@@ -434,6 +435,8 @@ func fetchCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	c.hostName = app.cfg.App.Host
+
 	// Redirect users who aren't requesting JSON
 	reqJSON := IsJSON(r.Header.Get("Content-Type"))
 	if !reqJSON {
@@ -475,6 +478,7 @@ func fetchCollectionPosts(app *App, w http.ResponseWriter, r *http.Request) erro
 	if err != nil {
 		return err
 	}
+	c.hostName = app.cfg.App.Host
 
 	// Check permissions
 	userID, err := apiCheckCollectionPermissions(app, r, c)
@@ -600,6 +604,7 @@ func processCollectionPermissions(app *App, cr *collectionReq, u *User, w http.R
 		}
 		return nil, err
 	}
+	c.hostName = app.cfg.App.Host
 
 	// Update CollectionRequest to reflect owner status
 	cr.isCollOwner = u != nil && u.ID == c.OwnerID

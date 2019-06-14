@@ -996,6 +996,7 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		if err != nil {
 			return err
 		}
+		coll.hostName = app.cfg.App.Host
 		_, err = apiCheckCollectionPermissions(app, r, coll)
 		if err != nil {
 			return err
@@ -1056,7 +1057,7 @@ func (p *Post) processPost() PublicPost {
 
 func (p *PublicPost) CanonicalURL() string {
 	if p.Collection == nil || p.Collection.Alias == "" {
-		return hostName + "/" + p.ID
+		return p.Collection.hostName + "/" + p.ID
 	}
 	return p.Collection.CanonicalURL() + p.Slug.String
 }
@@ -1087,7 +1088,7 @@ func (p *PublicPost) ActivityObject() *activitystreams.Object {
 		if isSingleUser {
 			tagBaseURL = p.Collection.CanonicalURL() + "tag:"
 		} else {
-			tagBaseURL = fmt.Sprintf("%s/%s/tag:", hostName, p.Collection.Alias)
+			tagBaseURL = fmt.Sprintf("%s/%s/tag:", p.Collection.hostName, p.Collection.Alias)
 		}
 		for _, t := range p.Tags {
 			o.Tag = append(o.Tag, activitystreams.Tag{
@@ -1244,6 +1245,7 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 		}
 		return err
 	}
+	c.hostName = app.cfg.App.Host
 
 	// Check collection permissions
 	if c.IsPrivate() && (u == nil || u.ID != c.OwnerID) {

@@ -57,6 +57,7 @@ func handleViewSitemap(app *App, w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	c.hostName = app.cfg.App.Host
 
 	if !isSubdomain {
 		pre += alias + "/"

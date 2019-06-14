@@ -57,9 +57,6 @@ var (
 	softwareVer = "0.9.0"
 
 	// DEPRECATED VARS
-	// TODO: pass app.cfg into GetCollection* calls so we can get these values
-	// from Collection methods and we no longer need these.
-	hostName     string
 	isSingleUser bool
 )
 
@@ -338,7 +335,6 @@ func Initialize(apper Apper, debug bool) (*App, error) {
 func Serve(app *App, r *mux.Router) {
 	log.Info("Going to serve...")
 
-	hostName = app.cfg.App.Host
 	isSingleUser = app.cfg.App.SingleUser
 	app.cfg.Server.Dev = debugging
 

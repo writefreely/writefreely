@@ -34,6 +34,7 @@ func ViewFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 	if err != nil {
 		return nil
 	}
+	c.hostName = app.cfg.App.Host
 
 	if c.IsPrivate() || c.IsProtected() {
 		return ErrCollectionNotFound

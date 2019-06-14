@@ -52,17 +52,17 @@ type readPublication struct {
 func initLocalTimeline(app *App) {
 	app.timeline = &localTimeline{
 		postsPerPage: tlPostsPerPage,
-		m:            memo.New(app.db.FetchPublicPosts, 10*time.Minute),
+		m:            memo.New(app.FetchPublicPosts, 10*time.Minute),
 	}
 }
 
 // satisfies memo.Func
-func (db *datastore) FetchPublicPosts() (interface{}, error) {
+func (app *App) FetchPublicPosts() (interface{}, error) {
 	// Finds all public posts and posts in a public collection published during the owner's active subscription period and within the last 3 months
-	rows, err := db.Query(`SELECT p.id, alias, c.title, p.slug, p.title, p.content, p.text_appearance, p.language, p.rtl, p.created, p.updated
+	rows, err := app.db.Query(`SELECT p.id, alias, c.title, p.slug, p.title, p.content, p.text_appearance, p.language, p.rtl, p.created, p.updated
 	FROM collections c
 	LEFT JOIN posts p ON p.collection_id = c.id
-	WHERE c.privacy = 1 AND (p.created >= ` + db.dateSub(3, "month") + ` AND p.created <= ` + db.now() + ` AND pinned_position IS NULL)
+	WHERE c.privacy = 1 AND (p.created >= ` + app.db.dateSub(3, "month") + ` AND p.created <= ` + app.db.now() + ` AND pinned_position IS NULL)
 	ORDER BY p.created DESC`)
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)
@@ -82,6 +82,8 @@ func (db *datastore) FetchPublicPosts() (interface{}, error) {
 			log.Error("[READ] Unable to scan row, skipping: %v", err)
 			continue
 		}
+		c.hostName = app.cfg.App.Host
+
 		isCollectionPost := alias.Valid
 		if isCollectionPost {
 			c.Alias = alias.String
@@ -244,6 +246,7 @@ func handlePostIDRedirect(app *App, w http.ResponseWriter, r *http.Request) erro
 	if err != nil {
 		return err
 	}
+	c.hostName = app.cfg.App.Host
 
 	// Retrieve collection information and send user to canonical URL
 	return impart.HTTPError{http.StatusFound, c.CanonicalURL() + p.Slug.String}

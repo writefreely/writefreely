@@ -80,6 +80,7 @@ func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return err
 	}
+	c.hostName = app.cfg.App.Host
 
 	p := c.PersonObject()
 
@@ -104,6 +105,7 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		return err
 	}
+	c.hostName = app.cfg.App.Host
 
 	if app.cfg.App.SingleUser {
 		if alias != c.Alias {
@@ -156,6 +158,7 @@ func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return err
 	}
+	c.hostName = app.cfg.App.Host
 
 	accountRoot := c.FederatedAccount()
 
@@ -201,6 +204,7 @@ func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return err
 	}
+	c.hostName = app.cfg.App.Host
 
 	accountRoot := c.FederatedAccount()
 
@@ -234,6 +238,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		// TODO: return Reject?
 		return err
 	}
+	c.hostName = app.cfg.App.Host
 
 	if debugging {
 		dump, err := httputil.DumpRequest(r, true)
@@ -349,7 +354,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			log.Error("No to! %v", err)
 			return
 		}
-		err = makeActivityPost(p, fullActor.Inbox, am)
+		err = makeActivityPost(app.cfg.App.Host, p, fullActor.Inbox, am)
 		if err != nil {
 			log.Error("Unable to make activity POST: %v", err)
 			return
@@ -423,7 +428,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 	return nil
 }
 
-func makeActivityPost(p *activitystreams.Person, url string, m interface{}) error {
+func makeActivityPost(hostName string, p *activitystreams.Person, url string, m interface{}) error {
 	log.Info("POST %s", url)
 	b, err := json.Marshal(m)
 	if err != nil {
@@ -477,7 +482,7 @@ func makeActivityPost(p *activitystreams.Person, url string, m interface{}) erro
 	return nil
 }
 
-func resolveIRI(url string) ([]byte, error) {
+func resolveIRI(hostName, url string) ([]byte, error) {
 	log.Info("GET %s", url)
 
 	r, _ := http.NewRequest("GET", url, nil)
@@ -547,7 +552,7 @@ func deleteFederatedPost(app *App, p *PublicPost, collID int64) error {
 			na.CC = append(na.CC, f)
 		}
 
-		err = makeActivityPost(actor, si, activitystreams.NewDeleteActivity(na))
+		err = makeActivityPost(app.cfg.App.Host, actor, si, activitystreams.NewDeleteActivity(na))
 		if err != nil {
 			log.Error("Couldn't delete post! %v", err)
 		}
@@ -601,7 +606,7 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			activity.To = na.To
 			activity.CC = na.CC
 		}
-		err = makeActivityPost(actor, si, activity)
+		err = makeActivityPost(app.cfg.App.Host, actor, si, activity)
 		if err != nil {
 			log.Error("Couldn't post! %v", err)
 		}
@@ -632,7 +637,7 @@ func getActor(app *App, actorIRI string) (*activitystreams.Person, *RemoteUser, 
 			if iErr.Status == http.StatusNotFound {
 				// Fetch remote actor
 				log.Info("Not found; fetching actor %s remotely", actorIRI)
-				actorResp, err := resolveIRI(actorIRI)
+				actorResp, err := resolveIRI(app.cfg.App.Host, actorIRI)
 				if err != nil {
 					log.Error("Unable to get actor! %v", err)
 					return nil, nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't fetch actor."}
