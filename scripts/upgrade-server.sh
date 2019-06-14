@@ -29,7 +29,7 @@ if [[ `id -u` -ne 0 ]]; then
 fi
 
 # go ahead and check for the latest release on linux
-echo "Checking for updates.."
+echo "Checking for updates..."
 
 url=`curl -s https://api.github.com/repos/writeas/writefreely/releases/latest | grep 'browser_' | grep linux | cut -d\" -f4`
 
@@ -59,37 +59,37 @@ tempdir=$(mktemp -d)
 
 
 if [[ ${lv[0]} -gt ${cv[0]} ]]; then
-	echo "New major version"
-	echo "Downloading.."
+	echo "New major version available."
+	echo "Downloading..."
 	`wget -P $tempdir -q --show-progress $url`
 elif [[ ${lv[0]} -eq ${cv[0]} ]] && [[ ${lv[1]} -gt ${cv[1]} ]]; then
-	echo "New minor version"
-	echo "Downloading.."
+	echo "New minor version available."
+	echo "Downloading..."
 	`wget -P $tempdir -q --show-progress $url`
 elif [[ ${lv[2]} -gt ${cv[2]} ]]; then
-	echo "New patch version"
-	echo "Downloading.."
+	echo "New patch version available."
+	echo "Downloading..."
 	`wget -P $tempdir -q --show-progress $url`
 else
-	echo "Nothing to change"
+	echo "Up to date."
 	exit 0
 fi
 
 filename=${parts[-1]}
 
 # extract
-echo "Extracing files.."
+echo "Extracting files..."
 tar -zxf $tempdir/$filename -C $tempdir
 
 # copy files
-echo "Copying files.."
+echo "Copying files..."
 cp -r $tempdir/{pages,static,templates,writefreely} .
 
 # restart service
-echo "Restarting writefreely systemd service.."
+echo "Restarting writefreely systemd service..."
 if `systemctl restart writefreely`; then
 	echo "Success, version has been upgraded to $latest."
 else
-	echo "Upgrade complete, but failed to restart service"
+	echo "Upgrade complete, but failed to restart service."
 	exit 1
 fi
