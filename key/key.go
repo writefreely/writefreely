@@ -27,6 +27,7 @@ type Keychain struct {
 // skipping any that already exist.
 func (keys *Keychain) GenerateKeys() error {
 	// Generate keys only if they don't already exist
+	// TODO: use something like https://github.com/hashicorp/go-multierror to return errors
 	var err, keyErrs error
 	if len(keys.EmailKey) == 0 {
 		keys.EmailKey, err = GenerateBytes(EncKeysBytes)

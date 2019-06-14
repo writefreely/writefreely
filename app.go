@@ -496,6 +496,7 @@ func GenerateKeyFiles(app *App) error {
 
 	// Generate keys
 	initKeyPaths(app)
+	// TODO: use something like https://github.com/hashicorp/go-multierror to return errors
 	var keyErrs error
 	err := generateKey(emailKeyPath)
 	if err != nil {
