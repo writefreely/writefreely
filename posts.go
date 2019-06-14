@@ -14,6 +14,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"html/template"
+	"net/http"
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/gorilla/mux"
 	"github.com/guregu/null"
 	"github.com/guregu/null/zero"
@@ -31,11 +37,6 @@ import (
 	"github.com/writeas/web-core/tags"
 	"github.com/writeas/writefreely/page"
 	"github.com/writeas/writefreely/parse"
-	"html/template"
-	"net/http"
-	"regexp"
-	"strings"
-	"time"
 )
 
 const (
@@ -67,7 +68,8 @@ type (
 	}
 
 	AuthenticatedPost struct {
-		ID string `json:"id" schema:"id"`
+		ID  string `json:"id" schema:"id"`
+		Web bool   `json:"web" schema:"web"`
 		*SubmittedPost
 	}
 
@@ -623,6 +625,10 @@ func existingPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
+	if p.Web {
+		p.IsRTL.Valid = true
+	}
+
 	if p.SubmittedPost == nil {
 		return ErrPostNoUpdatableVals
 	}
@@ -732,7 +738,24 @@ func deletePost(app *App, w http.ResponseWriter, r *http.Request) error {
 	var collID sql.NullInt64
 	var coll *Collection
 	var pp *PublicPost
-	if accessToken != "" || u != nil {
+	if editToken != "" {
+		// TODO: SELECT owner_id, as well, and return appropriate error if NULL instead of running two queries
+		var dummy int64
+		err = app.db.QueryRow("SELECT 1 FROM posts WHERE id = ?", friendlyID).Scan(&dummy)
+		switch {
+		case err == sql.ErrNoRows:
+			return impart.HTTPError{http.StatusNotFound, "Post not found."}
+		}
+		err = app.db.QueryRow("SELECT 1 FROM posts WHERE id = ? AND owner_id IS NULL", friendlyID).Scan(&dummy)
+		switch {
+		case err == sql.ErrNoRows:
+			// Post already has an owner. This could provide a bad experience
+			// for the user, but it's more important to ensure data isn't lost
+			// unexpectedly. So prevent deletion via token.
+			return impart.HTTPError{http.StatusConflict, "This post belongs to some user (hopefully yours). Please log in and delete it from that user's account."}
+		}
+		res, err = app.db.Exec("DELETE FROM posts WHERE id = ? AND modify_token = ? AND owner_id IS NULL", friendlyID, editToken)
+	} else if accessToken != "" || u != nil {
 		// Caller provided some way to authenticate; assume caller expects the
 		// post to be deleted based on a specific post owner, thus we should
 		// return corresponding errors.
@@ -780,26 +803,7 @@ func deletePost(app *App, w http.ResponseWriter, r *http.Request) error {
 			res, err = t.Exec("DELETE FROM posts WHERE id = ? AND owner_id = ?", friendlyID, ownerID)
 		}
 	} else {
-		if editToken == "" {
-			return impart.HTTPError{http.StatusBadRequest, "No authenticated user or post token given."}
-		}
-
-		// TODO: SELECT owner_id, as well, and return appropriate error if NULL instead of running two queries
-		var dummy int64
-		err = app.db.QueryRow("SELECT 1 FROM posts WHERE id = ?", friendlyID).Scan(&dummy)
-		switch {
-		case err == sql.ErrNoRows:
-			return impart.HTTPError{http.StatusNotFound, "Post not found."}
-		}
-		err = app.db.QueryRow("SELECT 1 FROM posts WHERE id = ? AND owner_id IS NULL", friendlyID).Scan(&dummy)
-		switch {
-		case err == sql.ErrNoRows:
-			// Post already has an owner. This could provide a bad experience
-			// for the user, but it's more important to ensure data isn't lost
-			// unexpectedly. So prevent deletion via token.
-			return impart.HTTPError{http.StatusConflict, "This post belongs to some user (hopefully yours). Please log in and delete it from that user's account."}
-		}
-		res, err = app.db.Exec("DELETE FROM posts WHERE id = ? AND modify_token = ? AND owner_id IS NULL", friendlyID, editToken)
+		return impart.HTTPError{http.StatusBadRequest, "No authenticated user or post token given."}
 	}
 	if err != nil {
 		return err

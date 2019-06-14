@@ -14,9 +14,10 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/csv"
-	"github.com/writeas/web-core/log"
 	"strings"
 	"time"
+
+	"github.com/writeas/web-core/log"
 )
 
 func exportPostsCSV(u *User, posts *[]PublicPost) []byte {
@@ -37,7 +38,7 @@ func exportPostsCSV(u *User, posts *[]PublicPost) []byte {
 	w := csv.NewWriter(&b)
 	w.WriteAll(r) // calls Flush internally
 	if err := w.Error(); err != nil {
-		log.Info("error writing csv:", err)
+		log.Info("error writing csv: %v", err)
 	}
 
 	return b.Bytes()
