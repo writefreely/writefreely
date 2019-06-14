@@ -84,5 +84,9 @@ cp -r $tempdir/{pages,static,templates,writefreely} .
 
 # restart service
 echo "Restarting writefreely systemd service.."
-`systemctl restart writefreely`
-echo "Done, version has been upgraded to $latest."
+if `systemctl restart writefreely`; then
+	echo "Success, version has been upgraded to $latest."
+else
+	echo "Upgrade complete, but failed to restart service"
+	exit 1
+fi
