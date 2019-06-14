@@ -17,6 +17,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"strconv"
+	"time"
+
 	"github.com/gorilla/mux"
 	"github.com/writeas/activity/streams"
 	"github.com/writeas/httpsig"
@@ -25,12 +32,6 @@ import (
 	"github.com/writeas/web-core/activitypub"
 	"github.com/writeas/web-core/activitystreams"
 	"github.com/writeas/web-core/log"
-	"io/ioutil"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
-	"strconv"
-	"time"
 )
 
 const (
