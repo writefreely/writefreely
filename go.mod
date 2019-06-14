@@ -32,6 +32,7 @@ require (
 	github.com/guregu/null v3.4.0+incompatible
 	github.com/ikeikeikeike/go-sitemap-generator v1.0.1
 	github.com/imdario/mergo v0.3.7 // indirect
+	github.com/jteeuwen/go-bindata v3.0.7+incompatible // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/kylemcc/twitter-text-go v0.0.0-20180726194232-7f582f6736ec
 	github.com/lunixbochs/vtclean v1.0.0 // indirect

@@ -113,7 +113,7 @@ lib-assets : generate
 
 generate :
 	@hash go-bindata > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u github.com/jteeuwen/go-bindata/...; \
+		$(GOGET) -u github.com/jteeuwen/go-bindata/go-bindata; \
 	fi
 
 $(TMPBIN):
