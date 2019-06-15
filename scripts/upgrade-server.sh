@@ -1,23 +1,23 @@
 #! /bin/bash
 ###############################################################################
-##											writefreely update script														 ##
-##																																					 ##
-##		WARNING: running this script will overwrite any modifed assets or 		 ##
-##		template files. If you have any custom changes to these files you 		 ##
-##		should back them up FIRST.																						 ##
-##																																					 ##
-##		This must be run from the web application root directory							 ##
-##		i.e. /var/www/writefreely, and operates under the assumption that you  ##
-##		have not installed the binary `writefreely` in another location.			 ##
+##			writefreely update script			     ##
+##								 	     ##
+##	WARNING: running this script will overwrite any modifed assets or    ##
+##	template files. If you have any custom changes to these files you    ##
+##	should back them up FIRST.					     ##
+##									     ##
+##	This must be run from the web application root directory	     ##
+##	i.e. /var/www/writefreely, and operates under the assumption that you##
+##	have not installed the binary `writefreely` in another location.     ##
 ###############################################################################
 #
-#			Copyright © 2019 A Bunch Tell LLC.
+#	Copyright © 2019 A Bunch Tell LLC.
 #
-#			This file is part of WriteFreely.
+#	This file is part of WriteFreely.
 #
-#			WriteFreely is free software: you can redistribute it and/or modify
-#			it under the terms of the GNU Affero General Public License, included
-#			in the LICENSE file in this source code package.
+#	WriteFreely is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU Affero General Public License, included
+#	in the LICENSE file in this source code package.
 #
 
 
@@ -35,12 +35,13 @@ url=`curl -s https://api.github.com/repos/writeas/writefreely/releases/latest | 
 
 # check current version
 
-current=`./writefreely -v`
-if [ -z "$current" ]; then
+bin_output=`./writefreely -v`
+if [ -z "$bin_output" ]; then
 	exit 1
 fi
 
-echo "Current version is v${current:(-5):5}"
+current=${bin_output:12:5}
+echo "Current version is v$current"
 
 # grab latest version number
 IFS='/'
@@ -51,7 +52,7 @@ echo "Latest release is $latest"
 
 
 IFS='.'
-read -ra cv <<< "${current:(-5):5}"
+read -ra cv <<< "$current"
 read -ra lv <<< "${latest#v}"
 
 IFS=' '
