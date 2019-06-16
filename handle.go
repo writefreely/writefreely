@@ -23,17 +23,44 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
+	"github.com/writeas/writefreely/config"
 	"github.com/writeas/writefreely/page"
 )
 
+// UserLevel represents the required user level for accessing an endpoint
 type UserLevel int
 
 const (
-	UserLevelNone         UserLevel = iota // user or not -- ignored
-	UserLevelOptional                      // user or not -- object fetched if user
-	UserLevelNoneRequired                  // non-user (required)
-	UserLevelUser                          // user (required)
+	UserLevelNoneType         UserLevel = iota // user or not -- ignored
+	UserLevelOptionalType                      // user or not -- object fetched if user
+	UserLevelNoneRequiredType                  // non-user (required)
+	UserLevelUserType                          // user (required)
 )
+
+func UserLevelNone(cfg *config.Config) UserLevel {
+	return UserLevelNoneType
+}
+
+func UserLevelOptional(cfg *config.Config) UserLevel {
+	return UserLevelOptionalType
+}
+
+func UserLevelNoneRequired(cfg *config.Config) UserLevel {
+	return UserLevelNoneRequiredType
+}
+
+func UserLevelUser(cfg *config.Config) UserLevel {
+	return UserLevelUserType
+}
+
+// UserLevelReader returns the permission level required for any route where
+// users can read published content.
+func UserLevelReader(cfg *config.Config) UserLevel {
+	if cfg.App.Private {
+		return UserLevelUserType
+	}
+	return UserLevelOptionalType
+}
 
 type (
 	handlerFunc          func(app *App, w http.ResponseWriter, r *http.Request) error
@@ -41,6 +68,7 @@ type (
 	userApperHandlerFunc func(apper Apper, u *User, w http.ResponseWriter, r *http.Request) error
 	dataHandlerFunc      func(app *App, w http.ResponseWriter, r *http.Request) ([]byte, string, error)
 	authFunc             func(app *App, r *http.Request) (*User, error)
+	UserLevelFunc        func(cfg *config.Config) UserLevel
 )
 
 type Handler struct {
@@ -307,7 +335,7 @@ func (h *Handler) Page(n string) http.HandlerFunc {
 	}, UserLevelOptional)
 }
 
-func (h *Handler) WebErrors(f handlerFunc, ul UserLevel) http.HandlerFunc {
+func (h *Handler) WebErrors(f handlerFunc, ul UserLevelFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// TODO: factor out this logic shared with Web()
 		h.handleHTTPError(w, r, func() error {
@@ -331,21 +359,21 @@ func (h *Handler) WebErrors(f handlerFunc, ul UserLevel) http.HandlerFunc {
 
 			var session *sessions.Session
 			var err error
-			if ul != UserLevelNone {
+			if ul(h.app.App().cfg) != UserLevelNoneType {
 				session, err = h.sessionStore.Get(r, cookieName)
-				if err != nil && (ul == UserLevelNoneRequired || ul == UserLevelUser) {
+				if err != nil && (ul(h.app.App().cfg) == UserLevelNoneRequiredType || ul(h.app.App().cfg) == UserLevelUserType) {
 					// Cookie is required, but we can ignore this error
 					log.Error("Handler: Unable to get session (for user permission %d); ignoring: %v", ul, err)
 				}
 
 				_, gotUser := session.Values[cookieUserVal].(*User)
-				if ul == UserLevelNoneRequired && gotUser {
+				if ul(h.app.App().cfg) == UserLevelNoneRequiredType && gotUser {
 					to := correctPageFromLoginAttempt(r)
 					log.Info("Handler: Required NO user, but got one. Redirecting to %s", to)
 					err := impart.HTTPError{http.StatusFound, to}
 					status = err.Status
 					return err
-				} else if ul == UserLevelUser && !gotUser {
+				} else if ul(h.app.App().cfg) == UserLevelUserType && !gotUser {
 					log.Info("Handler: Required a user, but DIDN'T get one. Sending not logged in.")
 					err := ErrNotLoggedIn
 					status = err.Status
@@ -380,9 +408,18 @@ func (h *Handler) WebErrors(f handlerFunc, ul UserLevel) http.HandlerFunc {
 	}
 }
 
+func (h *Handler) CollectionPostOrStatic(w http.ResponseWriter, r *http.Request) {
+	if strings.Contains(r.URL.Path, ".") && !isRaw(r) {
+		// Serve static file
+		h.app.App().shttp.ServeHTTP(w, r)
+	}
+
+	h.Web(viewCollectionPost, UserLevelReader)(w, r)
+}
+
 // Web handles requests made in the web application. This provides user-
 // friendly HTML pages and actions that work in the browser.
-func (h *Handler) Web(f handlerFunc, ul UserLevel) http.HandlerFunc {
+func (h *Handler) Web(f handlerFunc, ul UserLevelFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		h.handleHTTPError(w, r, func() error {
 			var status int
@@ -404,21 +441,21 @@ func (h *Handler) Web(f handlerFunc, ul UserLevel) http.HandlerFunc {
 				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
 			}()
 
-			if ul != UserLevelNone {
+			if ul(h.app.App().cfg) != UserLevelNoneType {
 				session, err := h.sessionStore.Get(r, cookieName)
-				if err != nil && (ul == UserLevelNoneRequired || ul == UserLevelUser) {
+				if err != nil && (ul(h.app.App().cfg) == UserLevelNoneRequiredType || ul(h.app.App().cfg) == UserLevelUserType) {
 					// Cookie is required, but we can ignore this error
 					log.Error("Handler: Unable to get session (for user permission %d); ignoring: %v", ul, err)
 				}
 
 				_, gotUser := session.Values[cookieUserVal].(*User)
-				if ul == UserLevelNoneRequired && gotUser {
+				if ul(h.app.App().cfg) == UserLevelNoneRequiredType && gotUser {
 					to := correctPageFromLoginAttempt(r)
 					log.Info("Handler: Required NO user, but got one. Redirecting to %s", to)
 					err := impart.HTTPError{http.StatusFound, to}
 					status = err.Status
 					return err
-				} else if ul == UserLevelUser && !gotUser {
+				} else if ul(h.app.App().cfg) == UserLevelUserType && !gotUser {
 					log.Info("Handler: Required a user, but DIDN'T get one. Sending not logged in.")
 					err := ErrNotLoggedIn
 					status = err.Status
@@ -478,7 +515,7 @@ func (h *Handler) All(f handlerFunc) http.HandlerFunc {
 	}
 }
 
-func (h *Handler) Download(f dataHandlerFunc, ul UserLevel) http.HandlerFunc {
+func (h *Handler) Download(f dataHandlerFunc, ul UserLevelFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		h.handleHTTPError(w, r, func() error {
 			var status int
@@ -523,27 +560,27 @@ func (h *Handler) Download(f dataHandlerFunc, ul UserLevel) http.HandlerFunc {
 	}
 }
 
-func (h *Handler) Redirect(url string, ul UserLevel) http.HandlerFunc {
+func (h *Handler) Redirect(url string, ul UserLevelFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		h.handleHTTPError(w, r, func() error {
 			start := time.Now()
 
 			var status int
-			if ul != UserLevelNone {
+			if ul(h.app.App().cfg) != UserLevelNoneType {
 				session, err := h.sessionStore.Get(r, cookieName)
-				if err != nil && (ul == UserLevelNoneRequired || ul == UserLevelUser) {
+				if err != nil && (ul(h.app.App().cfg) == UserLevelNoneRequiredType || ul(h.app.App().cfg) == UserLevelUserType) {
 					// Cookie is required, but we can ignore this error
 					log.Error("Handler: Unable to get session (for user permission %d); ignoring: %v", ul, err)
 				}
 
 				_, gotUser := session.Values[cookieUserVal].(*User)
-				if ul == UserLevelNoneRequired && gotUser {
+				if ul(h.app.App().cfg) == UserLevelNoneRequiredType && gotUser {
 					to := correctPageFromLoginAttempt(r)
 					log.Info("Handler: Required NO user, but got one. Redirecting to %s", to)
 					err := impart.HTTPError{http.StatusFound, to}
 					status = err.Status
 					return err
-				} else if ul == UserLevelUser && !gotUser {
+				} else if ul(h.app.App().cfg) == UserLevelUserType && !gotUser {
 					log.Info("Handler: Required a user, but DIDN'T get one. Sending not logged in.")
 					err := ErrNotLoggedIn
 					status = err.Status

@@ -76,7 +76,9 @@ type (
 		// Federation
 		Federation  bool `ini:"federation"`
 		PublicStats bool `ini:"public_stats"`
-		Private     bool `ini:"private"`
+
+		// Access
+		Private bool `ini:"private"`
 
 		// Additional functions
 		LocalTimeline bool   `ini:"local_timeline"`

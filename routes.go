@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/writeas/go-webfinger"
 	"github.com/writeas/web-core/log"
+	"github.com/writeas/writefreely/config"
 	"github.com/writefreely/go-nodeinfo"
 	"net/http"
 	"path/filepath"
@@ -152,8 +153,13 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	write.HandleFunc("/login", handler.Web(viewLogin, UserLevelNoneRequired))
 	write.HandleFunc("/invite/{code}", handler.Web(handleViewInvite, UserLevelNoneRequired)).Methods("GET")
 	// TODO: show a reader-specific 404 page if the function is disabled
-	// TODO: change this based on configuration for either public or private-to-this-instance
-	readPerm := UserLevelOptional
+	readPerm := func(cfg *config.Config) UserLevel {
+		if cfg.App.Private {
+			// Private instance, so only allow users to access Reader routes
+			return UserLevelUserType
+		}
+		return UserLevelOptionalType
+	}
 
 	write.HandleFunc("/read", handler.Web(viewLocalTimeline, readPerm))
 	RouteRead(handler, readPerm, write.PathPrefix("/read").Subrouter())
@@ -173,8 +179,8 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	if apper.App().cfg.App.SingleUser {
 		RouteCollections(handler, write.PathPrefix("/").Subrouter())
 	} else {
-		write.HandleFunc("/{prefix:[@~$!\\-+]}{collection}", handler.Web(handleViewCollection, UserLevelOptional))
-		write.HandleFunc("/{collection}/", handler.Web(handleViewCollection, UserLevelOptional))
+		write.HandleFunc("/{prefix:[@~$!\\-+]}{collection}", handler.Web(handleViewCollection, UserLevelReader))
+		write.HandleFunc("/{collection}/", handler.Web(handleViewCollection, UserLevelReader))
 		RouteCollections(handler, write.PathPrefix("/{prefix:[@~$!\\-+]?}{collection}").Subrouter())
 		// Posts
 	}
@@ -184,19 +190,19 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 }
 
 func RouteCollections(handler *Handler, r *mux.Router) {
-	r.HandleFunc("/page/{page:[0-9]+}", handler.Web(handleViewCollection, UserLevelOptional))
-	r.HandleFunc("/tag:{tag}", handler.Web(handleViewCollectionTag, UserLevelOptional))
-	r.HandleFunc("/tag:{tag}/feed/", handler.Web(ViewFeed, UserLevelOptional))
-	r.HandleFunc("/tags/{tag}", handler.Web(handleViewCollectionTag, UserLevelOptional))
+	r.HandleFunc("/page/{page:[0-9]+}", handler.Web(handleViewCollection, UserLevelReader))
+	r.HandleFunc("/tag:{tag}", handler.Web(handleViewCollectionTag, UserLevelReader))
+	r.HandleFunc("/tag:{tag}/feed/", handler.Web(ViewFeed, UserLevelReader))
+	r.HandleFunc("/tags/{tag}", handler.Web(handleViewCollectionTag, UserLevelReader))
 	r.HandleFunc("/sitemap.xml", handler.All(handleViewSitemap))
 	r.HandleFunc("/feed/", handler.All(ViewFeed))
-	r.HandleFunc("/{slug}", handler.Web(viewCollectionPost, UserLevelOptional))
+	r.HandleFunc("/{slug}", handler.CollectionPostOrStatic)
 	r.HandleFunc("/{slug}/edit", handler.Web(handleViewPad, UserLevelUser))
 	r.HandleFunc("/{slug}/edit/meta", handler.Web(handleViewMeta, UserLevelUser))
-	r.HandleFunc("/{slug}/", handler.Web(handleCollectionPostRedirect, UserLevelOptional)).Methods("GET")
+	r.HandleFunc("/{slug}/", handler.Web(handleCollectionPostRedirect, UserLevelReader)).Methods("GET")
 }
 
-func RouteRead(handler *Handler, readPerm UserLevel, r *mux.Router) {
+func RouteRead(handler *Handler, readPerm UserLevelFunc, r *mux.Router) {
 	r.HandleFunc("/api/posts", handler.Web(viewLocalTimelineAPI, readPerm))
 	r.HandleFunc("/p/{page}", handler.Web(viewLocalTimeline, readPerm))
 	r.HandleFunc("/feed/", handler.Web(viewLocalTimelineFeed, readPerm))

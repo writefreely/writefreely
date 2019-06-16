@@ -1190,6 +1190,16 @@ func getRawCollectionPost(app *App, slug, collAlias string) *RawPost {
 	}
 }
 
+func isRaw(r *http.Request) bool {
+	vars := mux.Vars(r)
+	slug := vars["slug"]
+
+	isJSON := strings.HasSuffix(slug, ".json")
+	isXML := strings.HasSuffix(slug, ".xml")
+	isMarkdown := strings.HasSuffix(slug, ".md")
+	return strings.HasSuffix(slug, ".txt") || isJSON || isXML || isMarkdown
+}
+
 func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	slug := vars["slug"]
@@ -1198,12 +1208,6 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 	isXML := strings.HasSuffix(slug, ".xml")
 	isMarkdown := strings.HasSuffix(slug, ".md")
 	isRaw := strings.HasSuffix(slug, ".txt") || isJSON || isXML || isMarkdown
-
-	if strings.Contains(r.URL.Path, ".") && !isRaw {
-		// Serve static file
-		app.shttp.ServeHTTP(w, r)
-		return nil
-	}
 
 	cr := &collectionReq{}
 	err := processCollectionRequest(cr, vars, w, r)
