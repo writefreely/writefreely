@@ -350,6 +350,7 @@ func handleAdminUpdateSite(app *App, u *User, w http.ResponseWriter, r *http.Req
 func handleAdminUpdateConfig(apper Apper, u *User, w http.ResponseWriter, r *http.Request) error {
 	apper.App().cfg.App.SiteName = r.FormValue("site_name")
 	apper.App().cfg.App.SiteDesc = r.FormValue("site_desc")
+	apper.App().cfg.App.Landing = r.FormValue("landing")
 	apper.App().cfg.App.OpenRegistration = r.FormValue("open_registration") == "on"
 	mul, err := strconv.Atoi(r.FormValue("min_username_len"))
 	if err == nil {

@@ -71,6 +71,8 @@ p.docs {
 			<dd>{{.Config.Host}}</dd>
 			<dt>User Mode</dt>
 			<dd>{{if .Config.SingleUser}}Single user{{else}}Multiple users{{end}}</dd>
+			<dt{{if .Config.SingleUser}} class="invisible"{{end}}>Landing Page</dt>
+			<dd{{if .Config.SingleUser}} class="invisible"{{end}}><input type="text" name="landing" id="landing" class="inline" value="{{.Config.Landing}}" style="width: 14em;" /></dd>
 			<dt{{if .Config.SingleUser}} class="invisible"{{end}}><label for="open_registration">Open Registrations</label></dt>
 			<dd{{if .Config.SingleUser}} class="invisible"{{end}}><input type="checkbox" name="open_registration" id="open_registration" {{if .Config.OpenRegistration}}checked="checked"{{end}} /></dd>
 			<dt><label for="min_username_len">Minimum Username Length</label></dt>
