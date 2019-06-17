@@ -44,7 +44,7 @@
 					<label><input type="radio" name="visibility" id="visibility-unlisted" value="0" {{if .IsUnlisted}}checked="checked"{{end}} />
 						Unlisted
 					</label>
-					<p>This blog is visible to anyone with its link.</p>
+					<p>This blog is visible to {{if .Private}}any registered user on this instance{{else}}anyone with its link{{end}}.</p>
 				</li>
 				<li>
 				<label class="option-text"><input type="radio" name="visibility" id="visibility-private" value="2" {{if .IsPrivate}}checked="checked"{{end}} />
@@ -62,7 +62,7 @@
 					<label class="option-text{{if not .LocalTimeline}} disabled{{end}}"><input type="radio" name="visibility" id="visibility-public" value="1" {{if .IsPublic}}checked="checked"{{end}} {{if not .LocalTimeline}}disabled="disabled"{{end}} />
 						Public
 					</label>
-					{{if .LocalTimeline}}<p>This blog is displayed on the public <a href="/read">reader</a>, and to anyone with its link.</p>
+					{{if .LocalTimeline}}<p>This blog is displayed on the public <a href="/read">reader</a>, and is visible to {{if .Private}}any registered user on this instance{{else}}anyone with its link{{end}}.</p>
 					{{else}}<p>The public reader is currently turned off for this community.</p>{{end}}
 				</li>
 			</ul>
