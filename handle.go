@@ -795,6 +795,34 @@ func (h *Handler) LogHandlerFunc(f http.HandlerFunc) http.HandlerFunc {
 				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
 			}()
 
+			if h.app.App().cfg.App.Private {
+				// This instance is private, so ensure it's being accessed by a valid user
+				// Check if authenticated with an access token
+				_, apiErr := optionalAPIAuth(h.app.App(), r)
+				if apiErr != nil {
+					if err, ok := apiErr.(impart.HTTPError); ok {
+						status = err.Status
+					} else {
+						status = 500
+					}
+
+					if apiErr == ErrNotLoggedIn {
+						// Fall back to web auth since there was no access token given
+						_, err := webAuth(h.app.App(), r)
+						if err != nil {
+							if err, ok := apiErr.(impart.HTTPError); ok {
+								status = err.Status
+							} else {
+								status = 500
+							}
+							return err
+						}
+					} else {
+						return apiErr
+					}
+				}
+			}
+
 			f(w, r)
 
 			return nil
