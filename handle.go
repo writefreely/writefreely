@@ -237,22 +237,49 @@ func (h *Handler) AdminApper(f userApperHandlerFunc) http.HandlerFunc {
 	}
 }
 
+func apiAuth(app *App, r *http.Request) (*User, error) {
+	// Authorize user from Authorization header
+	t := r.Header.Get("Authorization")
+	if t == "" {
+		return nil, ErrNoAccessToken
+	}
+	u := &User{ID: app.db.GetUserID(t)}
+	if u.ID == -1 {
+		return nil, ErrBadAccessToken
+	}
+
+	return u, nil
+}
+
+// optionaAPIAuth is used for endpoints that accept authenticated requests via
+// Authorization header or cookie, unlike apiAuth. It returns a different err
+// in the case where no Authorization header is present.
+func optionalAPIAuth(app *App, r *http.Request) (*User, error) {
+	// Authorize user from Authorization header
+	t := r.Header.Get("Authorization")
+	if t == "" {
+		return nil, ErrNotLoggedIn
+	}
+	u := &User{ID: app.db.GetUserID(t)}
+	if u.ID == -1 {
+		return nil, ErrBadAccessToken
+	}
+
+	return u, nil
+}
+
+func webAuth(app *App, r *http.Request) (*User, error) {
+	u := getUserSession(app, r)
+	if u == nil {
+		return nil, ErrNotLoggedIn
+	}
+	return u, nil
+}
+
 // UserAPI handles requests made in the API by the authenticated user.
 // This provides user-friendly HTML pages and actions that work in the browser.
 func (h *Handler) UserAPI(f userHandlerFunc) http.HandlerFunc {
-	return h.UserAll(false, f, func(app *App, r *http.Request) (*User, error) {
-		// Authorize user from Authorization header
-		t := r.Header.Get("Authorization")
-		if t == "" {
-			return nil, ErrNoAccessToken
-		}
-		u := &User{ID: app.db.GetUserID(t)}
-		if u.ID == -1 {
-			return nil, ErrBadAccessToken
-		}
-
-		return u, nil
-	})
+	return h.UserAll(false, f, apiAuth)
 }
 
 func (h *Handler) UserAll(web bool, f userHandlerFunc, a authFunc) http.HandlerFunc {
@@ -500,6 +527,64 @@ func (h *Handler) All(f handlerFunc) http.HandlerFunc {
 			}()
 
 			// TODO: do any needed authentication
+
+			err := f(h.app.App(), w, r)
+			if err != nil {
+				if err, ok := err.(impart.HTTPError); ok {
+					status = err.Status
+				} else {
+					status = 500
+				}
+			}
+
+			return err
+		}())
+	}
+}
+
+func (h *Handler) AllReader(f handlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		h.handleError(w, r, func() error {
+			status := 200
+			start := time.Now()
+
+			defer func() {
+				if e := recover(); e != nil {
+					log.Error("%s:\n%s", e, debug.Stack())
+					impart.WriteError(w, impart.HTTPError{http.StatusInternalServerError, "Something didn't work quite right."})
+					status = 500
+				}
+
+				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
+			}()
+
+			if h.app.App().cfg.App.Private {
+				// This instance is private, so ensure it's being accessed by a valid user
+				// Check if authenticated with an access token
+				_, apiErr := optionalAPIAuth(h.app.App(), r)
+				if apiErr != nil {
+					if err, ok := apiErr.(impart.HTTPError); ok {
+						status = err.Status
+					} else {
+						status = 500
+					}
+
+					if apiErr == ErrNotLoggedIn {
+						// Fall back to web auth since there was no access token given
+						_, err := webAuth(h.app.App(), r)
+						if err != nil {
+							if err, ok := apiErr.(impart.HTTPError); ok {
+								status = err.Status
+							} else {
+								status = 500
+							}
+							return err
+						}
+					} else {
+						return apiErr
+					}
+				}
+			}
 
 			err := f(h.app.App(), w, r)
 			if err != nil {
