@@ -14,7 +14,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/writeas/go-webfinger"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/config"
 	"github.com/writefreely/go-nodeinfo"
 	"net/http"
 	"path/filepath"
@@ -153,16 +152,8 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	write.HandleFunc("/login", handler.Web(viewLogin, UserLevelNoneRequired))
 	write.HandleFunc("/invite/{code}", handler.Web(handleViewInvite, UserLevelNoneRequired)).Methods("GET")
 	// TODO: show a reader-specific 404 page if the function is disabled
-	readPerm := func(cfg *config.Config) UserLevel {
-		if cfg.App.Private {
-			// Private instance, so only allow users to access Reader routes
-			return UserLevelUserType
-		}
-		return UserLevelOptionalType
-	}
-
-	write.HandleFunc("/read", handler.Web(viewLocalTimeline, readPerm))
-	RouteRead(handler, readPerm, write.PathPrefix("/read").Subrouter())
+	write.HandleFunc("/read", handler.Web(viewLocalTimeline, UserLevelReader))
+	RouteRead(handler, UserLevelReader, write.PathPrefix("/read").Subrouter())
 
 	draftEditPrefix := ""
 	if apper.App().cfg.App.SingleUser {
