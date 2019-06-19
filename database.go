@@ -106,7 +106,7 @@ type writestore interface {
 
 	GetPostsCount(c *CollectionObj, includeFuture bool)
 	GetPosts(c *Collection, page int, includeFuture, forceRecentFirst, includePinned bool) (*[]PublicPost, error)
-	GetPostsTagged(c *Collection, tag string, page int, includeFuture bool) (*[]PublicPost, error)
+	GetPostsTagged(c *Collection, tag string, page int, includeFuture bool, reversed bool) (*[]PublicPost, error)
 
 	GetAPFollowers(c *Collection) (*[]RemoteUser, error)
 	GetAPActorKeys(collectionID int64) ([]byte, []byte)
@@ -1070,7 +1070,7 @@ func (db *datastore) GetPostsCount(c *CollectionObj, includeFuture bool) {
 func (db *datastore) GetPosts(c *Collection, page int, includeFuture, forceRecentFirst, includePinned bool) (*[]PublicPost, error) {
 	collID := c.ID
 
-	cf := c.NewFormat()
+	cf := c.NewFormat(false)
 	order := "DESC"
 	if cf.Ascending() && !forceRecentFirst {
 		order = "ASC"
@@ -1128,10 +1128,10 @@ func (db *datastore) GetPosts(c *Collection, page int, includeFuture, forceRecen
 // given tag.
 // It will return future posts if `includeFuture` is true.
 // TODO: change includeFuture to isOwner, since that's how it's used
-func (db *datastore) GetPostsTagged(c *Collection, tag string, page int, includeFuture bool) (*[]PublicPost, error) {
+func (db *datastore) GetPostsTagged(c *Collection, tag string, page int, includeFuture bool, reversed bool) (*[]PublicPost, error) {
 	collID := c.ID
 
-	cf := c.NewFormat()
+	cf := c.NewFormat(reversed)
 	order := "DESC"
 	if cf.Ascending() {
 		order = "ASC"
