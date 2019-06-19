@@ -437,8 +437,15 @@ func (h *Handler) WebErrors(f handlerFunc, ul UserLevelFunc) http.HandlerFunc {
 
 func (h *Handler) CollectionPostOrStatic(w http.ResponseWriter, r *http.Request) {
 	if strings.Contains(r.URL.Path, ".") && !isRaw(r) {
+		start := time.Now()
+		status := 200
+		defer func() {
+			log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
+		}()
+
 		// Serve static file
 		h.app.App().shttp.ServeHTTP(w, r)
+		return
 	}
 
 	h.Web(viewCollectionPost, UserLevelReader)(w, r)
