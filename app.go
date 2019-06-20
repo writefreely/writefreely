@@ -235,15 +235,14 @@ func Serve() {
 		if *configSections == "" {
 			*configSections = "server db app"
 		}
-		configSectionsArray := strings.Split(*configSections, " ")
-
 		// let's check there aren't any garbage in the list
+		configSectionsArray := strings.Split(*configSections, " ")
 		for _, element := range configSectionsArray {
 			if element != "server" && element != "db" && element != "app" {
 				log.Error("Invalid argument to --sections. Valid arguments are only \"server\", \"db\" and \"app\"")
 			}
 		}
-		d, err := config.Configure(app.cfgFile, configSectionsArray)
+		d, err := config.Configure(app.cfgFile, *configSections)
 		if err != nil {
 			log.Error("Unable to configure: %v", err)
 			os.Exit(1)
