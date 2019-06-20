@@ -24,7 +24,7 @@ type SetupData struct {
 	Config *Config
 }
 
-func Configure(fname string) (*SetupData, error) {
+func Configure(fname string, configSections []string) (*SetupData, error) {
 	data := &SetupData{}
 	var err error
 	if fname == "" {

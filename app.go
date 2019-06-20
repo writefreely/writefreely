@@ -198,6 +198,9 @@ func Serve() {
 	// Setup actions
 	createConfig := flag.Bool("create-config", false, "Creates a basic configuration and exits")
 	doConfig := flag.Bool("config", false, "Run the configuration process")
+	configSections := flag.String("sections", "server db app", "Which sections of the configuration to go through (requires --config), " +
+															   "valid values are any combination of 'server', 'db' and 'app' " +
+															   "example: writefreely --config --sections \"db app\"")
 	genKeys := flag.Bool("gen-keys", false, "Generate encryption and authentication keys")
 	createSchema := flag.Bool("init-db", false, "Initialize app database")
 	migrate := flag.Bool("migrate", false, "Migrate the database")
@@ -229,7 +232,18 @@ func Serve() {
 		}
 		os.Exit(0)
 	} else if *doConfig {
-		d, err := config.Configure(app.cfgFile)
+		if *configSections == "" {
+			*configSections = "server db app"
+		}
+		configSectionsArray := strings.Split(*configSections, " ")
+
+		// let's check there aren't any garbage in the list
+		for _, element := range configSectionsArray {
+			if element != "server" && element != "db" && element != "app" {
+				log.Error("Invalid argument to --sections. Valid arguments are only \"server\", \"db\" and \"app\"")
+			}
+		}
+		d, err := config.Configure(app.cfgFile, configSectionsArray)
 		if err != nil {
 			log.Error("Unable to configure: %v", err)
 			os.Exit(1)
