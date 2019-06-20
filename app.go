@@ -449,19 +449,21 @@ func DoConfig(app *App) {
 		log.Error("Unable to configure: %v", err)
 		os.Exit(1)
 	}
-	if d.User != nil {
-		app.cfg = d.Config
-		connectToDatabase(app)
-		defer shutdown(app)
+	app.cfg = d.Config
+	connectToDatabase(app)
+	defer shutdown(app)
 
-		if !app.db.DatabaseInitialized() {
-			err = adminInitDatabase(app)
-			if err != nil {
-				log.Error(err.Error())
-				os.Exit(1)
-			}
+	if !app.db.DatabaseInitialized() {
+		err = adminInitDatabase(app)
+		if err != nil {
+			log.Error(err.Error())
+			os.Exit(1)
 		}
+	} else {
+		log.Info("Database already initialized.")
+	}
 
+	if d.User != nil {
 		u := &User{
 			Username:   d.User.Username,
 			HashedPass: d.User.HashedPass,
