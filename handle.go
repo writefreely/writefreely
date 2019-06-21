@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -36,16 +36,17 @@ const (
 )
 
 type (
-	handlerFunc     func(app *app, w http.ResponseWriter, r *http.Request) error
-	userHandlerFunc func(app *app, u *User, w http.ResponseWriter, r *http.Request) error
-	dataHandlerFunc func(app *app, w http.ResponseWriter, r *http.Request) ([]byte, string, error)
-	authFunc        func(app *app, r *http.Request) (*User, error)
+	handlerFunc          func(app *App, w http.ResponseWriter, r *http.Request) error
+	userHandlerFunc      func(app *App, u *User, w http.ResponseWriter, r *http.Request) error
+	userApperHandlerFunc func(apper Apper, u *User, w http.ResponseWriter, r *http.Request) error
+	dataHandlerFunc      func(app *App, w http.ResponseWriter, r *http.Request) ([]byte, string, error)
+	authFunc             func(app *App, r *http.Request) (*User, error)
 )
 
 type Handler struct {
 	errors       *ErrorPages
 	sessionStore *sessions.CookieStore
-	app          *app
+	app          Apper
 }
 
 // ErrorPages hold template HTML error pages for displaying errors to the user.
@@ -59,7 +60,7 @@ type ErrorPages struct {
 
 // NewHandler returns a new Handler instance, using the given StaticPage data,
 // and saving alias to the application's CookieStore.
-func NewHandler(app *app) *Handler {
+func NewHandler(apper Apper) *Handler {
 	h := &Handler{
 		errors: &ErrorPages{
 			NotFound:            template.Must(template.New("").Parse("{{define \"base\"}}<html><head><title>404</title></head><body><p>Not found.</p></body></html>{{end}}")),
@@ -67,10 +68,23 @@ func NewHandler(app *app) *Handler {
 			InternalServerError: template.Must(template.New("").Parse("{{define \"base\"}}<html><head><title>500</title></head><body><p>Internal server error.</p></body></html>{{end}}")),
 			Blank:               template.Must(template.New("").Parse("{{define \"base\"}}<html><head><title>{{.Title}}</title></head><body><p>{{.Content}}</p></body></html>{{end}}")),
 		},
-		sessionStore: app.sessionStore,
-		app:          app,
+		sessionStore: apper.App().sessionStore,
+		app:          apper,
 	}
 
+	return h
+}
+
+// NewWFHandler returns a new Handler instance, using WriteFreely template files.
+// You MUST call writefreely.InitTemplates() before this.
+func NewWFHandler(apper Apper) *Handler {
+	h := NewHandler(apper)
+	h.SetErrorPages(&ErrorPages{
+		NotFound:            pages["404-general.tmpl"],
+		Gone:                pages["410.tmpl"],
+		InternalServerError: pages["500.tmpl"],
+		Blank:               pages["blank.tmpl"],
+	})
 	return h
 }
 
@@ -91,21 +105,21 @@ func (h *Handler) User(f userHandlerFunc) http.HandlerFunc {
 			defer func() {
 				if e := recover(); e != nil {
 					log.Error("%s: %s", e, debug.Stack())
-					h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app, r))
+					h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
 					status = http.StatusInternalServerError
 				}
 
 				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
 			}()
 
-			u := getUserSession(h.app, r)
+			u := getUserSession(h.app.App(), r)
 			if u == nil {
 				err := ErrNotLoggedIn
 				status = err.Status
 				return err
 			}
 
-			err := f(h.app, u, w, r)
+			err := f(h.app.App(), u, w, r)
 			if err == nil {
 				status = http.StatusOK
 			} else if err, ok := err.(impart.HTTPError); ok {
@@ -129,14 +143,52 @@ func (h *Handler) Admin(f userHandlerFunc) http.HandlerFunc {
 			defer func() {
 				if e := recover(); e != nil {
 					log.Error("%s: %s", e, debug.Stack())
-					h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app, r))
+					h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
 					status = http.StatusInternalServerError
 				}
 
 				log.Info(fmt.Sprintf("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent()))
 			}()
 
-			u := getUserSession(h.app, r)
+			u := getUserSession(h.app.App(), r)
+			if u == nil || !u.IsAdmin() {
+				err := impart.HTTPError{http.StatusNotFound, ""}
+				status = err.Status
+				return err
+			}
+
+			err := f(h.app.App(), u, w, r)
+			if err == nil {
+				status = http.StatusOK
+			} else if err, ok := err.(impart.HTTPError); ok {
+				status = err.Status
+			} else {
+				status = http.StatusInternalServerError
+			}
+
+			return err
+		}())
+	}
+}
+
+// AdminApper handles requests on /admin routes that require an Apper.
+func (h *Handler) AdminApper(f userApperHandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		h.handleHTTPError(w, r, func() error {
+			var status int
+			start := time.Now()
+
+			defer func() {
+				if e := recover(); e != nil {
+					log.Error("%s: %s", e, debug.Stack())
+					h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
+					status = http.StatusInternalServerError
+				}
+
+				log.Info(fmt.Sprintf("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent()))
+			}()
+
+			u := getUserSession(h.app.App(), r)
 			if u == nil || !u.IsAdmin() {
 				err := impart.HTTPError{http.StatusNotFound, ""}
 				status = err.Status
@@ -160,7 +212,7 @@ func (h *Handler) Admin(f userHandlerFunc) http.HandlerFunc {
 // UserAPI handles requests made in the API by the authenticated user.
 // This provides user-friendly HTML pages and actions that work in the browser.
 func (h *Handler) UserAPI(f userHandlerFunc) http.HandlerFunc {
-	return h.UserAll(false, f, func(app *app, r *http.Request) (*User, error) {
+	return h.UserAll(false, f, func(app *App, r *http.Request) (*User, error) {
 		// Authorize user from Authorization header
 		t := r.Header.Get("Authorization")
 		if t == "" {
@@ -191,7 +243,7 @@ func (h *Handler) UserAll(web bool, f userHandlerFunc, a authFunc) http.HandlerF
 				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
 			}()
 
-			u, err := a(h.app, r)
+			u, err := a(h.app.App(), r)
 			if err != nil {
 				if err, ok := err.(impart.HTTPError); ok {
 					status = err.Status
@@ -201,7 +253,7 @@ func (h *Handler) UserAll(web bool, f userHandlerFunc, a authFunc) http.HandlerF
 				return err
 			}
 
-			err = f(h.app, u, w, r)
+			err = f(h.app.App(), u, w, r)
 			if err == nil {
 				status = 200
 			} else if err, ok := err.(impart.HTTPError); ok {
@@ -222,7 +274,7 @@ func (h *Handler) UserAll(web bool, f userHandlerFunc, a authFunc) http.HandlerF
 }
 
 func (h *Handler) RedirectOnErr(f handlerFunc, loc string) handlerFunc {
-	return func(app *app, w http.ResponseWriter, r *http.Request) error {
+	return func(app *App, w http.ResponseWriter, r *http.Request) error {
 		err := f(app, w, r)
 		if err != nil {
 			if ie, ok := err.(impart.HTTPError); ok {
@@ -239,7 +291,7 @@ func (h *Handler) RedirectOnErr(f handlerFunc, loc string) handlerFunc {
 }
 
 func (h *Handler) Page(n string) http.HandlerFunc {
-	return h.Web(func(app *app, w http.ResponseWriter, r *http.Request) error {
+	return h.Web(func(app *App, w http.ResponseWriter, r *http.Request) error {
 		t, ok := pages[n]
 		if !ok {
 			return impart.HTTPError{http.StatusNotFound, "Page not found."}
@@ -264,13 +316,13 @@ func (h *Handler) WebErrors(f handlerFunc, ul UserLevel) http.HandlerFunc {
 
 			defer func() {
 				if e := recover(); e != nil {
-					u := getUserSession(h.app, r)
+					u := getUserSession(h.app.App(), r)
 					username := "None"
 					if u != nil {
 						username = u.Username
 					}
 					log.Error("User: %s\n\n%s: %s", username, e, debug.Stack())
-					h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app, r))
+					h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
 					status = 500
 				}
 
@@ -302,13 +354,13 @@ func (h *Handler) WebErrors(f handlerFunc, ul UserLevel) http.HandlerFunc {
 			}
 
 			// TODO: pass User object to function
-			err = f(h.app, w, r)
+			err = f(h.app.App(), w, r)
 			if err == nil {
 				status = 200
 			} else if httpErr, ok := err.(impart.HTTPError); ok {
 				status = httpErr.Status
 				if status < 300 || status > 399 {
-					addSessionFlash(h.app, w, r, httpErr.Message, session)
+					addSessionFlash(h.app.App(), w, r, httpErr.Message, session)
 					return impart.HTTPError{http.StatusFound, r.Referer()}
 				}
 			} else {
@@ -319,7 +371,7 @@ func (h *Handler) WebErrors(f handlerFunc, ul UserLevel) http.HandlerFunc {
 					log.Error(e)
 				}
 				log.Info("Web handler internal error render")
-				h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app, r))
+				h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
 				status = 500
 			}
 
@@ -338,14 +390,14 @@ func (h *Handler) Web(f handlerFunc, ul UserLevel) http.HandlerFunc {
 
 			defer func() {
 				if e := recover(); e != nil {
-					u := getUserSession(h.app, r)
+					u := getUserSession(h.app.App(), r)
 					username := "None"
 					if u != nil {
 						username = u.Username
 					}
 					log.Error("User: %s\n\n%s: %s", username, e, debug.Stack())
 					log.Info("Web deferred internal error render")
-					h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app, r))
+					h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
 					status = 500
 				}
 
@@ -375,7 +427,7 @@ func (h *Handler) Web(f handlerFunc, ul UserLevel) http.HandlerFunc {
 			}
 
 			// TODO: pass User object to function
-			err := f(h.app, w, r)
+			err := f(h.app.App(), w, r)
 			if err == nil {
 				status = 200
 			} else if httpErr, ok := err.(impart.HTTPError); ok {
@@ -384,7 +436,7 @@ func (h *Handler) Web(f handlerFunc, ul UserLevel) http.HandlerFunc {
 				e := fmt.Sprintf("[Web handler] 500: %v", err)
 				log.Error(e)
 				log.Info("Web internal error render")
-				h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app, r))
+				h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
 				status = 500
 			}
 
@@ -412,7 +464,7 @@ func (h *Handler) All(f handlerFunc) http.HandlerFunc {
 
 			// TODO: do any needed authentication
 
-			err := f(h.app, w, r)
+			err := f(h.app.App(), w, r)
 			if err != nil {
 				if err, ok := err.(impart.HTTPError); ok {
 					status = err.Status
@@ -434,14 +486,14 @@ func (h *Handler) Download(f dataHandlerFunc, ul UserLevel) http.HandlerFunc {
 			defer func() {
 				if e := recover(); e != nil {
 					log.Error("%s: %s", e, debug.Stack())
-					h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app, r))
+					h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
 					status = 500
 				}
 
 				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
 			}()
 
-			data, filename, err := f(h.app, w, r)
+			data, filename, err := f(h.app.App(), w, r)
 			if err != nil {
 				if err, ok := err.(impart.HTTPError); ok {
 					status = err.Status
@@ -530,7 +582,7 @@ func (h *Handler) handleHTTPError(w http.ResponseWriter, r *http.Request, err er
 				page.StaticPage
 				Content *template.HTML
 			}{
-				StaticPage: pageForReq(h.app, r),
+				StaticPage: pageForReq(h.app.App(), r),
 			}
 			if err.Message != "" {
 				co := template.HTML(err.Message)
@@ -540,12 +592,12 @@ func (h *Handler) handleHTTPError(w http.ResponseWriter, r *http.Request, err er
 			return
 		} else if err.Status == http.StatusNotFound {
 			w.WriteHeader(err.Status)
-			h.errors.NotFound.ExecuteTemplate(w, "base", pageForReq(h.app, r))
+			h.errors.NotFound.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
 			return
 		} else if err.Status == http.StatusInternalServerError {
 			w.WriteHeader(err.Status)
 			log.Info("handleHTTPErorr internal error render")
-			h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app, r))
+			h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
 			return
 		} else if err.Status == http.StatusAccepted {
 			impart.WriteSuccess(w, "", err.Status)
@@ -556,7 +608,7 @@ func (h *Handler) handleHTTPError(w http.ResponseWriter, r *http.Request, err er
 				Title   string
 				Content template.HTML
 			}{
-				pageForReq(h.app, r),
+				pageForReq(h.app.App(), r),
 				fmt.Sprintf("Uh oh (%d)", err.Status),
 				template.HTML(fmt.Sprintf("<p style=\"text-align: center\" class=\"introduction\">%s</p>", err.Message)),
 			}
@@ -591,7 +643,7 @@ func (h *Handler) handleError(w http.ResponseWriter, r *http.Request, err error)
 		impart.WriteError(w, impart.HTTPError{http.StatusInternalServerError, "This is an unhelpful error message for a miscellaneous internal error."})
 		return
 	}
-	h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app, r))
+	h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
 }
 
 func correctPageFromLoginAttempt(r *http.Request) string {
@@ -613,7 +665,7 @@ func (h *Handler) LogHandlerFunc(f http.HandlerFunc) http.HandlerFunc {
 			defer func() {
 				if e := recover(); e != nil {
 					log.Error("Handler.LogHandlerFunc\n\n%s: %s", e, debug.Stack())
-					h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app, r))
+					h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
 					status = 500
 				}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -11,8 +11,8 @@
 package writefreely
 
 import (
-	"crypto/rand"
 	"github.com/writeas/web-core/log"
+	"github.com/writeas/writefreely/key"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -20,8 +20,6 @@ import (
 
 const (
 	keysDir = "keys"
-
-	encKeysBytes = 32
 )
 
 var (
@@ -30,45 +28,20 @@ var (
 	cookieKeyPath     = filepath.Join(keysDir, "cookies_enc.aes256")
 )
 
-type keychain struct {
-	emailKey, cookieAuthKey, cookieKey []byte
+// InitKeys loads encryption keys into memory via the given Apper interface
+func InitKeys(apper Apper) error {
+	log.Info("Loading encryption keys...")
+	err := apper.LoadKeys()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func initKeyPaths(app *app) {
+func initKeyPaths(app *App) {
 	emailKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, emailKeyPath)
 	cookieAuthKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, cookieAuthKeyPath)
 	cookieKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, cookieKeyPath)
-}
-
-func initKeys(app *app) error {
-	var err error
-	app.keys = &keychain{}
-
-	if debugging {
-		log.Info("  %s", emailKeyPath)
-	}
-	app.keys.emailKey, err = ioutil.ReadFile(emailKeyPath)
-	if err != nil {
-		return err
-	}
-
-	if debugging {
-		log.Info("  %s", cookieAuthKeyPath)
-	}
-	app.keys.cookieAuthKey, err = ioutil.ReadFile(cookieAuthKeyPath)
-	if err != nil {
-		return err
-	}
-
-	if debugging {
-		log.Info("  %s", cookieKeyPath)
-	}
-	app.keys.cookieKey, err = ioutil.ReadFile(cookieKeyPath)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // generateKey generates a key at the given path used for the encryption of
@@ -85,7 +58,7 @@ func generateKey(path string) error {
 	}
 
 	log.Info("Generating %s.", path)
-	b, err := generateBytes(encKeysBytes)
+	b, err := key.GenerateBytes(key.EncKeysBytes)
 	if err != nil {
 		log.Error("FAILED. %s. Run writefreely --gen-keys again.", err)
 		return err
@@ -97,15 +70,4 @@ func generateKey(path string) error {
 	}
 	log.Info("Success.")
 	return nil
-}
-
-// generateBytes returns securely generated random bytes.
-func generateBytes(n int) ([]byte, error) {
-	b := make([]byte, n)
-	_, err := rand.Read(b)
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
 }

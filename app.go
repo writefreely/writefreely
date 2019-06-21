@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -12,9 +12,9 @@ package writefreely
 
 import (
 	"database/sql"
-	"flag"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -25,18 +25,18 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
-
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
 	"github.com/manifoldco/promptui"
 	"github.com/writeas/go-strip-markdown"
+	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/converter"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/author"
 	"github.com/writeas/writefreely/config"
+	"github.com/writeas/writefreely/key"
 	"github.com/writeas/writefreely/migrations"
 	"github.com/writeas/writefreely/page"
 )
@@ -57,27 +57,129 @@ var (
 	softwareVer = "0.9.0"
 
 	// DEPRECATED VARS
-	// TODO: pass app.cfg into GetCollection* calls so we can get these values
-	// from Collection methods and we no longer need these.
-	hostName     string
 	isSingleUser bool
 )
 
-type app struct {
+// App holds data and configuration for an individual WriteFreely instance.
+type App struct {
 	router       *mux.Router
+	shttp        *http.ServeMux
 	db           *datastore
 	cfg          *config.Config
 	cfgFile      string
-	keys         *keychain
+	keys         *key.Keychain
 	sessionStore *sessions.CookieStore
 	formDecoder  *schema.Decoder
 
 	timeline *localTimeline
 }
 
+// DB returns the App's datastore
+func (app *App) DB() *datastore {
+	return app.db
+}
+
+// Router returns the App's router
+func (app *App) Router() *mux.Router {
+	return app.router
+}
+
+// Config returns the App's current configuration.
+func (app *App) Config() *config.Config {
+	return app.cfg
+}
+
+// SetConfig updates the App's Config to the given value.
+func (app *App) SetConfig(cfg *config.Config) {
+	app.cfg = cfg
+}
+
+// SetKeys updates the App's Keychain to the given value.
+func (app *App) SetKeys(k *key.Keychain) {
+	app.keys = k
+}
+
+// Apper is the interface for getting data into and out of a WriteFreely
+// instance (or "App").
+//
+// App returns the App for the current instance.
+//
+// LoadConfig reads an app configuration into the App, returning any error
+// encountered.
+//
+// SaveConfig persists the current App configuration.
+//
+// LoadKeys reads the App's encryption keys and loads them into its
+// key.Keychain.
+type Apper interface {
+	App() *App
+
+	LoadConfig() error
+	SaveConfig(*config.Config) error
+
+	LoadKeys() error
+}
+
+// App returns the App
+func (app *App) App() *App {
+	return app
+}
+
+// LoadConfig loads and parses a config file.
+func (app *App) LoadConfig() error {
+	log.Info("Loading %s configuration...", app.cfgFile)
+	cfg, err := config.Load(app.cfgFile)
+	if err != nil {
+		log.Error("Unable to load configuration: %v", err)
+		os.Exit(1)
+		return err
+	}
+	app.cfg = cfg
+	return nil
+}
+
+// SaveConfig saves the given Config to disk -- namely, to the App's cfgFile.
+func (app *App) SaveConfig(c *config.Config) error {
+	return config.Save(c, app.cfgFile)
+}
+
+// LoadKeys reads all needed keys from disk into the App. In order to use the
+// configured `Server.KeysParentDir`, you must call initKeyPaths(App) before
+// this.
+func (app *App) LoadKeys() error {
+	var err error
+	app.keys = &key.Keychain{}
+
+	if debugging {
+		log.Info("  %s", emailKeyPath)
+	}
+	app.keys.EmailKey, err = ioutil.ReadFile(emailKeyPath)
+	if err != nil {
+		return err
+	}
+
+	if debugging {
+		log.Info("  %s", cookieAuthKeyPath)
+	}
+	app.keys.CookieAuthKey, err = ioutil.ReadFile(cookieAuthKeyPath)
+	if err != nil {
+		return err
+	}
+
+	if debugging {
+		log.Info("  %s", cookieKeyPath)
+	}
+	app.keys.CookieKey, err = ioutil.ReadFile(cookieKeyPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // handleViewHome shows page at root path. Will be the Pad if logged in and the
 // catch-all landing page otherwise.
-func handleViewHome(app *app, w http.ResponseWriter, r *http.Request) error {
+func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 	if app.cfg.App.SingleUser {
 		// Render blog index
 		return handleViewCollection(app, w, r)
@@ -88,6 +190,10 @@ func handleViewHome(app *app, w http.ResponseWriter, r *http.Request) error {
 	if u != nil {
 		// User is logged in, so show the Pad
 		return handleViewPad(app, w, r)
+	}
+
+	if land := app.cfg.App.LandingPath(); land != "/" {
+		return impart.HTTPError{http.StatusFound, land}
 	}
 
 	p := struct {
@@ -112,7 +218,7 @@ func handleViewHome(app *app, w http.ResponseWriter, r *http.Request) error {
 	return renderPage(w, "landing.tmpl", p)
 }
 
-func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *template.Template) error {
+func handleTemplatedPage(app *App, w http.ResponseWriter, r *http.Request, t *template.Template) error {
 	p := struct {
 		page.StaticPage
 		ContentTitle string
@@ -158,7 +264,7 @@ func handleTemplatedPage(app *app, w http.ResponseWriter, r *http.Request, t *te
 	return nil
 }
 
-func pageForReq(app *app, r *http.Request) page.StaticPage {
+func pageForReq(app *App, r *http.Request) page.StaticPage {
 	p := page.StaticPage{
 		AppCfg:  app.cfg.App,
 		Path:    r.URL.Path,
@@ -187,277 +293,50 @@ func pageForReq(app *app, r *http.Request) page.StaticPage {
 	return p
 }
 
-var shttp = http.NewServeMux()
 var fileRegex = regexp.MustCompile("/([^/]*\\.[^/]*)$")
 
-func Serve() {
-	// General options usable with other commands
-	debugPtr := flag.Bool("debug", false, "Enables debug logging.")
-	configFile := flag.String("c", "config.ini", "The configuration file to use")
+// Initialize loads the app configuration and initializes templates, keys,
+// session, route handlers, and the database connection.
+func Initialize(apper Apper, debug bool) (*App, error) {
+	debugging = debug
 
-	// Setup actions
-	createConfig := flag.Bool("create-config", false, "Creates a basic configuration and exits")
-	doConfig := flag.Bool("config", false, "Run the configuration process")
-	configSections := flag.String("sections", "server db app", "Which sections of the configuration to go through (requires --config), " +
-															   "valid values are any combination of 'server', 'db' and 'app' " +
-															   "example: writefreely --config --sections \"db app\"")
-	genKeys := flag.Bool("gen-keys", false, "Generate encryption and authentication keys")
-	createSchema := flag.Bool("init-db", false, "Initialize app database")
-	migrate := flag.Bool("migrate", false, "Migrate the database")
+	apper.LoadConfig()
 
-	// Admin actions
-	createAdmin := flag.String("create-admin", "", "Create an admin with the given username:password")
-	createUser := flag.String("create-user", "", "Create a regular user with the given username:password")
-	resetPassUser := flag.String("reset-pass", "", "Reset the given user's password")
-	outputVersion := flag.Bool("v", false, "Output the current version")
-	flag.Parse()
-
-	debugging = *debugPtr
-
-	app := &app{
-		cfgFile: *configFile,
-	}
-
-	if *outputVersion {
-		fmt.Println(serverSoftware + " " + softwareVer)
-		os.Exit(0)
-	} else if *createConfig {
-		log.Info("Creating configuration...")
-		c := config.New()
-		log.Info("Saving configuration %s...", app.cfgFile)
-		err := config.Save(c, app.cfgFile)
-		if err != nil {
-			log.Error("Unable to save configuration: %v", err)
-			os.Exit(1)
-		}
-		os.Exit(0)
-	} else if *doConfig {
-		if *configSections == "" {
-			*configSections = "server db app"
-		}
-		// let's check there aren't any garbage in the list
-		configSectionsArray := strings.Split(*configSections, " ")
-		for _, element := range configSectionsArray {
-			if element != "server" && element != "db" && element != "app" {
-				log.Error("Invalid argument to --sections. Valid arguments are only \"server\", \"db\" and \"app\"")
-				os.Exit(1)
-			}
-		}
-		d, err := config.Configure(app.cfgFile, *configSections)
-		if err != nil {
-			log.Error("Unable to configure: %v", err)
-			os.Exit(1)
-		}
-		if d.User != nil {
-			app.cfg = d.Config
-			connectToDatabase(app)
-			defer shutdown(app)
-
-			if !app.db.DatabaseInitialized() {
-				err = adminInitDatabase(app)
-				if err != nil {
-					log.Error(err.Error())
-					os.Exit(1)
-				}
-			}
-
-			u := &User{
-				Username:   d.User.Username,
-				HashedPass: d.User.HashedPass,
-				Created:    time.Now().Truncate(time.Second).UTC(),
-			}
-
-			// Create blog
-			log.Info("Creating user %s...\n", u.Username)
-			err = app.db.CreateUser(u, app.cfg.App.SiteName)
-			if err != nil {
-				log.Error("Unable to create user: %s", err)
-				os.Exit(1)
-			}
-			log.Info("Done!")
-		}
-		os.Exit(0)
-	} else if *genKeys {
-		errStatus := 0
-
-		// Read keys path from config
-		loadConfig(app)
-
-		// Create keys dir if it doesn't exist yet
-		fullKeysDir := filepath.Join(app.cfg.Server.KeysParentDir, keysDir)
-		if _, err := os.Stat(fullKeysDir); os.IsNotExist(err) {
-			err = os.Mkdir(fullKeysDir, 0700)
-			if err != nil {
-				log.Error("%s", err)
-				os.Exit(1)
-			}
-		}
-
-		// Generate keys
-		initKeyPaths(app)
-		err := generateKey(emailKeyPath)
-		if err != nil {
-			errStatus = 1
-		}
-		err = generateKey(cookieAuthKeyPath)
-		if err != nil {
-			errStatus = 1
-		}
-		err = generateKey(cookieKeyPath)
-		if err != nil {
-			errStatus = 1
-		}
-
-		os.Exit(errStatus)
-	} else if *createSchema {
-		loadConfig(app)
-		connectToDatabase(app)
-		defer shutdown(app)
-		err := adminInitDatabase(app)
-		if err != nil {
-			log.Error(err.Error())
-			os.Exit(1)
-		}
-		os.Exit(0)
-	} else if *createAdmin != "" {
-		err := adminCreateUser(app, *createAdmin, true)
-		if err != nil {
-			log.Error(err.Error())
-			os.Exit(1)
-		}
-		os.Exit(0)
-	} else if *createUser != "" {
-		err := adminCreateUser(app, *createUser, false)
-		if err != nil {
-			log.Error(err.Error())
-			os.Exit(1)
-		}
-		os.Exit(0)
-	} else if *resetPassUser != "" {
-		// Connect to the database
-		loadConfig(app)
-		connectToDatabase(app)
-		defer shutdown(app)
-
-		// Fetch user
-		u, err := app.db.GetUserForAuth(*resetPassUser)
-		if err != nil {
-			log.Error("Get user: %s", err)
-			os.Exit(1)
-		}
-
-		// Prompt for new password
-		prompt := promptui.Prompt{
-			Templates: &promptui.PromptTemplates{
-				Success: "{{ . | bold | faint }}: ",
-			},
-			Label: "New password",
-			Mask:  '*',
-		}
-		newPass, err := prompt.Run()
-		if err != nil {
-			log.Error("%s", err)
-			os.Exit(1)
-		}
-
-		// Do the update
-		log.Info("Updating...")
-		err = adminResetPassword(app, u, newPass)
-		if err != nil {
-			log.Error("%s", err)
-			os.Exit(1)
-		}
-		log.Info("Success.")
-		os.Exit(0)
-	} else if *migrate {
-		loadConfig(app)
-		connectToDatabase(app)
-		defer shutdown(app)
-
-		err := migrations.Migrate(migrations.NewDatastore(app.db.DB, app.db.driverName))
-		if err != nil {
-			log.Error("migrate: %s", err)
-			os.Exit(1)
-		}
-
-		os.Exit(0)
-	}
-
-	log.Info("Initializing...")
-
-	loadConfig(app)
-
-	hostName = app.cfg.App.Host
-	isSingleUser = app.cfg.App.SingleUser
-	app.cfg.Server.Dev = *debugPtr
-
-	err := initTemplates(app.cfg)
+	// Load templates
+	err := InitTemplates(apper.App().Config())
 	if err != nil {
-		log.Error("load templates: %s", err)
-		os.Exit(1)
+		return nil, fmt.Errorf("load templates: %s", err)
 	}
 
-	// Load keys
-	log.Info("Loading encryption keys...")
-	initKeyPaths(app)
-	err = initKeys(app)
+	// Load keys and set up session
+	initKeyPaths(apper.App()) // TODO: find a better way to do this, since it's unneeded in all Apper implementations
+	err = InitKeys(apper)
 	if err != nil {
-		log.Error("\n%s\n", err)
+		return nil, fmt.Errorf("init keys: %s", err)
 	}
+	apper.App().InitSession()
 
-	// Initialize modules
-	app.sessionStore = initSession(app)
-	app.formDecoder = schema.NewDecoder()
-	app.formDecoder.RegisterConverter(converter.NullJSONString{}, converter.ConvertJSONNullString)
-	app.formDecoder.RegisterConverter(converter.NullJSONBool{}, converter.ConvertJSONNullBool)
-	app.formDecoder.RegisterConverter(sql.NullString{}, converter.ConvertSQLNullString)
-	app.formDecoder.RegisterConverter(sql.NullBool{}, converter.ConvertSQLNullBool)
-	app.formDecoder.RegisterConverter(sql.NullInt64{}, converter.ConvertSQLNullInt64)
-	app.formDecoder.RegisterConverter(sql.NullFloat64{}, converter.ConvertSQLNullFloat64)
+	apper.App().InitDecoder()
 
-	// Check database configuration
-	if app.cfg.Database.Type == driverMySQL && (app.cfg.Database.User == "" || app.cfg.Database.Password == "") {
-		log.Error("Database user or password not set.")
-		os.Exit(1)
-	}
-	if app.cfg.Database.Host == "" {
-		app.cfg.Database.Host = "localhost"
-	}
-	if app.cfg.Database.Database == "" {
-		app.cfg.Database.Database = "writefreely"
-	}
-
-	connectToDatabase(app)
-	defer shutdown(app)
-
-	// Test database connection
-	err = app.db.Ping()
+	err = ConnectToDatabase(apper.App())
 	if err != nil {
-		log.Error("Database ping failed: %s", err)
+		return nil, fmt.Errorf("connect to DB: %s", err)
 	}
-
-	r := mux.NewRouter()
-	handler := NewHandler(app)
-	handler.SetErrorPages(&ErrorPages{
-		NotFound:            pages["404-general.tmpl"],
-		Gone:                pages["410.tmpl"],
-		InternalServerError: pages["500.tmpl"],
-		Blank:               pages["blank.tmpl"],
-	})
-
-	// Handle app routes
-	initRoutes(handler, r, app.cfg, app.db)
 
 	// Handle local timeline, if enabled
-	if app.cfg.App.LocalTimeline {
+	if apper.App().cfg.App.LocalTimeline {
 		log.Info("Initializing local timeline...")
-		initLocalTimeline(app)
+		initLocalTimeline(apper.App())
 	}
 
-	// Handle static files
-	fs := http.FileServer(http.Dir(filepath.Join(app.cfg.Server.StaticParentDir, staticDir)))
-	shttp.Handle("/", fs)
-	r.PathPrefix("/").Handler(fs)
+	return apper.App(), nil
+}
+
+func Serve(app *App, r *mux.Router) {
+	log.Info("Going to serve...")
+
+	isSingleUser = app.cfg.App.SingleUser
+	app.cfg.Server.Dev = debugging
 
 	// Handle shutdown
 	c := make(chan os.Signal, 2)
@@ -470,13 +349,12 @@ func Serve() {
 		os.Exit(0)
 	}()
 
-	http.Handle("/", r)
-
 	// Start web application server
 	var bindAddress = app.cfg.Server.Bind
 	if bindAddress == "" {
 		bindAddress = "localhost"
 	}
+	var err error
 	if app.cfg.IsSecureStandalone() {
 		log.Info("Serving redirects on http://%s:80", bindAddress)
 		go func() {
@@ -490,11 +368,11 @@ func Serve() {
 		log.Info("Serving on https://%s:443", bindAddress)
 		log.Info("---")
 		err = http.ListenAndServeTLS(
-			fmt.Sprintf("%s:443", bindAddress), app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, nil)
+			fmt.Sprintf("%s:443", bindAddress), app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, r)
 	} else {
 		log.Info("Serving on http://%s:%d\n", bindAddress, app.cfg.Server.Port)
 		log.Info("---")
-		err = http.ListenAndServe(fmt.Sprintf("%s:%d", bindAddress, app.cfg.Server.Port), nil)
+		err = http.ListenAndServe(fmt.Sprintf("%s:%d", bindAddress, app.cfg.Server.Port), r)
 	}
 	if err != nil {
 		log.Error("Unable to start: %v", err)
@@ -502,17 +380,216 @@ func Serve() {
 	}
 }
 
-func loadConfig(app *app) {
-	log.Info("Loading %s configuration...", app.cfgFile)
-	cfg, err := config.Load(app.cfgFile)
-	if err != nil {
-		log.Error("Unable to load configuration: %v", err)
-		os.Exit(1)
-	}
-	app.cfg = cfg
+func (app *App) InitDecoder() {
+	// TODO: do this at the package level, instead of the App level
+	// Initialize modules
+	app.formDecoder = schema.NewDecoder()
+	app.formDecoder.RegisterConverter(converter.NullJSONString{}, converter.ConvertJSONNullString)
+	app.formDecoder.RegisterConverter(converter.NullJSONBool{}, converter.ConvertJSONNullBool)
+	app.formDecoder.RegisterConverter(sql.NullString{}, converter.ConvertSQLNullString)
+	app.formDecoder.RegisterConverter(sql.NullBool{}, converter.ConvertSQLNullBool)
+	app.formDecoder.RegisterConverter(sql.NullInt64{}, converter.ConvertSQLNullInt64)
+	app.formDecoder.RegisterConverter(sql.NullFloat64{}, converter.ConvertSQLNullFloat64)
 }
 
-func connectToDatabase(app *app) {
+// ConnectToDatabase validates and connects to the configured database, then
+// tests the connection.
+func ConnectToDatabase(app *App) error {
+	// Check database configuration
+	if app.cfg.Database.Type == driverMySQL && (app.cfg.Database.User == "" || app.cfg.Database.Password == "") {
+		return fmt.Errorf("Database user or password not set.")
+	}
+	if app.cfg.Database.Host == "" {
+		app.cfg.Database.Host = "localhost"
+	}
+	if app.cfg.Database.Database == "" {
+		app.cfg.Database.Database = "writefreely"
+	}
+
+	// TODO: check err
+	connectToDatabase(app)
+
+	// Test database connection
+	err := app.db.Ping()
+	if err != nil {
+		return fmt.Errorf("Database ping failed: %s", err)
+	}
+
+	return nil
+}
+
+// OutputVersion prints out the version of the application.
+func OutputVersion() {
+	fmt.Println(serverSoftware + " " + softwareVer)
+}
+
+// NewApp creates a new app instance.
+func NewApp(cfgFile string) *App {
+	return &App{
+		cfgFile: cfgFile,
+	}
+}
+
+// CreateConfig creates a default configuration and saves it to the app's cfgFile.
+func CreateConfig(app *App) error {
+	log.Info("Creating configuration...")
+	c := config.New()
+	log.Info("Saving configuration %s...", app.cfgFile)
+	err := config.Save(c, app.cfgFile)
+	if err != nil {
+		return fmt.Errorf("Unable to save configuration: %v", err)
+	}
+	return nil
+}
+
+// DoConfig runs the interactive configuration process.
+func DoConfig(app *App, configSections string) {
+	if configSections == "" {
+		configSections = "server db app"
+	}
+	// let's check there aren't any garbage in the list
+	configSectionsArray := strings.Split(configSections, " ")
+	for _, element := range configSectionsArray {
+		if element != "server" && element != "db" && element != "app" {
+			log.Error("Invalid argument to --sections. Valid arguments are only \"server\", \"db\" and \"app\"")
+			os.Exit(1)
+		}
+	}
+	d, err := config.Configure(app.cfgFile, configSections)
+	if err != nil {
+		log.Error("Unable to configure: %v", err)
+		os.Exit(1)
+	}
+	if d.User != nil {
+		app.cfg = d.Config
+		connectToDatabase(app)
+		defer shutdown(app)
+
+		if !app.db.DatabaseInitialized() {
+			err = adminInitDatabase(app)
+			if err != nil {
+				log.Error(err.Error())
+				os.Exit(1)
+			}
+		}
+
+		u := &User{
+			Username:   d.User.Username,
+			HashedPass: d.User.HashedPass,
+			Created:    time.Now().Truncate(time.Second).UTC(),
+		}
+
+		// Create blog
+		log.Info("Creating user %s...\n", u.Username)
+		err = app.db.CreateUser(u, app.cfg.App.SiteName)
+		if err != nil {
+			log.Error("Unable to create user: %s", err)
+			os.Exit(1)
+		}
+		log.Info("Done!")
+	}
+	os.Exit(0)
+}
+
+// GenerateKeyFiles creates app encryption keys and saves them into the configured KeysParentDir.
+func GenerateKeyFiles(app *App) error {
+	// Read keys path from config
+	app.LoadConfig()
+
+	// Create keys dir if it doesn't exist yet
+	fullKeysDir := filepath.Join(app.cfg.Server.KeysParentDir, keysDir)
+	if _, err := os.Stat(fullKeysDir); os.IsNotExist(err) {
+		err = os.Mkdir(fullKeysDir, 0700)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Generate keys
+	initKeyPaths(app)
+	// TODO: use something like https://github.com/hashicorp/go-multierror to return errors
+	var keyErrs error
+	err := generateKey(emailKeyPath)
+	if err != nil {
+		keyErrs = err
+	}
+	err = generateKey(cookieAuthKeyPath)
+	if err != nil {
+		keyErrs = err
+	}
+	err = generateKey(cookieKeyPath)
+	if err != nil {
+		keyErrs = err
+	}
+
+	return keyErrs
+}
+
+// CreateSchema creates all database tables needed for the application.
+func CreateSchema(apper Apper) error {
+	apper.LoadConfig()
+	connectToDatabase(apper.App())
+	defer shutdown(apper.App())
+	err := adminInitDatabase(apper.App())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Migrate runs all necessary database migrations.
+func Migrate(app *App) error {
+	app.LoadConfig()
+	connectToDatabase(app)
+	defer shutdown(app)
+
+	err := migrations.Migrate(migrations.NewDatastore(app.db.DB, app.db.driverName))
+	if err != nil {
+		return fmt.Errorf("migrate: %s", err)
+	}
+	return nil
+}
+
+// ResetPassword runs the interactive password reset process.
+func ResetPassword(app *App, username string) error {
+	// Connect to the database
+	app.LoadConfig()
+	connectToDatabase(app)
+	defer shutdown(app)
+
+	// Fetch user
+	u, err := app.db.GetUserForAuth(username)
+	if err != nil {
+		log.Error("Get user: %s", err)
+		os.Exit(1)
+	}
+
+	// Prompt for new password
+	prompt := promptui.Prompt{
+		Templates: &promptui.PromptTemplates{
+			Success: "{{ . | bold | faint }}: ",
+		},
+		Label: "New password",
+		Mask:  '*',
+	}
+	newPass, err := prompt.Run()
+	if err != nil {
+		log.Error("%s", err)
+		os.Exit(1)
+	}
+
+	// Do the update
+	log.Info("Updating...")
+	err = adminResetPassword(app, u, newPass)
+	if err != nil {
+		log.Error("%s", err)
+		os.Exit(1)
+	}
+	log.Info("Success.")
+	return nil
+}
+
+func connectToDatabase(app *App) {
 	log.Info("Connecting to %s database...", app.cfg.Database.Type)
 
 	var db *sql.DB
@@ -542,28 +619,20 @@ func connectToDatabase(app *app) {
 	app.db = &datastore{db, app.cfg.Database.Type}
 }
 
-func shutdown(app *app) {
+func shutdown(app *App) {
 	log.Info("Closing database connection...")
 	app.db.Close()
 }
 
-func adminCreateUser(app *app, credStr string, isAdmin bool) error {
+// CreateUser creates a new admin or normal user from the given credentials.
+func CreateUser(apper Apper, username, password string, isAdmin bool) error {
 	// Create an admin user with --create-admin
-	creds := strings.Split(credStr, ":")
-	if len(creds) != 2 {
-		c := "user"
-		if isAdmin {
-			c = "admin"
-		}
-		return fmt.Errorf("usage: writefreely --create-%s username:password", c)
-	}
-
-	loadConfig(app)
-	connectToDatabase(app)
-	defer shutdown(app)
+	apper.LoadConfig()
+	connectToDatabase(apper.App())
+	defer shutdown(apper.App())
 
 	// Ensure an admin / first user doesn't already exist
-	firstUser, _ := app.db.GetUserByID(1)
+	firstUser, _ := apper.App().db.GetUserByID(1)
 	if isAdmin {
 		// Abort if trying to create admin user, but one already exists
 		if firstUser != nil {
@@ -577,9 +646,6 @@ func adminCreateUser(app *app, credStr string, isAdmin bool) error {
 	}
 
 	// Create the user
-	username := creds[0]
-	password := creds[1]
-
 	// Normalize and validate username
 	desiredUsername := username
 	username = getSlug(username, "")
@@ -589,8 +655,8 @@ func adminCreateUser(app *app, credStr string, isAdmin bool) error {
 		usernameDesc += " (originally: " + desiredUsername + ")"
 	}
 
-	if !author.IsValidUsername(app.cfg, username) {
-		return fmt.Errorf("Username %s is invalid, reserved, or shorter than configured minimum length (%d characters).", usernameDesc, app.cfg.App.MinUsernameLen)
+	if !author.IsValidUsername(apper.App().cfg, username) {
+		return fmt.Errorf("Username %s is invalid, reserved, or shorter than configured minimum length (%d characters).", usernameDesc, apper.App().cfg.App.MinUsernameLen)
 	}
 
 	// Hash the password
@@ -610,7 +676,7 @@ func adminCreateUser(app *app, credStr string, isAdmin bool) error {
 		userType = "admin"
 	}
 	log.Info("Creating %s %s...", userType, usernameDesc)
-	err = app.db.CreateUser(u, desiredUsername)
+	err = apper.App().db.CreateUser(u, desiredUsername)
 	if err != nil {
 		return fmt.Errorf("Unable to create user: %s", err)
 	}
@@ -618,7 +684,7 @@ func adminCreateUser(app *app, credStr string, isAdmin bool) error {
 	return nil
 }
 
-func adminInitDatabase(app *app) error {
+func adminInitDatabase(app *App) error {
 	schemaFileName := "schema.sql"
 	if app.cfg.Database.Type == driverSQLite {
 		schemaFileName = "sqlite.sql"

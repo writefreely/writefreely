@@ -37,6 +37,7 @@ func (wfr wfResolver) FindUser(username string, host, requestHost string, r []we
 		log.Error("Unable to get blog: %v", err)
 		return nil, err
 	}
+	c.hostName = wfr.cfg.App.Host
 	if wfr.cfg.App.SingleUser {
 		// Ensure handle matches user-chosen one on single-user blogs
 		if username != c.Alias {

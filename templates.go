@@ -98,7 +98,8 @@ func initUserPage(parentDir, path, key string) {
 	))
 }
 
-func initTemplates(cfg *config.Config) error {
+// InitTemplates loads all template files from the configured parent dir.
+func InitTemplates(cfg *config.Config) error {
 	log.Info("Loading templates...")
 	tmplFiles, err := ioutil.ReadDir(filepath.Join(cfg.Server.TemplatesParentDir, templatesDir))
 	if err != nil {
