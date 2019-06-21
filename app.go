@@ -240,6 +240,7 @@ func Serve() {
 		for _, element := range configSectionsArray {
 			if element != "server" && element != "db" && element != "app" {
 				log.Error("Invalid argument to --sections. Valid arguments are only \"server\", \"db\" and \"app\"")
+				os.Exit(1)
 			}
 		}
 		d, err := config.Configure(app.cfgFile, *configSections)
