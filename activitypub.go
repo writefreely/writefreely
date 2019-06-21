@@ -522,6 +522,7 @@ func deleteFederatedPost(app *App, p *PublicPost, collID int64) error {
 	if debugging {
 		log.Info("Deleting federated post!")
 	}
+	p.Collection.hostName = app.cfg.App.Host
 	actor := p.Collection.PersonObject(collID)
 	na := p.ActivityObject()
 

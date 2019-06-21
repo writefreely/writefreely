@@ -564,6 +564,7 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 			if err != nil {
 				return err
 			}
+			coll.hostName = app.cfg.App.Host
 			if coll.OwnerID != u.ID {
 				return ErrForbiddenCollection
 			}
@@ -687,6 +688,7 @@ func existingPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	if pRes.CollectionID.Valid {
 		coll, err := app.db.GetCollectionBy("id = ?", pRes.CollectionID.Int64)
 		if err == nil && !app.cfg.App.Private && app.cfg.App.Federation {
+			coll.hostName = app.cfg.App.Host
 			pRes.Collection = &CollectionObj{Collection: *coll}
 			go federatePost(app, pRes, pRes.Collection.ID, true)
 		}
@@ -876,6 +878,7 @@ func addPost(app *App, w http.ResponseWriter, r *http.Request) error {
 				continue
 			}
 			if !pRes.Post.Created.After(time.Now()) {
+				pRes.Post.Collection.hostName = app.cfg.App.Host
 				go federatePost(app, pRes.Post, pRes.Post.Collection.ID, false)
 			}
 		}
