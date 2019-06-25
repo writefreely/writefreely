@@ -66,26 +66,46 @@
 		<script src="/js/h.js"></script>
 		<script>
 		function toggleTheme() {
-			var btns = Array.prototype.slice.call(document.getElementById('tools').querySelectorAll('a img'));
-			var newTheme = '';
 			if (document.body.classList.contains('light')) {
-				newTheme = 'dark';
-				document.body.className = document.body.className.replace(/(?:^|\s)light(?!\S)/g, newTheme);
-				for (var i=0; i<btns.length; i++) {
-					btns[i].src = btns[i].src.replace('_dark@2x.png', '@2x.png');
+				setTheme('dark');
+			} else {
+				setTheme('light');
+			}
+			H.set('padTheme', newTheme);
+			console.log('here');
+
+		}
+		function setTheme(newTheme){
+			document.body.classList.remove('light');
+			document.body.classList.remove('dark');
+			document.body.classList.add(newTheme);
+			var btns = Array.prototype.slice.call(document.getElementById('tools').querySelectorAll('a img'));
+			if (newTheme == 'light'){
+				// check if current theme is dark otherwise we'll get `_dark_dark@2x.png`
+				if (H.get('padTheme', 'auto') == 'dark'){
+					for (var i=0; i<btns.length; i++) {
+						btns[i].src = btns[i].src.replace('@2x.png', '_dark@2x.png');
+					}
 				}
 			} else {
-				newTheme = 'light';
-				document.body.className = document.body.className.replace(/(?:^|\s)dark(?!\S)/g, newTheme);
 				for (var i=0; i<btns.length; i++) {
-					btns[i].src = btns[i].src.replace('@2x.png', '_dark@2x.png');
+					btns[i].src = btns[i].src.replace('_dark@2x.png', '@2x.png');
 				}
 			}
 			H.set('padTheme', newTheme);
 		}
-		if (H.get('padTheme', 'light') != 'light') {
-			toggleTheme();
+
+		if (H.get('padTheme', 'auto') == 'light') {
+			setTheme('light');
+		} else if (H.get('padTheme', 'auto') == 'dark'){
+			setTheme('dark');
+		} else {
+			const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches
+			if (isDarkMode) setTheme('dark');
+			else setTheme('light');
 		}
+
+
 		var $writer = H.getEl('writer');
 		var $btnPublish = H.getEl('publish');
 		var $wc = H.getEl("wc");
