@@ -1,4 +1,4 @@
-GITREV=`git describe --tags | cut -c 2-`
+GITREV=`git describe | cut -c 2-`
 LDFLAGS=-ldflags="-X 'github.com/writeas/writefreely.softwareVer=$(GITREV)'"
 
 GOCMD=go
@@ -95,7 +95,7 @@ release-linux : clean ui
 
 release-docker :
 	$(DOCKERCMD) push $(IMAGE_NAME)
-	
+
 ui : force_look
 	cd less/; $(MAKE) $(MFLAGS)
 
