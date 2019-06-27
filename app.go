@@ -203,12 +203,28 @@ func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 	p := struct {
 		page.StaticPage
 		Flashes []template.HTML
+		Banner  template.HTML
+		Content template.HTML
 
 		ForcedLanding bool
 	}{
 		StaticPage:    pageForReq(app, r),
 		ForcedLanding: forceLanding,
 	}
+
+	banner, err := getLandingBanner(app)
+	if err != nil {
+		log.Error("unable to get landing banner: %v", err)
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get banner: %v", err)}
+	}
+	p.Banner = template.HTML(applyMarkdown([]byte(banner.Content), ""))
+
+	content, err := getLandingPage(app)
+	if err != nil {
+		log.Error("unable to get landing content: %v", err)
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get content: %v", err)}
+	}
+	p.Content = template.HTML(applyMarkdown([]byte(content.Content), ""))
 
 	// Get error messages
 	session, err := app.sessionStore.Get(r, cookieName)

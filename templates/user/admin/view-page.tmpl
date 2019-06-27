@@ -25,23 +25,33 @@ input[type=text] {
 <div class="snug content-container">
 	{{template "admin-header" .}}
 
-	<h2 id="posts-header">{{.Content.ID}} page</h2>
+	<h2 id="posts-header">{{if eq .Content.ID "landing"}}Home page{{else}}{{.Content.ID}} page{{end}}</h2>
 
 	{{if eq .Content.ID "about"}}
 	<p class="page-desc content-desc">Describe what your instance is <a href="/about" target="page">about</a>.</p>
 	{{else if eq .Content.ID "privacy"}}
 	<p class="page-desc content-desc">Outline your <a href="/privacy" target="page">privacy policy</a>.</p>
+	{{else if eq .Content.ID "landing"}}
+	<p class="page-desc content-desc">Customize your <a href="/?landing=1">home page</a>.</p>
 	{{end}}
 
 	{{if .Message}}<p>{{.Message}}</p>{{end}}
 
 	<form method="post" action="/admin/update/{{.Content.ID}}" onsubmit="savePage(this)">
+		{{if eq .Content.Type "section"}}
+		<label for="banner">
+			Banner
+		</label>
+		<textarea id="banner" class="section codable norm edit-page" style="min-height: 5em; height: 5em;" name="banner">{{.Banner.Content}}</textarea>
+		<p class="content-desc">We suggest a header (e.g. <code># Welcome</code>), optionally followed by a small bit of text. Accepts Markdown and HTML.</p>
+		{{else}}
 		<label for="title">
 			Title
 		</label>
 		<input type="text" name="title" id="title" value="{{.Content.Title.String}}" />
+		{{end}}
 		<label for="content">
-			Content
+			{{if .Banner}}Body{{else}}Content{{end}}
 		</label>
 
 		<textarea id="content" class="section codable norm edit-page" name="content">{{.Content.Content}}</textarea>

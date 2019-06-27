@@ -17,6 +17,9 @@ table.classy.export .disabled, table.classy.export a {
 			<th>Page</th>
 			<th>Last Modified</th>
 		</tr>
+		<tr>
+			<td colspan="2"><a href="/admin/page/landing">Home</a></td>
+		</tr>
 		{{range .Pages}}
 		<tr>
 			<td><a href="/admin/page/{{.ID}}">{{if .Title.Valid}}{{.Title.String}}{{else}}{{.ID}}{{end}}</a></td>

@@ -299,6 +299,7 @@ func handleViewAdminPage(app *App, u *User, w http.ResponseWriter, r *http.Reque
 		Config  config.AppCfg
 		Message string
 
+		Banner  *instanceContent
 		Content *instanceContent
 	}{
 		Config:  app.cfg.App,
@@ -311,6 +312,13 @@ func handleViewAdminPage(app *App, u *User, w http.ResponseWriter, r *http.Reque
 		p.Content, err = getAboutPage(app)
 	} else if slug == "privacy" {
 		p.Content, err = getPrivacyPage(app)
+	} else if slug == "landing" {
+		p.Banner, err = getLandingBanner(app)
+		if err != nil {
+			return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get banner: %v", err)}
+		}
+		p.Content, err = getLandingPage(app)
+		p.Content.ID = "landing"
 	} else {
 		p.Content, err = app.db.GetDynamicContent(slug)
 	}
@@ -334,13 +342,24 @@ func handleAdminUpdateSite(app *App, u *User, w http.ResponseWriter, r *http.Req
 	id := vars["page"]
 
 	// Validate
-	if id != "about" && id != "privacy" {
+	if id != "about" && id != "privacy" && id != "landing" {
 		return impart.HTTPError{http.StatusNotFound, "No such page."}
 	}
 
-	// Update page
+	var err error
 	m := ""
-	err := app.db.UpdateDynamicContent(id, r.FormValue("title"), r.FormValue("content"), "page")
+	if id == "landing" {
+		// Handle special landing page
+		err = app.db.UpdateDynamicContent("landing-banner", "", r.FormValue("banner"), "section")
+		if err != nil {
+			m = "?m=" + err.Error()
+			return impart.HTTPError{http.StatusFound, "/admin/page/" + id + m}
+		}
+		err = app.db.UpdateDynamicContent("landing-body", "", r.FormValue("content"), "section")
+	} else {
+		// Update page
+		err = app.db.UpdateDynamicContent(id, r.FormValue("title"), r.FormValue("content"), "page")
+	}
 	if err != nil {
 		m = "?m=" + err.Error()
 	}
