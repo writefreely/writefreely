@@ -6,8 +6,6 @@
     var hlbaseUri = "/js/";
     var lb = document.querySelectorAll("code[class^='language-']");
 
-    // Set langs to the langs that are included by default (for now: 'common set' on CDN)
-    var langs = [];
 
     // Custom aliasmap
     var aliasmap = {
@@ -65,7 +63,7 @@
         // Support the aliases specified above
         if (aliasmap[lang]) lang = aliasmap[lang];
         lurl = hlbaseUri + "highlightjs/" + lang + ".min.js";
-        if (!(langs.includes(lang) || jss.includes(lurl))) {
+        if (!jss.includes(lurl)) {
           jss.push(lurl);
         }
       }
