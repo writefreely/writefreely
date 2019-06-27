@@ -186,21 +186,28 @@ func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// Multi-user instance
-	u := getUserSession(app, r)
-	if u != nil {
-		// User is logged in, so show the Pad
-		return handleViewPad(app, w, r)
-	}
+	forceLanding := r.FormValue("landing") == "1"
+	if !forceLanding {
+		// Show correct page based on user auth status and configured landing path
+		u := getUserSession(app, r)
+		if u != nil {
+			// User is logged in, so show the Pad
+			return handleViewPad(app, w, r)
+		}
 
-	if land := app.cfg.App.LandingPath(); land != "/" {
-		return impart.HTTPError{http.StatusFound, land}
+		if land := app.cfg.App.LandingPath(); land != "/" {
+			return impart.HTTPError{http.StatusFound, land}
+		}
 	}
 
 	p := struct {
 		page.StaticPage
 		Flashes []template.HTML
+
+		ForcedLanding bool
 	}{
-		StaticPage: pageForReq(app, r),
+		StaticPage:    pageForReq(app, r),
+		ForcedLanding: forceLanding,
 	}
 
 	// Get error messages
