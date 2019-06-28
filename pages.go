@@ -96,7 +96,7 @@ func getLandingBanner(app *App) (*instanceContent, error) {
 	return c, nil
 }
 
-func getLandingPage(app *App) (*instanceContent, error) {
+func getLandingBody(app *App) (*instanceContent, error) {
 	c, err := app.db.GetDynamicContent("landing-body")
 	if err != nil {
 		return nil, err

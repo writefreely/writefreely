@@ -219,7 +219,7 @@ func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 	p.Banner = template.HTML(applyMarkdown([]byte(banner.Content), ""))
 
-	content, err := getLandingPage(app)
+	content, err := getLandingBody(app)
 	if err != nil {
 		log.Error("unable to get landing content: %v", err)
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get content: %v", err)}

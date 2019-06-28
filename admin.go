@@ -317,7 +317,7 @@ func handleViewAdminPage(app *App, u *User, w http.ResponseWriter, r *http.Reque
 		if err != nil {
 			return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get banner: %v", err)}
 		}
-		p.Content, err = getLandingPage(app)
+		p.Content, err = getLandingBody(app)
 		p.Content.ID = "landing"
 	} else {
 		p.Content, err = app.db.GetDynamicContent(slug)
