@@ -266,6 +266,8 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	friendlyID := vars["post"]
 
+	// NOTE: until this is done better, be sure to keep this in parity with
+	// isRaw() and viewCollectionPost()
 	isJSON := strings.HasSuffix(friendlyID, ".json")
 	isXML := strings.HasSuffix(friendlyID, ".xml")
 	isCSS := strings.HasSuffix(friendlyID, ".css")
@@ -1197,6 +1199,8 @@ func isRaw(r *http.Request) bool {
 	vars := mux.Vars(r)
 	slug := vars["slug"]
 
+	// NOTE: until this is done better, be sure to keep this in parity with
+	// isRaw in viewCollectionPost() and handleViewPost()
 	isJSON := strings.HasSuffix(slug, ".json")
 	isXML := strings.HasSuffix(slug, ".xml")
 	isMarkdown := strings.HasSuffix(slug, ".md")
@@ -1207,6 +1211,8 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 	vars := mux.Vars(r)
 	slug := vars["slug"]
 
+	// NOTE: until this is done better, be sure to keep this in parity with
+	// isRaw() and handleViewPost()
 	isJSON := strings.HasSuffix(slug, ".json")
 	isXML := strings.HasSuffix(slug, ".xml")
 	isMarkdown := strings.HasSuffix(slug, ".md")
