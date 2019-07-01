@@ -79,3 +79,59 @@ We store log files, or data about what happens on our servers. We also use cooki
 
 Beyond this, it's important that you trust whoever runs **` + cfg.App.SiteName + `**. Software can only do so much to protect you -- your level of privacy protections will ultimately fall on the humans that run this particular service.`
 }
+
+func getLandingBanner(app *App) (*instanceContent, error) {
+	c, err := app.db.GetDynamicContent("landing-banner")
+	if err != nil {
+		return nil, err
+	}
+	if c == nil {
+		c = &instanceContent{
+			ID:      "landing-banner",
+			Type:    "section",
+			Content: defaultLandingBanner(app.cfg),
+			Updated: defaultPageUpdatedTime,
+		}
+	}
+	return c, nil
+}
+
+func getLandingBody(app *App) (*instanceContent, error) {
+	c, err := app.db.GetDynamicContent("landing-body")
+	if err != nil {
+		return nil, err
+	}
+	if c == nil {
+		c = &instanceContent{
+			ID:      "landing-body",
+			Type:    "section",
+			Content: defaultLandingBody(app.cfg),
+			Updated: defaultPageUpdatedTime,
+		}
+	}
+	return c, nil
+}
+
+func defaultLandingBanner(cfg *config.Config) string {
+	if cfg.App.Federation {
+		return "# Start your blog in the fediverse"
+	}
+	return "# Start your blog"
+}
+
+func defaultLandingBody(cfg *config.Config) string {
+	if cfg.App.Federation {
+		return `## Join the Fediverse
+
+The fediverse is a large network of platforms that all speak a common language. Imagine if you could reply to Instagram posts from Twitter, or interact with your favorite Medium blogs from Facebook -- federated alternatives like [PixelFed](https://pixelfed.org), [Mastodon](https://joinmastodon.org), and WriteFreely enable you to do these types of things.
+
+<div style="text-align:center">
+	<iframe style="width: 560px; height: 315px; max-width: 100%;" sandbox="allow-same-origin allow-scripts" src="https://video.writeas.org/videos/embed/cc55e615-d204-417c-9575-7b57674cc6f3" frameborder="0" allowfullscreen></iframe>
+</div>
+
+## Write More Socially
+
+WriteFreely can communicate with other federated platforms like Mastodon, so people can follow your blogs, bookmark their favorite posts, and boost them to their followers. Sign up above to create a blog and join the fediverse.`
+	}
+	return ""
+}
