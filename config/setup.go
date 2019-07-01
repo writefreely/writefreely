@@ -60,26 +60,27 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 		Selected: fmt.Sprintf(`{{.Label}} {{ . | faint }}`),
 	}
 
-	// Environment selection
-	selPrompt := promptui.Select{
-		Templates: selTmpls,
-		Label:     "Environment",
-		Items:     []string{"Development", "Production, standalone", "Production, behind reverse proxy"},
-	}
-	_, envType, err := selPrompt.Run()
-	if err != nil {
-		return data, err
-	}
-	isDevEnv := envType == "Development"
-	isStandalone := envType == "Production, standalone"
-
-	data.Config.Server.Dev = isDevEnv
-
+	var selPrompt promptui.Select
 	var prompt promptui.Prompt
 
 	if strings.Contains(configSections, "server") {
 		title(" Server setup ")
 		fmt.Println()
+
+		// Environment selection
+		selPrompt = promptui.Select{
+			Templates: selTmpls,
+			Label:     "Environment",
+			Items:     []string{"Development", "Production, standalone", "Production, behind reverse proxy"},
+		}
+		_, envType, err := selPrompt.Run()
+		if err != nil {
+			return data, err
+		}
+		isDevEnv := envType == "Development"
+		isStandalone := envType == "Production, standalone"
+
+		data.Config.Server.Dev = isDevEnv
 
 		if isDevEnv || !isStandalone {
 			// Running in dev environment or behind reverse proxy; ask for port
