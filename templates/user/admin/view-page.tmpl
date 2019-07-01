@@ -32,7 +32,7 @@ input[type=text] {
 	{{else if eq .Content.ID "privacy"}}
 	<p class="page-desc content-desc">Outline your <a href="/privacy" target="page">privacy policy</a>.</p>
 	{{else if eq .Content.ID "landing"}}
-	<p class="page-desc content-desc">Customize your <a href="/?landing=1">home page</a>.</p>
+	<p class="page-desc content-desc">Customize your <a href="/?landing=1" target="page">home page</a>.</p>
 	{{end}}
 
 	{{if .Message}}<p>{{.Message}}</p>{{end}}
