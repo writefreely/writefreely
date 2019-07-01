@@ -390,7 +390,7 @@ func (h *Handler) WebErrors(f handlerFunc, ul UserLevelFunc) http.HandlerFunc {
 				session, err = h.sessionStore.Get(r, cookieName)
 				if err != nil && (ul(h.app.App().cfg) == UserLevelNoneRequiredType || ul(h.app.App().cfg) == UserLevelUserType) {
 					// Cookie is required, but we can ignore this error
-					log.Error("Handler: Unable to get session (for user permission %d); ignoring: %v", ul, err)
+					log.Error("Handler: Unable to get session (for user permission %d); ignoring: %v", ul(h.app.App().cfg), err)
 				}
 
 				_, gotUser := session.Values[cookieUserVal].(*User)
@@ -479,7 +479,7 @@ func (h *Handler) Web(f handlerFunc, ul UserLevelFunc) http.HandlerFunc {
 				session, err := h.sessionStore.Get(r, cookieName)
 				if err != nil && (ul(h.app.App().cfg) == UserLevelNoneRequiredType || ul(h.app.App().cfg) == UserLevelUserType) {
 					// Cookie is required, but we can ignore this error
-					log.Error("Handler: Unable to get session (for user permission %d); ignoring: %v", ul, err)
+					log.Error("Handler: Unable to get session (for user permission %d); ignoring: %v", ul(h.app.App().cfg), err)
 				}
 
 				_, gotUser := session.Values[cookieUserVal].(*User)
@@ -662,7 +662,7 @@ func (h *Handler) Redirect(url string, ul UserLevelFunc) http.HandlerFunc {
 				session, err := h.sessionStore.Get(r, cookieName)
 				if err != nil && (ul(h.app.App().cfg) == UserLevelNoneRequiredType || ul(h.app.App().cfg) == UserLevelUserType) {
 					// Cookie is required, but we can ignore this error
-					log.Error("Handler: Unable to get session (for user permission %d); ignoring: %v", ul, err)
+					log.Error("Handler: Unable to get session (for user permission %d); ignoring: %v", ul(h.app.App().cfg), err)
 				}
 
 				_, gotUser := session.Values[cookieUserVal].(*User)
