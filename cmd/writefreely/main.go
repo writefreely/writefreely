@@ -28,9 +28,9 @@ func main() {
 	// Setup actions
 	createConfig := flag.Bool("create-config", false, "Creates a basic configuration and exits")
 	doConfig := flag.Bool("config", false, "Run the configuration process")
-	configSections := flag.String("sections", "server db app", "Which sections of the configuration to go through (requires --config), " +
-															   "valid values are any combination of 'server', 'db' and 'app' " +
-															   "example: writefreely --config --sections \"db app\"")
+	configSections := flag.String("sections", "server db app", "Which sections of the configuration to go through (requires --config), "+
+		"valid values are any combination of 'server', 'db' and 'app' "+
+		"example: writefreely --config --sections \"db app\"")
 	genKeys := flag.Bool("gen-keys", false, "Generate encryption and authentication keys")
 	createSchema := flag.Bool("init-db", false, "Initialize app database")
 	migrate := flag.Bool("migrate", false, "Migrate the database")

@@ -76,12 +76,11 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 	data.Config.Server.Dev = isDevEnv
 
 	var prompt promptui.Prompt
-	
-	if strings.Contains(configSections, "server"){
 
+	if strings.Contains(configSections, "server") {
 		title(" Server setup ")
 		fmt.Println()
-	
+
 		if isDevEnv || !isStandalone {
 			// Running in dev environment or behind reverse proxy; ask for port
 			prompt = promptui.Prompt{
@@ -96,7 +95,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 			}
 			data.Config.Server.Port, _ = strconv.Atoi(port) // Ignore error, as we've already validated number
 		}
-	
+
 		if isStandalone {
 			selPrompt = promptui.Select{
 				Templates: selTmpls,
@@ -113,7 +112,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 				data.Config.Server.TLSKeyPath = ""
 			} else if sel == 1 {
 				data.Config.Server.Port = 443
-	
+
 				prompt = promptui.Prompt{
 					Templates: tmpls,
 					Label:     "Certificate path",
@@ -124,7 +123,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 				if err != nil {
 					return data, err
 				}
-	
+
 				prompt = promptui.Prompt{
 					Templates: tmpls,
 					Label:     "Key path",
@@ -140,13 +139,14 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 			data.Config.Server.TLSCertPath = ""
 			data.Config.Server.TLSKeyPath = ""
 		}
-	
+
 		fmt.Println()
 	}
-	if strings.Contains(configSections, "db"){
+
+	if strings.Contains(configSections, "db") {
 		title(" Database setup ")
 		fmt.Println()
-	
+
 		selPrompt = promptui.Select{
 			Templates: selTmpls,
 			Label:     "Database driver",
@@ -156,11 +156,11 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 		if err != nil {
 			return data, err
 		}
-	
+
 		if sel == 0 {
 			// Configure for MySQL
 			data.Config.UseMySQL(isNewCfg)
-	
+
 			prompt = promptui.Prompt{
 				Templates: tmpls,
 				Label:     "Username",
@@ -171,7 +171,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 			if err != nil {
 				return data, err
 			}
-	
+
 			prompt = promptui.Prompt{
 				Templates: tmpls,
 				Label:     "Password",
@@ -183,7 +183,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 			if err != nil {
 				return data, err
 			}
-	
+
 			prompt = promptui.Prompt{
 				Templates: tmpls,
 				Label:     "Database name",
@@ -194,7 +194,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 			if err != nil {
 				return data, err
 			}
-	
+
 			prompt = promptui.Prompt{
 				Templates: tmpls,
 				Label:     "Host",
@@ -205,7 +205,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 			if err != nil {
 				return data, err
 			}
-	
+
 			prompt = promptui.Prompt{
 				Templates: tmpls,
 				Label:     "Port",
@@ -220,7 +220,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 		} else if sel == 1 {
 			// Configure for SQLite
 			data.Config.UseSQLite(isNewCfg)
-	
+
 			prompt = promptui.Prompt{
 				Templates: tmpls,
 				Label:     "Filename",
@@ -232,14 +232,14 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 				return data, err
 			}
 		}
-	
+
 		fmt.Println()
 	}
-	if strings.Contains(configSections, "app"){
 
+	if strings.Contains(configSections, "app") {
 		title(" App setup ")
 		fmt.Println()
-	
+
 		selPrompt = promptui.Select{
 			Templates: selTmpls,
 			Label:     "Site type",
@@ -250,10 +250,10 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 			return data, err
 		}
 		data.Config.App.SingleUser = usersType == "Single user blog"
-	
+
 		if data.Config.App.SingleUser {
 			data.User = &UserCreation{}
-	
+
 			//   prompt for username
 			prompt = promptui.Prompt{
 				Templates: tmpls,
@@ -264,7 +264,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 			if err != nil {
 				return data, err
 			}
-	
+
 			//   prompt for password
 			prompt = promptui.Prompt{
 				Templates: tmpls,
@@ -275,13 +275,13 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 			if err != nil {
 				return data, err
 			}
-	
+
 			data.User.HashedPass, err = auth.HashPass([]byte(newUserPass))
 			if err != nil {
 				return data, err
 			}
 		}
-	
+
 		siteNameLabel := "Instance name"
 		if data.Config.App.SingleUser {
 			siteNameLabel = "Blog name"
@@ -296,7 +296,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 		if err != nil {
 			return data, err
 		}
-	
+
 		prompt = promptui.Prompt{
 			Templates: tmpls,
 			Label:     "Public URL",
@@ -307,7 +307,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 		if err != nil {
 			return data, err
 		}
-	
+
 		if !data.Config.App.SingleUser {
 			selPrompt = promptui.Select{
 				Templates: selTmpls,
@@ -319,7 +319,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 				return data, err
 			}
 			data.Config.App.OpenRegistration = regType == "Open"
-	
+
 			prompt = promptui.Prompt{
 				Templates: tmpls,
 				Label:     "Max blogs per user",
@@ -331,7 +331,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 			}
 			data.Config.App.MaxBlogs, _ = strconv.Atoi(maxBlogs) // Ignore error, as we've already validated number
 		}
-	
+
 		selPrompt = promptui.Select{
 			Templates: selTmpls,
 			Label:     "Federation",
@@ -342,7 +342,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 			return data, err
 		}
 		data.Config.App.Federation = fedType == "Enabled"
-	
+
 		if data.Config.App.Federation {
 			selPrompt = promptui.Select{
 				Templates: selTmpls,
@@ -354,7 +354,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 				return data, err
 			}
 			data.Config.App.PublicStats = fedStatsType == "Public"
-	
+
 			selPrompt = promptui.Select{
 				Templates: selTmpls,
 				Label:     "Instance metadata privacy",
