@@ -443,8 +443,19 @@ func CreateConfig(app *App) error {
 }
 
 // DoConfig runs the interactive configuration process.
-func DoConfig(app *App) {
-	d, err := config.Configure(app.cfgFile)
+func DoConfig(app *App, configSections string) {
+	if configSections == "" {
+		configSections = "server db app"
+	}
+	// let's check there aren't any garbage in the list
+	configSectionsArray := strings.Split(configSections, " ")
+	for _, element := range configSectionsArray {
+		if element != "server" && element != "db" && element != "app" {
+			log.Error("Invalid argument to --sections. Valid arguments are only \"server\", \"db\" and \"app\"")
+			os.Exit(1)
+		}
+	}
+	d, err := config.Configure(app.cfgFile, configSections)
 	if err != nil {
 		log.Error("Unable to configure: %v", err)
 		os.Exit(1)
