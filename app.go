@@ -312,6 +312,7 @@ func pageForReq(app *App, r *http.Request) page.StaticPage {
 			p.Username = u.Username
 		}
 	}
+	p.CanViewReader = !app.cfg.App.Private || u != nil
 
 	return p
 }

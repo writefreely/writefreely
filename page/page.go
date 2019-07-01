@@ -23,10 +23,11 @@ type StaticPage struct {
 	HeaderNav bool
 
 	// Request values
-	Path     string
-	Username string
-	Values   map[string]string
-	Flashes  []string
+	Path          string
+	Username      string
+	Values        map[string]string
+	Flashes       []string
+	CanViewReader bool
 }
 
 // SanitizeHost alters the StaticPage to contain a real hostname. This is

@@ -266,6 +266,8 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	friendlyID := vars["post"]
 
+	// NOTE: until this is done better, be sure to keep this in parity with
+	// isRaw() and viewCollectionPost()
 	isJSON := strings.HasSuffix(friendlyID, ".json")
 	isXML := strings.HasSuffix(friendlyID, ".xml")
 	isCSS := strings.HasSuffix(friendlyID, ".css")
@@ -587,7 +589,7 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	// Write success now
 	response := impart.WriteSuccess(w, newPost, http.StatusCreated)
 
-	if newPost.Collection != nil && app.cfg.App.Federation && !newPost.Created.After(time.Now()) {
+	if newPost.Collection != nil && !app.cfg.App.Private && app.cfg.App.Federation && !newPost.Created.After(time.Now()) {
 		go federatePost(app, newPost, newPost.Collection.ID, false)
 	}
 
@@ -687,7 +689,7 @@ func existingPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	if pRes.CollectionID.Valid {
 		coll, err := app.db.GetCollectionBy("id = ?", pRes.CollectionID.Int64)
-		if err == nil && app.cfg.App.Federation {
+		if err == nil && !app.cfg.App.Private && app.cfg.App.Federation {
 			coll.hostName = app.cfg.App.Host
 			pRes.Collection = &CollectionObj{Collection: *coll}
 			go federatePost(app, pRes, pRes.Collection.ID, true)
@@ -828,7 +830,7 @@ func deletePost(app *App, w http.ResponseWriter, r *http.Request) error {
 	if t != nil {
 		t.Commit()
 	}
-	if coll != nil && app.cfg.App.Federation {
+	if coll != nil && !app.cfg.App.Private && app.cfg.App.Federation {
 		go deleteFederatedPost(app, pp, collID.Int64)
 	}
 
@@ -872,7 +874,7 @@ func addPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	if app.cfg.App.Federation {
+	if !app.cfg.App.Private && app.cfg.App.Federation {
 		for _, pRes := range *res {
 			if pRes.Code != http.StatusOK {
 				continue
@@ -1193,20 +1195,28 @@ func getRawCollectionPost(app *App, slug, collAlias string) *RawPost {
 	}
 }
 
+func isRaw(r *http.Request) bool {
+	vars := mux.Vars(r)
+	slug := vars["slug"]
+
+	// NOTE: until this is done better, be sure to keep this in parity with
+	// isRaw in viewCollectionPost() and handleViewPost()
+	isJSON := strings.HasSuffix(slug, ".json")
+	isXML := strings.HasSuffix(slug, ".xml")
+	isMarkdown := strings.HasSuffix(slug, ".md")
+	return strings.HasSuffix(slug, ".txt") || isJSON || isXML || isMarkdown
+}
+
 func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	slug := vars["slug"]
 
+	// NOTE: until this is done better, be sure to keep this in parity with
+	// isRaw() and handleViewPost()
 	isJSON := strings.HasSuffix(slug, ".json")
 	isXML := strings.HasSuffix(slug, ".xml")
 	isMarkdown := strings.HasSuffix(slug, ".md")
 	isRaw := strings.HasSuffix(slug, ".txt") || isJSON || isXML || isMarkdown
-
-	if strings.Contains(r.URL.Path, ".") && !isRaw {
-		// Serve static file
-		app.shttp.ServeHTTP(w, r)
-		return nil
-	}
 
 	cr := &collectionReq{}
 	err := processCollectionRequest(cr, vars, w, r)

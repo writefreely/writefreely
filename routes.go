@@ -60,7 +60,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 
 	// Federation endpoints
 	// host-meta
-	write.HandleFunc("/.well-known/host-meta", handler.Web(handleViewHostMeta, UserLevelOptional))
+	write.HandleFunc("/.well-known/host-meta", handler.Web(handleViewHostMeta, UserLevelReader))
 	// webfinger
 	write.HandleFunc(webfinger.WebFingerPath, handler.LogHandlerFunc(http.HandlerFunc(wf.Webfinger)))
 	// nodeinfo
@@ -112,28 +112,28 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	// Handle collections
 	write.HandleFunc("/api/collections", handler.All(newCollection)).Methods("POST")
 	apiColls := write.PathPrefix("/api/collections/").Subrouter()
-	apiColls.HandleFunc("/{alias:[0-9a-zA-Z\\-]+}", handler.All(fetchCollection)).Methods("GET")
+	apiColls.HandleFunc("/{alias:[0-9a-zA-Z\\-]+}", handler.AllReader(fetchCollection)).Methods("GET")
 	apiColls.HandleFunc("/{alias:[0-9a-zA-Z\\-]+}", handler.All(existingCollection)).Methods("POST", "DELETE")
-	apiColls.HandleFunc("/{alias}/posts", handler.All(fetchCollectionPosts)).Methods("GET")
+	apiColls.HandleFunc("/{alias}/posts", handler.AllReader(fetchCollectionPosts)).Methods("GET")
 	apiColls.HandleFunc("/{alias}/posts", handler.All(newPost)).Methods("POST")
-	apiColls.HandleFunc("/{alias}/posts/{post}", handler.All(fetchPost)).Methods("GET")
+	apiColls.HandleFunc("/{alias}/posts/{post}", handler.AllReader(fetchPost)).Methods("GET")
 	apiColls.HandleFunc("/{alias}/posts/{post:[a-zA-Z0-9]{10}}", handler.All(existingPost)).Methods("POST")
-	apiColls.HandleFunc("/{alias}/posts/{post}/{property}", handler.All(fetchPostProperty)).Methods("GET")
+	apiColls.HandleFunc("/{alias}/posts/{post}/{property}", handler.AllReader(fetchPostProperty)).Methods("GET")
 	apiColls.HandleFunc("/{alias}/collect", handler.All(addPost)).Methods("POST")
 	apiColls.HandleFunc("/{alias}/pin", handler.All(pinPost)).Methods("POST")
 	apiColls.HandleFunc("/{alias}/unpin", handler.All(pinPost)).Methods("POST")
 	apiColls.HandleFunc("/{alias}/inbox", handler.All(handleFetchCollectionInbox)).Methods("POST")
-	apiColls.HandleFunc("/{alias}/outbox", handler.All(handleFetchCollectionOutbox)).Methods("GET")
-	apiColls.HandleFunc("/{alias}/following", handler.All(handleFetchCollectionFollowing)).Methods("GET")
-	apiColls.HandleFunc("/{alias}/followers", handler.All(handleFetchCollectionFollowers)).Methods("GET")
+	apiColls.HandleFunc("/{alias}/outbox", handler.AllReader(handleFetchCollectionOutbox)).Methods("GET")
+	apiColls.HandleFunc("/{alias}/following", handler.AllReader(handleFetchCollectionFollowing)).Methods("GET")
+	apiColls.HandleFunc("/{alias}/followers", handler.AllReader(handleFetchCollectionFollowers)).Methods("GET")
 
 	// Handle posts
 	write.HandleFunc("/api/posts", handler.All(newPost)).Methods("POST")
 	posts := write.PathPrefix("/api/posts/").Subrouter()
-	posts.HandleFunc("/{post:[a-zA-Z0-9]{10}}", handler.All(fetchPost)).Methods("GET")
+	posts.HandleFunc("/{post:[a-zA-Z0-9]{10}}", handler.AllReader(fetchPost)).Methods("GET")
 	posts.HandleFunc("/{post:[a-zA-Z0-9]{10}}", handler.All(existingPost)).Methods("POST", "PUT")
 	posts.HandleFunc("/{post:[a-zA-Z0-9]{10}}", handler.All(deletePost)).Methods("DELETE")
-	posts.HandleFunc("/{post:[a-zA-Z0-9]{10}}/{property}", handler.All(fetchPostProperty)).Methods("GET")
+	posts.HandleFunc("/{post:[a-zA-Z0-9]{10}}/{property}", handler.AllReader(fetchPostProperty)).Methods("GET")
 	posts.HandleFunc("/claim", handler.All(addPost)).Methods("POST")
 	posts.HandleFunc("/disperse", handler.All(dispersePost)).Methods("POST")
 
@@ -152,11 +152,8 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	write.HandleFunc("/login", handler.Web(viewLogin, UserLevelNoneRequired))
 	write.HandleFunc("/invite/{code}", handler.Web(handleViewInvite, UserLevelNoneRequired)).Methods("GET")
 	// TODO: show a reader-specific 404 page if the function is disabled
-	// TODO: change this based on configuration for either public or private-to-this-instance
-	readPerm := UserLevelOptional
-
-	write.HandleFunc("/read", handler.Web(viewLocalTimeline, readPerm))
-	RouteRead(handler, readPerm, write.PathPrefix("/read").Subrouter())
+	write.HandleFunc("/read", handler.Web(viewLocalTimeline, UserLevelReader))
+	RouteRead(handler, UserLevelReader, write.PathPrefix("/read").Subrouter())
 
 	draftEditPrefix := ""
 	if apper.App().cfg.App.SingleUser {
@@ -173,8 +170,8 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	if apper.App().cfg.App.SingleUser {
 		RouteCollections(handler, write.PathPrefix("/").Subrouter())
 	} else {
-		write.HandleFunc("/{prefix:[@~$!\\-+]}{collection}", handler.Web(handleViewCollection, UserLevelOptional))
-		write.HandleFunc("/{collection}/", handler.Web(handleViewCollection, UserLevelOptional))
+		write.HandleFunc("/{prefix:[@~$!\\-+]}{collection}", handler.Web(handleViewCollection, UserLevelReader))
+		write.HandleFunc("/{collection}/", handler.Web(handleViewCollection, UserLevelReader))
 		RouteCollections(handler, write.PathPrefix("/{prefix:[@~$!\\-+]?}{collection}").Subrouter())
 		// Posts
 	}
@@ -184,19 +181,19 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 }
 
 func RouteCollections(handler *Handler, r *mux.Router) {
-	r.HandleFunc("/page/{page:[0-9]+}", handler.Web(handleViewCollection, UserLevelOptional))
-	r.HandleFunc("/tag:{tag}", handler.Web(handleViewCollectionTag, UserLevelOptional))
-	r.HandleFunc("/tag:{tag}/feed/", handler.Web(ViewFeed, UserLevelOptional))
-	r.HandleFunc("/tags/{tag}", handler.Web(handleViewCollectionTag, UserLevelOptional))
-	r.HandleFunc("/sitemap.xml", handler.All(handleViewSitemap))
-	r.HandleFunc("/feed/", handler.All(ViewFeed))
-	r.HandleFunc("/{slug}", handler.Web(viewCollectionPost, UserLevelOptional))
+	r.HandleFunc("/page/{page:[0-9]+}", handler.Web(handleViewCollection, UserLevelReader))
+	r.HandleFunc("/tag:{tag}", handler.Web(handleViewCollectionTag, UserLevelReader))
+	r.HandleFunc("/tag:{tag}/feed/", handler.Web(ViewFeed, UserLevelReader))
+	r.HandleFunc("/tags/{tag}", handler.Web(handleViewCollectionTag, UserLevelReader))
+	r.HandleFunc("/sitemap.xml", handler.AllReader(handleViewSitemap))
+	r.HandleFunc("/feed/", handler.AllReader(ViewFeed))
+	r.HandleFunc("/{slug}", handler.CollectionPostOrStatic)
 	r.HandleFunc("/{slug}/edit", handler.Web(handleViewPad, UserLevelUser))
 	r.HandleFunc("/{slug}/edit/meta", handler.Web(handleViewMeta, UserLevelUser))
-	r.HandleFunc("/{slug}/", handler.Web(handleCollectionPostRedirect, UserLevelOptional)).Methods("GET")
+	r.HandleFunc("/{slug}/", handler.Web(handleCollectionPostRedirect, UserLevelReader)).Methods("GET")
 }
 
-func RouteRead(handler *Handler, readPerm UserLevel, r *mux.Router) {
+func RouteRead(handler *Handler, readPerm UserLevelFunc, r *mux.Router) {
 	r.HandleFunc("/api/posts", handler.Web(viewLocalTimelineAPI, readPerm))
 	r.HandleFunc("/p/{page}", handler.Web(viewLocalTimeline, readPerm))
 	r.HandleFunc("/feed/", handler.Web(viewLocalTimelineFeed, readPerm))
