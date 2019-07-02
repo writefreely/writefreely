@@ -63,31 +63,7 @@ WriteFreely has minimal requirements to get up and running — you only need to 
 
 > **Note** this is currently alpha software. We're quickly moving out of this v0.x stage, but while we're in it, there are no guarantees that this is ready for production use.
 
-First, download the [latest release](https://github.com/writeas/writefreely/releases/latest) for your OS. It includes everything you need to start your blog.
-
-Now extract the files from the archive, change into the directory, and do the following steps:
-
-```bash
-# 1) Configure your blog
-./writefreely --config
-
-# 2) (if you chose MySQL in the previous step) Log into MySQL and run:
-# CREATE DATABASE writefreely;
-
-# 3) (if you chose Multi-user setup) Import the schema with:
-./writefreely --init-db
-
-# 4) Generate data encryption keys
-./writefreely --gen-keys
-
-# 5) Run
-./writefreely
-
-# 6) Check out your site at the URL you specified in the setup process
-# 7) There is no Step 7, you're done!
-```
-
-For running in production, [see our guide](https://writefreely.org/start#production).
+To get started, head over to our [Getting Started guide](https://writefreely.org/start). For production use, jump to the [Running in Production](https://writefreely.org/start#production) section.
 
 ## Packages
 
