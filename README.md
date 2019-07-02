@@ -71,9 +71,13 @@ WriteFreely is available in these package repositories:
 
 * [Arch User Repository](https://aur.archlinux.org/packages/writefreely/)
 
+## Documentation
+
+Read our full [documentation on WriteFreely.org](https://writefreely.org/docs). Help us improve by contributing to the [writefreely/documentation](https://github.com/writefreely/documentation) repo.
+
 ## Development
 
-Ready to hack on your site? Get started with our [developer guide](https://writefreely.org/docs/latest/developer).
+Ready to hack on your site? Get started with our [developer guide](https://writefreely.org/docs/latest/developer/setup).
 
 ## Docker
 
