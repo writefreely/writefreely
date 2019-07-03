@@ -564,12 +564,12 @@ func CreateSchema(apper Apper) error {
 }
 
 // Migrate runs all necessary database migrations.
-func Migrate(app *App) error {
-	app.LoadConfig()
-	connectToDatabase(app)
-	defer shutdown(app)
+func Migrate(apper Apper) error {
+	apper.LoadConfig()
+	connectToDatabase(apper.App())
+	defer shutdown(apper.App())
 
-	err := migrations.Migrate(migrations.NewDatastore(app.db.DB, app.db.driverName))
+	err := migrations.Migrate(migrations.NewDatastore(apper.App().db.DB, apper.App().db.driverName))
 	if err != nil {
 		return fmt.Errorf("migrate: %s", err)
 	}
