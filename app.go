@@ -577,14 +577,14 @@ func Migrate(apper Apper) error {
 }
 
 // ResetPassword runs the interactive password reset process.
-func ResetPassword(app *App, username string) error {
+func ResetPassword(apper Apper, username string) error {
 	// Connect to the database
-	app.LoadConfig()
-	connectToDatabase(app)
-	defer shutdown(app)
+	apper.LoadConfig()
+	connectToDatabase(apper.App())
+	defer shutdown(apper.App())
 
 	// Fetch user
-	u, err := app.db.GetUserForAuth(username)
+	u, err := apper.App().db.GetUserForAuth(username)
 	if err != nil {
 		log.Error("Get user: %s", err)
 		os.Exit(1)
@@ -606,7 +606,7 @@ func ResetPassword(app *App, username string) error {
 
 	// Do the update
 	log.Info("Updating...")
-	err = adminResetPassword(app, u, newPass)
+	err = adminResetPassword(apper.App(), u, newPass)
 	if err != nil {
 		log.Error("%s", err)
 		os.Exit(1)
