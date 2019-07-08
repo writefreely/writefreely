@@ -40,6 +40,12 @@ build-darwin: deps
 	fi
 	xgo --targets=darwin/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
 
+build-arm7: deps
+	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+		$(GOGET) -u github.com/karalabe/xgo; \
+	fi
+	xgo --targets=linux/arm-7, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
+
 build-docker :
 	$(DOCKERCMD) build -t $(IMAGE_NAME):latest -t $(IMAGE_NAME):$(GITREV) .
 
@@ -71,6 +77,10 @@ release : clean ui assets
 	$(MAKE) build-linux
 	mv build/$(BINARY_NAME)-linux-amd64 build/$(BINARY_NAME)
 	cd build; tar -cvzf ../$(BINARY_NAME)_$(GITREV)_linux_amd64.tar.gz *
+	rm build/$(BINARY_NAME)
+	$(MAKE) build-arm7
+	mv build/$(BINARY_NAME)-linux-arm-7 build/$(BINARY_NAME)
+	cd build; tar -cvzf ../$(BINARY_NAME)_$(GITREV)_linux_arm7.tar.gz *
 	rm build/$(BINARY_NAME)
 	$(MAKE) build-darwin
 	mv build/$(BINARY_NAME)-darwin-10.6-amd64 build/$(BINARY_NAME)
