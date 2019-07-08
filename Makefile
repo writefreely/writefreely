@@ -78,6 +78,10 @@ release : clean ui assets
 	mv build/$(BINARY_NAME)-linux-amd64 build/$(BINARY_NAME)
 	cd build; tar -cvzf ../$(BINARY_NAME)_$(GITREV)_linux_amd64.tar.gz *
 	rm build/$(BINARY_NAME)
+	$(MAKE) build-arm7
+	mv build/$(BINARY_NAME)-linux-arm-7 build/$(BINARY_NAME)
+	cd build; tar -cvzf ../$(BINARY_NAME)_$(GITREV)_linux_arm7.tar.gz *
+	rm build/$(BINARY_NAME)
 	$(MAKE) build-darwin
 	mv build/$(BINARY_NAME)-darwin-10.6-amd64 build/$(BINARY_NAME)
 	cd build; tar -cvzf ../$(BINARY_NAME)_$(GITREV)_macos_amd64.tar.gz *
