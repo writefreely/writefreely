@@ -40,6 +40,12 @@ build-darwin: deps
 	fi
 	xgo --targets=darwin/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
 
+build-arm7: deps
+	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+		$(GOGET) -u github.com/karalabe/xgo; \
+	fi
+	xgo --targets=linux/arm-7, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
+
 build-docker :
 	$(DOCKERCMD) build -t $(IMAGE_NAME):latest -t $(IMAGE_NAME):$(GITREV) .
 
