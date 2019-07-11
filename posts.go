@@ -1118,10 +1118,20 @@ func getSlugFromPost(title, body, lang string) string {
 	title = parse.PostLede(title, false)
 	// Truncate lede if needed
 	title, _ = parse.TruncToWord(title, 80)
+	var s string
 	if lang != "" && len(lang) == 2 {
-		return slug.MakeLang(title, lang)
+		s = slug.MakeLang(title, lang)
+	} else {
+		s = slug.Make(title)
 	}
-	return slug.Make(title)
+
+	// Transliteration may cause the slug to expand past the limit, so truncate again
+	s, _ = parse.TruncToWord(s, 80)
+	return strings.TrimFunc(s, func(r rune) bool {
+		// TruncToWord doesn't respect words in a slug, since spaces are replaced
+		// with hyphens. So remove any trailing hyphens.
+		return r == '-'
+	})
 }
 
 // isFontValid returns whether or not the submitted post's appearance is valid.
