@@ -357,6 +357,102 @@
 		} catch (e) {
 		  // whatevs
 		}
+
+		var allowedFileTypes = ["image/png", "image/jpeg"];
+
+        // using getElementsByTagName instead of querySelector for
+        // more backward compatibility (and probably performance)
+        var dropbox = document.getElementsByTagName("body")[0];
+        dropbox.addEventListener("drop", drop, true);
+        dropbox.addEventListener("dragover", function(e){e.preventDefault()}, true)
+        // firefox needs this too in order to not show the floating cursor on linux
+        // see [blogpost] for why we don't want this
+        dropbox.addEventListener("dragenter", function(e){e.preventDefault()}, true)
+
+        var textarea = document.getElementsByTagName("textarea")[0];
+
+        function drop(e) {
+            e.preventDefault();
+            var files = e.dataTransfer.files;
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                // from https://stackoverflow.com/a/1818400/400257
+                description = file.name.substr(0, file.name.lastIndexOf('.')) || file.name;
+                file.identifier = description+"_"+Math.random().toString(36).substring(2, 15);
+                file.progress = 0;
+                markdown = " [" + file.identifier + "](00%) ";
+                // if we drop on a textarea, on firefox, we can get the position of the drop
+                // by searching for the 'file://' uri that it appends to the textarea by default
+                insertTextAtCursor(markdown, textarea);
+                handleFile(file);
+            }
+        }
+
+        function insertTextAtCursor(text, textarea){
+            if (textarea.nodeName == "TEXTAREA") {
+                // save cursor position so that we can set it back after the operation on value
+                var startingPosition = textarea.selectionStart;
+                var textBeforeCursor = textarea.value.substring(0, textarea.selectionStart);
+                var textAfterCursor = textarea.value.substring(textarea.selectionEnd, textarea.value.length);
+                textarea.value = textBeforeCursor + text + textAfterCursor;
+                // set the cursor to its original position
+                textarea.selectionStart = textarea.selectionEnd = startingPosition + text.length;
+            } else throw "Element is not a textarea"
+        }
+
+        function handleFile(file){
+            var ok = false;
+            for (var i in allowedFileTypes){
+                if (file.type.match(allowedFileTypes[i])) {ok=true; break;}
+            }
+            if (!ok) throw "disallowed file type";
+
+            // var reader = new FileReader();
+            // reader.readAsDataURL(file);
+            var xhr = new XMLHttpRequest();
+            // progressMgmt(xhr,file,img);
+            xhr.open("POST", "http://localhost/minimalist-ajax-upload/upload.php");
+            xhr.setRequestHeader("Cache-Control", "no-cache");
+            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+            xhr.setRequestHeader("X-File-Name", file.name);
+            xhr.setRequestHeader("X-File-Size", file.size);
+
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    var startingPosition = textarea.selectionStart;
+                    var loaded = Math.ceil((e.loaded / e.total)*100);
+                    if (file.progress + 5 < loaded){
+                        file.progress = loaded;
+                        textarea.value = textarea.value.replace(getMarkdownRegex(file.identifier), "["+ file.identifier +"]("+padLeft(loaded,2)+"%)");
+                        textarea.selectionStart = textarea.selectionEnd = startingPosition;
+                    }
+                }
+            }
+
+            var formData = new FormData();
+            formData.append('file', file);
+            xhr.send(formData);
+            xhr.onreadystatechange = function(){
+                if(xhr.readyState == 4){
+                    processResponse(xhr.responseText, file.identifier);
+                }
+            }
+        }
+
+        function processResponse(responseText, identifier){
+            var response = JSON.parse(responseText);
+            description = response.name.substr(0, response.name.lastIndexOf('.')) || response.name;
+            textarea.value = textarea.value.replace(getMarkdownRegex(identifier), "["+ description +"]("+response.url+")");
+        }
+
+        function getMarkdownRegex(identifier){
+            return new RegExp('\\[' + identifier + '\\]\\(.*?\\)'); 
+        }
+
+        function padLeft(number, padTo, str){
+            return Array(padTo-String(number).length+1).join(str||'0')+number;
+        }
+
 		</script>
 		<link href="/css/icons.css" rel="stylesheet">
 	</body>
