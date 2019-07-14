@@ -1299,7 +1299,7 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 	p.IsTopLevel = app.cfg.App.SingleUser
 
 	// Check if post has been unpublished
-	if p.Content == "" {
+	if p.Content == "" && p.Title.String == "" {
 		return impart.HTTPError{http.StatusGone, "Post was unpublished."}
 	}
 

@@ -926,7 +926,7 @@ func (db *datastore) GetEditablePost(id, editToken string) (*PublicPost, error) 
 		return nil, err
 	}
 
-	if p.Content == "" {
+	if p.Content == "" && p.Title.String == "" {
 		return nil, ErrPostUnpublished
 	}
 
@@ -976,7 +976,7 @@ func (db *datastore) GetPost(id string, collectionID int64) (*PublicPost, error)
 		return nil, err
 	}
 
-	if p.Content == "" {
+	if p.Content == "" && p.Title.String == "" {
 		return nil, ErrPostUnpublished
 	}
 
@@ -1005,7 +1005,7 @@ func (db *datastore) GetOwnedPost(id string, ownerID int64) (*PublicPost, error)
 		return nil, err
 	}
 
-	if p.Content == "" {
+	if p.Content == "" && p.Title.String == "" {
 		return nil, ErrPostUnpublished
 	}
 
