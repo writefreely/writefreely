@@ -434,7 +434,11 @@
             xhr.send(formData);
             xhr.onreadystatechange = function(){
                 if(xhr.readyState == 4){
-                    processResponse(xhr.responseText, file.identifier);
+                    if (xhr.status == 200){
+                        processResponse(xhr.responseText, file.identifier);
+                    } else {
+                        processFailure(file.identifier);
+                    }
                 }
             }
         }
@@ -443,6 +447,10 @@
             var response = JSON.parse(responseText);
             description = response.name.substr(0, response.name.lastIndexOf('.')) || response.name;
             textarea.value = textarea.value.replace(getMarkdownRegex(identifier), "["+ description +"]("+response.url+")");
+        }
+
+		function processFailure(identifier){
+            textarea.value = textarea.value.replace(getMarkdownRegex(identifier), "");
         }
 
         function getMarkdownRegex(identifier){
