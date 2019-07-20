@@ -13,14 +13,14 @@ package writefreely
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/ikeikeikeike/go-sitemap-generator/stm"
+	"github.com/ikeikeikeike/go-sitemap-generator/v2/stm"
 	"github.com/writeas/web-core/log"
 	"net/http"
 	"time"
 )
 
 func buildSitemap(host, alias string) *stm.Sitemap {
-	sm := stm.NewSitemap()
+	sm := stm.NewSitemap(0)
 	sm.SetDefaultHost(host)
 	if alias != "/" {
 		sm.SetSitemapsPath(alias)
@@ -76,27 +76,30 @@ func handleViewSitemap(app *App, w http.ResponseWriter, r *http.Request) error {
 			lastSiteMod = p.Updated
 		}
 		u := stm.URL{
-			"loc":        p.Slug.String,
-			"changefreq": "weekly",
-			"mobile":     true,
-			"lastmod":    p.Updated,
+			{"loc", p.Slug.String},
+			{"changefreq", "weekly"},
+			{"mobile", true},
+			{"lastmod", p.Updated},
 		}
-		if len(p.Images) > 0 {
-			imgs := []stm.URL{}
-			for _, i := range p.Images {
-				imgs = append(imgs, stm.URL{"loc": i, "title": ""})
+		/*
+			if len(p.Images) > 0 {
+				imgs := []stm.URL{}
+				for _, i := range p.Images {
+					imgs = append(imgs, stm.URL{{"loc", i}, {"title", ""}})
+				}
+				// FIXME: this is a pain. At a loss on how to do this
+				u = append(u, []interface{}{[]interface{}{"image": imgs}})
 			}
-			u["image"] = imgs
-		}
+		*/
 		sm.Add(u)
 	}
 
 	// Add top URL
 	sm.Add(stm.URL{
-		"loc":        pre,
-		"changefreq": "daily",
-		"priority":   "1.0",
-		"lastmod":    lastSiteMod,
+		{"loc", pre},
+		{"changefreq", "daily"},
+		{"priority", "1.0"},
+		{"lastmod", lastSiteMod},
 	})
 
 	w.Write(sm.XMLContent())
