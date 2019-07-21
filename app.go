@@ -382,16 +382,6 @@ func Serve(app *App, r *mux.Router) {
 	}
 	var err error
 	if app.cfg.IsSecureStandalone() {
-		log.Info("Serving redirects on http://%s:80", bindAddress)
-		go func() {
-			err = http.ListenAndServe(
-				fmt.Sprintf("%s:80", bindAddress), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					http.Redirect(w, r, app.cfg.App.Host, http.StatusMovedPermanently)
-				}))
-			log.Error("Unable to start redirect server: %v", err)
-		}()
-
-		log.Info("Serving on https://%s:443", bindAddress)
 		if app.cfg.Server.Autocert {
 			m := &autocert.Manager{
 				Prompt: autocert.AcceptTOS,
@@ -418,9 +408,25 @@ requests. We recommend supplying a valid host name.`)
 			}
 			s.SetKeepAlivesEnabled(false)
 
+			go func() {
+				log.Info("Serving redirects on http://%s:80", bindAddress)
+				err = http.ListenAndServe(":80", m.HTTPHandler(nil))
+				log.Error("Unable to start redirect server: %v", err)
+			}()
+
+			log.Info("Serving on https://%s:443", bindAddress)
 			log.Info("---")
 			err = s.ListenAndServeTLS("", "")
 		} else {
+			go func() {
+				log.Info("Serving redirects on http://%s:80", bindAddress)
+				err = http.ListenAndServe(fmt.Sprintf("%s:80", bindAddress), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					http.Redirect(w, r, app.cfg.App.Host, http.StatusMovedPermanently)
+				}))
+				log.Error("Unable to start redirect server: %v", err)
+			}()
+
+			log.Info("Serving on https://%s:443", bindAddress)
 			log.Info("Using manual certificates")
 			log.Info("---")
 			err = http.ListenAndServeTLS(fmt.Sprintf("%s:443", bindAddress), app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, r)
