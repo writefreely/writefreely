@@ -11,6 +11,7 @@
 package writefreely
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"fmt"
 	"html/template"
@@ -39,6 +40,7 @@ import (
 	"github.com/writeas/writefreely/key"
 	"github.com/writeas/writefreely/migrations"
 	"github.com/writeas/writefreely/page"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 const (
@@ -390,9 +392,29 @@ func Serve(app *App, r *mux.Router) {
 		}()
 
 		log.Info("Serving on https://%s:443", bindAddress)
-		log.Info("---")
-		err = http.ListenAndServeTLS(
-			fmt.Sprintf("%s:443", bindAddress), app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, r)
+		if app.cfg.Server.Autocert {
+			log.Info("Using autocert")
+			m := &autocert.Manager{
+				Prompt:     autocert.AcceptTOS,
+				Cache:      autocert.DirCache(app.cfg.Server.TLSCertPath),
+				HostPolicy: autocert.HostWhitelist(app.cfg.App.Host),
+			}
+			s := &http.Server{
+				Addr:    ":https",
+				Handler: r,
+				TLSConfig: &tls.Config{
+					GetCertificate: m.GetCertificate,
+				},
+			}
+			s.SetKeepAlivesEnabled(false)
+
+			log.Info("---")
+			err = s.ListenAndServeTLS("", "")
+		} else {
+			log.Info("Using manual certificates")
+			log.Info("---")
+			err = http.ListenAndServeTLS(fmt.Sprintf("%s:443", bindAddress), app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, r)
+		}
 	} else {
 		log.Info("Serving on http://%s:%d\n", bindAddress, app.cfg.Server.Port)
 		log.Info("---")
