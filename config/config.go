@@ -83,6 +83,9 @@ type (
 		// Additional functions
 		LocalTimeline bool   `ini:"local_timeline"`
 		UserInvites   string `ini:"user_invites"`
+
+		// Defaults
+		DefaultVisibility string `ini:"default_visibility"`
 	}
 
 	// Config holds the complete configuration for running a writefreely instance

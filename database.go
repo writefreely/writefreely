@@ -44,7 +44,7 @@ var (
 )
 
 type writestore interface {
-	CreateUser(*User, string) error
+	CreateUser(*App, *User, string) error
 	UpdateUserEmail(keys *key.Keychain, userID int64, email string) error
 	UpdateEncryptedUserEmail(int64, []byte) error
 	GetUserByID(int64) (*User, error)
@@ -162,7 +162,7 @@ func (db *datastore) dateSub(l int, unit string) string {
 	return fmt.Sprintf("DATE_SUB(NOW(), INTERVAL %d %s)", l, unit)
 }
 
-func (db *datastore) CreateUser(u *User, collectionTitle string) error {
+func (db *datastore) CreateUser(app *App, u *User, collectionTitle string) error {
 	if db.PostIDExists(u.Username) {
 		return impart.HTTPError{http.StatusConflict, "Invalid collection name."}
 	}
@@ -196,7 +196,7 @@ func (db *datastore) CreateUser(u *User, collectionTitle string) error {
 	if collectionTitle == "" {
 		collectionTitle = u.Username
 	}
-	res, err = t.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", u.Username, collectionTitle, "", CollUnlisted, u.ID, 0)
+	res, err = t.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", u.Username, collectionTitle, "", defaultVisibility(app.cfg), u.ID, 0)
 	if err != nil {
 		t.Rollback()
 		if db.isDuplicateKeyErr(err) {

@@ -31,6 +31,7 @@ import (
 	"github.com/writeas/web-core/log"
 	waposts "github.com/writeas/web-core/posts"
 	"github.com/writeas/writefreely/author"
+	"github.com/writeas/writefreely/config"
 	"github.com/writeas/writefreely/page"
 )
 
@@ -125,6 +126,21 @@ const (
 	CollPrivate
 	CollProtected
 )
+
+var collVisibilityStrings = map[string]collVisibility{
+	"unlisted":  CollUnlisted,
+	"public":    CollPublic,
+	"private":   CollPrivate,
+	"protected": CollProtected,
+}
+
+func defaultVisibility(cfg *config.Config) collVisibility {
+	vis, ok := collVisibilityStrings[cfg.App.DefaultVisibility]
+	if !ok {
+		vis = CollUnlisted
+	}
+	return vis
+}
 
 func (cf *CollectionFormat) Ascending() bool {
 	return cf.Format == "novel"
@@ -358,35 +374,44 @@ func newCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 		return impart.HTTPError{http.StatusBadRequest, fmt.Sprintf("Parameter(s) %srequired.", missingParams)}
 	}
 
+	var userID int64
 	if reqJSON && !c.Web {
 		accessToken = r.Header.Get("Authorization")
 		if accessToken == "" {
 			return ErrNoAccessToken
+		}
+		userID = app.db.GetUserID(accessToken)
+		if userID == -1 {
+			return ErrBadAccessToken
 		}
 	} else {
 		u = getUserSession(app, r)
 		if u == nil {
 			return ErrNotLoggedIn
 		}
+		userID = u.ID
 	}
 
 	if !author.IsValidUsername(app.cfg, c.Alias) {
 		return impart.HTTPError{http.StatusPreconditionFailed, "Collection alias isn't valid."}
 	}
 
-	var coll *Collection
-	var err error
-	if accessToken != "" {
-		coll, err = app.db.CreateCollectionFromToken(c.Alias, c.Title, accessToken)
+	coll, err := app.db.CreateCollection(c.Alias, c.Title, userID)
+	if err != nil {
+		// TODO: handle this
+		return err
+	}
+
+	// Set visibility to configured default
+	vis := defaultVisibility(app.cfg)
+	if vis != CollUnlisted {
+		visInt := int(vis)
+		err = app.db.UpdateCollection(&SubmittedCollection{
+			OwnerID:    uint64(userID),
+			Visibility: &visInt,
+		}, coll.Alias)
 		if err != nil {
-			// TODO: handle this
-			return err
-		}
-	} else {
-		coll, err = app.db.CreateCollection(c.Alias, c.Title, u.ID)
-		if err != nil {
-			// TODO: handle this
-			return err
+			log.Error("Unable to set default visibility: %s", err)
 		}
 	}
 
