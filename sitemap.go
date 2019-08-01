@@ -12,11 +12,12 @@ package writefreely
 
 import (
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/gorilla/mux"
 	"github.com/ikeikeikeike/go-sitemap-generator/v2/stm"
 	"github.com/writeas/web-core/log"
-	"net/http"
-	"time"
 )
 
 func buildSitemap(host, alias string) *stm.Sitemap {
@@ -81,16 +82,16 @@ func handleViewSitemap(app *App, w http.ResponseWriter, r *http.Request) error {
 			{"mobile", true},
 			{"lastmod", p.Updated},
 		}
-		/*
-			if len(p.Images) > 0 {
-				imgs := []stm.URL{}
-				for _, i := range p.Images {
-					imgs = append(imgs, stm.URL{{"loc", i}, {"title", ""}})
-				}
-				// FIXME: this is a pain. At a loss on how to do this
-				u = append(u, []interface{}{[]interface{}{"image": imgs}})
+		if len(p.Images) > 0 {
+			imgs := stm.URL{}
+			for _, i := range p.Images {
+				imgs = append(imgs, []interface{}{
+					[]interface{}{"loc", i},
+					[]interface{}{"title", ""},
+				})
 			}
-		*/
+			u = append(u, []interface{}{"image", imgs})
+		}
 		sm.Add(u)
 	}
 
