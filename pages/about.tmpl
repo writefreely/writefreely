@@ -12,6 +12,7 @@
 			<p><em>{{.SiteName}}</em> is home to <strong>{{largeNumFmt .AboutStats.NumPosts}}</strong> {{pluralize "article" "articles" .AboutStats.NumPosts}} across <strong>{{largeNumFmt .AboutStats.NumBlogs}}</strong> {{pluralize "blog" "blogs" .AboutStats.NumBlogs}}.</p>
 		{{end}}
 
+		{{if not .WFModesty}}
 		<h2 style="margin-top:2em">About WriteFreely</h2>
 		<p><a href="https://writefreely.org">WriteFreely</a> is a self-hosted, decentralized blogging platform for publishing beautiful, simple blogs.</p>
 		<p>It lets you publish a single blog, or host a community of writers who can create multiple blogs under one account. You can also enable federation, which allows people in the fediverse to follow your blog, bookmark your posts, and share them with others.</p>
@@ -23,5 +24,6 @@
 				<p><a href="https://writefreely.org">WriteFreely</a></p>
 			</div>
 		</div>
+		{{end}}
 	</div>
 {{end}}
