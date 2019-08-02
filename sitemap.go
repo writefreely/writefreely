@@ -83,11 +83,11 @@ func handleViewSitemap(app *App, w http.ResponseWriter, r *http.Request) error {
 			{"lastmod", p.Updated},
 		}
 		if len(p.Images) > 0 {
-			imgs := stm.URL{}
+			imgs := []stm.URL{}
 			for _, i := range p.Images {
-				imgs = append(imgs, []interface{}{
-					[]interface{}{"loc", i},
-					[]interface{}{"title", ""},
+				imgs = append(imgs, stm.URL{
+					{"loc", i},
+					{"title", ""},
 				})
 			}
 			u = append(u, []interface{}{"image", imgs})
