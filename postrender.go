@@ -156,10 +156,12 @@ func friendlyPostTitle(content, friendlyId string) string {
 
 func getSanitizationPolicy() *bluemonday.Policy {
 	policy := bluemonday.UGCPolicy()
-	policy.AllowAttrs("src", "style").OnElements("iframe", "video")
+	policy.AllowAttrs("src", "style").OnElements("iframe", "video", "audio")
+	policy.AllowAttrs("src", "type").OnElements("source")
 	policy.AllowAttrs("frameborder", "width", "height").Matching(bluemonday.Integer).OnElements("iframe")
 	policy.AllowAttrs("allowfullscreen").OnElements("iframe")
 	policy.AllowAttrs("controls", "loop", "muted", "autoplay").OnElements("video")
+	policy.AllowAttrs("controls", "loop", "muted", "autoplay", "preload").OnElements("audio")
 	policy.AllowAttrs("target").OnElements("a")
 	policy.AllowAttrs("style", "class", "id").Globally()
 	policy.AllowURLSchemes("http", "https", "mailto", "xmpp")
