@@ -53,7 +53,10 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	padTmpl := "pad"
+	padTmpl := app.cfg.App.Editor
+	if padTmpl == "" {
+		padTmpl = "pad"
+	}
 
 	if action == "" && slug == "" {
 		// Not editing any post; simply render the Pad
