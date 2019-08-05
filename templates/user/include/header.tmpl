@@ -38,7 +38,13 @@
 			</nav>
 		</nav>
 		{{else}}
-		<h1><a href="/" title="Return to editor">{{.SiteName}}</a></h1>
+		{{ if .SimpleNav }}<nav id="full-nav">
+			<div class="left-side">
+				<h1><a href="/" title="Return to editor">{{.SiteName}}</a></h1>
+			</div>
+		{{ else }}
+			<h1><a href="/" title="Return to editor">{{.SiteName}}</a></h1>
+		{{ end }}
 		<nav id="user-nav">
 			<nav class="dropdown-nav">
 				<ul><li><a>{{.Username}}</a> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /><ul>
@@ -52,10 +58,21 @@
 				</ul>
 			</nav>
 			<nav class="tabs">
-				<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>
-				<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>
+				{{if .SimpleNav}}
+					<a href="/about">About</a>
+					{{if and (and (not .SingleUser) .LocalTimeline) .CanViewReader}}<a href="/read">Reader</a>{{end}}
+					<a href="/me/logout">Log out</a>
+				{{else}}
+					<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>
+					<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>
+				{{end}}
 			</nav>
 		</nav>
+		{{if .SimpleNav}}<div class="right-side">
+					<a class="simple-btn" href="/new">New Post</a>
+				</div>
+			</nav>
+		{{end}}
 		{{end}}
 	</header>
 	<div id="official-writing">

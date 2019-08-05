@@ -48,6 +48,7 @@
 					{{else}}
 					<li><a href="/#{{.Alias}}" class="write">{{.SiteName}}</a></li>
 					{{end}}
+					{{if .SimpleNav}}<li><a href="/new#{{.Alias}}">New Post</a></li>{{end}}
 					<li><a href="/me/c/{{.Alias}}">Customize</a></li>
 					<li><a href="/me/c/{{.Alias}}/stats">Stats</a></li>
 					<li class="separator"><hr /></li>
