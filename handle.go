@@ -137,7 +137,7 @@ func (h *Handler) User(f userHandlerFunc) http.HandlerFunc {
 					status = http.StatusInternalServerError
 				}
 
-				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
+				log.Info(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			u := getUserSession(h.app.App(), r)
@@ -175,7 +175,7 @@ func (h *Handler) Admin(f userHandlerFunc) http.HandlerFunc {
 					status = http.StatusInternalServerError
 				}
 
-				log.Info(fmt.Sprintf("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent()))
+				log.Info(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			u := getUserSession(h.app.App(), r)
@@ -213,7 +213,7 @@ func (h *Handler) AdminApper(f userApperHandlerFunc) http.HandlerFunc {
 					status = http.StatusInternalServerError
 				}
 
-				log.Info(fmt.Sprintf("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent()))
+				log.Info(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			u := getUserSession(h.app.App(), r)
@@ -295,7 +295,7 @@ func (h *Handler) UserAll(web bool, f userHandlerFunc, a authFunc) http.HandlerF
 					status = 500
 				}
 
-				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
+				log.Info(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			u, err := a(h.app.App(), r)
@@ -381,7 +381,7 @@ func (h *Handler) WebErrors(f handlerFunc, ul UserLevelFunc) http.HandlerFunc {
 					status = 500
 				}
 
-				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
+				log.Info(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			var session *sessions.Session
@@ -440,7 +440,7 @@ func (h *Handler) CollectionPostOrStatic(w http.ResponseWriter, r *http.Request)
 		start := time.Now()
 		status := 200
 		defer func() {
-			log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
+			log.Info(h.app.ReqLog(r, status, time.Since(start)))
 		}()
 
 		// Serve static file
@@ -472,7 +472,7 @@ func (h *Handler) Web(f handlerFunc, ul UserLevelFunc) http.HandlerFunc {
 					status = 500
 				}
 
-				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
+				log.Info(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			if ul(h.app.App().cfg) != UserLevelNoneType {
@@ -530,7 +530,7 @@ func (h *Handler) All(f handlerFunc) http.HandlerFunc {
 					status = 500
 				}
 
-				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
+				log.Info(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			// TODO: do any needed authentication
@@ -562,7 +562,7 @@ func (h *Handler) AllReader(f handlerFunc) http.HandlerFunc {
 					status = 500
 				}
 
-				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
+				log.Info(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			if h.app.App().cfg.App.Private {
@@ -619,7 +619,7 @@ func (h *Handler) Download(f dataHandlerFunc, ul UserLevelFunc) http.HandlerFunc
 					status = 500
 				}
 
-				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
+				log.Info(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			data, filename, err := f(h.app.App(), w, r)
@@ -682,7 +682,7 @@ func (h *Handler) Redirect(url string, ul UserLevelFunc) http.HandlerFunc {
 
 			status = sendRedirect(w, http.StatusFound, url)
 
-			log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
+			log.Info(h.app.ReqLog(r, status, time.Since(start)))
 
 			return nil
 		}())
@@ -799,7 +799,7 @@ func (h *Handler) LogHandlerFunc(f http.HandlerFunc) http.HandlerFunc {
 				}
 
 				// TODO: log actual status code returned
-				log.Info("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent())
+				log.Info(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			if h.app.App().cfg.App.Private {
