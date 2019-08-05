@@ -193,7 +193,12 @@ func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 		// Show correct page based on user auth status and configured landing path
 		u := getUserSession(app, r)
 		if u != nil {
-			// User is logged in, so show the Pad
+			// User is logged in, so show the Pad or Blogs page, depending on config
+			if app.cfg.App.SimpleNav {
+				// Simple nav, so home page is Blogs page
+				return viewCollections(app, u, w, r)
+			}
+			// Default config, so home page is editor
 			return handleViewPad(app, w, r)
 		}
 

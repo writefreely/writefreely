@@ -68,6 +68,7 @@ type (
 		JSDisabled bool   `ini:"disable_js"`
 		WebFonts   bool   `ini:"webfonts"`
 		Landing    string `ini:"landing"`
+		SimpleNav  bool   `ini:"simple_nav"`
 
 		// Users
 		SingleUser       bool `ini:"single_user"`
