@@ -1,20 +1,4 @@
-{{define "header"}}<!DOCTYPE HTML>
-<html>
-<head>
-	<meta charset="utf-8">
-
-	<title>{{.PageTitle}} {{if .Separator}}{{.Separator}}{{else}}&mdash;{{end}} {{.SiteName}}</title>
-
-	<link rel="stylesheet" type="text/css" href="/css/write.css" />
-	<link rel="shortcut icon" href="/favicon.ico" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<meta name="theme-color" content="#888888" />
-	<meta name="apple-mobile-web-app-title" content="{{.SiteName}}">
-	<link rel="apple-touch-icon" sizes="152x152" href="/img/touch-icon-152.png">
-	<link rel="apple-touch-icon" sizes="167x167" href="/img/touch-icon-167.png">
-	<link rel="apple-touch-icon" sizes="180x180" href="/img/touch-icon-180.png">
-</head>
-<body id="me">
+{{define "user-navigation"}}
 	<header{{if .SingleUser}} class="singleuser"{{end}}>
 		{{if .SingleUser}}
 		<nav id="user-nav">
@@ -75,6 +59,25 @@
 		{{end}}
 		{{end}}
 	</header>
+{{end}}
+{{define "header"}}<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+
+	<title>{{.PageTitle}} {{if .Separator}}{{.Separator}}{{else}}&mdash;{{end}} {{.SiteName}}</title>
+
+	<link rel="stylesheet" type="text/css" href="/css/write.css" />
+	<link rel="shortcut icon" href="/favicon.ico" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="theme-color" content="#888888" />
+	<meta name="apple-mobile-web-app-title" content="{{.SiteName}}">
+	<link rel="apple-touch-icon" sizes="152x152" href="/img/touch-icon-152.png">
+	<link rel="apple-touch-icon" sizes="167x167" href="/img/touch-icon-167.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="/img/touch-icon-180.png">
+</head>
+<body id="me">
+	{{template "user-navigation" .}}
 	<div id="official-writing">
 {{end}}
 
