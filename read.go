@@ -47,6 +47,7 @@ type readPublication struct {
 	Posts       *[]PublicPost
 	CurrentPage int
 	TotalPages  int
+	SelTopic    string
 }
 
 func initLocalTimeline(app *App) {
@@ -201,6 +202,7 @@ func showLocalTimeline(app *App, w http.ResponseWriter, r *http.Request, page in
 		&posts,
 		page,
 		ttlPages,
+		tag,
 	}
 
 	err := templates["read"].ExecuteTemplate(w, "base", d)
