@@ -1352,7 +1352,7 @@ Are you sure it was ever here?`,
 		fmt.Fprint(w, p.Content)
 	} else if strings.Contains(r.Header.Get("Accept"), "application/activity+json") {
 		if !postFound {
-			w.WriteHeader(http.StatusNotFound)
+			return ErrCollectionPageNotFound
 		}
 		p.extractData()
 		ap := p.ActivityObject()
