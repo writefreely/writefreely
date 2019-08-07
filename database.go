@@ -74,7 +74,7 @@ type writestore interface {
 	GetAnonymousPosts(u *User) (*[]PublicPost, error)
 	GetUserPosts(u *User) (*[]PublicPost, error)
 
-	CreateOwnedPost(post *SubmittedPost, accessToken, collAlias string) (*PublicPost, error)
+	CreateOwnedPost(post *SubmittedPost, accessToken, collAlias, hostName string) (*PublicPost, error)
 	CreatePost(userID, collID int64, post *SubmittedPost) (*Post, error)
 	UpdateOwnedPost(post *AuthenticatedPost, userID int64) error
 	GetEditablePost(id, editToken string) (*PublicPost, error)
@@ -542,7 +542,7 @@ func (db *datastore) GetTemporaryOneTimeAccessToken(userID int64, validSecs int,
 	return u.String(), nil
 }
 
-func (db *datastore) CreateOwnedPost(post *SubmittedPost, accessToken, collAlias string) (*PublicPost, error) {
+func (db *datastore) CreateOwnedPost(post *SubmittedPost, accessToken, collAlias, hostName string) (*PublicPost, error) {
 	var userID, collID int64 = -1, -1
 	var coll *Collection
 	var err error
@@ -556,6 +556,7 @@ func (db *datastore) CreateOwnedPost(post *SubmittedPost, accessToken, collAlias
 			if err != nil {
 				return nil, err
 			}
+			coll.hostName = hostName
 			if coll.OwnerID != userID {
 				return nil, ErrForbiddenCollection
 			}

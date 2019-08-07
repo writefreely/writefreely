@@ -557,7 +557,7 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	var coll *Collection
 	var err error
 	if accessToken != "" {
-		newPost, err = app.db.CreateOwnedPost(p, accessToken, collAlias)
+		newPost, err = app.db.CreateOwnedPost(p, accessToken, collAlias, app.cfg.App.Host)
 	} else {
 		//return ErrNotLoggedIn
 		// TODO: verify user is logged in
@@ -1300,14 +1300,32 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 		coll.Owner = owner
 	}
 
+	postFound := true
 	p, err := app.db.GetPost(slug, coll.ID)
 	if err != nil {
-		if err == ErrCollectionPageNotFound && slug == "feed" {
-			// User tried to access blog feed without a trailing slash, and
-			// there's no post with a slug "feed"
-			return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "/feed/"}
+		if err == ErrCollectionPageNotFound {
+			postFound = false
+
+			if slug == "feed" {
+				// User tried to access blog feed without a trailing slash, and
+				// there's no post with a slug "feed"
+				return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "/feed/"}
+			}
+
+			po := &Post{
+				Slug:     null.NewString(slug, true),
+				Font:     "norm",
+				Language: zero.NewString("en", true),
+				RTL:      zero.NewBool(false, true),
+				Content: `<p class="msg">This page is missing.</p>
+
+Are you sure it was ever here?`,
+			}
+			pp := po.processPost()
+			p = &pp
+		} else {
+			return err
 		}
-		return err
 	}
 	p.IsOwner = owner != nil && p.OwnerID.Valid && owner.ID == p.OwnerID.Int64
 	p.Collection = coll
@@ -1329,11 +1347,20 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 			contentType = "text/markdown"
 		}
 		w.Header().Set("Content-Type", fmt.Sprintf("%s; charset=utf-8", contentType))
+		if !postFound {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprintf(w, "Post not found.")
+			// TODO: return error instead, so status is correctly reflected in logs
+			return nil
+		}
 		if isMarkdown && p.Title.String != "" {
 			fmt.Fprintf(w, "# %s\n\n", p.Title.String)
 		}
 		fmt.Fprint(w, p.Content)
 	} else if strings.Contains(r.Header.Get("Accept"), "application/activity+json") {
+		if !postFound {
+			return ErrCollectionPageNotFound
+		}
 		p.extractData()
 		ap := p.ActivityObject(app.cfg)
 		ap.Context = []interface{}{activitystreams.Namespace}
@@ -1350,6 +1377,7 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 			IsPinned       bool
 			IsCustomDomain bool
 			PinnedPosts    *[]PublicPost
+			IsFound        bool
 			IsAdmin        bool
 			CanInvite      bool
 		}{
@@ -1357,12 +1385,16 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 			StaticPage:     pageForReq(app, r),
 			IsOwner:        cr.isCollOwner,
 			IsCustomDomain: cr.isCustomDomain,
+			IsFound:        postFound,
 		}
 		tp.IsAdmin = u != nil && u.IsAdmin()
 		tp.CanInvite = canUserInvite(app.cfg, tp.IsAdmin)
 		tp.PinnedPosts, _ = app.db.GetPinnedPosts(coll)
 		tp.IsPinned = len(*tp.PinnedPosts) > 0 && PostsContains(tp.PinnedPosts, p)
 
+		if !postFound {
+			w.WriteHeader(http.StatusNotFound)
+		}
 		postTmpl := "collection-post"
 		if app.cfg.App.Chorus {
 			postTmpl = "chorus-collection-post"

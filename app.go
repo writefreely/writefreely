@@ -120,6 +120,8 @@ type Apper interface {
 	SaveConfig(*config.Config) error
 
 	LoadKeys() error
+
+	ReqLog(r *http.Request, status int, timeSince time.Duration) string
 }
 
 // App returns the App
@@ -177,6 +179,10 @@ func (app *App) LoadKeys() error {
 	}
 
 	return nil
+}
+
+func (app *App) ReqLog(r *http.Request, status int, timeSince time.Duration) string {
+	return fmt.Sprintf("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, timeSince, r.UserAgent())
 }
 
 // handleViewHome shows page at root path. Will be the Pad if logged in and the
