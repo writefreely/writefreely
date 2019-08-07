@@ -95,6 +95,14 @@ p.docs {
 					<option value="admin" {{if eq .Config.UserInvites "admin"}}selected="selected"{{end}}>Admins</option>
 				</select>
 			</dd>
+			<dt{{if .Config.SingleUser}} class="invisible"{{end}}><label for="default_visibility">Default blog visibility</label></dt>
+			<dd{{if .Config.SingleUser}} class="invisible"{{end}}>
+				<select name="default_visibility" id="default_visibility">
+					<option value="unlisted" {{if eq .Config.DefaultVisibility "unlisted"}}selected="selected"{{end}}>Unlisted</option>
+					<option value="public" {{if eq .Config.DefaultVisibility "public"}}selected="selected"{{end}}>Public</option>
+					<option value="private" {{if eq .Config.DefaultVisibility "private"}}selected="selected"{{end}}>Private</option>
+				</select>
+			</dd>
 		</dl>
 		<input type="submit" value="Save Configuration" />
 	</div>
