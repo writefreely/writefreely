@@ -1344,8 +1344,10 @@ Are you sure it was ever here?`,
 		w.Header().Set("Content-Type", fmt.Sprintf("%s; charset=utf-8", contentType))
 		if !postFound {
 			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprintf(w, "Post not found.")
+			// TODO: return error instead, so status is correctly reflected in logs
+			return nil
 		}
-
 		if isMarkdown && p.Title.String != "" {
 			fmt.Fprintf(w, "# %s\n\n", p.Title.String)
 		}
