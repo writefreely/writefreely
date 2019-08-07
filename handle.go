@@ -721,6 +721,10 @@ func (h *Handler) handleHTTPError(w http.ResponseWriter, r *http.Request, err er
 			return
 		} else if err.Status == http.StatusNotFound {
 			w.WriteHeader(err.Status)
+			if strings.Contains(r.Header.Get("Accept"), "application/activity+json") {
+				// This is a fediverse request; simply return the header
+				return
+			}
 			h.errors.NotFound.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
 			return
 		} else if err.Status == http.StatusInternalServerError {
