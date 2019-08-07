@@ -224,14 +224,14 @@ func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 		log.Error("unable to get landing banner: %v", err)
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get banner: %v", err)}
 	}
-	p.Banner = template.HTML(applyMarkdown([]byte(banner.Content), ""))
+	p.Banner = template.HTML(applyMarkdown([]byte(banner.Content), "", app.cfg))
 
 	content, err := getLandingBody(app)
 	if err != nil {
 		log.Error("unable to get landing content: %v", err)
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get content: %v", err)}
 	}
-	p.Content = template.HTML(applyMarkdown([]byte(content.Content), ""))
+	p.Content = template.HTML(applyMarkdown([]byte(content.Content), "", app.cfg))
 
 	// Get error messages
 	session, err := app.sessionStore.Get(r, cookieName)
@@ -279,7 +279,7 @@ func handleTemplatedPage(app *App, w http.ResponseWriter, r *http.Request, t *te
 			return err
 		}
 		p.ContentTitle = c.Title.String
-		p.Content = template.HTML(applyMarkdown([]byte(c.Content), ""))
+		p.Content = template.HTML(applyMarkdown([]byte(c.Content), "", app.cfg))
 		p.PlainContent = shortPostDescription(stripmd.Strip(c.Content))
 		if !c.Updated.IsZero() {
 			p.Updated = c.Updated.Format("January 2, 2006")

@@ -100,7 +100,7 @@ func (app *App) FetchPublicPosts() (interface{}, error) {
 		}
 
 		p.extractData()
-		p.HTMLContent = template.HTML(applyMarkdown([]byte(p.Content), ""))
+		p.HTMLContent = template.HTML(applyMarkdown([]byte(p.Content), "", app.cfg))
 		fp := p.processPost()
 		if isCollectionPost {
 			fp.Collection = &CollectionObj{Collection: *c}
@@ -295,7 +295,7 @@ func viewLocalTimelineFeed(app *App, w http.ResponseWriter, req *http.Request) e
 			Title:       title,
 			Link:        &Link{Href: permalink},
 			Description: "<![CDATA[" + stripmd.Strip(p.Content) + "]]>",
-			Content:     applyMarkdown([]byte(p.Content), ""),
+			Content:     applyMarkdown([]byte(p.Content), "", app.cfg),
 			Author:      &Author{author, ""},
 			Created:     p.Created,
 			Updated:     p.Updated,

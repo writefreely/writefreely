@@ -35,6 +35,7 @@ import (
 	"github.com/writeas/web-core/i18n"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/tags"
+	"github.com/writeas/writefreely/config"
 	"github.com/writeas/writefreely/page"
 	"github.com/writeas/writefreely/parse"
 )
@@ -376,7 +377,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 			Direction:   d,
 		}
 		if !isRaw {
-			post.HTMLContent = template.HTML(applyMarkdown([]byte(content), ""))
+			post.HTMLContent = template.HTML(applyMarkdown([]byte(content), "", app.cfg))
 		}
 	}
 
@@ -1032,7 +1033,7 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 
 		p.Collection = &CollectionObj{Collection: *coll}
-		po := p.ActivityObject()
+		po := p.ActivityObject(app.cfg)
 		po.Context = []interface{}{activitystreams.Namespace}
 		return impart.RenderActivityJSON(w, po, http.StatusOK)
 	}
@@ -1067,7 +1068,7 @@ func (p *PublicPost) CanonicalURL() string {
 	return p.Collection.CanonicalURL() + p.Slug.String
 }
 
-func (p *PublicPost) ActivityObject() *activitystreams.Object {
+func (p *PublicPost) ActivityObject(cfg *config.Config) *activitystreams.Object {
 	o := activitystreams.NewArticleObject()
 	o.ID = p.Collection.FederatedAPIBase() + "api/posts/" + p.ID
 	o.Published = p.Created
@@ -1078,7 +1079,7 @@ func (p *PublicPost) ActivityObject() *activitystreams.Object {
 	}
 	o.Name = p.DisplayTitle()
 	if p.HTMLContent == template.HTML("") {
-		p.formatContent(false)
+		p.formatContent(cfg, false)
 	}
 	o.Content = string(p.HTMLContent)
 	if p.Language.Valid {
@@ -1093,7 +1094,11 @@ func (p *PublicPost) ActivityObject() *activitystreams.Object {
 		if isSingleUser {
 			tagBaseURL = p.Collection.CanonicalURL() + "tag:"
 		} else {
-			tagBaseURL = fmt.Sprintf("%s/%s/tag:", p.Collection.hostName, p.Collection.Alias)
+			if cfg.App.Chorus {
+				tagBaseURL = fmt.Sprintf("%s/read/t/", p.Collection.hostName)
+			} else {
+				tagBaseURL = fmt.Sprintf("%s/%s/tag:", p.Collection.hostName, p.Collection.Alias)
+			}
 		}
 		for _, t := range p.Tags {
 			o.Tag = append(o.Tag, activitystreams.Tag{
@@ -1330,14 +1335,14 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 		fmt.Fprint(w, p.Content)
 	} else if strings.Contains(r.Header.Get("Accept"), "application/activity+json") {
 		p.extractData()
-		ap := p.ActivityObject()
+		ap := p.ActivityObject(app.cfg)
 		ap.Context = []interface{}{activitystreams.Namespace}
 		return impart.RenderActivityJSON(w, ap, http.StatusOK)
 	} else {
 		p.extractData()
 		p.Content = strings.Replace(p.Content, "<!--more-->", "", 1)
 		// TODO: move this to function
-		p.formatContent(cr.isCollOwner)
+		p.formatContent(app.cfg, cr.isCollOwner)
 		tp := struct {
 			*PublicPost
 			page.StaticPage

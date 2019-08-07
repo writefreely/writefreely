@@ -496,7 +496,7 @@ func fetchCollectionPosts(app *App, w http.ResponseWriter, r *http.Request) erro
 		}
 	}
 
-	posts, err := app.db.GetPosts(c, page, isCollOwner, false, false)
+	posts, err := app.db.GetPosts(app.cfg, c, page, isCollOwner, false, false)
 	if err != nil {
 		return err
 	}
@@ -730,7 +730,7 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 		return impart.HTTPError{http.StatusFound, redirURL}
 	}
 
-	coll.Posts, _ = app.db.GetPosts(c, page, cr.isCollOwner, false, false)
+	coll.Posts, _ = app.db.GetPosts(app.cfg, c, page, cr.isCollOwner, false, false)
 
 	// Serve collection
 	displayPage := CollectionPage{
@@ -825,7 +825,7 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 
 	coll := newDisplayCollection(c, cr, page)
 
-	coll.Posts, _ = app.db.GetPostsTagged(c, tag, page, cr.isCollOwner)
+	coll.Posts, _ = app.db.GetPostsTagged(app.cfg, c, tag, page, cr.isCollOwner)
 	if coll.Posts != nil && len(*coll.Posts) == 0 {
 		return ErrCollectionPageNotFound
 	}
