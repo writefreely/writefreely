@@ -507,7 +507,7 @@ func DoConfig(app *App, configSections string) {
 
 		// Create blog
 		log.Info("Creating user %s...\n", u.Username)
-		err = app.db.CreateUser(app, u, app.cfg.App.SiteName)
+		err = app.db.CreateUser(app.cfg, u, app.cfg.App.SiteName)
 		if err != nil {
 			log.Error("Unable to create user: %s", err)
 			os.Exit(1)
@@ -702,7 +702,7 @@ func CreateUser(apper Apper, username, password string, isAdmin bool) error {
 		userType = "admin"
 	}
 	log.Info("Creating %s %s...", userType, usernameDesc)
-	err = apper.App().db.CreateUser(apper.App(), u, desiredUsername)
+	err = apper.App().db.CreateUser(apper.App().Config(), u, desiredUsername)
 	if err != nil {
 		return fmt.Errorf("Unable to create user: %s", err)
 	}
