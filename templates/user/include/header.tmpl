@@ -1,5 +1,5 @@
 {{define "user-navigation"}}
-	<header{{if .SingleUser}} class="singleuser"{{end}}>
+	<header class="{{if .SingleUser}}singleuser{{else}}multiuser{{end}}">
 		{{if .SingleUser}}
 		<nav id="user-nav">
 			<nav class="dropdown-nav">
@@ -30,6 +30,7 @@
 			<h1><a href="/" title="Return to editor">{{.SiteName}}</a></h1>
 		{{ end }}
 		<nav id="user-nav">
+			{{if .Username}}
 			<nav class="dropdown-nav">
 				<ul><li><a>{{.Username}}</a> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /><ul>
 						{{if .IsAdmin}}<li><a href="/admin">Admin dashboard</a></li>{{end}}
@@ -41,20 +42,21 @@
 					</ul></li>
 				</ul>
 			</nav>
+			{{end}}
 			<nav class="tabs">
 				{{if .SimpleNav}}
 					<a href="/about">About</a>
 					{{if and (and (not .SingleUser) .LocalTimeline) .CanViewReader}}<a href="/read">Reader</a>{{end}}
-					<a href="/me/logout">Log out</a>
+					{{if .Username}}<a href="/me/logout">Log out</a>{{else}}<a href="/login">Log in</a>{{end}}
 				{{else}}
 					<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>
 					<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>
 				{{end}}
 			</nav>
 		</nav>
-		{{if .SimpleNav}}<div class="right-side">
+		{{if .SimpleNav}}{{if .Username}}<div class="right-side">
 					<a class="simple-btn" href="/new">New Post</a>
-				</div>
+				</div>{{end}}
 			</nav>
 		{{end}}
 		{{end}}

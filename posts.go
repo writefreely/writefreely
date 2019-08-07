@@ -1345,15 +1345,24 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 			IsPinned       bool
 			IsCustomDomain bool
 			PinnedPosts    *[]PublicPost
+			IsAdmin        bool
+			CanInvite      bool
 		}{
 			PublicPost:     p,
 			StaticPage:     pageForReq(app, r),
 			IsOwner:        cr.isCollOwner,
 			IsCustomDomain: cr.isCustomDomain,
 		}
+		tp.IsAdmin = u != nil && u.IsAdmin()
+		tp.CanInvite = canUserInvite(app.cfg, tp.IsAdmin)
 		tp.PinnedPosts, _ = app.db.GetPinnedPosts(coll)
 		tp.IsPinned = len(*tp.PinnedPosts) > 0 && PostsContains(tp.PinnedPosts, p)
-		if err := templates["collection-post"].ExecuteTemplate(w, "post", tp); err != nil {
+
+		postTmpl := "collection-post"
+		if app.cfg.App.Chorus {
+			postTmpl = "chorus-collection-post"
+		}
+		if err := templates[postTmpl].ExecuteTemplate(w, "post", tp); err != nil {
 			log.Error("Error in collection-post template: %v", err)
 		}
 	}

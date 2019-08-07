@@ -65,10 +65,15 @@
 		}
 		body#collection header nav {
 			display: inline !important;
+		}
+		body#collection header nav:not(#full-nav):not(#user-nav) {
 			margin: 0 0 0 1em !important;
 		}
 		header nav#user-nav {
 			margin-left: 0 !important;
+		}
+		body#collection header nav.tabs a:first-child {
+			margin-left: 1em;
 		}
 		</style>
 {{end}}

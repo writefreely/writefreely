@@ -69,6 +69,7 @@ type (
 		WebFonts   bool   `ini:"webfonts"`
 		Landing    string `ini:"landing"`
 		SimpleNav  bool   `ini:"simple_nav"`
+		Chorus     bool   `ini:"chorus"`
 
 		// Users
 		SingleUser       bool `ini:"single_user"`

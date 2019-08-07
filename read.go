@@ -48,6 +48,8 @@ type readPublication struct {
 	CurrentPage int
 	TotalPages  int
 	SelTopic    string
+	IsAdmin     bool
+	CanInvite   bool
 }
 
 func initLocalTimeline(app *App) {
@@ -198,11 +200,16 @@ func showLocalTimeline(app *App, w http.ResponseWriter, r *http.Request, page in
 	}
 
 	d := &readPublication{
-		pageForReq(app, r),
-		&posts,
-		page,
-		ttlPages,
-		tag,
+		StaticPage:  pageForReq(app, r),
+		Posts:       &posts,
+		CurrentPage: page,
+		TotalPages:  ttlPages,
+		SelTopic:    tag,
+	}
+	if app.cfg.App.Chorus {
+		u := getUserSession(app, r)
+		d.IsAdmin = u != nil && u.IsAdmin()
+		d.CanInvite = canUserInvite(app.cfg, d.IsAdmin)
 	}
 
 	err := templates["read"].ExecuteTemplate(w, "base", d)

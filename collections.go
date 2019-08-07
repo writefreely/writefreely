@@ -525,6 +525,8 @@ type CollectionPage struct {
 	Username       string
 	Collections    *[]Collection
 	PinnedPosts    *[]PublicPost
+	IsAdmin        bool
+	CanInvite      bool
 }
 
 func (c *CollectionObj) ScriptDisplay() template.JS {
@@ -737,6 +739,8 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 		IsCustomDomain:    cr.isCustomDomain,
 		IsWelcome:         r.FormValue("greeting") != "",
 	}
+	displayPage.IsAdmin = u != nil && u.IsAdmin()
+	displayPage.CanInvite = canUserInvite(app.cfg, displayPage.IsAdmin)
 	var owner *User
 	if u != nil {
 		displayPage.Username = u.Username
@@ -768,7 +772,11 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 	// TODO: fix this mess of collections inside collections
 	displayPage.PinnedPosts, _ = app.db.GetPinnedPosts(coll.CollectionObj)
 
-	err = templates["collection"].ExecuteTemplate(w, "collection", displayPage)
+	collTmpl := "collection"
+	if app.cfg.App.Chorus {
+		collTmpl = "chorus-collection"
+	}
+	err = templates[collTmpl].ExecuteTemplate(w, "collection", displayPage)
 	if err != nil {
 		log.Error("Unable to render collection index: %v", err)
 	}

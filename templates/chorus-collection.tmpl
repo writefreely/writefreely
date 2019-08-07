@@ -1,0 +1,230 @@
+{{define "collection"}}<!DOCTYPE HTML>
+<html {{if .Language}}lang="{{.Language}}"{{end}} dir="{{.Direction}}">
+	<head>
+		<meta charset="utf-8">
+
+		<title>{{.DisplayTitle}}{{if not .SingleUser}} &mdash; {{.SiteName}}{{end}}</title>
+		
+		<link rel="stylesheet" type="text/css" href="/css/write.css" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="canonical" href="{{.CanonicalURL}}">
+		{{if gt .CurrentPage 1}}<link rel="prev" href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">{{end}}
+		{{if lt .CurrentPage .TotalPages}}<link rel="next" href="{{.NextPageURL .Prefix .CurrentPage .IsTopLevel}}">{{end}}
+		{{if not .IsPrivate}}<link rel="alternate" type="application/rss+xml" title="{{.DisplayTitle}} &raquo; Feed" href="{{.CanonicalURL}}feed/" />{{end}}
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<meta name="generator" content="WriteFreely">
+		<meta name="description" content="{{.Description}}">
+		<meta itemprop="name" content="{{.DisplayTitle}}">
+		<meta itemprop="description" content="{{.Description}}">
+		<meta name="twitter:card" content="summary">
+		<meta name="twitter:title" content="{{.DisplayTitle}}">
+		<meta name="twitter:image" content="{{.AvatarURL}}">
+		<meta name="twitter:description" content="{{.Description}}">
+		<meta property="og:title" content="{{.DisplayTitle}}" />
+		<meta property="og:site_name" content="{{.DisplayTitle}}" />
+		<meta property="og:type" content="article" />
+		<meta property="og:url" content="{{.CanonicalURL}}" />
+		<meta property="og:description" content="{{.Description}}" />
+		<meta property="og:image" content="{{.AvatarURL}}">
+		{{if .StyleSheet}}<style type="text/css">{{.StyleSheetDisplay}}</style>{{end}}
+	<style type="text/css">
+body#collection header {
+	max-width: 40em;
+	margin: 1em auto;
+    text-align: left;
+	padding: 0;
+}
+body#collection header.multiuser {
+    max-width: 100%;
+    margin: 1em;
+}
+body#collection header nav:not(.pinned-posts) {
+	display: inline;
+}
+body#collection header nav.dropdown-nav,
+body#collection header nav.tabs,
+body#collection header nav.tabs a:first-child {
+	margin: 0 0 0 1em;
+}
+	</style>
+
+		{{if .RenderMathJax}}
+		  <!-- Add mathjax logic -->
+		  {{template "mathjax" .}}
+		{{end}}
+
+		<!-- Add highlighting logic -->
+		{{template "highlighting" . }}
+
+	</head>
+	<body id="collection" itemscope itemtype="http://schema.org/WebPage">
+		{{template "user-navigation" .}}
+		
+		<header>
+		<h1 dir="{{.Direction}}" id="blog-title"><a href="/{{if .IsTopLevel}}{{else}}{{.Prefix}}{{.Alias}}/{{end}}" class="h-card p-author u-url" rel="me author">{{.DisplayTitle}}</a></h1>
+		{{if .Description}}<p class="description p-note">{{.Description}}</p>{{end}}
+		{{/*if not .Public/*}}
+			<!--p class="meta-note"><span>Private collection</span>. Only you can see this page.</p-->
+		{{/*end*/}}
+		{{if .PinnedPosts}}<nav class="pinned-posts">
+			{{range .PinnedPosts}}<a class="pinned" href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}</nav>
+		{{end}}
+		</header>
+		
+		{{if .Posts}}<section id="wrapper" itemscope itemtype="http://schema.org/Blog">{{else}}<div id="wrapper">{{end}}
+
+			{{if .IsWelcome}}
+			<div id="welcome">
+				<h2>Welcome, <strong>{{.Username}}</strong>!</h2>
+				<p>This is your new blog.</p>
+				<p><a class="simple-cta" href="/#{{.Alias}}">Start writing</a>, or <a class="simple-cta" href="/me/c/{{.Alias}}">customize</a> your blog.</p>
+				<p>Check out our <a class="simple-cta" href="https://guides.write.as/writing/?pk_campaign=welcome">writing guide</a> to see what else you can do, and <a class="simple-cta" href="/contact">get in touch</a> anytime with questions or feedback.</p>
+			</div>
+			{{end}}
+
+			{{template "posts" .}}
+
+		{{if gt .TotalPages 1}}<nav id="paging" class="content-container clearfix">
+			{{if or (and .Format.Ascending (lt .CurrentPage .TotalPages)) (isRTL .Direction)}}
+				{{if gt .CurrentPage 1}}<a href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">&#8672; {{if and .Format.Ascending (lt .CurrentPage .TotalPages)}}Previous{{else}}Newer{{end}}</a>{{end}}
+				{{if lt .CurrentPage .TotalPages}}<a style="float:right;" href="{{.NextPageURL .Prefix .CurrentPage .IsTopLevel}}">{{if and .Format.Ascending (lt .CurrentPage .TotalPages)}}Next{{else}}Older{{end}} &#8674;</a>{{end}}
+			{{else}}
+				{{if lt .CurrentPage .TotalPages}}<a href="{{.NextPageURL .Prefix .CurrentPage .IsTopLevel}}">&#8672; Older</a>{{end}}
+				{{if gt .CurrentPage 1}}<a style="float:right;" href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">Newer &#8674;</a>{{end}}
+			{{end}}
+		</nav>{{end}}
+
+		{{if .Posts}}</section>{{else}}</div>{{end}}
+
+		{{if .ShowFooterBranding }}
+		<footer>
+			<hr />
+			<nav dir="ltr">
+				{{if not .SingleUser}}<a class="home pubd" href="/">{{.SiteName}}</a> &middot; {{end}}powered by <a style="margin-left:0" href="https://writefreely.org">writefreely</a>
+			</nav>
+		</footer>
+		{{ end }}
+	</body>
+
+	{{if .CanShowScript}}
+		{{range .ExternalScripts}}<script type="text/javascript" src="{{.}}" async></script>{{end}}
+		{{if .Script}}<script type="text/javascript">{{.ScriptDisplay}}</script>{{end}}
+	{{end}}
+	<script src="/js/h.js"></script>
+	<script src="/js/postactions.js"></script>
+	<script type="text/javascript">
+var deleting = false;
+function delPost(e, id, owned) {
+	e.preventDefault();
+	if (deleting) {
+		return;
+	}
+
+	// TODO: UNDO!
+	if (window.confirm('Are you sure you want to delete this post?')) {
+		// AJAX
+		deletePost(id, "", function() {
+			// Remove post from list
+			var $postEl = document.getElementById('post-' + id);
+			$postEl.parentNode.removeChild($postEl);
+			// TODO: add next post from this collection at the bottom
+		});
+	}
+}
+
+var deletePost = function(postID, token, callback) {
+	deleting = true;
+
+	var $delBtn = document.getElementById('post-' + postID).getElementsByClassName('delete action')[0];
+	$delBtn.innerHTML = '...';
+
+	var http = new XMLHttpRequest();
+	var url = "/api/posts/" + postID;
+	http.open("DELETE", url, true);
+	http.onreadystatechange = function() {
+		if (http.readyState == 4) {
+			deleting = false;
+			if (http.status == 204) {
+				callback();
+			} else if (http.status == 409) {
+				$delBtn.innerHTML = 'delete';
+				alert("Post is synced to another account. Delete the post from that account instead.");
+				// TODO: show "remove" button instead of "delete" now
+				// Persist that state.
+				// Have it remove the post locally only.
+			} else {
+				$delBtn.innerHTML = 'delete';
+				alert("Failed to delete." + (http.status>=500?" Please try again.":""));
+			}
+		}
+	}
+	http.send();
+};
+
+var pinning = false;
+function pinPost(e, postID, slug, title) {
+	e.preventDefault();
+	if (pinning) {
+		return;
+	}
+	pinning = true;
+
+	var callback = function() {
+		// Visibly remove post from collection
+		var $postEl = document.getElementById('post-' + postID);
+		$postEl.parentNode.removeChild($postEl);
+		var $header = document.getElementsByTagName('header')[0];
+		var $pinnedNavs = $header.getElementsByTagName('nav');
+		// Add link to nav
+		var link = '<a class="pinned" href="/{{.Alias}}/'+slug+'">'+title+'</a>';
+		if ($pinnedNavs.length == 0) {
+			$header.insertAdjacentHTML("beforeend", '<nav>'+link+'</nav>');
+		} else {
+			$pinnedNavs[0].insertAdjacentHTML("beforeend", link);
+		}
+	};
+
+	var $pinBtn = document.getElementById('post-' + postID).getElementsByClassName('pin action')[0];
+	$pinBtn.innerHTML = '...';
+
+	var http = new XMLHttpRequest();
+	var url = "/api/collections/{{.Alias}}/pin";
+	var params = [ { "id": postID } ];
+	http.open("POST", url, true);
+	http.setRequestHeader("Content-type", "application/json");
+	http.onreadystatechange = function() {
+		if (http.readyState == 4) {
+			pinning = false;
+			if (http.status == 200) {
+				callback();
+			} else if (http.status == 409) {
+				$pinBtn.innerHTML = 'pin';
+				alert("Post is synced to another account. Delete the post from that account instead.");
+				// TODO: show "remove" button instead of "delete" now
+				// Persist that state.
+				// Have it remove the post locally only.
+			} else {
+				$pinBtn.innerHTML = 'pin';
+				alert("Failed to pin." + (http.status>=500?" Please try again.":""));
+			}
+		}
+	}
+	http.send(JSON.stringify(params));
+};
+
+	try {
+	  WebFontConfig = {
+		custom: { families: [ 'Lora:400,700:latin', 'Open+Sans:400,700:latin' ], urls: [ '/css/fonts.css' ] }
+	  };
+	  (function() {
+		var wf = document.createElement('script');
+		wf.src = '/js/webfont.js';
+		wf.type = 'text/javascript';
+		wf.async = 'true';
+		var s = document.getElementsByTagName('script')[0];
+		s.parentNode.insertBefore(wf, s);
+	  })();
+	} catch (e) {}
+	</script>
+</html>{{end}}
