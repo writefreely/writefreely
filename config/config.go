@@ -67,6 +67,7 @@ type (
 		JSDisabled bool   `ini:"disable_js"`
 		WebFonts   bool   `ini:"webfonts"`
 		Landing    string `ini:"landing"`
+		WFModesty  bool   `ini:"wf_modesty"`
 
 		// Users
 		SingleUser       bool `ini:"single_user"`
