@@ -282,6 +282,7 @@ func (db *datastore) CreateCollection(cfg *config.Config, alias, title string, u
 		Title:       title,
 		OwnerID:     userID,
 		PublicOwner: false,
+		Public:      defaultVisibility(cfg) == CollPublic,
 	}
 
 	c.ID, err = res.LastInsertId()
