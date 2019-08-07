@@ -556,7 +556,7 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	var coll *Collection
 	var err error
 	if accessToken != "" {
-		newPost, err = app.db.CreateOwnedPost(p, accessToken, collAlias)
+		newPost, err = app.db.CreateOwnedPost(p, accessToken, collAlias, app.cfg.App.Host)
 	} else {
 		//return ErrNotLoggedIn
 		// TODO: verify user is logged in
