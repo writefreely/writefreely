@@ -34,8 +34,8 @@
 		{{if .Summary}}<p>{{.Summary}}</p>{{end}}
 	</div>{{end}}
 </div>{{ else }}<div id="no-posts-published"><p>You haven't saved any drafts yet.</p>
-	<p>They'll show up here once you do. Find your blog posts from the <a href="/me/c/">Blogs</a> page.</p>
-	<p class="text-cta"><a href="/">Start writing</a></p></div>{{ end }}
+	<p>They'll show up here once you do. {{if not .SingleUser}}Find your blog posts from the <a href="/me/c/">Blogs</a> page.{{end}}</p>
+	<p class="text-cta"><a href="{{if .SingleUser}}/me/new{{else}}/{{end}}">Start writing</a></p></div>{{ end }}
 
 <div id="moving"></div>
 

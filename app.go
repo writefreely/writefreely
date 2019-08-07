@@ -11,6 +11,7 @@
 package writefreely
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"fmt"
 	"html/template"
@@ -39,6 +40,7 @@ import (
 	"github.com/writeas/writefreely/key"
 	"github.com/writeas/writefreely/migrations"
 	"github.com/writeas/writefreely/page"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 const (
@@ -118,6 +120,8 @@ type Apper interface {
 	SaveConfig(*config.Config) error
 
 	LoadKeys() error
+
+	ReqLog(r *http.Request, status int, timeSince time.Duration) string
 }
 
 // App returns the App
@@ -175,6 +179,10 @@ func (app *App) LoadKeys() error {
 	}
 
 	return nil
+}
+
+func (app *App) ReqLog(r *http.Request, status int, timeSince time.Duration) string {
+	return fmt.Sprintf("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, timeSince, r.UserAgent())
 }
 
 // handleViewHome shows page at root path. Will be the Pad if logged in and the
@@ -380,19 +388,55 @@ func Serve(app *App, r *mux.Router) {
 	}
 	var err error
 	if app.cfg.IsSecureStandalone() {
-		log.Info("Serving redirects on http://%s:80", bindAddress)
-		go func() {
-			err = http.ListenAndServe(
-				fmt.Sprintf("%s:80", bindAddress), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if app.cfg.Server.Autocert {
+			m := &autocert.Manager{
+				Prompt: autocert.AcceptTOS,
+				Cache:  autocert.DirCache(app.cfg.Server.TLSCertPath),
+			}
+			host, err := url.Parse(app.cfg.App.Host)
+			if err != nil {
+				log.Error("[WARNING] Unable to parse configured host! %s", err)
+				log.Error(`[WARNING] ALL hosts are allowed, which can open you to an attack where
+clients connect to a server by IP address and pretend to be asking for an
+incorrect host name, and cause you to reach the CA's rate limit for certificate
+requests. We recommend supplying a valid host name.`)
+				log.Info("Using autocert on ANY host")
+			} else {
+				log.Info("Using autocert on host %s", host.Host)
+				m.HostPolicy = autocert.HostWhitelist(host.Host)
+			}
+			s := &http.Server{
+				Addr:    ":https",
+				Handler: r,
+				TLSConfig: &tls.Config{
+					GetCertificate: m.GetCertificate,
+				},
+			}
+			s.SetKeepAlivesEnabled(false)
+
+			go func() {
+				log.Info("Serving redirects on http://%s:80", bindAddress)
+				err = http.ListenAndServe(":80", m.HTTPHandler(nil))
+				log.Error("Unable to start redirect server: %v", err)
+			}()
+
+			log.Info("Serving on https://%s:443", bindAddress)
+			log.Info("---")
+			err = s.ListenAndServeTLS("", "")
+		} else {
+			go func() {
+				log.Info("Serving redirects on http://%s:80", bindAddress)
+				err = http.ListenAndServe(fmt.Sprintf("%s:80", bindAddress), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					http.Redirect(w, r, app.cfg.App.Host, http.StatusMovedPermanently)
 				}))
-			log.Error("Unable to start redirect server: %v", err)
-		}()
+				log.Error("Unable to start redirect server: %v", err)
+			}()
 
-		log.Info("Serving on https://%s:443", bindAddress)
-		log.Info("---")
-		err = http.ListenAndServeTLS(
-			fmt.Sprintf("%s:443", bindAddress), app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, r)
+			log.Info("Serving on https://%s:443", bindAddress)
+			log.Info("Using manual certificates")
+			log.Info("---")
+			err = http.ListenAndServeTLS(fmt.Sprintf("%s:443", bindAddress), app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, r)
+		}
 	} else {
 		log.Info("Serving on http://%s:%d\n", bindAddress, app.cfg.Server.Port)
 		log.Info("---")
@@ -507,7 +551,7 @@ func DoConfig(app *App, configSections string) {
 
 		// Create blog
 		log.Info("Creating user %s...\n", u.Username)
-		err = app.db.CreateUser(u, app.cfg.App.SiteName)
+		err = app.db.CreateUser(app.cfg, u, app.cfg.App.SiteName)
 		if err != nil {
 			log.Error("Unable to create user: %s", err)
 			os.Exit(1)
@@ -702,7 +746,7 @@ func CreateUser(apper Apper, username, password string, isAdmin bool) error {
 		userType = "admin"
 	}
 	log.Info("Creating %s %s...", userType, usernameDesc)
-	err = apper.App().db.CreateUser(u, desiredUsername)
+	err = apper.App().db.CreateUser(apper.App().Config(), u, desiredUsername)
 	if err != nil {
 		return fmt.Errorf("Unable to create user: %s", err)
 	}

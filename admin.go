@@ -391,6 +391,7 @@ func handleAdminUpdateConfig(apper Apper, u *User, w http.ResponseWriter, r *htt
 	if apper.App().cfg.App.UserInvites == "none" {
 		apper.App().cfg.App.UserInvites = ""
 	}
+	apper.App().cfg.App.DefaultVisibility = r.FormValue("default_visibility")
 
 	m := "?cm=Configuration+saved."
 	err = apper.SaveConfig(apper.App().cfg)

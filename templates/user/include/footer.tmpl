@@ -8,11 +8,11 @@
 		<hr />
 		<nav>
 			<a class="home" href="/">{{.SiteName}}</a>
-			<a href="/about">about</a>
+			{{if not .SingleUser}}<a href="/about">about</a>{{end}}
 			{{if and (not .SingleUser) .LocalTimeline}}<a href="/read">reader</a>{{end}}
 			<a href="https://writefreely.org/guide/{{.OfficialVersion}}" target="guide">writer's guide</a>
-			<a href="/privacy">privacy</a>
-			{{if .WFModesty}}
+			{{if not .SingleUser}}<a href="/privacy">privacy</a>{{end}}
+      {{if .WFModesty}}
 			<p style="font-size: 0.9em">powered by <a href="https://writefreely.org">writefreely</a></p>
 			{{else}}
 			<a href="https://writefreely.org">writefreely {{.Version}}</a>

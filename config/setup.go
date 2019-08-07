@@ -101,39 +101,48 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 			selPrompt = promptui.Select{
 				Templates: selTmpls,
 				Label:     "Web server mode",
-				Items:     []string{"Insecure (port 80)", "Secure (port 443)"},
+				Items:     []string{"Insecure (port 80)", "Secure (port 443), manual certificate", "Secure (port 443), auto certificate"},
 			}
 			sel, _, err := selPrompt.Run()
 			if err != nil {
 				return data, err
 			}
 			if sel == 0 {
+				data.Config.Server.Autocert = false
 				data.Config.Server.Port = 80
 				data.Config.Server.TLSCertPath = ""
 				data.Config.Server.TLSKeyPath = ""
-			} else if sel == 1 {
+			} else if sel == 1 || sel == 2 {
 				data.Config.Server.Port = 443
+				data.Config.Server.Autocert = sel == 2
 
-				prompt = promptui.Prompt{
-					Templates: tmpls,
-					Label:     "Certificate path",
-					Validate:  validateNonEmpty,
-					Default:   data.Config.Server.TLSCertPath,
-				}
-				data.Config.Server.TLSCertPath, err = prompt.Run()
-				if err != nil {
-					return data, err
-				}
+				if sel == 1 {
+					// Manual certificate configuration
+					prompt = promptui.Prompt{
+						Templates: tmpls,
+						Label:     "Certificate path",
+						Validate:  validateNonEmpty,
+						Default:   data.Config.Server.TLSCertPath,
+					}
+					data.Config.Server.TLSCertPath, err = prompt.Run()
+					if err != nil {
+						return data, err
+					}
 
-				prompt = promptui.Prompt{
-					Templates: tmpls,
-					Label:     "Key path",
-					Validate:  validateNonEmpty,
-					Default:   data.Config.Server.TLSKeyPath,
-				}
-				data.Config.Server.TLSKeyPath, err = prompt.Run()
-				if err != nil {
-					return data, err
+					prompt = promptui.Prompt{
+						Templates: tmpls,
+						Label:     "Key path",
+						Validate:  validateNonEmpty,
+						Default:   data.Config.Server.TLSKeyPath,
+					}
+					data.Config.Server.TLSKeyPath, err = prompt.Run()
+					if err != nil {
+						return data, err
+					}
+				} else {
+					// Automatic certificate
+					data.Config.Server.TLSCertPath = "certs"
+					data.Config.Server.TLSKeyPath = "certs"
 				}
 			}
 		} else {

@@ -35,6 +35,7 @@ type (
 
 		TLSCertPath string `ini:"tls_cert_path"`
 		TLSKeyPath  string `ini:"tls_key_path"`
+		Autocert    bool   `ini:"autocert"`
 
 		TemplatesParentDir string `ini:"templates_parent_dir"`
 		StaticParentDir    string `ini:"static_parent_dir"`
@@ -84,6 +85,9 @@ type (
 		// Additional functions
 		LocalTimeline bool   `ini:"local_timeline"`
 		UserInvites   string `ini:"user_invites"`
+
+		// Defaults
+		DefaultVisibility string `ini:"default_visibility"`
 	}
 
 	// Config holds the complete configuration for running a writefreely instance

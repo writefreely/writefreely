@@ -176,7 +176,7 @@ function pinPost(e, postID, slug, title) {
 		var $header = document.getElementsByTagName('header')[0];
 		var $pinnedNavs = $header.getElementsByTagName('nav');
 		// Add link to nav
-		var link = '<a class="pinned" href="/{{.Alias}}/'+slug+'">'+title+'</a>';
+		var link = '<a class="pinned" href="{{if not .SingleUser}}/{{.Alias}}/{{end}}'+slug+'">'+title+'</a>';
 		if ($pinnedNavs.length == 0) {
 			$header.insertAdjacentHTML("beforeend", '<nav>'+link+'</nav>');
 		} else {
