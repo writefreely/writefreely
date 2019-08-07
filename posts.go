@@ -869,7 +869,7 @@ func addPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	collAlias := vars["alias"]
 
 	// Update all given posts
-	res, err := app.db.ClaimPosts(ownerID, collAlias, claims)
+	res, err := app.db.ClaimPosts(app.cfg, ownerID, collAlias, claims)
 	if err != nil {
 		return err
 	}

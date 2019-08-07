@@ -396,23 +396,10 @@ func newCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 		return impart.HTTPError{http.StatusPreconditionFailed, "Collection alias isn't valid."}
 	}
 
-	coll, err := app.db.CreateCollection(c.Alias, c.Title, userID)
+	coll, err := app.db.CreateCollection(app.cfg, c.Alias, c.Title, userID)
 	if err != nil {
 		// TODO: handle this
 		return err
-	}
-
-	// Set visibility to configured default
-	vis := defaultVisibility(app.cfg)
-	if vis != CollUnlisted {
-		visInt := int(vis)
-		err = app.db.UpdateCollection(&SubmittedCollection{
-			OwnerID:    uint64(userID),
-			Visibility: &visInt,
-		}, coll.Alias)
-		if err != nil {
-			log.Error("Unable to set default visibility: %s", err)
-		}
 	}
 
 	res := &CollectionObj{Collection: *coll}
