@@ -53,10 +53,17 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	padTmpl := "pad"
+	padTmpl := app.cfg.App.Editor
+	if padTmpl == "" {
+		padTmpl = "pad"
+	}
 
 	if action == "" && slug == "" {
 		// Not editing any post; simply render the Pad
+		if templates[padTmpl] == nil {
+			log.Info("No template '%s' found. Falling back to default 'pad' template.", padTmpl)
+			padTmpl = "pad"
+		}
 		if err = templates[padTmpl].ExecuteTemplate(w, "pad", appData); err != nil {
 			log.Error("Unable to execute template: %v", err)
 		}

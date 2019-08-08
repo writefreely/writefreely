@@ -64,6 +64,7 @@ type (
 
 		// Site appearance
 		Theme      string `ini:"theme"`
+		Editor     string `ini:"editor"`
 		JSDisabled bool   `ini:"disable_js"`
 		WebFonts   bool   `ini:"webfonts"`
 		Landing    string `ini:"landing"`
