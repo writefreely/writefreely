@@ -65,9 +65,9 @@ func defaultPrivacyTitle() sql.NullString {
 
 func defaultAboutPage(cfg *config.Config) string {
 	if cfg.App.Federation {
-		return `_` + cfg.App.SiteName + `_ is an interconnected place for you to write and publish, powered by WriteFreely and ActivityPub.`
+		return `_` + cfg.App.SiteName + `_ is an interconnected place for you to write and publish, powered by [WriteFreely](https://writefreely.org) and ActivityPub.`
 	}
-	return `_` + cfg.App.SiteName + `_ is a place for you to write and publish, powered by WriteFreely.`
+	return `_` + cfg.App.SiteName + `_ is a place for you to write and publish, powered by [WriteFreely](https://writefreely.org).`
 }
 
 func defaultPrivacyPolicy(cfg *config.Config) string {

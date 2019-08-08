@@ -168,7 +168,7 @@ func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWr
 	}
 
 	// Create actual user
-	if err := app.db.CreateUser(u, desiredUsername); err != nil {
+	if err := app.db.CreateUser(app.cfg, u, desiredUsername); err != nil {
 		return nil, err
 	}
 

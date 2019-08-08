@@ -69,6 +69,7 @@ type (
 		WebFonts   bool   `ini:"webfonts"`
 		Landing    string `ini:"landing"`
 		SimpleNav  bool   `ini:"simple_nav"`
+		WFModesty  bool   `ini:"wf_modesty"`
 		Chorus     bool   `ini:"chorus"`
 
 		// Users
@@ -87,6 +88,9 @@ type (
 		// Additional functions
 		LocalTimeline bool   `ini:"local_timeline"`
 		UserInvites   string `ini:"user_invites"`
+
+		// Defaults
+		DefaultVisibility string `ini:"default_visibility"`
 	}
 
 	// Config holds the complete configuration for running a writefreely instance

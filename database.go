@@ -45,7 +45,7 @@ var (
 )
 
 type writestore interface {
-	CreateUser(*User, string) error
+	CreateUser(*config.Config, *User, string) error
 	UpdateUserEmail(keys *key.Keychain, userID int64, email string) error
 	UpdateEncryptedUserEmail(int64, []byte) error
 	GetUserByID(int64) (*User, error)
@@ -83,8 +83,8 @@ type writestore interface {
 	GetOwnedPost(id string, ownerID int64) (*PublicPost, error)
 	GetPostProperty(id string, collectionID int64, property string) (interface{}, error)
 
-	CreateCollectionFromToken(string, string, string) (*Collection, error)
-	CreateCollection(string, string, int64) (*Collection, error)
+	CreateCollectionFromToken(*config.Config, string, string, string) (*Collection, error)
+	CreateCollection(*config.Config, string, string, int64) (*Collection, error)
 	GetCollectionBy(condition string, value interface{}) (*Collection, error)
 	GetCollection(alias string) (*Collection, error)
 	GetCollectionForPad(alias string) (*Collection, error)
@@ -103,7 +103,7 @@ type writestore interface {
 	CanCollect(cpr *ClaimPostRequest, userID int64) bool
 	AttemptClaim(p *ClaimPostRequest, query string, params []interface{}, slugIdx int) (sql.Result, error)
 	DispersePosts(userID int64, postIDs []string) (*[]ClaimPostResult, error)
-	ClaimPosts(userID int64, collAlias string, posts *[]ClaimPostRequest) (*[]ClaimPostResult, error)
+	ClaimPosts(cfg *config.Config, userID int64, collAlias string, posts *[]ClaimPostRequest) (*[]ClaimPostResult, error)
 
 	GetPostsCount(c *CollectionObj, includeFuture bool)
 	GetPosts(cfg *config.Config, c *Collection, page int, includeFuture, forceRecentFirst, includePinned bool) (*[]PublicPost, error)
@@ -163,7 +163,7 @@ func (db *datastore) dateSub(l int, unit string) string {
 	return fmt.Sprintf("DATE_SUB(NOW(), INTERVAL %d %s)", l, unit)
 }
 
-func (db *datastore) CreateUser(u *User, collectionTitle string) error {
+func (db *datastore) CreateUser(cfg *config.Config, u *User, collectionTitle string) error {
 	if db.PostIDExists(u.Username) {
 		return impart.HTTPError{http.StatusConflict, "Invalid collection name."}
 	}
@@ -197,7 +197,7 @@ func (db *datastore) CreateUser(u *User, collectionTitle string) error {
 	if collectionTitle == "" {
 		collectionTitle = u.Username
 	}
-	res, err = t.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", u.Username, collectionTitle, "", CollUnlisted, u.ID, 0)
+	res, err = t.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", u.Username, collectionTitle, "", defaultVisibility(cfg), u.ID, 0)
 	if err != nil {
 		t.Rollback()
 		if db.isDuplicateKeyErr(err) {
@@ -239,13 +239,13 @@ func (db *datastore) UpdateEncryptedUserEmail(userID int64, encEmail []byte) err
 	return nil
 }
 
-func (db *datastore) CreateCollectionFromToken(alias, title, accessToken string) (*Collection, error) {
+func (db *datastore) CreateCollectionFromToken(cfg *config.Config, alias, title, accessToken string) (*Collection, error) {
 	userID := db.GetUserID(accessToken)
 	if userID == -1 {
 		return nil, ErrBadAccessToken
 	}
 
-	return db.CreateCollection(alias, title, userID)
+	return db.CreateCollection(cfg, alias, title, userID)
 }
 
 func (db *datastore) GetUserCollectionCount(userID int64) (uint64, error) {
@@ -262,13 +262,13 @@ func (db *datastore) GetUserCollectionCount(userID int64) (uint64, error) {
 	return collCount, nil
 }
 
-func (db *datastore) CreateCollection(alias, title string, userID int64) (*Collection, error) {
+func (db *datastore) CreateCollection(cfg *config.Config, alias, title string, userID int64) (*Collection, error) {
 	if db.PostIDExists(alias) {
 		return nil, impart.HTTPError{http.StatusConflict, "Invalid collection name."}
 	}
 
 	// All good, so create new collection
-	res, err := db.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", alias, title, "", CollUnlisted, userID, 0)
+	res, err := db.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", alias, title, "", defaultVisibility(cfg), userID, 0)
 	if err != nil {
 		if db.isDuplicateKeyErr(err) {
 			return nil, impart.HTTPError{http.StatusConflict, "Collection already exists."}
@@ -282,6 +282,7 @@ func (db *datastore) CreateCollection(alias, title string, userID int64) (*Colle
 		Title:       title,
 		OwnerID:     userID,
 		PublicOwner: false,
+		Public:      defaultVisibility(cfg) == CollPublic,
 	}
 
 	c.ID, err = res.LastInsertId()
@@ -1326,7 +1327,7 @@ func (db *datastore) DispersePosts(userID int64, postIDs []string) (*[]ClaimPost
 	return &res, nil
 }
 
-func (db *datastore) ClaimPosts(userID int64, collAlias string, posts *[]ClaimPostRequest) (*[]ClaimPostResult, error) {
+func (db *datastore) ClaimPosts(cfg *config.Config, userID int64, collAlias string, posts *[]ClaimPostRequest) (*[]ClaimPostResult, error) {
 	postClaimReqs := map[string]bool{}
 	res := []ClaimPostResult{}
 	postCollAlias := collAlias
@@ -1383,7 +1384,7 @@ func (db *datastore) ClaimPosts(userID int64, collAlias string, posts *[]ClaimPo
 				// This is a new collection
 				// TODO: consider removing this. This seriously complicates this
 				// method and adds another (unnecessary?) logic path.
-				coll, err = db.CreateCollection(postCollAlias, "", userID)
+				coll, err = db.CreateCollection(cfg, postCollAlias, "", userID)
 				if err != nil {
 					if err, ok := err.(impart.HTTPError); ok {
 						r.Code = err.Status
