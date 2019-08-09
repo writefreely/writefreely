@@ -47,11 +47,11 @@
 				{{if .SimpleNav}}
 					{{ if not .SingleUser }}
 					{{if and (and .LocalTimeline .CanViewReader) .Chorus}}<a href="/"{{if eq .Path "/"}} class="selected"{{end}}>Home</a>{{end}}
-					{{if gt .MaxBlogs 1}}<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>{{end}}
-					{{if and (and .Chorus (eq .MaxBlogs 1)) .Username}}<a href="/{{.Username}}/"{{if eq .Path (printf "/%s/" .Username)}} class="selected"{{end}}>Posts</a>{{end}}
 					{{ end }}
 					<a href="/about">About</a>
 					{{ if not .SingleUser }}
+					{{if gt .MaxBlogs 1}}<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>{{end}}
+					{{if and (and .Chorus (eq .MaxBlogs 1)) .Username}}<a href="/{{.Username}}/"{{if eq .Path (printf "/%s/" .Username)}} class="selected"{{end}}>My Posts</a>{{end}}
 					{{if and (and .LocalTimeline .CanViewReader) (not .Chorus)}}<a href="/read">Reader</a>{{end}}
 					{{if and (and .Chorus .OpenRegistration) (not .Username)}}<a href="/signup"{{if eq .Path "/signup"}} class="selected"{{end}}>Sign up</a>{{end}}
 					{{if .Username}}<a href="/me/logout">Log out</a>{{else}}<a href="/login">Log in</a>{{end}}

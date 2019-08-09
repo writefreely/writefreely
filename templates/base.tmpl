@@ -38,11 +38,11 @@
 				<nav class="tabs">
 					{{ if and .SimpleNav (not .SingleUser) }}
 					{{if and (and .LocalTimeline .CanViewReader) .Chorus}}<a href="/"{{if eq .Path "/"}} class="selected"{{end}}>Home</a>{{end}}
-					{{if gt .MaxBlogs 1}}<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>{{end}}
-					{{if and (and .Chorus (eq .MaxBlogs 1)) .Username}}<a href="/{{.Username}}/"{{if eq .Path (printf "/%s/" .Username)}} class="selected"{{end}}>Posts</a>{{end}}
 					{{ end }}
 					<a href="/about"{{if eq .Path "/about"}} class="selected"{{end}}>About</a>
 					{{ if not .SingleUser }}
+					{{if gt .MaxBlogs 1}}<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>{{end}}
+					{{if and (and .Chorus (eq .MaxBlogs 1)) .Username}}<a href="/{{.Username}}/"{{if eq .Path (printf "/%s/" .Username)}} class="selected"{{end}}>My Posts</a>{{end}}
 					{{if and (and  .LocalTimeline .CanViewReader) (not .Chorus)}}<a href="/read"{{if eq .Path "/read"}} class="selected"{{end}}>Reader</a>{{end}}
 					{{if and (and  .Chorus .OpenRegistration) (not .Username)}}<a href="/signup"{{if eq .Path "/signup"}} class="selected"{{end}}>Sign up</a>{{end}}
 					{{if not .Username}}<a href="/login"{{if eq .Path "/login"}} class="selected"{{end}}>Log in</a>{{else if .SimpleNav}}<a href="/me/logout">Log out</a>{{end}}
