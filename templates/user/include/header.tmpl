@@ -45,6 +45,7 @@
 			{{end}}
 			<nav class="tabs">
 				{{if .SimpleNav}}
+					{{if and (and (not .SingleUser) .Chorus) .Username}}<a href="/{{.Username}}/"{{if eq .Path (printf "/%s/" .Username)}} class="selected"{{end}}>Posts</a>{{end}}
 					<a href="/about">About</a>
 					{{if and (and (not .SingleUser) .LocalTimeline) .CanViewReader}}<a href="/read">Reader</a>{{end}}
 					{{if and (and (and (not .SingleUser) .Chorus) .OpenRegistration) (not .Username)}}<a href="/signup"{{if eq .Path "/signup"}} class="selected"{{end}}>Sign up</a>{{end}}
