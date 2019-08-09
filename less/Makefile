@@ -1,13 +1,8 @@
-ifeq ($(shell which lessc),/usr/bin/lessc)
-	LESSC=/usr/bin/lessc
-else ifeq ($(shell which lessc),/usr/local/bin/lessc)
-	LESSC=/usr/local/bin/lessc
-else ifeq ($(shell which lessc),/bin/lessc)
-	LESSC=/bin/lessc
-else
-	LESSC=node_modules/.bin/lessc
+LESSC := $(shell command -v lessc 2> /dev/null)
+
+ifndef LESSC
+	$(error "less is not installed, please run install-less.sh")
 endif
-export LESSC
 
 CSSDIR=../static/css/
 
