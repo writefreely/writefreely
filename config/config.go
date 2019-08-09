@@ -70,7 +70,10 @@ type (
 		Landing    string `ini:"landing"`
 		SimpleNav  bool   `ini:"simple_nav"`
 		WFModesty  bool   `ini:"wf_modesty"`
-		Chorus     bool   `ini:"chorus"`
+
+		// Site functionality
+		Chorus        bool `ini:"chorus"`
+		DisableDrafts bool `ini:"disable_drafts"`
 
 		// Users
 		SingleUser       bool `ini:"single_user"`
