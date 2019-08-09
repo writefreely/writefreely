@@ -193,16 +193,20 @@ func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 		return handleViewCollection(app, w, r)
 	}
 
-	if app.cfg.App.Chorus {
-		// This instance is focused on reading, so show Reader on home route
-		return viewLocalTimeline(app, w, r)
-	}
-
 	// Multi-user instance
 	forceLanding := r.FormValue("landing") == "1"
 	if !forceLanding {
 		// Show correct page based on user auth status and configured landing path
 		u := getUserSession(app, r)
+
+		if app.cfg.App.Chorus {
+			// This instance is focused on reading, so show Reader on home route if not
+			// private or a private-instance user is logged in.
+			if !app.cfg.App.Private || u != nil {
+				return viewLocalTimeline(app, w, r)
+			}
+		}
+
 		if u != nil {
 			// User is logged in, so show the Pad
 			return handleViewPad(app, w, r)
