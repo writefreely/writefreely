@@ -38,6 +38,7 @@
 				<nav class="tabs">
 					<a href="/about"{{if eq .Path "/about"}} class="selected"{{end}}>About</a>
 					{{if and (and (not .SingleUser) .LocalTimeline) .CanViewReader}}<a href="/read"{{if eq .Path "/read"}} class="selected"{{end}}>Reader</a>{{end}}
+					{{if and (and (and (not .SingleUser) .Chorus) .OpenRegistration) (not .Username)}}<a href="/signup"{{if eq .Path "/signup"}} class="selected"{{end}}>Sign up</a>{{end}}
 					{{if and (not .SingleUser) (not .Username)}}<a href="/login"{{if eq .Path "/login"}} class="selected"{{end}}>Log in</a>{{else if .SimpleNav}}<a href="/me/logout">Log out</a>{{end}}
 				</nav>
 				{{if .SimpleNav}}{{if .Username}}<div class="right-side" style="font-size: 0.86em;">

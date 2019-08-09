@@ -47,6 +47,7 @@
 				{{if .SimpleNav}}
 					<a href="/about">About</a>
 					{{if and (and (not .SingleUser) .LocalTimeline) .CanViewReader}}<a href="/read">Reader</a>{{end}}
+					{{if and (and (and (not .SingleUser) .Chorus) .OpenRegistration) (not .Username)}}<a href="/signup"{{if eq .Path "/signup"}} class="selected"{{end}}>Sign up</a>{{end}}
 					{{if .Username}}<a href="/me/logout">Log out</a>{{else}}<a href="/login">Log in</a>{{end}}
 				{{else}}
 					<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>

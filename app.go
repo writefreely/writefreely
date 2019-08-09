@@ -213,6 +213,12 @@ func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
+	return handleViewLanding(app, w, r)
+}
+
+func handleViewLanding(app *App, w http.ResponseWriter, r *http.Request) error {
+	forceLanding := r.FormValue("landing") == "1"
+
 	p := struct {
 		page.StaticPage
 		Flashes []template.HTML

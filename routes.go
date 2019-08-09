@@ -150,6 +150,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 
 	// Handle special pages first
 	write.HandleFunc("/login", handler.Web(viewLogin, UserLevelNoneRequired))
+	write.HandleFunc("/signup", handler.Web(handleViewLanding, UserLevelNoneRequired))
 	write.HandleFunc("/invite/{code}", handler.Web(handleViewInvite, UserLevelNoneRequired)).Methods("GET")
 	// TODO: show a reader-specific 404 page if the function is disabled
 	write.HandleFunc("/read", handler.Web(viewLocalTimeline, UserLevelReader))
