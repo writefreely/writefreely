@@ -185,12 +185,17 @@ func (app *App) ReqLog(r *http.Request, status int, timeSince time.Duration) str
 	return fmt.Sprintf("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, timeSince, r.UserAgent())
 }
 
-// handleViewHome shows page at root path. Will be the Pad if logged in and the
-// catch-all landing page otherwise.
+// handleViewHome shows page at root path. It checks the configuration and
+// authentication state to show the correct page.
 func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 	if app.cfg.App.SingleUser {
 		// Render blog index
 		return handleViewCollection(app, w, r)
+	}
+
+	if app.cfg.App.Chorus {
+		// This instance is focused on reading, so show Reader on home route
+		return viewLocalTimeline(app, w, r)
 	}
 
 	// Multi-user instance
@@ -199,12 +204,7 @@ func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 		// Show correct page based on user auth status and configured landing path
 		u := getUserSession(app, r)
 		if u != nil {
-			// User is logged in, so show the Pad or Blogs page, depending on config
-			if app.cfg.App.SimpleNav {
-				// Simple nav, so home page is Blogs page
-				return viewCollections(app, u, w, r)
-			}
-			// Default config, so home page is editor
+			// User is logged in, so show the Pad
 			return handleViewPad(app, w, r)
 		}
 
