@@ -22,7 +22,7 @@
 			</nav>
 		</nav>
 		{{else}}
-		{{ if .SimpleNav }}<nav id="full-nav">
+		{{ if .Chorus }}<nav id="full-nav">
 			<div class="left-side">
 				<h1><a href="/" title="Return to editor">{{.SiteName}}</a></h1>
 			</div>
@@ -63,7 +63,7 @@
 				{{end}}
 			</nav>
 		</nav>
-		{{if .SimpleNav}}{{if .Username}}<div class="right-side">
+		{{if .Chorus}}{{if .Username}}<div class="right-side">
 					<a class="simple-btn" href="/new">New Post</a>
 				</div>{{end}}
 			</nav>
