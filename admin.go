@@ -319,6 +319,8 @@ func handleViewAdminPage(app *App, u *User, w http.ResponseWriter, r *http.Reque
 		}
 		p.Content, err = getLandingBody(app)
 		p.Content.ID = "landing"
+	} else if slug == "reader" {
+		p.Content, err = getReaderSection(app)
 	} else {
 		p.Content, err = app.db.GetDynamicContent(slug)
 	}
@@ -342,7 +344,7 @@ func handleAdminUpdateSite(app *App, u *User, w http.ResponseWriter, r *http.Req
 	id := vars["page"]
 
 	// Validate
-	if id != "about" && id != "privacy" && id != "landing" {
+	if id != "about" && id != "privacy" && id != "landing" && id != "reader" {
 		return impart.HTTPError{http.StatusNotFound, "No such page."}
 	}
 
@@ -356,6 +358,9 @@ func handleAdminUpdateSite(app *App, u *User, w http.ResponseWriter, r *http.Req
 			return impart.HTTPError{http.StatusFound, "/admin/page/" + id + m}
 		}
 		err = app.db.UpdateDynamicContent("landing-body", "", r.FormValue("content"), "section")
+	} else if id == "reader" {
+		// Update sections with titles
+		err = app.db.UpdateDynamicContent(id, r.FormValue("title"), r.FormValue("content"), "section")
 	} else {
 		// Update page
 		err = app.db.UpdateDynamicContent(id, r.FormValue("title"), r.FormValue("content"), "page")

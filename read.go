@@ -50,6 +50,10 @@ type readPublication struct {
 	SelTopic    string
 	IsAdmin     bool
 	CanInvite   bool
+
+	// Customizable page content
+	ContentTitle string
+	Content      template.HTML
 }
 
 func initLocalTimeline(app *App) {
@@ -211,8 +215,14 @@ func showLocalTimeline(app *App, w http.ResponseWriter, r *http.Request, page in
 		d.IsAdmin = u != nil && u.IsAdmin()
 		d.CanInvite = canUserInvite(app.cfg, d.IsAdmin)
 	}
+	c, err := getReaderSection(app)
+	if err != nil {
+		return err
+	}
+	d.ContentTitle = c.Title.String
+	d.Content = template.HTML(applyMarkdown([]byte(c.Content), "", app.cfg))
 
-	err := templates["read"].ExecuteTemplate(w, "base", d)
+	err = templates["read"].ExecuteTemplate(w, "base", d)
 	if err != nil {
 		log.Error("Unable to render reader: %v", err)
 		fmt.Fprintf(w, ":(")
