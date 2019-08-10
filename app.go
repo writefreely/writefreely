@@ -486,9 +486,14 @@ func ConnectToDatabase(app *App) error {
 	return nil
 }
 
+// FormatVersion constructs the version string for the application
+func FormatVersion() string {
+	return serverSoftware + " " + softwareVer
+}
+
 // OutputVersion prints out the version of the application.
 func OutputVersion() {
-	fmt.Println(serverSoftware + " " + softwareVer)
+	fmt.Println(FormatVersion())
 }
 
 // NewApp creates a new app instance.
