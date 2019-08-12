@@ -1380,11 +1380,7 @@ Are you sure it was ever here?`,
 			IsCustomDomain: cr.isCustomDomain,
 			IsFound:        postFound,
 		}
-		if p.IsOwner {
-			tp.PinnedPosts, _ = app.db.GetPinnedPosts(coll, true)
-		} else {
-			tp.PinnedPosts, _ = app.db.GetPinnedPosts(coll, false)
-		}
+		tp.PinnedPosts, _ = app.db.GetPinnedPosts(coll, p.IsOwner)
 		tp.IsPinned = len(*tp.PinnedPosts) > 0 && PostsContains(tp.PinnedPosts, p)
 
 		if !postFound {
