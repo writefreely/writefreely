@@ -94,7 +94,7 @@ type writestore interface {
 
 	UpdatePostPinState(pinned bool, postID string, collID, ownerID, pos int64) error
 	GetLastPinnedPostPos(collID int64) int64
-	GetPinnedPosts(coll *CollectionObj) (*[]PublicPost, error)
+	GetPinnedPosts(coll *CollectionObj, includeFuture bool) (*[]PublicPost, error)
 	RemoveCollectionRedirect(t *sql.Tx, alias string) error
 	GetCollectionRedirect(alias string) (new string)
 	IsCollectionAttributeOn(id int64, attr string) bool
@@ -1533,9 +1533,15 @@ func (db *datastore) GetLastPinnedPostPos(collID int64) int64 {
 	return lastPos.Int64
 }
 
-func (db *datastore) GetPinnedPosts(coll *CollectionObj) (*[]PublicPost, error) {
+func (db *datastore) GetPinnedPosts(coll *CollectionObj, includeFuture bool) (*[]PublicPost, error) {
 	// FIXME: sqlite-backed instances don't include ellipsis on truncated titles
-	rows, err := db.Query("SELECT id, slug, title, "+db.clip("content", 80)+", pinned_position FROM posts WHERE collection_id = ? AND pinned_position IS NOT NULL ORDER BY pinned_position ASC", coll.ID)
+	rows := &sql.Rows{}
+	var err error
+	if includeFuture {
+		rows, err = db.Query("SELECT id, slug, title, "+db.clip("content", 80)+", pinned_position FROM posts WHERE collection_id = ? AND pinned_position IS NOT NULL ORDER BY pinned_position ASC", coll.ID)
+	} else {
+		rows, err = db.Query("SELECT id, slug, title, "+db.clip("content", 80)+", pinned_position FROM posts WHERE collection_id = ? AND pinned_position IS NOT NULL AND created <= "+db.now()+" ORDER BY pinned_position ASC", coll.ID)
+	}
 	if err != nil {
 		log.Error("Failed selecting pinned posts: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve pinned posts."}

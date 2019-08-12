@@ -769,6 +769,7 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 			displayPage.Collections = pubColls
 		}
 	}
+	isOwner := owner != nil
 	if owner == nil {
 		// Current user doesn't own collection; retrieve owner information
 		owner, err = app.db.GetUserByID(coll.OwnerID)
@@ -782,7 +783,11 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 
 	// Add more data
 	// TODO: fix this mess of collections inside collections
-	displayPage.PinnedPosts, _ = app.db.GetPinnedPosts(coll.CollectionObj)
+	if isOwner {
+		displayPage.PinnedPosts, _ = app.db.GetPinnedPosts(coll.CollectionObj, true)
+	} else {
+		displayPage.PinnedPosts, _ = app.db.GetPinnedPosts(coll.CollectionObj, false)
+	}
 
 	err = templates["collection"].ExecuteTemplate(w, "collection", displayPage)
 	if err != nil {
@@ -866,6 +871,7 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 			displayPage.Collections = pubColls
 		}
 	}
+	isOwner := owner != nil
 	if owner == nil {
 		// Current user doesn't own collection; retrieve owner information
 		owner, err = app.db.GetUserByID(coll.OwnerID)
@@ -878,7 +884,11 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 	coll.Owner = displayPage.Owner
 	// Add more data
 	// TODO: fix this mess of collections inside collections
-	displayPage.PinnedPosts, _ = app.db.GetPinnedPosts(coll.CollectionObj)
+	if isOwner {
+		displayPage.PinnedPosts, _ = app.db.GetPinnedPosts(coll.CollectionObj, true)
+	} else {
+		displayPage.PinnedPosts, _ = app.db.GetPinnedPosts(coll.CollectionObj, false)
+	}
 
 	err = templates["collection-tags"].ExecuteTemplate(w, "collection-tags", displayPage)
 	if err != nil {
