@@ -13,6 +13,13 @@ package writefreely
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
+	"net/http"
+	"regexp"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/guregu/null/zero"
@@ -22,12 +29,6 @@ import (
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/author"
 	"github.com/writeas/writefreely/page"
-	"html/template"
-	"net/http"
-	"regexp"
-	"strings"
-	"sync"
-	"time"
 )
 
 type (
@@ -546,7 +547,7 @@ func getVerboseAuthUser(app *App, token string, u *User, verbose bool) *AuthUser
 		if err != nil {
 			log.Error("Login: Unable to get user posts: %v", err)
 		}
-		colls, err := app.db.GetCollections(u)
+		colls, err := app.db.GetCollections(u, app.cfg.App.Host)
 		if err != nil {
 			log.Error("Login: Unable to get user collections: %v", err)
 		}
@@ -716,7 +717,7 @@ func viewMyCollectionsAPI(app *App, u *User, w http.ResponseWriter, r *http.Requ
 		return ErrBadRequestedType
 	}
 
-	p, err := app.db.GetCollections(u)
+	p, err := app.db.GetCollections(u, app.cfg.App.Host)
 	if err != nil {
 		return err
 	}
@@ -739,7 +740,7 @@ func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		log.Error("unable to fetch flashes: %v", err)
 	}
 
-	c, err := app.db.GetPublishableCollections(u)
+	c, err := app.db.GetPublishableCollections(u, app.cfg.App.Host)
 	if err != nil {
 		log.Error("unable to fetch collections: %v", err)
 	}
@@ -762,7 +763,7 @@ func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 }
 
 func viewCollections(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
-	c, err := app.db.GetCollections(u)
+	c, err := app.db.GetCollections(u, app.cfg.App.Host)
 	if err != nil {
 		log.Error("unable to fetch collections: %v", err)
 		return fmt.Errorf("No collections")

@@ -13,16 +13,17 @@ package writefreely
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
+	"runtime"
+	"strconv"
+	"time"
+
 	"github.com/gogits/gogs/pkg/tool"
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
-	"net/http"
-	"runtime"
-	"strconv"
-	"time"
 )
 
 var (
@@ -195,7 +196,7 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 		p.LastPost = lp.Format("January 2, 2006, 3:04 PM")
 	}
 
-	colls, err := app.db.GetCollections(p.User)
+	colls, err := app.db.GetCollections(p.User, app.cfg.App.Host)
 	if err != nil {
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get user's collections: %v", err)}
 	}
