@@ -1535,13 +1535,11 @@ func (db *datastore) GetLastPinnedPostPos(collID int64) int64 {
 
 func (db *datastore) GetPinnedPosts(coll *CollectionObj, includeFuture bool) (*[]PublicPost, error) {
 	// FIXME: sqlite-backed instances don't include ellipsis on truncated titles
-	rows := &sql.Rows{}
-	var err error
-	if includeFuture {
-		rows, err = db.Query("SELECT id, slug, title, "+db.clip("content", 80)+", pinned_position FROM posts WHERE collection_id = ? AND pinned_position IS NOT NULL ORDER BY pinned_position ASC", coll.ID)
-	} else {
-		rows, err = db.Query("SELECT id, slug, title, "+db.clip("content", 80)+", pinned_position FROM posts WHERE collection_id = ? AND pinned_position IS NOT NULL AND created <= "+db.now()+" ORDER BY pinned_position ASC", coll.ID)
+	timeCondition := ""
+	if !includeFuture {
+		timeCondition = "AND created <= " + db.now()
 	}
+	rows, err := db.Query("SELECT id, slug, title, "+db.clip("content", 80)+", pinned_position FROM posts WHERE collection_id = ? AND pinned_position IS NOT NULL "+timeCondition+" ORDER BY pinned_position ASC", coll.ID)
 	if err != nil {
 		log.Error("Failed selecting pinned posts: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve pinned posts."}
