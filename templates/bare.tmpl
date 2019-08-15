@@ -19,7 +19,7 @@
 		
 		<header id="tools">
 			<div id="clip">
-				{{if not .SingleUser}}<h1><a href="/me/c/" title="View blogs">{{.SiteName}}</a></h1>{{end}}
+				{{if not .SingleUser}}<h1>{{if .Chorus}}<a href="/" title="Home">{{else}}<a href="/me/c/" title="View blogs">{{end}}{{.SiteName}}</a></h1>{{end}}
 				<nav id="target" {{if .SingleUser}}style="margin-left:0"{{end}}><ul>
 						<li>{{if .Blogs}}<a href="{{$c := index .Blogs 0}}{{$c.CanonicalURL}}">My Posts</a>{{else}}<a>Draft</a>{{end}}</li>
 				</ul></nav>
