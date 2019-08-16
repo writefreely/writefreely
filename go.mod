@@ -28,6 +28,7 @@ require (
 	github.com/gorilla/schema v1.0.2
 	github.com/gorilla/sessions v1.1.3
 	github.com/guregu/null v3.4.0+incompatible
+	github.com/hashicorp/go-multierror v1.0.0
 	github.com/ikeikeikeike/go-sitemap-generator v1.0.1
 	github.com/ikeikeikeike/go-sitemap-generator/v2 v2.0.2
 	github.com/imdario/mergo v0.3.7 // indirect
@@ -56,6 +57,7 @@ require (
 	github.com/writeas/go-webfinger v0.0.0-20190106002315-85cf805c86d2
 	github.com/writeas/httpsig v1.0.0
 	github.com/writeas/impart v1.1.0
+	github.com/writeas/import v0.0.0-20190815235139-628d10daaa9e
 	github.com/writeas/monday v0.0.0-20181024183321-54a7dd579219
 	github.com/writeas/nerds v1.0.0
 	github.com/writeas/openssl-go v1.0.0 // indirect
@@ -63,7 +65,7 @@ require (
 	github.com/writeas/slug v1.2.0
 	github.com/writeas/web-core v1.0.0
 	github.com/writefreely/go-nodeinfo v1.2.0
-	golang.org/x/crypto v0.0.0-20190208162236-193df9c0f06f // indirect
+	golang.org/x/crypto v0.0.0-20190208162236-193df9c0f06f
 	golang.org/x/lint v0.0.0-20181217174547-8f45f776aaf1 // indirect
 	golang.org/x/net v0.0.0-20190206173232-65e2d4e15006 // indirect
 	golang.org/x/sys v0.0.0-20190209173611-3b5209105503 // indirect

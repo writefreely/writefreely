@@ -1,0 +1,33 @@
+{{define "import"}}
+{{template "header" .}}
+
+<div class="snug content-container">
+	<h2 id="posts-header">Import</h2>
+	<p>Upload text or markdown files to import as posts.</p>
+	<div class="formContainer">
+		<form id="importPosts" class="import" enctype="multipart/form-data" action="/me/import" method="POST">
+			<label for="file" hidden>Browse files to upload</label>
+			<input class="fileInput" name="files" type="file" multiple accept=".txt,.md"/>
+			<br />
+			<label for="collection">Select a blog to import the posts under.</label>
+			<select name="collection">
+				{{range $i, $el := .Collections}}
+				<option value={{.Alias}}>
+					{{if .Title}}{{.Title}}{{else}}{{.Alias}}{{end}}
+				</option>
+				{{end}}
+				<option value="" selected>drafts</option>
+			</select>
+			<br />
+			<input type="submit" value="Import" />
+		</form>
+	</div>
+	{{if .Flashes}}
+	<ul class="errors">
+		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
+	</ul>
+	{{end}}
+</div>
+
+{{template "footer" .}}
+{{end}}
