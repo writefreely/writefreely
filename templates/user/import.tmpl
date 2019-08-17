@@ -2,6 +2,11 @@
 {{template "header" .}}
 
 <div class="snug content-container">
+	{{if .Message}}
+	<div class="alert {{if .InfoMsg}}info{{else}}success{{end}}">
+		<p>{{.Message}}</p>
+	</div>
+	{{end}}
 	<h2 id="posts-header">Import</h2>
 	<p>Upload text or markdown files to import as posts.</p>
 	<div class="formContainer">

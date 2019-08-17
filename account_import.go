@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/writeas/impart"
@@ -28,6 +29,8 @@ func viewImport(app *App, u *User, w http.ResponseWriter, r *http.Request) error
 		*UserPage
 		Collections *[]Collection
 		Flashes     []template.HTML
+		Message     string
+		InfoMsg     bool
 	}{
 		UserPage:    p,
 		Collections: c,
@@ -36,7 +39,14 @@ func viewImport(app *App, u *User, w http.ResponseWriter, r *http.Request) error
 
 	flashes, _ := getSessionFlashes(app, w, r, nil)
 	for _, flash := range flashes {
-		d.Flashes = append(d.Flashes, template.HTML(flash))
+		if strings.HasPrefix(flash, "SUCCESS: ") {
+			d.Message = strings.TrimPrefix(flash, "SUCCESS: ")
+		} else if strings.HasPrefix(flash, "INFO: ") {
+			d.Message = strings.TrimPrefix(flash, "INFO: ")
+			d.InfoMsg = true
+		} else {
+			d.Flashes = append(d.Flashes, template.HTML(flash))
+		}
 	}
 
 	showUserPage(w, "import", d)
@@ -48,8 +58,9 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 	r.ParseMultipartForm(10 << 20)
 	files := r.MultipartForm.File["files"]
 	var fileErrs []error
+	filesSubmitted := len(files)
+	var filesImported int
 	for _, formFile := range files {
-		// TODO: count uploaded files that succeed and report back with message
 		file, err := formFile.Open()
 		if err != nil {
 			fileErrs = append(fileErrs, fmt.Errorf("failed to open form file: %s", formFile.Filename))
@@ -125,10 +136,20 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 				continue
 			}
 		}
+		filesImported++
 	}
 	if len(fileErrs) != 0 {
 		_ = addSessionFlash(app, w, r, multierror.ListFormatFunc(fileErrs), nil)
 	}
 
+	if filesImported == filesSubmitted {
+		verb := "posts"
+		if filesSubmitted == 1 {
+			verb = "post"
+		}
+		_ = addSessionFlash(app, w, r, fmt.Sprintf("SUCCESS: Import complete, %d %s imported.", filesImported, verb), nil)
+	} else if filesImported > 0 {
+		_ = addSessionFlash(app, w, r, fmt.Sprintf("INFO: %d of %d posts imported, see details below.", filesImported, filesSubmitted), nil)
+	}
 	return impart.HTTPError{http.StatusFound, "/me/import"}
 }
