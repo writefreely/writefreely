@@ -10,9 +10,9 @@
 	<h2 id="posts-header">Import</h2>
 	<p>Upload text or markdown files to import as posts.</p>
 	<div class="formContainer">
-		<form id="importPosts" class="import" enctype="multipart/form-data" action="/me/import" method="POST">
+		<form id="importPosts" class="import" enctype="multipart/form-data" action="/api/me/import" method="POST">
 			<label for="file" hidden>Browse files to upload</label>
-			<input class="fileInput" name="files" type="file" multiple accept=".txt,.md"/>
+			<input class="fileInput" name="files" type="file" multiple accept="text/plain"/>
 			<br />
 			<label for="collection">Select a blog to import the posts under.</label>
 			<select name="collection">
