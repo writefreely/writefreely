@@ -108,33 +108,34 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 				ID: 0,
 			}
 		}
+		coll.hostName = app.cfg.App.Host
 
 		submittedPost := SubmittedPost{
 			Title:   &post.Title,
 			Content: &post.Content,
 			Font:    "norm",
 		}
+		rp, err := app.db.CreatePost(u.ID, coll.ID, &submittedPost)
+		if err != nil {
+			fileErrs = append(fileErrs, fmt.Errorf("failed to create post from %s", formFile.Filename))
+			log.Error("import textfile: create db post: %v", err)
+			continue
+		}
+
+		// create public post
+
 		if coll.ID != 0 && app.cfg.App.Federation {
-			token, err := app.db.GetAccessToken(u.ID)
-			if err != nil {
-				fileErrs = append(fileErrs, fmt.Errorf("failed to authenticate uploading: %s", formFile.Filename))
-				log.Error("import textfile: get accesstoken: %+v", err)
-				continue
-			}
-			ownedPost, err := app.db.CreateOwnedPost(&submittedPost, token, coll.Alias, app.cfg.App.Host)
-			if err != nil {
-				fileErrs = append(fileErrs, fmt.Errorf("failed to create owned post for %s", formFile.Filename))
-				log.Error("import textfile: create owned post: %v", err)
-				continue
-			}
-			go federatePost(app, ownedPost, coll.ID, false)
-		} else {
-			_, err = app.db.CreatePost(u.ID, coll.ID, &submittedPost)
-			if err != nil {
-				fileErrs = append(fileErrs, fmt.Errorf("failed to create post from %s", formFile.Filename))
-				log.Error("import textfile: create db post: %v", err)
-				continue
-			}
+			go federatePost(
+				app,
+				&PublicPost{
+					Post: rp,
+					Collection: &CollectionObj{
+						Collection: *coll,
+					},
+				},
+				coll.ID,
+				false,
+			)
 		}
 		filesImported++
 	}
