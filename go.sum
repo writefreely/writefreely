@@ -61,6 +61,7 @@ github.com/gogs/minwinsvc v0.0.0-20170301035411-95be6356811a/go.mod h1:TUIZ+29jo
 github.com/golang/lint v0.0.0-20181026193005-c67002cb31c3/go.mod h1:tluoj9z5200jBnyusfRPU2LqT6J+DAorxEvtC7LHB+E=
 github.com/golang/lint v0.0.0-20181217174547-8f45f776aaf1 h1:6DVPu65tee05kY0/rciBQ47ue+AnuY8KTayV6VHikIo=
 github.com/golang/lint v0.0.0-20181217174547-8f45f776aaf1/go.mod h1:tluoj9z5200jBnyusfRPU2LqT6J+DAorxEvtC7LHB+E=
+github.com/golang/protobuf v1.2.0 h1:P3YflyNX/ehuJFLhxviNdFxQPkGK5cDcApsge1SqnvM=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/google/shlex v0.0.0-20181106134648-c34317bd91bf h1:7+FW5aGwISbqUtkfmIpZJGRgNFg2ioYPvFaUxdqpDsg=
 github.com/google/shlex v0.0.0-20181106134648-c34317bd91bf/go.mod h1:RpwtwJQFrIEPstU94h88MWPXP2ektJZ8cZ0YntAmXiE=
@@ -169,6 +170,8 @@ github.com/writeas/import v0.0.0-20190815214647-baae8acd8d06 h1:S6oKKP8GhSoyZUvV
 github.com/writeas/import v0.0.0-20190815214647-baae8acd8d06/go.mod h1:f3K8z7YnJwKnPIT4h7980n9C6cQb4DIB2QcxVCTB7lE=
 github.com/writeas/import v0.0.0-20190815235139-628d10daaa9e h1:31PkvDTWkjzC1nGzWw9uAE92ZfcVyFX/K9L9ejQjnEs=
 github.com/writeas/import v0.0.0-20190815235139-628d10daaa9e/go.mod h1:f3K8z7YnJwKnPIT4h7980n9C6cQb4DIB2QcxVCTB7lE=
+github.com/writeas/import v0.1.0 h1:ZbAOb6QL24tgZOEAmEJ/hk59fF4UGOX8sQLaYE+yNiA=
+github.com/writeas/import v0.1.0/go.mod h1:f3K8z7YnJwKnPIT4h7980n9C6cQb4DIB2QcxVCTB7lE=
 github.com/writeas/import v0.1.1 h1:SbYltT+nxrJBUe0xQWJqeKMHaupbxV0a6K3RtwcE4yY=
 github.com/writeas/import v0.1.1/go.mod h1:gFe0Pl7ZWYiXbI0TJxeMMyylPGZmhVvCfQxhMEc8CxM=
 github.com/writeas/import v0.2.0 h1:Ov23JW9Rnjxk06rki1Spar45bNX647HhwhAZj3flJiY=
