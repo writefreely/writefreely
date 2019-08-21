@@ -12,7 +12,7 @@
 	<div class="formContainer">
 		<form id="importPosts" class="import" enctype="multipart/form-data" action="/api/me/import" method="POST">
 			<label for="file" hidden>Browse files to upload</label>
-			<input class="fileInput" name="files" type="file" multiple accept="text/plain"/>
+			<input class="fileInput" name="files" type="file" multiple accept="text/markdown, text/plain"/>
 			<br />
 			<label for="collection">Select a blog to import the posts under.</label>
 			<select name="collection">
