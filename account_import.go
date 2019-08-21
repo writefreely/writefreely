@@ -109,10 +109,12 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 			}
 		}
 		coll.hostName = app.cfg.App.Host
+		created := post.Created.Format("2006-01-02T15:04:05Z")
 		submittedPost := SubmittedPost{
 			Title:   &post.Title,
 			Content: &post.Content,
 			Font:    "norm",
+			Created: &created,
 		}
 		rp, err := app.db.CreatePost(u.ID, coll.ID, &submittedPost)
 		if err != nil {

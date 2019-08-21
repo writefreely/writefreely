@@ -159,6 +159,8 @@ github.com/writeas/go-webfinger v0.0.0-20190106002315-85cf805c86d2 h1:DUsp4OhdfI
 github.com/writeas/go-webfinger v0.0.0-20190106002315-85cf805c86d2/go.mod h1:w2VxyRO/J5vfNjJHYVubsjUGHd3RLDoVciz0DE3ApOc=
 github.com/writeas/go-writeas v1.1.0 h1:WHGm6wriBkxYAOGbvriXH8DlMUGOi6jhSZLUZKQ+4mQ=
 github.com/writeas/go-writeas v1.1.0/go.mod h1:oh9U1rWaiE0p3kzdKwwvOpNXgp0P0IELI7OLOwV4fkA=
+github.com/writeas/go-writeas/v2 v2.0.2 h1:akvdMg89U5oBJiCkBwOXljVLTqP354uN6qnG2oOMrbk=
+github.com/writeas/go-writeas/v2 v2.0.2/go.mod h1:9sjczQJKmru925fLzg0usrU1R1tE4vBmQtGnItUMR0M=
 github.com/writeas/httpsig v1.0.0 h1:peIAoIA3DmlP8IG8tMNZqI4YD1uEnWBmkcC9OFPjt3A=
 github.com/writeas/httpsig v1.0.0/go.mod h1:7ClMGSrSVXJbmiLa17bZ1LrG1oibGZmUMlh3402flPY=
 github.com/writeas/impart v1.1.0 h1:nPnoO211VscNkp/gnzir5UwCDEvdHThL5uELU60NFSE=
@@ -167,6 +169,8 @@ github.com/writeas/import v0.0.0-20190815214647-baae8acd8d06 h1:S6oKKP8GhSoyZUvV
 github.com/writeas/import v0.0.0-20190815214647-baae8acd8d06/go.mod h1:f3K8z7YnJwKnPIT4h7980n9C6cQb4DIB2QcxVCTB7lE=
 github.com/writeas/import v0.0.0-20190815235139-628d10daaa9e h1:31PkvDTWkjzC1nGzWw9uAE92ZfcVyFX/K9L9ejQjnEs=
 github.com/writeas/import v0.0.0-20190815235139-628d10daaa9e/go.mod h1:f3K8z7YnJwKnPIT4h7980n9C6cQb4DIB2QcxVCTB7lE=
+github.com/writeas/import v0.1.1 h1:SbYltT+nxrJBUe0xQWJqeKMHaupbxV0a6K3RtwcE4yY=
+github.com/writeas/import v0.1.1/go.mod h1:gFe0Pl7ZWYiXbI0TJxeMMyylPGZmhVvCfQxhMEc8CxM=
 github.com/writeas/monday v0.0.0-20181024183321-54a7dd579219 h1:baEp0631C8sT2r/hqwypIw2snCFZa6h7U6TojoLHu/c=
 github.com/writeas/monday v0.0.0-20181024183321-54a7dd579219/go.mod h1:NyM35ayknT7lzO6O/1JpfgGyv+0W9Z9q7aE0J8bXxfQ=
 github.com/writeas/nerds v1.0.0 h1:ZzRcCN+Sr3MWID7o/x1cr1ZbLvdpej9Y1/Ho+JKlqxo=
