@@ -95,7 +95,7 @@ release : clean ui assets
 	$(MAKE) release-docker
 
 # This assumes you're on linux/amd64
-release-linux : clean
+release-linux : clean ui
 	mkdir -p $(BUILDPATH)
 	cp -r templates $(BUILDPATH)
 	cp -r pages $(BUILDPATH)
