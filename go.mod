@@ -63,7 +63,7 @@ require (
 	github.com/writeas/slug v1.2.0
 	github.com/writeas/web-core v1.0.0
 	github.com/writefreely/go-nodeinfo v1.2.0
-	golang.org/x/crypto v0.0.0-20190208162236-193df9c0f06f // indirect
+	golang.org/x/crypto v0.0.0-20190208162236-193df9c0f06f
 	golang.org/x/lint v0.0.0-20181217174547-8f45f776aaf1 // indirect
 	golang.org/x/net v0.0.0-20190206173232-65e2d4e15006 // indirect
 	golang.org/x/sys v0.0.0-20190209173611-3b5209105503 // indirect
