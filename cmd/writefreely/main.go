@@ -113,6 +113,7 @@ func main() {
 
 	// Initialize the application
 	var err error
+	log.Info("Starting %s...", writefreely.FormatVersion())
 	app, err = writefreely.Initialize(app, *debugPtr)
 	if err != nil {
 		log.Error("%s", err)
