@@ -7,7 +7,7 @@ const fileInput = document.querySelector('input[type="file"]')
 
 document.onreadystatechange = () => {
   if ( document.readyState === "complete") {
-    selectElem.disabled = true;  
+    selectElem.disabled = true;
     submitElem.disabled = true;
     zipInfo.hidden = true;
     zipWarning.hidden = true;
@@ -28,7 +28,7 @@ fileInput.onchange = function() {
       zipWarning.hidden = true;
     }
   }
-  
+
   if ( this.files.length > 1 ) {
     selectElem.disabled = false;
     submitElem.disabled = false;
