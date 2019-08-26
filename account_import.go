@@ -72,7 +72,7 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 	if len(errs) != 0 {
 		_ = addSessionFlash(app, w, r, multierror.ListFormatFunc(errs), nil)
 	}
-	if filesImported == filesSubmitted {
+	if filesImported == filesSubmitted && filesSubmitted != 0 {
 		postAdj := "posts"
 		if filesSubmitted == 1 {
 			postAdj = "post"
@@ -92,6 +92,8 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		} else {
 			_ = addSessionFlash(app, w, r, fmt.Sprintf("SUCCESS: Import complete, %d %s imported.", filesImported, postAdj), nil)
 		}
+	} else if filesImported == 0 && filesSubmitted == 0 {
+		_ = addSessionFlash(app, w, r, "INFO: 0 valid posts found", nil)
 	} else if filesImported > 0 {
 		_ = addSessionFlash(app, w, r, fmt.Sprintf("INFO: %d of %d posts imported, see details below.", filesImported, filesSubmitted), nil)
 	}
@@ -184,9 +186,10 @@ func importZipPosts(app *App, w http.ResponseWriter, r *http.Request, file *mult
 	}
 
 	for collKey, posts := range postMap {
-		// TODO: will posts ever be 0? should skip if so
+		if len(posts) == 0 {
+			continue
+		}
 		collObj := CollectionObj{}
-		importedColls++
 		if collKey != wfimport.DraftsKey {
 			coll, err := app.db.GetCollection(collKey)
 			if err == ErrCollectionNotFound {
@@ -202,6 +205,7 @@ func importZipPosts(app *App, w http.ResponseWriter, r *http.Request, file *mult
 				continue
 			}
 			collObj.Collection = *coll
+			importedColls++
 		}
 
 		for _, post := range posts {
@@ -217,6 +221,7 @@ func importZipPosts(app *App, w http.ResponseWriter, r *http.Request, file *mult
 				rp, err := app.db.CreatePost(u.ID, collObj.Collection.ID, &submittedPost)
 				if err != nil {
 					errs = append(errs, fmt.Errorf("create post: %v", err))
+					continue
 				}
 
 				if collObj.Collection.ID != 0 && app.cfg.App.Federation {

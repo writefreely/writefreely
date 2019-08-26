@@ -1,4 +1,4 @@
-
+const fileForm = document.querySelector('form.import-form');
 const selectElem = document.querySelector('select[name="collection"]');
 const submitElem = document.querySelector('input[type="submit"]');
 const zipInfo = document.querySelector('span.zip > ul.info');
@@ -21,7 +21,7 @@ fileInput.onchange = function() {
       submitElem.disabled = false;
       zipInfo.hidden = false;
       zipWarning.hidden = true;
-    } else if ( this.files[0].type.match('text.*')) {
+    } else {
       selectElem.disabled = false;
       submitElem.disabled = false;
       zipInfo.hidden = true;
@@ -47,3 +47,9 @@ fileInput.onchange = function() {
     }
   }
 }
+
+submitElem.addEventListener("click", (e) => {
+  e.preventDefault();
+  submitElem.disabled = true;
+  fileForm.submit();
+});
