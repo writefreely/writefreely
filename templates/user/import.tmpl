@@ -8,22 +8,33 @@
 	</div>
 	{{end}}
 	<h2 id="posts-header">Import</h2>
-	<p>Upload text or markdown files to import as posts.</p>
-	<div class="formContainer">
-		<form id="importPosts" class="import" enctype="multipart/form-data" action="/api/me/import" method="POST">
+	<p>This form allows you to import posts from files on your computer.</p>
+	<p>Any number text or markdown files are supported, as well as zip archives of posts.</p>
+	<div>
+		<form class="import-form" enctype="multipart/form-data" action="/api/me/import" method="POST">
 			<label for="file" hidden>Browse files to upload</label>
-			<input class="fileInput" name="files" type="file" multiple accept="text/markdown, text/plain, application/zip"/>
-			<br />
-			<label for="collection">Select a blog to import the posts under.</label>
-			<select name="collection">
-				{{range $i, $el := .Collections}}
-				<option value={{.Alias}}>
-					{{if .Title}}{{.Title}}{{else}}{{.Alias}}{{end}}
-				</option>
-				{{end}}
-				<option value="" selected>drafts</option>
-			</select>
-			<br />
+			<input name="files" type="file" multiple accept="text/*, application/zip"/>
+			<span class="row">
+				<label for="collection">Select a blog to import the posts under.</label>
+				<select name="collection">
+					{{range $i, $el := .Collections}}
+					<option value={{.Alias}}>
+						{{if .Title}}{{.Title}}{{else}}{{.Alias}}{{end}}
+					</option>
+					{{end}}
+					<option value="" selected>drafts</option>
+				</select>
+			</span>
+			<span class="row zip">
+				<p class="error">
+					WARNING: zip files must be uploaded separately, one at a time.
+				</p>
+				<ul class="info">
+					<li>Root level zip files are imported as drafts</li>
+					<li>ZIP sub-directories are imported as blog collections.<br/>
+					If no blog exists matching the sub-directory name, one will be created if possible.</li>
+				</ul>
+			</span>
 			<input type="submit" value="Import" />
 		</form>
 	</div>
@@ -35,4 +46,5 @@
 </div>
 
 {{template "footer" .}}
+<script src="/js/import.js"></script>
 {{end}}
