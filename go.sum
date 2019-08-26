@@ -171,6 +171,8 @@ github.com/writeas/import v0.0.0-20190815235139-628d10daaa9e h1:31PkvDTWkjzC1nGz
 github.com/writeas/import v0.0.0-20190815235139-628d10daaa9e/go.mod h1:f3K8z7YnJwKnPIT4h7980n9C6cQb4DIB2QcxVCTB7lE=
 github.com/writeas/import v0.1.1 h1:SbYltT+nxrJBUe0xQWJqeKMHaupbxV0a6K3RtwcE4yY=
 github.com/writeas/import v0.1.1/go.mod h1:gFe0Pl7ZWYiXbI0TJxeMMyylPGZmhVvCfQxhMEc8CxM=
+github.com/writeas/import v0.2.0 h1:Ov23JW9Rnjxk06rki1Spar45bNX647HhwhAZj3flJiY=
+github.com/writeas/import v0.2.0/go.mod h1:gFe0Pl7ZWYiXbI0TJxeMMyylPGZmhVvCfQxhMEc8CxM=
 github.com/writeas/monday v0.0.0-20181024183321-54a7dd579219 h1:baEp0631C8sT2r/hqwypIw2snCFZa6h7U6TojoLHu/c=
 github.com/writeas/monday v0.0.0-20181024183321-54a7dd579219/go.mod h1:NyM35ayknT7lzO6O/1JpfgGyv+0W9Z9q7aE0J8bXxfQ=
 github.com/writeas/nerds v1.0.0 h1:ZzRcCN+Sr3MWID7o/x1cr1ZbLvdpej9Y1/Ho+JKlqxo=
