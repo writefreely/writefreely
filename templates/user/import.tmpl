@@ -1,0 +1,50 @@
+{{define "import"}}
+{{template "header" .}}
+
+<div class="snug content-container">
+	{{if .Message}}
+	<div class="alert {{if .InfoMsg}}info{{else}}success{{end}}">
+		<p>{{.Message}}</p>
+	</div>
+	{{end}}
+	<h2 id="posts-header">Import</h2>
+	<p>This form allows you to import posts from files on your computer.</p>
+	<p>Any number text or markdown files are supported, as well as zip archives of posts.</p>
+	<div>
+		<form class="import-form" enctype="multipart/form-data" action="/api/me/import" method="POST">
+			<label for="file" hidden>Browse files to upload</label>
+			<input name="files" type="file" multiple accept="text/*, application/zip"/>
+			<span class="row">
+				<label for="collection">Select a blog to import the posts under.</label>
+				<select name="collection">
+					{{range $i, $el := .Collections}}
+					<option value={{.Alias}}>
+						{{if .Title}}{{.Title}}{{else}}{{.Alias}}{{end}}
+					</option>
+					{{end}}
+					<option value="" selected>drafts</option>
+				</select>
+			</span>
+			<span class="row zip">
+				<p class="error">
+					WARNING: zip files must be uploaded separately, selected zips will be <strong>skipped</strong>.
+				</p>
+				<ul class="info">
+					<li>Root level zip files are imported as drafts</li>
+					<li>ZIP sub-directories are imported as blog collections.<br/>
+					If no blog exists matching the sub-directory name, one will be created if possible.</li>
+				</ul>
+			</span>
+			<input type="submit" value="Import" />
+		</form>
+	</div>
+	{{if .Flashes}}
+	<ul class="errors">
+		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
+	</ul>
+	{{end}}
+</div>
+
+{{template "footer" .}}
+<script src="/js/import.js"></script>
+{{end}}

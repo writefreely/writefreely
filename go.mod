@@ -28,6 +28,7 @@ require (
 	github.com/gorilla/schema v1.0.2
 	github.com/gorilla/sessions v1.1.3
 	github.com/guregu/null v3.4.0+incompatible
+	github.com/hashicorp/go-multierror v1.0.0
 	github.com/ikeikeikeike/go-sitemap-generator v1.0.1
 	github.com/ikeikeikeike/go-sitemap-generator/v2 v2.0.2
 	github.com/imdario/mergo v0.3.7 // indirect
@@ -56,6 +57,7 @@ require (
 	github.com/writeas/go-webfinger v0.0.0-20190106002315-85cf805c86d2
 	github.com/writeas/httpsig v1.0.0
 	github.com/writeas/impart v1.1.0
+	github.com/writeas/import v0.2.1
 	github.com/writeas/monday v0.0.0-20181024183321-54a7dd579219
 	github.com/writeas/nerds v1.0.0
 	github.com/writeas/openssl-go v1.0.0 // indirect
