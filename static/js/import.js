@@ -6,7 +6,7 @@ const zipWarning = document.querySelector('span.zip > p.error');
 const fileInput = document.querySelector('input[type="file"]')
 
 document.onreadystatechange = () => {
-  if ( document.readyState === "complete") {
+  if ( document.readyState === "interactive") {
     selectElem.disabled = true;
     submitElem.disabled = true;
     zipInfo.hidden = true;
