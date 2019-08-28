@@ -13,16 +13,17 @@ package writefreely
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
+	"runtime"
+	"strconv"
+	"time"
+
 	"github.com/gogits/gogs/pkg/tool"
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
-	"net/http"
-	"runtime"
-	"strconv"
-	"time"
 )
 
 var (
@@ -227,6 +228,31 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 
 	showUserPage(w, "view-user", p)
 	return nil
+}
+
+func handleAdminToggleUserSuspended(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	username := vars["username"]
+	if username == "" {
+		return impart.HTTPError{http.StatusFound, "/admin/users"}
+	}
+
+	userToToggle, err := app.db.GetUserForAuth(username)
+	if err != nil {
+		log.Error("failed to get user: %v", err)
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get user from username: %v", err)}
+	}
+	if userToToggle.Suspended {
+		err = app.db.SetUserSuspended(userToToggle.ID, false)
+	} else {
+		err = app.db.SetUserSuspended(userToToggle.ID, true)
+	}
+	if err != nil {
+		log.Error("toggle user suspended: %v", err)
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not toggle user suspended: %v")}
+	}
+	// TODO: invalidate sessions
+	return impart.HTTPError{http.StatusFound, fmt.Sprintf("/admin/user/%s#status", username)}
 }
 
 func handleViewAdminPages(app *App, u *User, w http.ResponseWriter, r *http.Request) error {

@@ -131,8 +131,12 @@
 		{{else}}var canPublish = true;{{end}}
 		var publishing = false;
 		var justPublished = false;
-
+		var suspended = {{.Suspended}};
 		var publish = function(content, font) {
+			if (suspended === true) {
+				alert("Your account is currently suspended, posting is disabled.");
+				return;
+			}
 			{{if and (and .Post.Id (not .Post.Slug)) (not .User)}}
 			if (!token) {
 				alert("You don't have permission to update this post.");

@@ -225,6 +225,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `password` char(60) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
   `email` varbinary(255) DEFAULT NULL,
   `created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `suspended` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

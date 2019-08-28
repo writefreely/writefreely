@@ -13,6 +13,13 @@ package writefreely
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
+	"net/http"
+	"regexp"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/guregu/null/zero"
@@ -22,12 +29,6 @@ import (
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/author"
 	"github.com/writeas/writefreely/page"
-	"html/template"
-	"net/http"
-	"regexp"
-	"strings"
-	"sync"
-	"time"
 )
 
 type (
@@ -1011,14 +1012,16 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 
 	obj := struct {
 		*UserPage
-		Email    string
-		HasPass  bool
-		IsLogOut bool
+		Email     string
+		HasPass   bool
+		IsLogOut  bool
+		Suspended bool
 	}{
-		UserPage: NewUserPage(app, r, u, "Account Settings", flashes),
-		Email:    fullUser.EmailClear(app.keys),
-		HasPass:  passIsSet,
-		IsLogOut: r.FormValue("logout") == "1",
+		UserPage:  NewUserPage(app, r, u, "Account Settings", flashes),
+		Email:     fullUser.EmailClear(app.keys),
+		HasPass:   passIsSet,
+		IsLogOut:  r.FormValue("logout") == "1",
+		Suspended: fullUser.Suspended,
 	}
 
 	showUserPage(w, "settings", obj)

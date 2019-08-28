@@ -12,12 +12,13 @@ package writefreely
 
 import (
 	"fmt"
+	"net/http"
+	"time"
+
 	. "github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
 	stripmd "github.com/writeas/go-strip-markdown"
 	"github.com/writeas/web-core/log"
-	"net/http"
-	"time"
 )
 
 func ViewFeed(app *App, w http.ResponseWriter, req *http.Request) error {
@@ -33,6 +34,15 @@ func ViewFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 	}
 	if err != nil {
 		return nil
+	}
+
+	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	if err != nil {
+		log.Error("view feed: get user: %v", err)
+		return ErrInternalGeneral
+	}
+	if suspended {
+		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host
 

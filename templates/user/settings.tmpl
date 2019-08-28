@@ -12,6 +12,12 @@ h3 { font-weight: normal; }
 		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 	</ul>{{end}}
 
+	{{if .Suspended}}
+	<div class="alert info">
+		<p>This account is currently suspended.</p>
+		<p>Please contact the instance administrator to discuss reactivation.</p>
+	</div>
+	{{end}}
 	{{ if .IsLogOut }}
 	<div class="alert info">
 		<p class="introduction">Please add an <strong>email address</strong> and/or <strong>passphrase</strong> so you can log in again later.</p>

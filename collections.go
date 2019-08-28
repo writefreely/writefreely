@@ -379,6 +379,7 @@ func newCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 
 	var userID int64
+	var err error
 	if reqJSON && !c.Web {
 		accessToken = r.Header.Get("Authorization")
 		if accessToken == "" {
@@ -394,6 +395,14 @@ func newCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 			return ErrNotLoggedIn
 		}
 		userID = u.ID
+	}
+	suspended, err := app.db.IsUserSuspended(userID)
+	if err != nil {
+		log.Error("new collection: get user: %v", err)
+		return ErrInternalGeneral
+	}
+	if suspended {
+		return ErrUserSuspended
 	}
 
 	if !author.IsValidUsername(app.cfg, c.Alias) {
@@ -724,6 +733,15 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 		return err
 	}
 
+	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	if err != nil {
+		log.Error("view collection: get owner: %v", err)
+		return ErrInternalGeneral
+	}
+
+	if suspended {
+		return ErrCollectionNotFound
+	}
 	// Serve ActivityStreams data now, if requested
 	if strings.Contains(r.Header.Get("Accept"), "application/activity+json") {
 		ac := c.PersonObject()
@@ -824,6 +842,10 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 		return err
 	}
 
+	if u.Suspended {
+		return ErrCollectionNotFound
+	}
+
 	page := getCollectionPage(vars)
 
 	c, err := processCollectionPermissions(app, cr, u, w, r)
@@ -916,7 +938,6 @@ func existingCollection(app *App, w http.ResponseWriter, r *http.Request) error 
 	if reqJSON && !isWeb {
 		// Ensure an access token was given
 		accessToken := r.Header.Get("Authorization")
-		u = &User{}
 		u.ID = app.db.GetUserID(accessToken)
 		if u.ID == -1 {
 			return ErrBadAccessToken
@@ -926,6 +947,16 @@ func existingCollection(app *App, w http.ResponseWriter, r *http.Request) error 
 		if u == nil {
 			return ErrNotLoggedIn
 		}
+	}
+
+	suspended, err := app.db.IsUserSuspended(u.ID)
+	if err != nil {
+		log.Error("existing collection: get user suspended status: %v", err)
+		return ErrInternalGeneral
+	}
+
+	if suspended {
+		return ErrUserSuspended
 	}
 
 	if r.Method == "DELETE" {
@@ -940,7 +971,6 @@ func existingCollection(app *App, w http.ResponseWriter, r *http.Request) error 
 	}
 
 	c := SubmittedCollection{OwnerID: uint64(u.ID)}
-	var err error
 
 	if reqJSON {
 		// Decode JSON request

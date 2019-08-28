@@ -12,15 +12,16 @@ package writefreely
 
 import (
 	"database/sql"
+	"html/template"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
 	"github.com/writeas/nerds/store"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/page"
-	"html/template"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 type Invite struct {
@@ -76,6 +77,10 @@ func handleViewUserInvites(app *App, u *User, w http.ResponseWriter, r *http.Req
 func handleCreateUserInvite(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	muVal := r.FormValue("uses")
 	expVal := r.FormValue("expires")
+
+	if u.Suspended {
+		return ErrUserSuspended
+	}
 
 	var err error
 	var maxUses int

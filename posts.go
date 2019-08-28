@@ -380,6 +380,16 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
+	suspended, err := app.db.IsUserSuspended(ownerID.Int64)
+	if err != nil {
+		log.Error("view post: get collection owner: %v", err)
+		return ErrInternalGeneral
+	}
+
+	if suspended {
+		return ErrPostNotFound
+	}
+
 	// Check if post has been unpublished
 	if content == "" {
 		gone = true
@@ -496,6 +506,15 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	} else {
 		userID = app.db.GetUserID(accessToken)
 	}
+	suspended, err := app.db.IsUserSuspended(userID)
+	if err != nil {
+		log.Error("new post: get user: %v", err)
+		return ErrInternalGeneral
+	}
+	if suspended {
+		return ErrUserSuspended
+	}
+
 	if userID == -1 {
 		return ErrNotLoggedIn
 	}
@@ -508,7 +527,7 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	var p *SubmittedPost
 	if reqJSON {
 		decoder := json.NewDecoder(r.Body)
-		err := decoder.Decode(&p)
+		err = decoder.Decode(&p)
 		if err != nil {
 			log.Error("Couldn't parse new post JSON request: %v\n", err)
 			return ErrBadJSON
@@ -554,7 +573,6 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	var newPost *PublicPost = &PublicPost{}
 	var coll *Collection
-	var err error
 	if accessToken != "" {
 		newPost, err = app.db.CreateOwnedPost(p, accessToken, collAlias, app.cfg.App.Host)
 	} else {
@@ -660,6 +678,15 @@ func existingPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	suspended, err := app.db.IsUserSuspended(userID)
+	if err != nil {
+		log.Error("existing post: get user: %v", err)
+		return ErrInternalGeneral
+	}
+	if suspended {
+		return ErrUserSuspended
 	}
 
 	// Modify post struct
@@ -856,11 +883,20 @@ func addPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		ownerID = u.ID
 	}
 
+	suspended, err := app.db.IsUserSuspended(ownerID)
+	if err != nil {
+		log.Error("add post: get user: %v", err)
+		return ErrInternalGeneral
+	}
+	if suspended {
+		return ErrUserSuspended
+	}
+
 	// Parse claimed posts in format:
 	// [{"id": "...", "token": "..."}]
 	var claims *[]ClaimPostRequest
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&claims)
+	err = decoder.Decode(&claims)
 	if err != nil {
 		return ErrBadJSONArray
 	}
@@ -950,13 +986,22 @@ func pinPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		userID = u.ID
 	}
 
+	suspended, err := app.db.IsUserSuspended(userID)
+	if err != nil {
+		log.Error("pin post: get user: %v", err)
+		return ErrInternalGeneral
+	}
+	if suspended {
+		return ErrUserSuspended
+	}
+
 	// Parse request
 	var posts []struct {
 		ID       string `json:"id"`
 		Position int64  `json:"position"`
 	}
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&posts)
+	err = decoder.Decode(&posts)
 	if err != nil {
 		return ErrBadJSONArray
 	}
@@ -992,6 +1037,7 @@ func pinPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	var collID int64
+	var ownerID int64
 	var coll *Collection
 	var err error
 	vars := mux.Vars(r)
@@ -1007,11 +1053,21 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 			return err
 		}
 		collID = coll.ID
+		ownerID = coll.OwnerID
 	}
 
 	p, err := app.db.GetPost(vars["post"], collID)
 	if err != nil {
 		return err
+	}
+	suspended, err := app.db.IsUserSuspended(ownerID)
+	if err != nil {
+		log.Error("fetch post: get owner: %v", err)
+		return ErrInternalGeneral
+	}
+
+	if suspended {
+		return ErrPostNotFound
 	}
 
 	p.extractData()
@@ -1270,6 +1326,15 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 	}
 	c.hostName = app.cfg.App.Host
 
+	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	if err != nil {
+		log.Error("view collection post: get owner: %v", err)
+		return ErrInternalGeneral
+	}
+
+	if suspended {
+		return ErrPostNotFound
+	}
 	// Check collection permissions
 	if c.IsPrivate() && (u == nil || u.ID != c.OwnerID) {
 		return ErrPostNotFound

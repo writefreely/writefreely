@@ -296,7 +296,7 @@ func (db *datastore) CreateCollection(cfg *config.Config, alias, title string, u
 func (db *datastore) GetUserByID(id int64) (*User, error) {
 	u := &User{ID: id}
 
-	err := db.QueryRow("SELECT username, password, email, created FROM users WHERE id = ?", id).Scan(&u.Username, &u.HashedPass, &u.Email, &u.Created)
+	err := db.QueryRow("SELECT username, password, email, created, suspended FROM users WHERE id = ?", id).Scan(&u.Username, &u.HashedPass, &u.Email, &u.Created, &u.Suspended)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, ErrUserNotFound
@@ -306,6 +306,23 @@ func (db *datastore) GetUserByID(id int64) (*User, error) {
 	}
 
 	return u, nil
+}
+
+// IsUserSuspended returns true if the user account associated with id is
+// currently suspended.
+func (db *datastore) IsUserSuspended(id int64) (bool, error) {
+	u := &User{ID: id}
+
+	err := db.QueryRow("SELECT suspended FROM users WHERE id = ?", id).Scan(&u.Suspended)
+	switch {
+	case err == sql.ErrNoRows:
+		return false, ErrUserNotFound
+	case err != nil:
+		log.Error("Couldn't SELECT user password: %v", err)
+		return false, err
+	}
+
+	return u.Suspended, nil
 }
 
 // DoesUserNeedAuth returns true if the user hasn't provided any methods for
@@ -347,7 +364,7 @@ func (db *datastore) IsUserPassSet(id int64) (bool, error) {
 func (db *datastore) GetUserForAuth(username string) (*User, error) {
 	u := &User{Username: username}
 
-	err := db.QueryRow("SELECT id, password, email, created FROM users WHERE username = ?", username).Scan(&u.ID, &u.HashedPass, &u.Email, &u.Created)
+	err := db.QueryRow("SELECT id, password, email, created, suspended FROM users WHERE username = ?", username).Scan(&u.ID, &u.HashedPass, &u.Email, &u.Created, &u.Suspended)
 	switch {
 	case err == sql.ErrNoRows:
 		// Check if they've entered the wrong, unnormalized username
@@ -370,7 +387,7 @@ func (db *datastore) GetUserForAuth(username string) (*User, error) {
 func (db *datastore) GetUserForAuthByID(userID int64) (*User, error) {
 	u := &User{ID: userID}
 
-	err := db.QueryRow("SELECT id, password, email, created FROM users WHERE id = ?", u.ID).Scan(&u.ID, &u.HashedPass, &u.Email, &u.Created)
+	err := db.QueryRow("SELECT id, password, email, created, suspended FROM users WHERE id = ?", u.ID).Scan(&u.ID, &u.HashedPass, &u.Email, &u.Created, &u.Suspended)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, ErrUserNotFound
@@ -1624,7 +1641,11 @@ func (db *datastore) GetMeStats(u *User) userMeStats {
 }
 
 func (db *datastore) GetTotalCollections() (collCount int64, err error) {
-	err = db.QueryRow(`SELECT COUNT(*) FROM collections`).Scan(&collCount)
+	err = db.QueryRow(`
+	SELECT COUNT(*) 
+	FROM collections c
+	LEFT JOIN users u ON u.id = c.owner_id
+	WHERE u.suspended = 0`).Scan(&collCount)
 	if err != nil {
 		log.Error("Unable to fetch collections count: %v", err)
 	}
@@ -1632,7 +1653,11 @@ func (db *datastore) GetTotalCollections() (collCount int64, err error) {
 }
 
 func (db *datastore) GetTotalPosts() (postCount int64, err error) {
-	err = db.QueryRow(`SELECT COUNT(*) FROM posts`).Scan(&postCount)
+	err = db.QueryRow(`
+	SELECT COUNT(*)
+	FROM posts p
+	LEFT JOIN users u ON u.id = p.owner_id
+	WHERE u.Suspended = 0`).Scan(&postCount)
 	if err != nil {
 		log.Error("Unable to fetch posts count: %v", err)
 	}
@@ -2341,17 +2366,17 @@ func (db *datastore) GetAllUsers(page uint) (*[]User, error) {
 		limitStr = fmt.Sprintf("%d, %d", (page-1)*adminUsersPerPage, adminUsersPerPage)
 	}
 
-	rows, err := db.Query("SELECT id, username, created FROM users ORDER BY created DESC LIMIT " + limitStr)
+	rows, err := db.Query("SELECT id, username, created, suspended FROM users ORDER BY created DESC LIMIT " + limitStr)
 	if err != nil {
-		log.Error("Failed selecting from posts: %v", err)
-		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve user posts."}
+		log.Error("Failed selecting from users: %v", err)
+		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve all users."}
 	}
 	defer rows.Close()
 
 	users := []User{}
 	for rows.Next() {
 		u := User{}
-		err = rows.Scan(&u.ID, &u.Username, &u.Created)
+		err = rows.Scan(&u.ID, &u.Username, &u.Created, &u.Suspended)
 		if err != nil {
 			log.Error("Failed scanning GetAllUsers() row: %v", err)
 			break
@@ -2386,6 +2411,14 @@ func (db *datastore) GetUserLastPostTime(id int64) (*time.Time, error) {
 		return nil, err
 	}
 	return &t, nil
+}
+
+func (db *datastore) SetUserSuspended(id int64, suspend bool) error {
+	_, err := db.Exec("UPDATE users SET suspended = ? WHERE id = ?", suspend, id)
+	if err != nil {
+		return fmt.Errorf("failed to update user suspended status: %v", err)
+	}
+	return nil
 }
 
 func (db *datastore) GetCollectionLastPostTime(id int64) (*time.Time, error) {

@@ -7,6 +7,24 @@ table.classy th {
 h3 {
 	font-weight: normal;
 }
+td.active-suspend {
+	display: flex;
+	align-items: center;
+}
+
+td.active-suspend > input[type="submit"] {
+	margin-left: auto;
+	margin-right: 5%;
+}
+
+@media only screen and (max-width: 500px) {
+	td.active-suspend {
+		flex-wrap: wrap;
+	}
+	td.active-suspend > input[type="submit"] {
+		margin: auto;
+	}
+}
 </style>
 <div class="snug content-container">
 	{{template "admin-header" .}}
@@ -37,6 +55,20 @@ h3 {
 		<tr>
 			<th>Last Post</th>
 			<td>{{if .LastPost}}{{.LastPost}}{{else}}Never{{end}}</td>
+		</tr>
+		<tr>
+			<form action="/admin/user/{{.User.Username}}" method="POST">
+				<a id="status"/>
+				<th>Status</th>
+				{{if .User.Suspended}}
+				<td class="active-suspend"><p>User is currently Suspended</p><input type="submit" value="Activate"/></td>
+				{{else}}
+				<td class="active-suspend">
+					<p>User is currently Active</p>
+					<input class="danger" type="submit" value="Suspend" {{if .User.IsAdmin}}disabled{{end}}/>
+				</td>
+				{{end}}
+			</form>
 		</tr>
 	</table>
 

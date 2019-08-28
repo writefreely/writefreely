@@ -59,6 +59,7 @@ type (
 		HasPass    bool        `json:"has_pass"`
 		Email      zero.String `json:"email"`
 		Created    time.Time   `json:"created"`
+		Suspended  bool        `json:"suspended"`
 
 		clearEmail string `json:"email"`
 	}
