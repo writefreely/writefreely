@@ -13,16 +13,17 @@ package writefreely
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
+	"runtime"
+	"strconv"
+	"time"
+
 	"github.com/gogits/gogs/pkg/tool"
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
-	"net/http"
-	"runtime"
-	"strconv"
-	"time"
 )
 
 var (
@@ -112,7 +113,6 @@ func handleViewAdminDash(app *App, u *User, w http.ResponseWriter, r *http.Reque
 		Message:       r.FormValue("m"),
 		ConfigMessage: r.FormValue("cm"),
 	}
-
 	showUserPage(w, "admin", p)
 	return nil
 }
@@ -449,5 +449,32 @@ func adminResetPassword(app *App, u *User, newPass string) error {
 	if err != nil {
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not update passphrase: %v", err)}
 	}
+	return nil
+}
+
+func handleViewAdminUpdates(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	check := r.URL.Query().Get("check")
+
+	if check == "now" && app.cfg.App.UpdateChecks {
+		app.updates.CheckNow()
+	}
+
+	p := struct {
+		*UserPage
+		LastChecked      string
+		LatestVersion    string
+		LatestReleaseURL string
+		UpdateAvailable  bool
+	}{
+		UserPage: NewUserPage(app, r, u, "Updates", nil),
+	}
+	if app.cfg.App.UpdateChecks {
+		p.LastChecked = app.updates.lastCheck.Format("January 2, 2006, 3:04 PM")
+		p.LatestVersion = app.updates.LatestVersion()
+		p.LatestReleaseURL = app.updates.ReleaseURL()
+		p.UpdateAvailable = app.updates.AreAvailable()
+	}
+
+	showUserPage(w, "app-updates", p)
 	return nil
 }

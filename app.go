@@ -30,7 +30,7 @@ import (
 	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
 	"github.com/manifoldco/promptui"
-	"github.com/writeas/go-strip-markdown"
+	stripmd "github.com/writeas/go-strip-markdown"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/converter"
@@ -72,6 +72,7 @@ type App struct {
 	keys         *key.Keychain
 	sessionStore *sessions.CookieStore
 	formDecoder  *schema.Decoder
+	updates      *updatesCache
 
 	timeline *localTimeline
 }
@@ -346,6 +347,8 @@ func Initialize(apper Apper, debug bool) (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("init keys: %s", err)
 	}
+	apper.App().InitUpdates()
+
 	apper.App().InitSession()
 
 	apper.App().InitDecoder()

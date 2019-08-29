@@ -11,13 +11,14 @@
 package writefreely
 
 import (
+	"net/http"
+	"path/filepath"
+	"strings"
+
 	"github.com/gorilla/mux"
 	"github.com/writeas/go-webfinger"
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/go-nodeinfo"
-	"net/http"
-	"path/filepath"
-	"strings"
 )
 
 // InitStaticRoutes adds routes for serving static files.
@@ -147,6 +148,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	write.HandleFunc("/admin/page/{slug}", handler.Admin(handleViewAdminPage)).Methods("GET")
 	write.HandleFunc("/admin/update/config", handler.AdminApper(handleAdminUpdateConfig)).Methods("POST")
 	write.HandleFunc("/admin/update/{page}", handler.Admin(handleAdminUpdateSite)).Methods("POST")
+	write.HandleFunc("/admin/updates", handler.Admin(handleViewAdminUpdates)).Methods("GET")
 
 	// Handle special pages first
 	write.HandleFunc("/login", handler.Web(viewLogin, UserLevelNoneRequired))
