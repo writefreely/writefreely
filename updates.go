@@ -68,7 +68,9 @@ func (uc updatesCache) LatestVersion() string {
 func (uc updatesCache) ReleaseURL() string {
 	ver := strings.TrimPrefix(uc.latestVersion, "v")
 	ver = strings.TrimSuffix(ver, ".0")
-	return "https://blog.writefreely.org/version-" + strings.ReplaceAll(ver, ".", "-")
+	// hack until go 1.12 in build/travis
+	seg := strings.Split(ver, ".")
+	return "https://blog.writefreely.org/version-" + strings.Join(seg, "-")
 }
 
 // newUpdatesCache returns an initialized updates cache
