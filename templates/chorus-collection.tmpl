@@ -174,7 +174,7 @@ function pinPost(e, postID, slug, title) {
 		// Visibly remove post from collection
 		var $postEl = document.getElementById('post-' + postID);
 		$postEl.parentNode.removeChild($postEl);
-		var $header = document.getElementsByTagName('header')[0];
+		var $header = document.querySelector('header:not(.multiuser)');
 		var $pinnedNavs = $header.getElementsByTagName('nav');
 		// Add link to nav
 		var link = '<a class="pinned" href="/{{.Alias}}/'+slug+'">'+title+'</a>';
