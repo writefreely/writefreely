@@ -100,14 +100,14 @@ function unpinPost(e, postID) {
 	}
 	pinning = true;
 
-	var $header = document.getElementsByTagName('header')[0];
+	var $footer = document.getElementsByTagName('footer')[0];
 	var callback = function() {
 		// Hide current page
-		var $pinnedNavLink = $header.getElementsByTagName('nav')[0].querySelector('.pinned.selected');
+		var $pinnedNavLink = $footer.getElementsByTagName('nav')[0].querySelector('.pinned.selected');
 		$pinnedNavLink.style.display = 'none';
 	};
 
-	var $pinBtn = $header.getElementsByClassName('unpin')[0];
+	var $pinBtn = $footer.getElementsByClassName('unpin')[0];
 	$pinBtn.innerHTML = '...';
 
 	var http = new XMLHttpRequest();
