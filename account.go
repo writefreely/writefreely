@@ -309,10 +309,10 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p := &struct {
 		page.StaticPage
-		To       string
-		Message  template.HTML
-		Flashes  []template.HTML
-		Username string
+		To            string
+		Message       template.HTML
+		Flashes       []template.HTML
+		LoginUsername string
 	}{
 		pageForReq(app, r),
 		r.FormValue("to"),
