@@ -104,7 +104,7 @@ func compileFullExport(app *App, u *User) *ExportUser {
 		User: u,
 	}
 
-	colls, err := app.db.GetCollections(u)
+	colls, err := app.db.GetCollections(u, app.cfg.App.Host)
 	if err != nil {
 		log.Error("unable to fetch collections: %v", err)
 	}

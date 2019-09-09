@@ -12,18 +12,19 @@ package writefreely
 
 import (
 	"fmt"
-	"github.com/microcosm-cc/bluemonday"
-	stripmd "github.com/writeas/go-strip-markdown"
-	"github.com/writeas/saturday"
-	"github.com/writeas/web-core/stringmanip"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/parse"
 	"html"
 	"html/template"
 	"regexp"
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/microcosm-cc/bluemonday"
+	stripmd "github.com/writeas/go-strip-markdown"
+	blackfriday "github.com/writeas/saturday"
+	"github.com/writeas/web-core/stringmanip"
+	"github.com/writeas/writefreely/config"
+	"github.com/writeas/writefreely/parse"
 )
 
 var (
@@ -37,6 +38,7 @@ var (
 
 func (p *Post) formatContent(cfg *config.Config, c *Collection, isOwner bool) {
 	baseURL := c.CanonicalURL()
+	// TODO: redundant
 	if !isSingleUser {
 		baseURL = "/" + c.Alias + "/"
 	}

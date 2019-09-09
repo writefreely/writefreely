@@ -65,8 +65,8 @@ type writestore interface {
 	ChangeSettings(app *App, u *User, s *userSettings) error
 	ChangePassphrase(userID int64, sudo bool, curPass string, hashedPass []byte) error
 
-	GetCollections(u *User) (*[]Collection, error)
-	GetPublishableCollections(u *User) (*[]Collection, error)
+	GetCollections(u *User, hostName string) (*[]Collection, error)
+	GetPublishableCollections(u *User, hostName string) (*[]Collection, error)
 	GetMeStats(u *User) userMeStats
 	GetTotalCollections() (int64, error)
 	GetTotalPosts() (int64, error)
@@ -1559,7 +1559,7 @@ func (db *datastore) GetPinnedPosts(coll *CollectionObj) (*[]PublicPost, error) 
 	return &posts, nil
 }
 
-func (db *datastore) GetCollections(u *User) (*[]Collection, error) {
+func (db *datastore) GetCollections(u *User, hostName string) (*[]Collection, error) {
 	rows, err := db.Query("SELECT id, alias, title, description, privacy, view_count FROM collections WHERE owner_id = ? ORDER BY id ASC", u.ID)
 	if err != nil {
 		log.Error("Failed selecting from collections: %v", err)
@@ -1575,6 +1575,7 @@ func (db *datastore) GetCollections(u *User) (*[]Collection, error) {
 			log.Error("Failed scanning row: %v", err)
 			break
 		}
+		c.hostName = hostName
 		c.URL = c.CanonicalURL()
 		c.Public = c.IsPublic()
 
@@ -1588,8 +1589,8 @@ func (db *datastore) GetCollections(u *User) (*[]Collection, error) {
 	return &colls, nil
 }
 
-func (db *datastore) GetPublishableCollections(u *User) (*[]Collection, error) {
-	c, err := db.GetCollections(u)
+func (db *datastore) GetPublishableCollections(u *User, hostName string) (*[]Collection, error) {
+	c, err := db.GetCollections(u, hostName)
 	if err != nil {
 		return nil, err
 	}
