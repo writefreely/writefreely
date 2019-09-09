@@ -724,6 +724,8 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 		return err
 	}
 
+	c.hostName = app.cfg.App.Host
+
 	// Serve ActivityStreams data now, if requested
 	if strings.Contains(r.Header.Get("Accept"), "application/activity+json") {
 		ac := c.PersonObject()
@@ -762,7 +764,7 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 			owner = u
 			displayPage.CanPin = true
 
-			pubColls, err := app.db.GetPublishableCollections(owner)
+			pubColls, err := app.db.GetPublishableCollections(owner, app.cfg.App.Host)
 			if err != nil {
 				log.Error("unable to fetch collections: %v", err)
 			}
@@ -859,7 +861,7 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 			owner = u
 			displayPage.CanPin = true
 
-			pubColls, err := app.db.GetPublishableCollections(owner)
+			pubColls, err := app.db.GetPublishableCollections(owner, app.cfg.App.Host)
 			if err != nil {
 				log.Error("unable to fetch collections: %v", err)
 			}

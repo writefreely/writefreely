@@ -48,7 +48,7 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 	var err error
 	if appData.User != nil {
-		appData.Blogs, err = app.db.GetPublishableCollections(appData.User)
+		appData.Blogs, err = app.db.GetPublishableCollections(appData.User, app.cfg.App.Host)
 		if err != nil {
 			log.Error("Unable to get user's blogs for Pad: %v", err)
 		}
