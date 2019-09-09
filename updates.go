@@ -20,7 +20,7 @@ import (
 
 // updatesCacheTime is the default interval between cache updates for new
 // software versions
-const updatesCacheTime = 12 * time.Hour
+const defaultUpdatesCacheTime = 12 * time.Hour
 
 // updatesCache holds data about current and new releases of the writefreely
 // software
@@ -38,7 +38,7 @@ type updatesCache struct {
 func (uc *updatesCache) CheckNow() error {
 	uc.mu.Lock()
 	defer uc.mu.Unlock()
-	latestRemote, err := newVersionCheck(uc.currentVersion)
+	latestRemote, err := newVersionCheck()
 	if err != nil {
 		return err
 	}
@@ -74,9 +74,9 @@ func (uc updatesCache) ReleaseURL() string {
 }
 
 // newUpdatesCache returns an initialized updates cache
-func newUpdatesCache() *updatesCache {
+func newUpdatesCache(expiry time.Duration) *updatesCache {
 	cache := updatesCache{
-		frequency:      updatesCacheTime,
+		frequency:      expiry,
 		currentVersion: "v" + softwareVer,
 	}
 	cache.CheckNow()
@@ -84,13 +84,14 @@ func newUpdatesCache() *updatesCache {
 }
 
 // InitUpdates initializes the updates cache, if the config value is set
+// It uses the defaultUpdatesCacheTime for the cache expiry
 func (app *App) InitUpdates() {
 	if app.cfg.App.UpdateChecks {
-		app.updates = newUpdatesCache()
+		app.updates = newUpdatesCache(defaultUpdatesCacheTime)
 	}
 }
 
-func newVersionCheck(serverVersion string) (string, error) {
+func newVersionCheck() (string, error) {
 	res, err := http.Get("https://version.writefreely.org")
 	if err == nil && res.StatusCode == http.StatusOK {
 		defer res.Body.Close()
