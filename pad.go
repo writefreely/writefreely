@@ -11,12 +11,13 @@
 package writefreely
 
 import (
+	"net/http"
+	"strings"
+
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/page"
-	"net/http"
-	"strings"
 )
 
 func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
@@ -54,16 +55,13 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 
 	padTmpl := app.cfg.App.Editor
-	if padTmpl == "" {
+	if templates[padTmpl] == nil {
+		log.Info("No template '%s' found. Falling back to default 'pad' template.", padTmpl)
 		padTmpl = "pad"
 	}
 
 	if action == "" && slug == "" {
 		// Not editing any post; simply render the Pad
-		if templates[padTmpl] == nil {
-			log.Info("No template '%s' found. Falling back to default 'pad' template.", padTmpl)
-			padTmpl = "pad"
-		}
 		if err = templates[padTmpl].ExecuteTemplate(w, "pad", appData); err != nil {
 			log.Error("Unable to execute template: %v", err)
 		}
