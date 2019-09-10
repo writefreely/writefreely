@@ -770,7 +770,7 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 		}
 	}
 	isOwner := owner != nil
-	if owner == nil {
+	if !isOwner {
 		// Current user doesn't own collection; retrieve owner information
 		owner, err = app.db.GetUserByID(coll.OwnerID)
 		if err != nil {
@@ -868,7 +868,7 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 		}
 	}
 	isOwner := owner != nil
-	if owner == nil {
+	if !isOwner {
 		// Current user doesn't own collection; retrieve owner information
 		owner, err = app.db.GetUserByID(coll.OwnerID)
 		if err != nil {
