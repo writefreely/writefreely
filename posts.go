@@ -1389,7 +1389,7 @@ Are you sure it was ever here?`,
 		}
 		tp.IsAdmin = u != nil && u.IsAdmin()
 		tp.CanInvite = canUserInvite(app.cfg, tp.IsAdmin)
-		tp.PinnedPosts, _ = app.db.GetPinnedPosts(coll)
+		tp.PinnedPosts, _ = app.db.GetPinnedPosts(coll, p.IsOwner)
 		tp.IsPinned = len(*tp.PinnedPosts) > 0 && PostsContains(tp.PinnedPosts, p)
 
 		if !postFound {
