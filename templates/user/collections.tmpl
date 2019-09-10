@@ -13,7 +13,7 @@
 		<a class="title" href="/{{.Alias}}/">{{if .Title}}{{.Title}}{{else}}{{.Alias}}{{end}}</a>
 	</h3> 
 	<h4>
-		<a class="action new-post" href="/#{{.Alias}}">new post</a>
+		<a class="action new-post" href="{{if $.Chorus}}/new{{else}}/{{end}}#{{.Alias}}">new post</a>
 		<a class="action" href="/me/c/{{.Alias}}">customize</a>
 		<a class="action" href="/me/c/{{.Alias}}/stats">stats</a>
 	</h4>
