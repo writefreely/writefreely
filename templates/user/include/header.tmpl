@@ -1,21 +1,5 @@
-{{define "header"}}<!DOCTYPE HTML>
-<html>
-<head>
-	<meta charset="utf-8">
-
-	<title>{{.PageTitle}} {{if .Separator}}{{.Separator}}{{else}}&mdash;{{end}} {{.SiteName}}</title>
-
-	<link rel="stylesheet" type="text/css" href="/css/write.css" />
-	<link rel="shortcut icon" href="/favicon.ico" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<meta name="theme-color" content="#888888" />
-	<meta name="apple-mobile-web-app-title" content="{{.SiteName}}">
-	<link rel="apple-touch-icon" sizes="152x152" href="/img/touch-icon-152.png">
-	<link rel="apple-touch-icon" sizes="167x167" href="/img/touch-icon-167.png">
-	<link rel="apple-touch-icon" sizes="180x180" href="/img/touch-icon-180.png">
-</head>
-<body id="me">
-	<header{{if .SingleUser}} class="singleuser"{{end}}>
+{{define "user-navigation"}}
+	<header class="{{if .SingleUser}}singleuser{{else}}multiuser{{end}}">
 		{{if .SingleUser}}
 		<nav id="user-nav">
 			<nav class="dropdown-nav">
@@ -38,8 +22,15 @@
 			</nav>
 		</nav>
 		{{else}}
-		<h1><a href="/" title="Return to editor">{{.SiteName}}</a></h1>
+		{{ if .Chorus }}<nav id="full-nav">
+			<div class="left-side">
+				<h1><a href="/" title="Return to editor">{{.SiteName}}</a></h1>
+			</div>
+		{{ else }}
+			<h1><a href="/" title="Return to editor">{{.SiteName}}</a></h1>
+		{{ end }}
 		<nav id="user-nav">
+			{{if .Username}}
 			<nav class="dropdown-nav">
 				<ul><li><a>{{.Username}}</a> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /><ul>
 						{{if .IsAdmin}}<li><a href="/admin">Admin dashboard</a></li>{{end}}
@@ -51,13 +42,55 @@
 					</ul></li>
 				</ul>
 			</nav>
+			{{end}}
 			<nav class="tabs">
-				<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>
-				<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>
+				{{if .SimpleNav}}
+					{{ if not .SingleUser }}
+					{{if and (and .LocalTimeline .CanViewReader) .Chorus}}<a href="/"{{if eq .Path "/"}} class="selected"{{end}}>Home</a>{{end}}
+					{{ end }}
+					<a href="/about">About</a>
+					{{ if not .SingleUser }}
+						{{ if .Username }}
+					{{if gt .MaxBlogs 1}}<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>{{end}}
+					{{if and .Chorus (eq .MaxBlogs 1)}}<a href="/{{.Username}}/"{{if eq .Path (printf "/%s/" .Username)}} class="selected"{{end}}>My Posts</a>{{end}}
+					{{if not .DisableDrafts}}<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>{{end}}
+						{{ end }}
+					{{if and (and .LocalTimeline .CanViewReader) (not .Chorus)}}<a href="/read">Reader</a>{{end}}
+					{{if and (and (and .Chorus .OpenRegistration) (not .Username)) (or (not .Private) (ne .Landing ""))}}<a href="/signup"{{if eq .Path "/signup"}} class="selected"{{end}}>Sign up</a>{{end}}
+					{{if .Username}}<a href="/me/logout">Log out</a>{{else}}<a href="/login">Log in</a>{{end}}
+					{{ end }}
+				{{else}}
+					<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>
+					{{if not .DisableDrafts}}<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>{{end}}
+				{{end}}
 			</nav>
 		</nav>
+		{{if .Chorus}}{{if .Username}}<div class="right-side">
+					<a class="simple-btn" href="/new">New Post</a>
+				</div>{{end}}
+			</nav>
+		{{end}}
 		{{end}}
 	</header>
+{{end}}
+{{define "header"}}<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+
+	<title>{{.PageTitle}} {{if .Separator}}{{.Separator}}{{else}}&mdash;{{end}} {{.SiteName}}</title>
+
+	<link rel="stylesheet" type="text/css" href="/css/write.css" />
+	<link rel="shortcut icon" href="/favicon.ico" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="theme-color" content="#888888" />
+	<meta name="apple-mobile-web-app-title" content="{{.SiteName}}">
+	<link rel="apple-touch-icon" sizes="152x152" href="/img/touch-icon-152.png">
+	<link rel="apple-touch-icon" sizes="167x167" href="/img/touch-icon-167.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="/img/touch-icon-180.png">
+</head>
+<body id="me">
+	{{template "user-navigation" .}}
 	<div id="official-writing">
 {{end}}
 

@@ -106,8 +106,8 @@ type writestore interface {
 	ClaimPosts(cfg *config.Config, userID int64, collAlias string, posts *[]ClaimPostRequest) (*[]ClaimPostResult, error)
 
 	GetPostsCount(c *CollectionObj, includeFuture bool)
-	GetPosts(c *Collection, page int, includeFuture, forceRecentFirst, includePinned bool) (*[]PublicPost, error)
-	GetPostsTagged(c *Collection, tag string, page int, includeFuture bool) (*[]PublicPost, error)
+	GetPosts(cfg *config.Config, c *Collection, page int, includeFuture, forceRecentFirst, includePinned bool) (*[]PublicPost, error)
+	GetPostsTagged(cfg *config.Config, c *Collection, tag string, page int, includeFuture bool) (*[]PublicPost, error)
 
 	GetAPFollowers(c *Collection) (*[]RemoteUser, error)
 	GetAPActorKeys(collectionID int64) ([]byte, []byte)
@@ -1070,7 +1070,7 @@ func (db *datastore) GetPostsCount(c *CollectionObj, includeFuture bool) {
 // It will return future posts if `includeFuture` is true.
 // It will include only standard (non-pinned) posts unless `includePinned` is true.
 // TODO: change includeFuture to isOwner, since that's how it's used
-func (db *datastore) GetPosts(c *Collection, page int, includeFuture, forceRecentFirst, includePinned bool) (*[]PublicPost, error) {
+func (db *datastore) GetPosts(cfg *config.Config, c *Collection, page int, includeFuture, forceRecentFirst, includePinned bool) (*[]PublicPost, error) {
 	collID := c.ID
 
 	cf := c.NewFormat()
@@ -1115,7 +1115,7 @@ func (db *datastore) GetPosts(c *Collection, page int, includeFuture, forceRecen
 			break
 		}
 		p.extractData()
-		p.formatContent(c, includeFuture)
+		p.formatContent(cfg, c, includeFuture)
 
 		posts = append(posts, p.processPost())
 	}
@@ -1131,7 +1131,7 @@ func (db *datastore) GetPosts(c *Collection, page int, includeFuture, forceRecen
 // given tag.
 // It will return future posts if `includeFuture` is true.
 // TODO: change includeFuture to isOwner, since that's how it's used
-func (db *datastore) GetPostsTagged(c *Collection, tag string, page int, includeFuture bool) (*[]PublicPost, error) {
+func (db *datastore) GetPostsTagged(cfg *config.Config, c *Collection, tag string, page int, includeFuture bool) (*[]PublicPost, error) {
 	collID := c.ID
 
 	cf := c.NewFormat()
@@ -1179,7 +1179,7 @@ func (db *datastore) GetPostsTagged(c *Collection, tag string, page int, include
 			break
 		}
 		p.extractData()
-		p.formatContent(c, includeFuture)
+		p.formatContent(cfg, c, includeFuture)
 
 		posts = append(posts, p.processPost())
 	}

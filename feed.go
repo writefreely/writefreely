@@ -55,9 +55,9 @@ func ViewFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 
 	tag := mux.Vars(req)["tag"]
 	if tag != "" {
-		coll.Posts, _ = app.db.GetPostsTagged(c, tag, 1, false)
+		coll.Posts, _ = app.db.GetPostsTagged(app.cfg, c, tag, 1, false)
 	} else {
-		coll.Posts, _ = app.db.GetPosts(c, 1, false, true, false)
+		coll.Posts, _ = app.db.GetPosts(app.cfg, c, 1, false, true, false)
 	}
 
 	author := ""
@@ -94,7 +94,7 @@ func ViewFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 			Title:       title,
 			Link:        &Link{Href: permalink},
 			Description: "<![CDATA[" + stripmd.Strip(p.Content) + "]]>",
-			Content:     applyMarkdown([]byte(p.Content), ""),
+			Content:     applyMarkdown([]byte(p.Content), "", app.cfg),
 			Author:      &Author{author, ""},
 			Created:     p.Created,
 			Updated:     p.Updated,

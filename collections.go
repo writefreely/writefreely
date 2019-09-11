@@ -512,7 +512,7 @@ func fetchCollectionPosts(app *App, w http.ResponseWriter, r *http.Request) erro
 		}
 	}
 
-	posts, err := app.db.GetPosts(c, page, isCollOwner, false, false)
+	posts, err := app.db.GetPosts(app.cfg, c, page, isCollOwner, false, false)
 	if err != nil {
 		return err
 	}
@@ -541,6 +541,8 @@ type CollectionPage struct {
 	Username       string
 	Collections    *[]Collection
 	PinnedPosts    *[]PublicPost
+	IsAdmin        bool
+	CanInvite      bool
 }
 
 func (c *CollectionObj) ScriptDisplay() template.JS {
@@ -746,7 +748,7 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 		return impart.HTTPError{http.StatusFound, redirURL}
 	}
 
-	coll.Posts, _ = app.db.GetPosts(c, page, cr.isCollOwner, false, false)
+	coll.Posts, _ = app.db.GetPosts(app.cfg, c, page, cr.isCollOwner, false, false)
 
 	// Serve collection
 	displayPage := CollectionPage{
@@ -755,6 +757,8 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 		IsCustomDomain:    cr.isCustomDomain,
 		IsWelcome:         r.FormValue("greeting") != "",
 	}
+	displayPage.IsAdmin = u != nil && u.IsAdmin()
+	displayPage.CanInvite = canUserInvite(app.cfg, displayPage.IsAdmin)
 	var owner *User
 	if u != nil {
 		displayPage.Username = u.Username
@@ -787,7 +791,11 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 	// TODO: fix this mess of collections inside collections
 	displayPage.PinnedPosts, _ = app.db.GetPinnedPosts(coll.CollectionObj, isOwner)
 
-	err = templates["collection"].ExecuteTemplate(w, "collection", displayPage)
+	collTmpl := "collection"
+	if app.cfg.App.Chorus {
+		collTmpl = "chorus-collection"
+	}
+	err = templates[collTmpl].ExecuteTemplate(w, "collection", displayPage)
 	if err != nil {
 		log.Error("Unable to render collection index: %v", err)
 	}
@@ -836,7 +844,7 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 
 	coll := newDisplayCollection(c, cr, page)
 
-	coll.Posts, _ = app.db.GetPostsTagged(c, tag, page, cr.isCollOwner)
+	coll.Posts, _ = app.db.GetPostsTagged(app.cfg, c, tag, page, cr.isCollOwner)
 	if coll.Posts != nil && len(*coll.Posts) == 0 {
 		return ErrCollectionPageNotFound
 	}

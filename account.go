@@ -28,6 +28,7 @@ import (
 	"github.com/writeas/web-core/data"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/author"
+	"github.com/writeas/writefreely/config"
 	"github.com/writeas/writefreely/page"
 )
 
@@ -59,9 +60,13 @@ func NewUserPage(app *App, r *http.Request, u *User, title string, flashes []str
 	up.Flashes = flashes
 	up.Path = r.URL.Path
 	up.IsAdmin = u.IsAdmin()
-	up.CanInvite = app.cfg.App.UserInvites != "" &&
-		(up.IsAdmin || app.cfg.App.UserInvites != "admin")
+	up.CanInvite = canUserInvite(app.cfg, up.IsAdmin)
 	return up
+}
+
+func canUserInvite(cfg *config.Config, isAdmin bool) bool {
+	return cfg.App.UserInvites != "" &&
+		(isAdmin || cfg.App.UserInvites != "admin")
 }
 
 func (up *UserPage) SetMessaging(u *User) {
@@ -305,10 +310,10 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p := &struct {
 		page.StaticPage
-		To       string
-		Message  template.HTML
-		Flashes  []template.HTML
-		Username string
+		To            string
+		Message       template.HTML
+		Flashes       []template.HTML
+		LoginUsername string
 	}{
 		pageForReq(app, r),
 		r.FormValue("to"),

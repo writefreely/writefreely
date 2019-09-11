@@ -47,6 +47,9 @@ func handleWebSignup(app *App, w http.ResponseWriter, r *http.Request) error {
 	ur.Normalize = true
 
 	to := "/"
+	if app.cfg.App.SimpleNav {
+		to = "/new"
+	}
 	if ur.InviteCode != "" {
 		to = "/invite/" + ur.InviteCode
 	}

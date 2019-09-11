@@ -1,0 +1,235 @@
+{{define "pad"}}<!DOCTYPE HTML>
+<html>
+	<head>
+
+		<title>{{if .Editing}}Editing {{if .Post.Title}}{{.Post.Title}}{{else}}{{.Post.Id}}{{end}}{{else}}New Post{{end}} &mdash; {{.SiteName}}</title>
+		
+		<link rel="stylesheet" type="text/css" href="/css/write.css" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<meta name="google" value="notranslate">
+	</head>
+	<body id="pad" class="light">
+
+		<div id="overlay"></div>
+		
+		<textarea id="writer" placeholder="Write..." class="{{.Post.Font}}" autofocus>{{if .Post.Title}}# {{.Post.Title}}
+
+{{end}}{{.Post.Content}}</textarea>
+		
+		<header id="tools">
+			<div id="clip">
+				{{if not .SingleUser}}<h1>{{if .Chorus}}<a href="/" title="Home">{{else}}<a href="/me/c/" title="View blogs">{{end}}{{.SiteName}}</a></h1>{{end}}
+				<nav id="target" {{if .SingleUser}}style="margin-left:0"{{end}}><ul>
+						<li>{{if .Blogs}}<a href="{{$c := index .Blogs 0}}{{$c.CanonicalURL}}">My Posts</a>{{else}}<a>Draft</a>{{end}}</li>
+				</ul></nav>
+				<span id="wc" class="hidden if-room room-4">0 words</span>
+			</div>
+			<noscript style="margin-left: 2em;"><strong>NOTE</strong>: for now, you'll need Javascript enabled to post.</noscript>
+			<div id="belt">
+				{{if .Editing}}<div class="tool hidden if-room"><a href="{{if .EditCollection}}{{.EditCollection.CanonicalURL}}{{.Post.Slug}}/edit/meta{{else}}/{{if .SingleUser}}d/{{end}}{{.Post.Id}}/meta{{end}}" title="Edit post metadata" id="edit-meta"><img class="ic-24dp" src="/img/ic_info_dark@2x.png" /></a></div>{{end}}
+				<div class="tool"><button title="Publish your writing" id="publish" style="font-weight: bold">Post</button></div>
+			</div>
+		</header>
+
+		<script src="/js/h.js"></script>
+		<script>
+		var $writer = H.getEl('writer');
+		var $btnPublish = H.getEl('publish');
+		var $wc = H.getEl("wc");
+		var updateWordCount = function() {
+			var words = 0;
+			var val = $writer.el.value.trim();
+			if (val != '') {
+				words = $writer.el.value.trim().replace(/\s+/gi, ' ').split(' ').length;
+			}
+			$wc.el.innerText = words + " word" + (words != 1 ? "s" : "");
+		};
+		var setButtonStates = function() {
+			if (!canPublish) {
+				$btnPublish.el.className = 'disabled';
+				return;
+			}
+			if ($writer.el.value.length === 0 || (draftDoc != 'lastDoc' && $writer.el.value == origDoc)) {
+				$btnPublish.el.className = 'disabled';
+			} else {
+				$btnPublish.el.className = '';
+			}
+		};
+		{{if .Post.Id}}var draftDoc = 'draft{{.Post.Id}}';
+		var origDoc = '{{.Post.Content}}';{{else}}var draftDoc = 'lastDoc';{{end}}
+		H.load($writer, draftDoc, true);
+		updateWordCount();
+		
+		var typingTimer;
+		var doneTypingInterval = 200;
+
+		var posts;
+		{{if and .Post.Id (not .Post.Slug)}}
+		var token = null;
+		var curPostIdx;
+		posts = JSON.parse(H.get('posts', '[]'));
+		for (var i=0; i<posts.length; i++) {
+			if (posts[i].id == "{{.Post.Id}}") {
+				token = posts[i].token;
+				break;
+			}
+		}
+		var canPublish = token != null;
+		{{else}}var canPublish = true;{{end}}
+		var publishing = false;
+		var justPublished = false;
+
+		var publish = function(content, font) {
+			{{if and (and .Post.Id (not .Post.Slug)) (not .User)}}
+			if (!token) {
+				alert("You don't have permission to update this post.");
+				return;
+			}
+			{{end}}
+			publishing = true;
+			$btnPublish.el.textContent = 'Posting...';
+			$btnPublish.el.disabled = true;
+
+			var http = new XMLHttpRequest();
+			var lang = navigator.languages ? navigator.languages[0] : (navigator.language || navigator.userLanguage);
+			lang = lang.substring(0, 2);
+			var post = H.getTitleStrict(content);
+
+			var params = {
+				body: post.content,
+				title: post.title,
+				font: font,
+				lang: lang
+			};
+			{{ if .Post.Slug }}
+			var url = "/api/collections/{{.EditCollection.Alias}}/posts/{{.Post.Id}}";
+			{{ else if .Post.Id }}
+			var url = "/api/posts/{{.Post.Id}}";
+			if (typeof token === 'undefined' || !token) {
+				token = "";
+			}
+			params.token = token;
+			{{ else }}
+			var url = "/api/posts";
+			var postTarget = '{{if .Blogs}}{{$c := index .Blogs 0}}{{$c.Alias}}{{else}}anonymous{{end}}';
+			if (postTarget != 'anonymous') {
+				url = "/api/collections/" + postTarget + "/posts";
+			}
+			{{ end }}
+
+			http.open("POST", url, true);
+
+			// Send the proper header information along with the request
+			http.setRequestHeader("Content-type", "application/json");
+
+			http.onreadystatechange = function() {
+				if (http.readyState == 4) {
+					publishing = false;
+					if (http.status == 200 || http.status == 201) {
+						data = JSON.parse(http.responseText);
+						id = data.data.id;
+						nextURL = '{{if .SingleUser}}/d{{end}}/'+id;
+
+						{{ if not .Post.Id }}
+							// Post created
+							if (postTarget != 'anonymous') {
+							  nextURL = {{if not .SingleUser}}'/'+postTarget+{{end}}'/'+data.data.slug;
+							}
+							editToken = data.data.token;
+
+							{{ if not .User }}if (postTarget == 'anonymous') {
+								// Save the data
+								var posts = JSON.parse(H.get('posts', '[]'));
+
+								{{if .Post.Id}}var newPost = H.createPost("{{.Post.Id}}", token, content);
+								for (var i=0; i<posts.length; i++) {
+									if (posts[i].id == "{{.Post.Id}}") {
+										posts[i].title = newPost.title;
+										posts[i].summary = newPost.summary;
+										break;
+									}
+								}
+								nextURL = "/pad/posts";{{else}}posts.push(H.createPost(id, editToken, content));{{end}}
+
+								H.set('posts', JSON.stringify(posts));
+							}
+							{{ end }}
+						{{ end }}
+
+						justPublished = true;
+						if (draftDoc != 'lastDoc') {
+							H.remove(draftDoc);
+							{{if .Editing}}H.remove('draft{{.Post.Id}}font');{{end}}
+						} else {
+							H.set(draftDoc, '');
+						}
+
+						{{if .EditCollection}}
+						window.location = '{{.EditCollection.CanonicalURL}}{{.Post.Slug}}';
+						{{else}}
+						window.location = nextURL;
+						{{end}}
+					} else {
+						$btnPublish.el.textContent = 'Post';
+						alert("Failed to post. Please try again.");
+					}
+				}
+			}
+			http.send(JSON.stringify(params));
+		};
+
+		setButtonStates();
+		$writer.on('keyup input', function() {
+			setButtonStates();
+			clearTimeout(typingTimer);
+			typingTimer = setTimeout(doneTyping, doneTypingInterval);
+		}, false);
+		$writer.on('keydown', function(e) {
+			clearTimeout(typingTimer);
+			if (e.keyCode == 13 && (e.metaKey || e.ctrlKey)) {
+				$btnPublish.el.click();
+			}
+		});
+		$btnPublish.on('click', function(e) {
+			e.preventDefault();
+			if (!publishing && $writer.el.value) {
+				var content = $writer.el.value;
+				publish(content, selectedFont);
+			}
+		});
+
+		WebFontConfig = {
+			custom: { families: [ 'Lora:400,700:latin' ], urls: [ '/css/fonts.css' ] }
+		};
+		var selectedFont = H.get('{{if .Editing}}draft{{.Post.Id}}font{{else}}padFont{{end}}', '{{.Post.Font}}');
+
+		var doneTyping = function() {
+			if (draftDoc == 'lastDoc' || $writer.el.value != origDoc) {
+				H.save($writer, draftDoc);
+				updateWordCount();
+			}
+		};
+		window.addEventListener('beforeunload', function(e) {
+			if (draftDoc != 'lastDoc' && $writer.el.value == origDoc) {
+				H.remove(draftDoc);
+			} else if (!justPublished) {
+				doneTyping();
+			}
+		});
+
+		try {
+		  (function() {
+			var wf=document.createElement('script');
+			wf.src = '/js/webfont.js';
+			wf.type='text/javascript';
+			wf.async='true';
+			var s=document.getElementsByTagName('script')[0];
+			s.parentNode.insertBefore(wf, s);
+		  })();
+		} catch (e) {
+		  // whatevs
+		}
+		</script>
+	</body>
+</html>{{end}}

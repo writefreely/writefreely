@@ -118,7 +118,7 @@ func compileFullExport(app *App, u *User) *ExportUser {
 	var collObjs []CollectionObj
 	for _, c := range *colls {
 		co := &CollectionObj{Collection: c}
-		co.Posts, err = app.db.GetPosts(&c, 0, true, false, true)
+		co.Posts, err = app.db.GetPosts(app.cfg, &c, 0, true, false, true)
 		if err != nil {
 			log.Error("unable to get collection posts: %v", err)
 		}

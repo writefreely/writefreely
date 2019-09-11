@@ -129,10 +129,10 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 	ocp := activitystreams.NewOrderedCollectionPage(accountRoot, "outbox", res.TotalPosts, p)
 	ocp.OrderedItems = []interface{}{}
 
-	posts, err := app.db.GetPosts(c, p, false, true, false)
+	posts, err := app.db.GetPosts(app.cfg, c, p, false, true, false)
 	for _, pp := range *posts {
 		pp.Collection = res
-		o := pp.ActivityObject()
+		o := pp.ActivityObject(app.cfg)
 		a := activitystreams.NewCreateActivity(o)
 		ocp.OrderedItems = append(ocp.OrderedItems, *a)
 	}
@@ -524,7 +524,7 @@ func deleteFederatedPost(app *App, p *PublicPost, collID int64) error {
 	}
 	p.Collection.hostName = app.cfg.App.Host
 	actor := p.Collection.PersonObject(collID)
-	na := p.ActivityObject()
+	na := p.ActivityObject(app.cfg)
 
 	// Add followers
 	p.Collection.ID = collID
@@ -570,7 +570,7 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 		}
 	}
 	actor := p.Collection.PersonObject(collID)
-	na := p.ActivityObject()
+	na := p.ActivityObject(app.cfg)
 
 	// Add followers
 	p.Collection.ID = collID
