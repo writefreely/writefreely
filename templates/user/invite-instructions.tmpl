@@ -1,0 +1,25 @@
+{{define "invite-instructions"}}
+{{template "header" .}}
+<style>
+  .copy-link {
+    width: 100%;
+    margin: 2em 0;
+    text-align: center;
+    font-size-adjust: .7;
+    color: #555;
+  }
+</style>
+<div class="snug content-container">
+	<h1>Invite Instructions</h1>
+  <p>This is a special link that you can send to anyone you want to join <em>{{ .SiteName }}</em>. Copy the link below and paste it into an email, instant message, or text message and send it to the person you want. When they navigate to the link, they'll be able to create an account.</p>
+  <input
+  class="copy-link"
+  type="text"
+  name="invite-url"
+  value="{{$.Host}}/invite/{{.InviteID}}"
+  onfocus="if (this.select) this.select(); else this.setSelectionRange(0, this.value.length);"
+  readonly/>
+</div>
+
+{{template "footer" .}}
+{{end}}

@@ -12,15 +12,16 @@ package writefreely
 
 import (
 	"database/sql"
+	"html/template"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
 	"github.com/writeas/nerds/store"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/page"
-	"html/template"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 type Invite struct {
@@ -108,6 +109,26 @@ func handleCreateUserInvite(app *App, u *User, w http.ResponseWriter, r *http.Re
 
 func handleViewInvite(app *App, w http.ResponseWriter, r *http.Request) error {
 	inviteCode := mux.Vars(r)["code"]
+
+	if u := getUserSession(app, r); u != nil {
+		// check if invite belongs to another user
+		// error can be ignored as not important in this case
+		if ownInvite, _ := app.db.IsUsersInvite(inviteCode, u.ID); !ownInvite {
+			addSessionFlash(app, w, r, "No need for an invite, You are already registered.", nil)
+			// show homepage
+			return impart.HTTPError{http.StatusFound, "/me/settings"}
+		}
+		// show invite instructions
+		p := struct {
+			*UserPage
+			InviteID string
+		}{
+			UserPage: NewUserPage(app, r, u, "Invite Instructions", nil),
+			InviteID: inviteCode,
+		}
+		showUserPage(w, "invite-instructions", p)
+		return nil
+	}
 
 	i, err := app.db.GetUserInvite(inviteCode)
 	if err != nil {
