@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT-style license that can be
 // found in the LICENSE file of the Gogs project (github.com/gogs/gogs).
 
-package writefreely
+package appstats
 
 import (
 	"fmt"
@@ -81,8 +81,8 @@ func computeTimeDiff(diff int64) (int64, string) {
 	return diff, diffStr
 }
 
-// timeSincePro calculates the time interval and generate full user-friendly string.
-func timeSincePro(then time.Time) string {
+// TimeSincePro calculates the time interval and generate full user-friendly string.
+func TimeSincePro(then time.Time) string {
 	now := time.Now()
 	diff := now.Unix() - then.Unix()
 
@@ -121,8 +121,8 @@ func humanateBytes(s uint64, base float64, sizes []string) string {
 	return fmt.Sprintf(f+" %s", val, suffix)
 }
 
-// fileSize calculates the file size and generate user-friendly string.
-func fileSize(s int64) string {
+// FileSize calculates the file size and generate user-friendly string.
+func FileSize(s int64) string {
 	sizes := []string{"B", "KB", "MB", "GB", "TB", "PB", "EB"}
 	return humanateBytes(uint64(s), 1024, sizes)
 }

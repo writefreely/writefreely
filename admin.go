@@ -22,6 +22,7 @@ import (
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/log"
+	"github.com/writeas/writefreely/appstats"
 	"github.com/writeas/writefreely/config"
 )
 
@@ -407,37 +408,37 @@ func handleAdminUpdateConfig(apper Apper, u *User, w http.ResponseWriter, r *htt
 }
 
 func updateAppStats() {
-	sysStatus.Uptime = timeSincePro(appStartTime)
+	sysStatus.Uptime = appstats.TimeSincePro(appStartTime)
 
 	m := new(runtime.MemStats)
 	runtime.ReadMemStats(m)
 	sysStatus.NumGoroutine = runtime.NumGoroutine()
 
-	sysStatus.MemAllocated = fileSize(int64(m.Alloc))
-	sysStatus.MemTotal = fileSize(int64(m.TotalAlloc))
-	sysStatus.MemSys = fileSize(int64(m.Sys))
+	sysStatus.MemAllocated = appstats.FileSize(int64(m.Alloc))
+	sysStatus.MemTotal = appstats.FileSize(int64(m.TotalAlloc))
+	sysStatus.MemSys = appstats.FileSize(int64(m.Sys))
 	sysStatus.Lookups = m.Lookups
 	sysStatus.MemMallocs = m.Mallocs
 	sysStatus.MemFrees = m.Frees
 
-	sysStatus.HeapAlloc = fileSize(int64(m.HeapAlloc))
-	sysStatus.HeapSys = fileSize(int64(m.HeapSys))
-	sysStatus.HeapIdle = fileSize(int64(m.HeapIdle))
-	sysStatus.HeapInuse = fileSize(int64(m.HeapInuse))
-	sysStatus.HeapReleased = fileSize(int64(m.HeapReleased))
+	sysStatus.HeapAlloc = appstats.FileSize(int64(m.HeapAlloc))
+	sysStatus.HeapSys = appstats.FileSize(int64(m.HeapSys))
+	sysStatus.HeapIdle = appstats.FileSize(int64(m.HeapIdle))
+	sysStatus.HeapInuse = appstats.FileSize(int64(m.HeapInuse))
+	sysStatus.HeapReleased = appstats.FileSize(int64(m.HeapReleased))
 	sysStatus.HeapObjects = m.HeapObjects
 
-	sysStatus.StackInuse = fileSize(int64(m.StackInuse))
-	sysStatus.StackSys = fileSize(int64(m.StackSys))
-	sysStatus.MSpanInuse = fileSize(int64(m.MSpanInuse))
-	sysStatus.MSpanSys = fileSize(int64(m.MSpanSys))
-	sysStatus.MCacheInuse = fileSize(int64(m.MCacheInuse))
-	sysStatus.MCacheSys = fileSize(int64(m.MCacheSys))
-	sysStatus.BuckHashSys = fileSize(int64(m.BuckHashSys))
-	sysStatus.GCSys = fileSize(int64(m.GCSys))
-	sysStatus.OtherSys = fileSize(int64(m.OtherSys))
+	sysStatus.StackInuse = appstats.FileSize(int64(m.StackInuse))
+	sysStatus.StackSys = appstats.FileSize(int64(m.StackSys))
+	sysStatus.MSpanInuse = appstats.FileSize(int64(m.MSpanInuse))
+	sysStatus.MSpanSys = appstats.FileSize(int64(m.MSpanSys))
+	sysStatus.MCacheInuse = appstats.FileSize(int64(m.MCacheInuse))
+	sysStatus.MCacheSys = appstats.FileSize(int64(m.MCacheSys))
+	sysStatus.BuckHashSys = appstats.FileSize(int64(m.BuckHashSys))
+	sysStatus.GCSys = appstats.FileSize(int64(m.GCSys))
+	sysStatus.OtherSys = appstats.FileSize(int64(m.OtherSys))
 
-	sysStatus.NextGC = fileSize(int64(m.NextGC))
+	sysStatus.NextGC = appstats.FileSize(int64(m.NextGC))
 	sysStatus.LastGC = fmt.Sprintf("%.1fs", float64(time.Now().UnixNano()-int64(m.LastGC))/1000/1000/1000)
 	sysStatus.PauseTotalNs = fmt.Sprintf("%.1fs", float64(m.PauseTotalNs)/1000/1000/1000)
 	sysStatus.PauseNs = fmt.Sprintf("%.3fs", float64(m.PauseNs[(m.NumGC+255)%256])/1000/1000/1000)
