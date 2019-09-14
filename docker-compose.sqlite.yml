@@ -5,26 +5,12 @@ services:
     volumes:
       - ./keys:/home/writefreely/keys
       - ./config.ini:/home/writefreely/config.ini
+      - ./writefreely.db:/home/writefreely/writefreely.db
     ports:
       - "8080:8080"
     networks:
       - writefreely
-    depends_on:
-      - db
     restart: unless-stopped
-  db:
-    image: "mariadb:latest"
-    volumes:
-      - db-data:/var/lib/mysql/data
-    networks:
-      - writefreely
-    environment:
-      - MYSQL_DATABASE=writefreely
-      - MYSQL_ROOT_PASSWORD=changeme
-    restart: unless-stopped
-
-volumes:
-  db-data:
 
 networks:
   writefreely:

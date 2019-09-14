@@ -1,35 +1,25 @@
-# Build image
-FROM golang:1.12-alpine as build
+FROM golang:1.12-alpine AS build
 
-RUN apk add --update nodejs nodejs-npm make g++ git sqlite-dev
-RUN npm install -g less less-plugin-clean-css
-RUN go get -u github.com/jteeuwen/go-bindata/...
+RUN apk add nodejs nodejs-npm make g++ ca-certificates git sqlite-dev && \
+  npm install -g less less-plugin-clean-css && \
+  go get -u github.com/jteeuwen/go-bindata/...
 
-RUN mkdir -p /go/src/github.com/writeas/writefreely
-WORKDIR /go/src/github.com/writeas/writefreely
+WORKDIR /src
+COPY ./go.mod ./go.sum ./
+RUN go mod download
 COPY . .
+RUN make assets ui && cd cmd/writefreely && go build -v -tags='sqlite'
 
-ENV GO111MODULE=on
-RUN make build \
- && make ui
-RUN mkdir /stage && \
-    cp -R /go/bin \
-      /go/src/github.com/writeas/writefreely/templates \
-      /go/src/github.com/writeas/writefreely/static \
-      /go/src/github.com/writeas/writefreely/pages \
-      /go/src/github.com/writeas/writefreely/keys \
-      /go/src/github.com/writeas/writefreely/cmd \
-      /stage
+RUN mkdir -p \
+  /home/writefreely/static /home/writefreely/templates /home/writefreely/pages && \
+  cp -r templates/ pages/ static/ /home/writefreely
 
-# Final image
-FROM alpine:3.8
+FROM alpine AS final
 
-RUN apk add --no-cache openssl ca-certificates
-COPY --from=build --chown=daemon:daemon /stage /go
+# TODO user nobody or similar
+COPY --from=build /src/cmd/writefreely/writefreely /bin
+COPY --from=build /home /home
 
-WORKDIR /go
-VOLUME /go/keys
 EXPOSE 8080
-USER daemon
-
-ENTRYPOINT ["cmd/writefreely/writefreely"]
+WORKDIR /home/writefreely
+ENTRYPOINT [ "writefreely" ]
