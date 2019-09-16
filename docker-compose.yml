@@ -1,10 +1,9 @@
 version: "3"
 services:
   web:
-    image: robjloranger/writefreely:v0.10.0
+    image: writeas/writefreely:latest
     volumes:
-      - ./keys:/home/writefreely/keys
-      - ./config.ini:/home/writefreely/config.ini
+      - web-data:/home/writefreely
     ports:
       - "8080:8080"
     networks:
@@ -15,7 +14,7 @@ services:
   db:
     image: "mariadb:latest"
     volumes:
-      - db-data:/var/lib/mysql/data
+      - db-data:/var/lib/mysql
     networks:
       - writefreely
     environment:
@@ -24,7 +23,8 @@ services:
     restart: unless-stopped
 
 volumes:
-  db-data:
+    web-data:
+    db-data:
 
 networks:
   writefreely:

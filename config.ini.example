@@ -1,6 +1,7 @@
 [server]
 hidden_host = 
 port        = 8080
+bind        = 0.0.0.0
 
 [database]
 type     = mysql

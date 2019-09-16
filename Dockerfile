@@ -8,11 +8,13 @@ WORKDIR /src
 COPY ./go.mod ./go.sum ./
 RUN go mod download
 COPY . .
-RUN make assets ui && cd cmd/writefreely && go build -v -tags='sqlite'
+RUN cd cmd/writefreely && go build -v -tags='sqlite'
+RUN make assets ui
 
 RUN mkdir -p \
   /home/writefreely/static /home/writefreely/templates /home/writefreely/pages && \
-  cp -r templates/ pages/ static/ /home/writefreely
+  cp -r templates/ pages/ static/ /home/writefreely && \
+  cp config.ini.example /home/writefreely/config.ini
 
 FROM alpine AS final
 
