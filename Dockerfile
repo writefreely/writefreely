@@ -1,6 +1,6 @@
 FROM golang:1.12-alpine AS build
 
-RUN apk add nodejs nodejs-npm make g++ ca-certificates git sqlite-dev && \
+RUN apk add --update nodejs nodejs-npm make g++ ca-certificates git sqlite-dev && \
   npm install -g less less-plugin-clean-css && \
   go get -u github.com/jteeuwen/go-bindata/...
 
