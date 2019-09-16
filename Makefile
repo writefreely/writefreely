@@ -19,9 +19,6 @@ ci: ci-assets deps
 build: assets deps
 	cd cmd/writefreely; $(GOBUILD) -v -tags='sqlite'
 
-build-no-git: assets deps
-	cd cmd/writefreely; $(GOCMD) build -v -tags='sqlite'
-
 build-no-sqlite: assets-no-sqlite deps-no-sqlite
 	cd cmd/writefreely; $(GOBUILD) -v -o $(BINARY_NAME)
 
