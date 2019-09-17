@@ -16,12 +16,21 @@ RUN mkdir -p \
   cp -r templates/ pages/ static/ /home/writefreely && \
   cp config.ini.example /home/writefreely/config.ini
 
-FROM alpine AS final
+FROM alpine AS dev
 
-# TODO user nobody or similar
 COPY --from=build /src/cmd/writefreely/writefreely /bin
 COPY --from=build /home /home
 
 EXPOSE 8080
+WORKDIR /home/writefreely
+ENTRYPOINT [ "writefreely" ]
+
+FROM alpine AS prod
+
+
+RUN apk add ca-certificates openssl
+COPY --from=dev . .
+
+EXPOSE 80 443
 WORKDIR /home/writefreely
 ENTRYPOINT [ "writefreely" ]
