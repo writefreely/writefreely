@@ -1,4 +1,4 @@
-LESSC := $(shell command -v lessc 2> /dev/null)
+LESSC=$(shell command -v lessc 2> /dev/null)
 
 ifndef LESSC
 	$(error "less is not installed, please run install-less.sh")
