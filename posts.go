@@ -472,7 +472,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 //   /posts?collection={alias}
 // ? /collections/{alias}/posts
 func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	vars := mux.Vars(r)
 	collAlias := vars["alias"]
 	if collAlias == "" {
@@ -598,7 +598,7 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 }
 
 func existingPost(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	vars := mux.Vars(r)
 	postID := vars["post"]
 
