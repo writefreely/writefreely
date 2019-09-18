@@ -170,6 +170,7 @@ func getSanitizationPolicy() *bluemonday.Policy {
 	policy.AllowAttrs("controls", "loop", "muted", "autoplay").OnElements("video")
 	policy.AllowAttrs("controls", "loop", "muted", "autoplay", "preload").OnElements("audio")
 	policy.AllowAttrs("target").OnElements("a")
+	policy.AllowAttrs("title").OnElements("abbr")
 	policy.AllowAttrs("style", "class", "id").Globally()
 	policy.AllowURLSchemes("http", "https", "mailto", "xmpp")
 	return policy
