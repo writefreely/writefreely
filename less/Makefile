@@ -1,20 +1,10 @@
-ifeq ($(shell which lessc),/usr/bin/lessc)
-	LESSC=/usr/bin/lessc
-else ifeq ($(shell which lessc),/usr/local/bin/lessc)
-	LESSC=/usr/local/bin/lessc
-else ifeq ($(shell which lessc),/bin/lessc)
-	LESSC=/bin/lessc
-else
-	LESSC=node_modules/.bin/lessc
-endif
-export LESSC
-
 CSSDIR=../static/css/
 
 all :
-	$(LESSC) app.less --clean-css="--s1 --advanced" $(CSSDIR)write.css
-	$(LESSC) fonts.less --clean-css="--s1 --advanced" $(CSSDIR)fonts.css
-	$(LESSC) icons.less --clean-css="--s1 --advanced" $(CSSDIR)icons.css
+	@command -v lessc >/dev/null 2>&1 || { echo >&2 "lessc is not installed, please run: make install or: less/install-less.sh"; exit 1; }
+	lessc app.less --clean-css="--s1 --advanced" $(CSSDIR)write.css
+	lessc fonts.less --clean-css="--s1 --advanced" $(CSSDIR)fonts.css
+	lessc icons.less --clean-css="--s1 --advanced" $(CSSDIR)icons.css
 
 install :
 	./install-less.sh
