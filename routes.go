@@ -11,13 +11,14 @@
 package writefreely
 
 import (
+	"net/http"
+	"path/filepath"
+	"strings"
+
 	"github.com/gorilla/mux"
 	"github.com/writeas/go-webfinger"
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/go-nodeinfo"
-	"net/http"
-	"path/filepath"
-	"strings"
 )
 
 // InitStaticRoutes adds routes for serving static files.
@@ -151,7 +152,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	// Handle special pages first
 	write.HandleFunc("/login", handler.Web(viewLogin, UserLevelNoneRequired))
 	write.HandleFunc("/signup", handler.Web(handleViewLanding, UserLevelNoneRequired))
-	write.HandleFunc("/invite/{code}", handler.Web(handleViewInvite, UserLevelNoneRequired)).Methods("GET")
+	write.HandleFunc("/invite/{code}", handler.Web(handleViewInvite, UserLevelOptional)).Methods("GET")
 	// TODO: show a reader-specific 404 page if the function is disabled
 	write.HandleFunc("/read", handler.Web(viewLocalTimeline, UserLevelReader))
 	RouteRead(handler, UserLevelReader, write.PathPrefix("/read").Subrouter())

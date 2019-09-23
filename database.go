@@ -2257,6 +2257,19 @@ func (db *datastore) GetUserInvite(id string) (*Invite, error) {
 	return &i, nil
 }
 
+// IsUsersInvite returns true if the user with ID created the invite with code
+// and an error other than sql no rows, if any. Will return false in the event
+// of an error.
+func (db *datastore) IsUsersInvite(code string, userID int64) (bool, error) {
+	var id string
+	err := db.QueryRow("SELECT id FROM userinvites WHERE id = ? AND owner_id = ?", code, userID).Scan(&id)
+	if err != nil && err != sql.ErrNoRows {
+		log.Error("Failed selecting invite: %v", err)
+		return false, err
+	}
+	return id != "", nil
+}
+
 func (db *datastore) GetUsersInvitedCount(id string) int64 {
 	var count int64
 	err := db.QueryRow("SELECT COUNT(*) FROM usersinvited WHERE invite_id = ?", id).Scan(&count)
