@@ -141,7 +141,7 @@ func handleViewInvite(app *App, w http.ResponseWriter, r *http.Request) error {
 			Invite:   i,
 			Expired:  expired,
 		}
-		showUserPage(w, "invite-instructions", p)
+		showUserPage(w, "invite-help", p)
 		return nil
 	}
 
