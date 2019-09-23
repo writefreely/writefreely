@@ -3,7 +3,7 @@
 <style>
   .copy-link {
     width: 100%;
-    margin: 2em 0;
+    margin: 1em 0;
     text-align: center;
     font-size-adjust: .7;
     color: #555;
@@ -15,7 +15,16 @@
 		<p style="font-style: italic">This invite link is expired.</p>
 	{{ else }}
 		<p>Copy the link below and send it to anyone that you want to join <em>{{ .SiteName }}</em>. You could paste it into an email, instant message, text message, or write it down on paper. Anyone who navigates to this special page will be able to create an account.</p>
-		<input class="copy-link" type="text" name="invite-url" value="{{$.Host}}/invite/{{.InviteID}}" onfocus="if (this.select) this.select(); else this.setSelectionRange(0, this.value.length);" readonly />
+		<input class="copy-link" type="text" name="invite-url" value="{{$.Host}}/invite/{{.Invite.ID}}" onfocus="if (this.select) this.select(); else this.setSelectionRange(0, this.value.length);" readonly />
+		<p>
+			{{ if gt .Invite.MaxUses.Int64 0 }}
+				{{if eq .Invite.MaxUses.Int64 1}}Only <strong>one</strong> user{{else}}Up to <strong>{{.Invite.MaxUses.Int64}}</strong> users{{end}} can sign up with this link.
+				{{if gt .Invite.Uses 0}}So far, <strong>{{.Invite.Uses}}</strong> {{pluralize "person has" "people have" .Invite.Uses}} used it.{{end}}
+				{{if .Invite.Expires}}It expires on <strong>{{.Invite.ExpiresFriendly}}</strong>.{{end}}
+			{{ else }}
+				It can be used as many times as you like{{if .Invite.Expires}} before <strong>{{.Invite.ExpiresFriendly}}</strong>, when it expires{{end}}.
+			{{ end }}
+		</p>
 	{{ end }}
 </div>
 

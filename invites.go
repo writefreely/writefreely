@@ -134,11 +134,11 @@ func handleViewInvite(app *App, w http.ResponseWriter, r *http.Request) error {
 		// show invite instructions
 		p := struct {
 			*UserPage
-			InviteID string
+			Invite  *Invite
 			Expired bool
 		}{
 			UserPage: NewUserPage(app, r, u, "Invite to "+app.cfg.App.SiteName, nil),
-			InviteID: inviteCode,
+			Invite:   i,
 			Expired:  expired,
 		}
 		showUserPage(w, "invite-instructions", p)
