@@ -110,6 +110,11 @@ func handleCreateUserInvite(app *App, u *User, w http.ResponseWriter, r *http.Re
 func handleViewInvite(app *App, w http.ResponseWriter, r *http.Request) error {
 	inviteCode := mux.Vars(r)["code"]
 
+	i, err := app.db.GetUserInvite(inviteCode)
+	if err != nil {
+		return err
+	}
+
 	if u := getUserSession(app, r); u != nil {
 		// check if invite belongs to another user
 		// error can be ignored as not important in this case
@@ -128,11 +133,6 @@ func handleViewInvite(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 		showUserPage(w, "invite-instructions", p)
 		return nil
-	}
-
-	i, err := app.db.GetUserInvite(inviteCode)
-	if err != nil {
-		return err
 	}
 
 	p := struct {
