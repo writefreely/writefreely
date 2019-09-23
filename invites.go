@@ -126,7 +126,7 @@ func handleViewInvite(app *App, w http.ResponseWriter, r *http.Request) error {
 		// check if invite belongs to another user
 		// error can be ignored as not important in this case
 		if ownInvite, _ := app.db.IsUsersInvite(inviteCode, u.ID); !ownInvite {
-			addSessionFlash(app, w, r, "No need for an invite, You are already registered.", nil)
+			addSessionFlash(app, w, r, "You're already registered and logged in.", nil)
 			// show homepage
 			return impart.HTTPError{http.StatusFound, "/me/settings"}
 		}
