@@ -137,7 +137,7 @@ func handleViewInvite(app *App, w http.ResponseWriter, r *http.Request) error {
 			InviteID string
 			Expired bool
 		}{
-			UserPage: NewUserPage(app, r, u, "Invite Instructions", nil),
+			UserPage: NewUserPage(app, r, u, "Invite to "+app.cfg.App.SiteName, nil),
 			InviteID: inviteCode,
 			Expired:  expired,
 		}
