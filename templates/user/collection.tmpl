@@ -154,6 +154,8 @@
 <script src="/js/h.js"></script>
 <script src="/js/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
+// set dark mode
+const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches
 // Begin shared modal code
 function showModal(id) {
 	document.getElementById('overlay').style.display = 'block';
@@ -229,6 +231,9 @@ var opt = {
 };
 var theme = "ace/theme/chrome";
 var cssEditor = ace.edit("css-editor");
+if (isDarkMode){
+	var theme = "ace/theme/solarized_dark";
+}
 cssEditor.setTheme(theme);
 cssEditor.session.setMode("ace/mode/css");
 cssEditor.setOptions(opt);

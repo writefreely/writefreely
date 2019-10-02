@@ -8,3 +8,4 @@ tmp
 *.db
 
 bindata.go
+*.DS_Store

@@ -1,8 +1,9 @@
 @primary: rgb(114, 120, 191);
 @secondary: rgb(114, 191, 133);
 @subheaders: #444;
+@subheadersDark: #aaa;
 @headerTextColor: black;
-@headerTextColorDarkMode: white;
+@headerTextColorDarkMode: #cfcfcf;
 @sansFont: 'Open Sans', 'Segoe UI', Tahoma, Arial, sans-serif;
 @serifFont: Lora, 'Palatino Linotype', 'Book Antiqua', 'New York', 'DejaVu serif', serif;
 @monoFont: Hack, consolas, Menlo-Regular, Menlo, Monaco, 'ubuntu mono', monospace, monospace;
@@ -10,6 +11,7 @@
 @errUrgentCol: #ecc63c;
 @proSelectedCol: #71D571;
 @textLinkColor: rgb(0, 0, 238);
+@textLinkColorDark: rgb(162, 162, 255);
 
 :root {
     color-scheme: light dark;
@@ -1538,7 +1540,10 @@ pre.code-block {
 			a {
 				color: @headerTextColorDarkMode;
 				&:hover {
-					color: #cfcfcf;
+					color: #fff;
+				}
+				&:visited {
+					color: @headerTextColorDarkMode;
 				}
 			}
 		}
@@ -1556,13 +1561,65 @@ pre.code-block {
 		}
 
 		a {
-			color: rgb(162, 162, 255);
+			color: @textLinkColorDark
 		}
 
 		a:visited{
 			color: rgb(201, 138, 253);
 		}
 
+		#official-writing, #wrapper {
+			h2, h3, h4 {
+				color: @subheadersDark;
+			}
+			ul {
+				&.collections {
+					li {
+						&.collection {
+							a.title {
+								&:link, &:visited {
+									color: @headerTextColorDarkMode;
+								}
+							}
+						}
+						a.create {
+							color: @subheadersDark;
+						}
+					}
+				}
+			}
+		}
+
 	}
 
+	body#me #official-writing h2 a:link, body#me #official-writing h2 a:visited{
+		color: @textLinkColorDark
+	}
+
+	.ace_editor {
+		border: 1px solid #333;
+	}
+
+	input {
+		background: #202020;
+		color: #bbb;
+	}
+
+	nav#manage ul ul li img{
+		filter: invert(1);
+	}
+
+	.alert {
+		&.info {
+			color: #4295be;
+			background-color: #0a0b0c;
+			border-color: #181d1f;
+		}
+		&.success {
+			color: #5bb35c;
+			background-color: #282b27;
+			border-color: #21241e;
+		}
+	}
+	
 }

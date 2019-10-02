@@ -4,6 +4,7 @@
 @lightNavBG: #fff;
 @lightNavHoverBG: #f6f6f6;
 @lightNavBorder: #ccc;
+@darkNavBorder: #333;
 
 @darkBG: #222222;
 @darkTextColor: #ffffff;
@@ -44,6 +45,36 @@ body#pad-sub #posts, .atoms {
 		color: @lightLinkColor;
 		&:hover {
 			color: darken(@lightLinkColor, 10%);
+		}
+	}
+}
+
+@media (prefers-color-scheme: dark){
+	body#pad-sub #posts, .atoms {
+		h3 {
+			a {
+				color: @darkTextColor;
+				&:hover {
+					color: lighten(@darkTextColor, 10%);
+				}
+			}
+		}
+		h3, h4 {
+			a {
+				color: @darkTextColor;
+				&:hover {
+					color: lighten(@darkTextColor, 10%);
+				}
+			}
+		}
+		date, .electron {
+			color: #999;
+		}
+		a.action, a {
+			color: @darkTextColor;
+			&:hover {
+				color: lighten(@darkTextColor, 10%);
+			}
 		}
 	}
 }
