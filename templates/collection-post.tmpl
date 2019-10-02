@@ -40,7 +40,7 @@ body#post header {
 article time.dt {
 	display: block;
 }
-article time.dt.published {
+article time.dt.subtle {
 	color: #666;
 	margin-bottom: 1em;
 }
@@ -77,7 +77,7 @@ body#post article h2#title{
 		<article id="post-body" class="{{.Font}} h-entry {{if not .IsFound}}error-page{{end}}">
 		{{if .IsScheduled}}<p class="badge">Scheduled</p>{{end}}
 		{{if .Title.String}}<h2 id="title" class="p-name">{{.FormattedDisplayTitle}}</h2>{{end}}
-		{{if .ShowDates}}<time class="dt{{if .Title.String}} published{{end}}" datetime="{{.Created}}" pubdate itemprop="datePublished" content="{{.Created}}">{{.DisplayDate}}</time>{{end}}
+		{{if .ShowDates}}<time class="dt{{if .Title.String}} subtle{{end}}" datetime="{{.Created}}" pubdate itemprop="datePublished" content="{{.Created}}">{{.DisplayDate}}</time>{{end}}
 		<div class="e-content">{{.HTMLContent}}</div>
 		</article>
 
