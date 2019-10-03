@@ -7,12 +7,32 @@ table.classy th {
 h3 {
 	font-weight: normal;
 }
+input.copy-text {
+	text-align: center;
+	    font-size: 1.2em;
+	    color: #555;
+	margin-left: 1rem;
+}
+button[type="submit"].danger {
+	padding-left: 2rem;
+	padding-right: 2rem;
+}
 </style>
 <div class="snug content-container">
 	{{template "admin-header" .}}
 
 	<h2 id="posts-header">{{.User.Username}}</h2>
-
+	{{if .NewPassword}}<p class="alert success">New password for user <strong>{{.User.Username}}</strong> is
+		<input
+		type="text"
+		class="copy-text"
+		value="{{.NewPassword}}"
+		onfocus="if (this.select) this.select(); else this.setSelectionRange(0, this.value.length);"
+		readonly />
+		<br/><br/>
+		You must share this new password with the user, this is the only time it will be displayed.
+		</p>
+	{{end}}
 	<table class="classy export">
 		<tr>
 			<th>No.</th>
@@ -37,6 +57,21 @@ h3 {
 		<tr>
 			<th>Last Post</th>
 			<td>{{if .LastPost}}{{.LastPost}}{{else}}Never{{end}}</td>
+		</tr>
+		<tr>
+			<th>Password</th>
+			<td>
+				{{if not .OwnUserPage}}
+					<form id="reset-form" action="/admin/user/{{.User.Username}}" method="post" autocomplete="false">
+					<input type="hidden" name="user" value="{{.User.ID}}"/>
+					<button
+					class="danger"
+					type="submit">Reset</button>
+				</form>
+				{{else}}
+				<a href="/me/settings" title="Go to reset password page">Change your password</a>
+				{{end}}
+			</td>
 		</tr>
 	</table>
 
@@ -83,5 +118,13 @@ h3 {
 	{{end}}
 </div>
 
+<script type="text/javascript">
+	form = document.getElementById("reset-form");
+	form.addEventListener('submit', function(e) {
+		e.preventDefault();
+		agreed = confirm("Really reset password for {{.User.Username}}?\nYou will have to record and share the new password with them.");
+		if (agreed === true) { form.submit();}
+	});
+</script>
 {{template "footer" .}}
 {{end}}
