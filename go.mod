@@ -6,11 +6,13 @@ require (
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
 	github.com/captncraig/cors v0.0.0-20180620154129-376d45073b49 // indirect
 	github.com/clbanning/mxj v1.8.4 // indirect
+	github.com/dchest/uniuri v0.0.0-20160212164326-8902c56451e9 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.7.0
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/go-test/deep v1.0.1 // indirect
 	github.com/golang/lint v0.0.0-20181217174547-8f45f776aaf1 // indirect
+	github.com/gologme/log v0.0.0-20181207131047-4e5d8ccb38e8 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/gorilla/feeds v1.1.0
 	github.com/gorilla/mux v1.7.0
@@ -36,6 +38,7 @@ require (
 	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
 	github.com/stretchr/testify v1.3.0 // indirect
 	github.com/writeas/activity v0.1.2
+	github.com/writeas/activityserve v0.0.0-20191008122325-5fc3b48e70c5
 	github.com/writeas/go-strip-markdown v2.0.1+incompatible
 	github.com/writeas/go-webfinger v0.0.0-20190106002315-85cf805c86d2
 	github.com/writeas/httpsig v1.0.0
@@ -58,3 +61,5 @@ require (
 	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0 // indirect
 	gopkg.in/yaml.v2 v2.2.2 // indirect
 )
+
+go 1.13

@@ -26,6 +26,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/writeas/activity/streams"
+	"github.com/writeas/activityserve"
 	"github.com/writeas/httpsig"
 	"github.com/writeas/impart"
 	"github.com/writeas/nerds/store"
@@ -594,12 +595,12 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 		}
 	}
 
+	var activity *activitystreams.Activity
 	for si, instFolls := range inboxes {
 		na.CC = []string{}
 		for _, f := range instFolls {
 			na.CC = append(na.CC, f)
 		}
-		var activity *activitystreams.Activity
 		if isUpdate {
 			activity = activitystreams.NewUpdateActivity(na)
 		} else {
@@ -612,6 +613,28 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			log.Error("Couldn't post! %v", err)
 		}
 	}
+
+	for _, tag := range na.Tag {
+		if tag.Type == "Mention" {
+			activity = activitystreams.NewCreateActivity(na)
+			activity.To = na.To
+			activity.CC = na.CC
+			// This here might be redundant in some cases as we might have already
+			// sent this to the sharedInbox of this instance above, but we need too
+			// much logic to catch this at the expense of the odd extra request.
+			// I don't believe we'd ever have too many mentions in a single post that this
+			// could become a burden.
+			remoteActor, err := activityserve.NewRemoteActor(tag.HRef)
+			if err != nil {
+				log.Error("Couldn't fetch remote actor", err)
+			}
+			err = makeActivityPost(app.cfg.App.Host, actor, remoteActor.GetInbox(), activity)
+			if err != nil {
+				log.Error("Couldn't post! %v", err)
+			}
+		}
+	}
+
 	return nil
 }
 

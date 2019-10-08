@@ -1108,6 +1108,24 @@ func (p *PublicPost) ActivityObject(cfg *config.Config) *activitystreams.Object 
 			})
 		}
 	}
+	// Find mentioned users
+	mentionedUsers := make(map[string]string)
+	//:= map[string]string{"@qwazix@pleroma.site": "https://pleroma.site/users/qwazix", "@tzo@cybre.space": "https://cybre.space/users/tzo"}
+
+	stripper := bluemonday.StrictPolicy()
+	content := stripper.Sanitize(p.Content)
+	mentionRegex := regexp.MustCompile(`@[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}`)
+	mentions := mentionRegex.FindAllString(content, -1)
+
+	for _, handle := range mentions {
+		actorIRI := RemoteLookup(handle)
+		mentionedUsers[handle] = actorIRI
+	}
+
+	for handle, iri := range mentionedUsers {
+		o.CC = append(o.CC, iri)
+		o.Tag = append(o.Tag, activitystreams.Tag{"Mention", iri, handle})
+	}
 	return o
 }
 

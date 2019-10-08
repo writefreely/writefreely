@@ -11,11 +11,15 @@
 package writefreely
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"strings"
+
 	"github.com/writeas/go-webfinger"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
-	"net/http"
 )
 
 type wfResolver struct {
@@ -79,4 +83,29 @@ func (wfr wfResolver) DummyUser(username string, hostname string, r []webfinger.
 
 func (wfr wfResolver) IsNotFoundError(err error) bool {
 	return err == wfUserNotFoundErr
+}
+
+// RemoteLookup looks up a user by handle at a remote server
+// and returns the actor URL
+// TODO make this work
+func RemoteLookup(handle string) string {
+	handle = strings.TrimLeft(handle, "@")
+	// let's take the server part of the handle
+	parts := strings.Split(handle, "@")
+	resp, err := http.Get("https://" + parts[1] + "/.well-known/webfinger?resource=acct:" + handle)
+	if err != nil {
+		log.Error("Error performing webfinger request", err)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Error("Error reading webfinger response", err)
+	}
+
+	var result map[string]interface{}
+	json.Unmarshal(body, &result)
+
+	aliases := result["aliases"].([]interface{})
+
+	return aliases[0].(string)
 }
