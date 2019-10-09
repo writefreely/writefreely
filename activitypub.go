@@ -589,18 +589,25 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			inbox = f.Inbox
 		}
 		if _, ok := inboxes[inbox]; ok {
+			// check if we're already sending to this shared inbox
 			inboxes[inbox] = append(inboxes[inbox], f.ActorID)
 		} else {
+			// add the new shared inbox to the list
 			inboxes[inbox] = []string{f.ActorID}
 		}
 	}
 
 	var activity *activitystreams.Activity
+	// for each one of the shared inboxes
 	for si, instFolls := range inboxes {
+		// add all followers from that instance
+		// to the CC field
 		na.CC = []string{}
 		for _, f := range instFolls {
 			na.CC = append(na.CC, f)
 		}
+		// create a new "Create" activity
+		// with our article as object
 		if isUpdate {
 			activity = activitystreams.NewUpdateActivity(na)
 		} else {
@@ -608,11 +615,18 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			activity.To = na.To
 			activity.CC = na.CC
 		}
+		// and post it to that sharedInbox
 		err = makeActivityPost(app.cfg.App.Host, actor, si, activity)
 		if err != nil {
 			log.Error("Couldn't post! %v", err)
 		}
 	}
+
+	// re-create the object so that the CC list gets reset and has
+	// the mentioned users. This might seem wasteful but the code is
+	// cleaner than adding the mentioned users to CC here instead of
+	// in p.ActivityObject()
+	na = p.ActivityObject(app.cfg)
 
 	for _, tag := range na.Tag {
 		if tag.Type == "Mention" {
@@ -632,6 +646,8 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			if err != nil {
 				log.Error("Couldn't post! %v", err)
 			}
+			// log.Info("Activity", activity)
+
 		}
 	}
 

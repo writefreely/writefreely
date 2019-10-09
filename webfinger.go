@@ -87,7 +87,6 @@ func (wfr wfResolver) IsNotFoundError(err error) bool {
 
 // RemoteLookup looks up a user by handle at a remote server
 // and returns the actor URL
-// TODO make this work
 func RemoteLookup(handle string) string {
 	handle = strings.TrimLeft(handle, "@")
 	// let's take the server part of the handle
@@ -95,11 +94,13 @@ func RemoteLookup(handle string) string {
 	resp, err := http.Get("https://" + parts[1] + "/.well-known/webfinger?resource=acct:" + handle)
 	if err != nil {
 		log.Error("Error performing webfinger request", err)
+		return ""
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Error("Error reading webfinger response", err)
+		return ""
 	}
 
 	var result map[string]interface{}
