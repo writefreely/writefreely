@@ -25,7 +25,6 @@ import (
 	"github.com/guregu/null/zero"
 	"github.com/kylemcc/twitter-text-go/extract"
 	"github.com/microcosm-cc/bluemonday"
-	"github.com/writeas/activityserve"
 	stripmd "github.com/writeas/go-strip-markdown"
 	"github.com/writeas/impart"
 	"github.com/writeas/monday"
@@ -1118,37 +1117,10 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 	mentions := mentionRegex.FindAllString(content, -1)
 
 	for _, handle := range mentions {
-		var actorIRI string
-		remoteuser, errRemoteUser := getRemoteUserFromHandle(app, handle)
-		if errRemoteUser != nil {
-			// can't find using handle in the table but the table may already have this user without
-			// handle from a previous version
-			actorIRI = RemoteLookup(handle)
-			_, errRemoteUser := getRemoteUser(app, actorIRI)
-			// if it exists then we need to update the handle
-			if errRemoteUser == nil {
-				// query := "UPDATE remoteusers SET handle='" + handle + "' WHERE actor_id='" + iri + "';"
-				// log.Info(query)
-				_, err := app.db.Exec("UPDATE remoteusers SET handle=? WHERE actor_id=?;", handle, actorIRI)
-				if err != nil {
-					log.Error("Can't update handle (" + handle + ") in database for user " + actorIRI)
-				}
-			} else {
-				// this probably means we don't have the user in the table so let's try to insert it
-				// here we need to ask the server for the inboxes
-				remoteActor, err := activityserve.NewRemoteActor(actorIRI)
-				if err != nil {
-					log.Error("Couldn't fetch remote actor", err)
-				}
-				fmt.Println(actorIRI, remoteActor.GetInbox(), remoteActor.GetSharedInbox(), handle)
-				_, err = app.db.Exec("INSERT INTO remoteusers (actor_id, inbox, shared_inbox, handle) VALUES( ?, ?, ?, ?)", actorIRI, remoteActor.GetInbox(), remoteActor.GetSharedInbox(), handle)
-				if err != nil {
-					log.Error("Can't insert remote user in database", err)
-					return nil
-				}
-			}
-		} else {
-			actorIRI = remoteuser.ActorID
+		actorIRI, err := app.db.getProfilePageFromHandle(app, handle)
+		if err != nil {
+			log.Info("Can't find this user either in the database nor in the remote instance")
+			return nil
 		}
 		mentionedUsers[handle] = actorIRI
 	}

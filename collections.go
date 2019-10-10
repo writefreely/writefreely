@@ -824,13 +824,14 @@ func handleViewMention(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	handle := vars["handle"]
 
-	remoteUser, err := getRemoteUserFromHandle(app, handle)
+	remoteUser, err := app.db.getProfilePageFromHandle(app, handle)
 	if err != nil {
-		log.Error("Couldn't find this user in our database "+handle, err)
-		return err
+		log.Error("Couldn't find this user "+handle, err)
+		return nil
 	}
 
-	w.Write([]byte("go to " + remoteUser.ActorID))
+	http.Redirect(w, r, remoteUser, http.StatusSeeOther)
+	w.Write([]byte("go to " + remoteUser))
 
 	return nil
 }
