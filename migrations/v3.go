@@ -19,5 +19,11 @@ func supportActivityPubMentions(db *datastore) error {
 		return err
 	}
 
+	err = t.Commit()
+	if err != nil {
+		t.Rollback()
+		return err
+	}
+
 	return nil
 }
