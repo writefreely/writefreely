@@ -34,6 +34,7 @@ var (
 	titleElementReg = regexp.MustCompile("</?h[1-6]>")
 	hashtagReg      = regexp.MustCompile(`{{\[\[\|\|([^|]+)\|\|\]\]}}`)
 	markeddownReg   = regexp.MustCompile("<p>(.+)</p>")
+	mentionReg      = regexp.MustCompile(`@[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]+\b`)
 )
 
 func (p *Post) formatContent(cfg *config.Config, c *Collection, isOwner bool) {
@@ -82,6 +83,8 @@ func applyMarkdownSpecial(data []byte, skipNoFollow bool, baseURL string, cfg *c
 			tagPrefix = "/read/t/"
 		}
 		md = []byte(hashtagReg.ReplaceAll(md, []byte("<a href=\""+tagPrefix+"$1\" class=\"hashtag\"><span>#</span><span class=\"p-category\">$1</span></a>")))
+		handlePrefix := baseURL + "mention:"
+		md = []byte(mentionReg.ReplaceAll(md, []byte("<a href=\""+handlePrefix+"$0\" class=\"mention\">$0</a>")))
 	}
 	// Strip out bad HTML
 	policy := getSanitizationPolicy()

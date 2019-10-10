@@ -25,6 +25,7 @@ import (
 	"github.com/guregu/null/zero"
 	"github.com/kylemcc/twitter-text-go/extract"
 	"github.com/microcosm-cc/bluemonday"
+	"github.com/writeas/activityserve"
 	stripmd "github.com/writeas/go-strip-markdown"
 	"github.com/writeas/impart"
 	"github.com/writeas/monday"
@@ -35,7 +36,6 @@ import (
 	"github.com/writeas/web-core/i18n"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/tags"
-	"github.com/writeas/writefreely/config"
 	"github.com/writeas/writefreely/page"
 	"github.com/writeas/writefreely/parse"
 )
@@ -1033,7 +1033,7 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 
 		p.Collection = &CollectionObj{Collection: *coll}
-		po := p.ActivityObject(app.cfg)
+		po := p.ActivityObject(app)
 		po.Context = []interface{}{activitystreams.Namespace}
 		return impart.RenderActivityJSON(w, po, http.StatusOK)
 	}
@@ -1068,7 +1068,8 @@ func (p *PublicPost) CanonicalURL() string {
 	return p.Collection.CanonicalURL() + p.Slug.String
 }
 
-func (p *PublicPost) ActivityObject(cfg *config.Config) *activitystreams.Object {
+func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
+	cfg := app.cfg
 	o := activitystreams.NewArticleObject()
 	o.ID = p.Collection.FederatedAPIBase() + "api/posts/" + p.ID
 	o.Published = p.Created
@@ -1117,7 +1118,38 @@ func (p *PublicPost) ActivityObject(cfg *config.Config) *activitystreams.Object 
 	mentions := mentionRegex.FindAllString(content, -1)
 
 	for _, handle := range mentions {
-		actorIRI := RemoteLookup(handle)
+		var actorIRI string
+		remoteuser, errRemoteUser := getRemoteUserFromHandle(app, handle)
+		if errRemoteUser != nil {
+			// can't find using handle in the table but the table may already have this user without
+			// handle from a previous version
+			actorIRI = RemoteLookup(handle)
+			_, errRemoteUser := getRemoteUser(app, actorIRI)
+			// if it exists then we need to update the handle
+			if errRemoteUser == nil {
+				// query := "UPDATE remoteusers SET handle='" + handle + "' WHERE actor_id='" + iri + "';"
+				// log.Info(query)
+				_, err := app.db.Exec("UPDATE remoteusers SET handle=? WHERE actor_id=?;", handle, actorIRI)
+				if err != nil {
+					log.Error("Can't update handle (" + handle + ") in database for user " + actorIRI)
+				}
+			} else {
+				// this probably means we don't have the user in the table so let's try to insert it
+				// here we need to ask the server for the inboxes
+				remoteActor, err := activityserve.NewRemoteActor(actorIRI)
+				if err != nil {
+					log.Error("Couldn't fetch remote actor", err)
+				}
+				fmt.Println(actorIRI, remoteActor.GetInbox(), remoteActor.GetSharedInbox(), handle)
+				_, err = app.db.Exec("INSERT INTO remoteusers (actor_id, inbox, shared_inbox, handle) VALUES( ?, ?, ?, ?)", actorIRI, remoteActor.GetInbox(), remoteActor.GetSharedInbox(), handle)
+				if err != nil {
+					log.Error("Can't insert remote user in database", err)
+					return nil
+				}
+			}
+		} else {
+			actorIRI = remoteuser.ActorID
+		}
 		mentionedUsers[handle] = actorIRI
 	}
 
@@ -1379,7 +1411,7 @@ Are you sure it was ever here?`,
 			return ErrCollectionPageNotFound
 		}
 		p.extractData()
-		ap := p.ActivityObject(app.cfg)
+		ap := p.ActivityObject(app)
 		ap.Context = []interface{}{activitystreams.Namespace}
 		return impart.RenderActivityJSON(w, ap, http.StatusOK)
 	} else {

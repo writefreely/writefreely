@@ -26,7 +26,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/writeas/activity/streams"
-	"github.com/writeas/activityserve"
 	"github.com/writeas/httpsig"
 	"github.com/writeas/impart"
 	"github.com/writeas/nerds/store"
@@ -45,6 +44,7 @@ type RemoteUser struct {
 	ActorID     string
 	Inbox       string
 	SharedInbox string
+	Handle      string
 }
 
 func (ru *RemoteUser) AsPerson() *activitystreams.Person {
@@ -133,7 +133,7 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 	posts, err := app.db.GetPosts(app.cfg, c, p, false, true, false)
 	for _, pp := range *posts {
 		pp.Collection = res
-		o := pp.ActivityObject(app.cfg)
+		o := pp.ActivityObject(app)
 		a := activitystreams.NewCreateActivity(o)
 		ocp.OrderedItems = append(ocp.OrderedItems, *a)
 	}
@@ -525,7 +525,7 @@ func deleteFederatedPost(app *App, p *PublicPost, collID int64) error {
 	}
 	p.Collection.hostName = app.cfg.App.Host
 	actor := p.Collection.PersonObject(collID)
-	na := p.ActivityObject(app.cfg)
+	na := p.ActivityObject(app)
 
 	// Add followers
 	p.Collection.ID = collID
@@ -571,7 +571,7 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 		}
 	}
 	actor := p.Collection.PersonObject(collID)
-	na := p.ActivityObject(app.cfg)
+	na := p.ActivityObject(app)
 
 	// Add followers
 	p.Collection.ID = collID
@@ -626,8 +626,7 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 	// the mentioned users. This might seem wasteful but the code is
 	// cleaner than adding the mentioned users to CC here instead of
 	// in p.ActivityObject()
-	na = p.ActivityObject(app.cfg)
-
+	na = p.ActivityObject(app)
 	for _, tag := range na.Tag {
 		if tag.Type == "Mention" {
 			activity = activitystreams.NewCreateActivity(na)
@@ -638,11 +637,11 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			// much logic to catch this at the expense of the odd extra request.
 			// I don't believe we'd ever have too many mentions in a single post that this
 			// could become a burden.
-			remoteActor, err := activityserve.NewRemoteActor(tag.HRef)
-			if err != nil {
-				log.Error("Couldn't fetch remote actor", err)
-			}
-			err = makeActivityPost(app.cfg.App.Host, actor, remoteActor.GetInbox(), activity)
+
+			fmt.Println(tag.HRef)
+			fmt.Println("aaa")
+			remoteUser, err := getRemoteUser(app, tag.HRef)
+			err = makeActivityPost(app.cfg.App.Host, actor, remoteUser.Inbox, activity)
 			if err != nil {
 				log.Error("Couldn't post! %v", err)
 			}
@@ -656,7 +655,7 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 
 func getRemoteUser(app *App, actorID string) (*RemoteUser, error) {
 	u := RemoteUser{ActorID: actorID}
-	err := app.db.QueryRow("SELECT id, inbox, shared_inbox FROM remoteusers WHERE actor_id = ?", actorID).Scan(&u.ID, &u.Inbox, &u.SharedInbox)
+	err := app.db.QueryRow("SELECT id, inbox, shared_inbox, handle FROM remoteusers WHERE actor_id = ?", actorID).Scan(&u.ID, &u.Inbox, &u.SharedInbox, &u.Handle)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, impart.HTTPError{http.StatusNotFound, "No remote user with that ID."}
@@ -665,6 +664,21 @@ func getRemoteUser(app *App, actorID string) (*RemoteUser, error) {
 		return nil, err
 	}
 
+	return &u, nil
+}
+
+// getRemoteUserFromHandle retrieves the profile page of a remote user
+// from the @user@server.tld handle
+func getRemoteUserFromHandle(app *App, handle string) (*RemoteUser, error) {
+	u := RemoteUser{Handle: handle}
+	err := app.db.QueryRow("SELECT id, actor_id, inbox, shared_inbox FROM remoteusers WHERE handle = ?", handle).Scan(&u.ID, &u.ActorID, &u.Inbox, &u.SharedInbox)
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, impart.HTTPError{http.StatusNotFound, "No remote user with that handle."}
+	case err != nil:
+		log.Error("Couldn't get remote user %s: %v", handle, err)
+		return nil, err
+	}
 	return &u, nil
 }
 

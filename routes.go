@@ -184,6 +184,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 
 func RouteCollections(handler *Handler, r *mux.Router) {
 	r.HandleFunc("/page/{page:[0-9]+}", handler.Web(handleViewCollection, UserLevelReader))
+	r.HandleFunc("/mention:{handle}", handler.Web(handleViewMention, UserLevelReader))
 	r.HandleFunc("/tag:{tag}", handler.Web(handleViewCollectionTag, UserLevelReader))
 	r.HandleFunc("/tag:{tag}/feed/", handler.Web(ViewFeed, UserLevelReader))
 	r.HandleFunc("/tags/{tag}", handler.Web(handleViewCollectionTag, UserLevelReader))

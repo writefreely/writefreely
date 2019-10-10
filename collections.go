@@ -820,6 +820,21 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 	return err
 }
 
+func handleViewMention(app *App, w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	handle := vars["handle"]
+
+	remoteUser, err := getRemoteUserFromHandle(app, handle)
+	if err != nil {
+		log.Error("Couldn't find this user in our database "+handle, err)
+		return err
+	}
+
+	w.Write([]byte("go to " + remoteUser.ActorID))
+
+	return nil
+}
+
 func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	tag := vars["tag"]
