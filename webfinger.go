@@ -108,5 +108,5 @@ func RemoteLookup(handle string) string {
 
 	aliases := result["aliases"].([]interface{})
 
-	return aliases[0].(string)
+	return aliases[len(aliases)-1].(string)
 }
