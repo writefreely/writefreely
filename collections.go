@@ -830,10 +830,7 @@ func handleViewMention(app *App, w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	http.Redirect(w, r, remoteUser, http.StatusSeeOther)
-	w.Write([]byte("go to " + remoteUser))
-
-	return nil
+	return impart.HTTPError{Status: http.StatusFound, Message: remoteUser} 
 }
 
 func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) error {

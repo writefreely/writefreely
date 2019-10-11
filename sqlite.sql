@@ -172,7 +172,6 @@ CREATE TABLE IF NOT EXISTS `remoteusers` (
   actor_id TEXT NOT NULL,
   inbox TEXT NOT NULL,
   shared_inbox TEXT NOT NULL,
-  handle TEXT DEFAULT '' NOT NULL,
   CONSTRAINT collection_id UNIQUE (actor_id)
 );
 

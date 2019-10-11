@@ -70,6 +70,9 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	write.HandleFunc(nodeinfo.NodeInfoPath, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfoDiscover)))
 	write.HandleFunc(niCfg.InfoURL, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfo)))
 
+	// handle mentions
+	write.HandleFunc("/mention:{handle}", handler.Web(handleViewMention, UserLevelReader))
+
 	// Set up dyamic page handlers
 	// Handle auth
 	auth := write.PathPrefix("/api/auth/").Subrouter()
@@ -184,7 +187,6 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 
 func RouteCollections(handler *Handler, r *mux.Router) {
 	r.HandleFunc("/page/{page:[0-9]+}", handler.Web(handleViewCollection, UserLevelReader))
-	r.HandleFunc("/mention:{handle}", handler.Web(handleViewMention, UserLevelReader))
 	r.HandleFunc("/tag:{tag}", handler.Web(handleViewCollectionTag, UserLevelReader))
 	r.HandleFunc("/tag:{tag}/feed/", handler.Web(ViewFeed, UserLevelReader))
 	r.HandleFunc("/tags/{tag}", handler.Web(handleViewCollectionTag, UserLevelReader))

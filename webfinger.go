@@ -106,7 +106,22 @@ func RemoteLookup(handle string) string {
 	var result map[string]interface{}
 	json.Unmarshal(body, &result)
 
-	aliases := result["aliases"].([]interface{})
+	var href string
+	for _, link := range result["links"].([]interface{}) {
+		if link.(map[string]interface{})["rel"] == "self" {
+			href = link.(map[string]interface{})["href"].(string)
+		}
+	}
 
-	return aliases[len(aliases)-1].(string)
+	// if we didn't find it with the above then
+	// try using aliases
+	if href == "" {
+		aliases := result["aliases"].([]interface{})
+		// take the last alias because mastodon has the
+		// https://instance.tld/@user first which
+		// doesn't work as an href
+		href = aliases[len(aliases)-1].(string)
+	}
+
+	return href
 }

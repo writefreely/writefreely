@@ -637,16 +637,11 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			// much logic to catch this at the expense of the odd extra request.
 			// I don't believe we'd ever have too many mentions in a single post that this
 			// could become a burden.
-
-			fmt.Println(tag.HRef)
-			fmt.Println("aaa")
 			remoteUser, err := getRemoteUser(app, tag.HRef)
 			err = makeActivityPost(app.cfg.App.Host, actor, remoteUser.Inbox, activity)
 			if err != nil {
 				log.Error("Couldn't post! %v", err)
 			}
-			// log.Info("Activity", activity)
-
 		}
 	}
 
