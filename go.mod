@@ -38,7 +38,7 @@ require (
 	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
 	github.com/stretchr/testify v1.3.0 // indirect
 	github.com/writeas/activity v0.1.2
-	github.com/writeas/activityserve v0.0.0-20191008122325-5fc3b48e70c5
+	github.com/writeas/activityserve v0.0.0-20191011072627-3a81f7784d5b
 	github.com/writeas/go-strip-markdown v2.0.1+incompatible
 	github.com/writeas/go-webfinger v0.0.0-20190106002315-85cf805c86d2
 	github.com/writeas/httpsig v1.0.0

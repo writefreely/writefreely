@@ -107,6 +107,8 @@ func RemoteLookup(handle string) string {
 	json.Unmarshal(body, &result)
 
 	var href string
+	// iterate over webfinger links and find the one with
+	// a self "rel"
 	for _, link := range result["links"].([]interface{}) {
 		if link.(map[string]interface{})["rel"] == "self" {
 			href = link.(map[string]interface{})["href"].(string)
