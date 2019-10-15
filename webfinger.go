@@ -103,26 +103,30 @@ func RemoteLookup(handle string) string {
 		return ""
 	}
 
-	var result map[string]interface{}
-	json.Unmarshal(body, &result)
+	var result webfinger.Resource
+	err = json.Unmarshal(body, &result)
+
+	if err != nil {
+		log.Error("Unsupported webfinger response received", err)
+		return ""
+	}
 
 	var href string
 	// iterate over webfinger links and find the one with
 	// a self "rel"
-	for _, link := range result["links"].([]interface{}) {
-		if link.(map[string]interface{})["rel"] == "self" {
-			href = link.(map[string]interface{})["href"].(string)
+	for _, link := range result.Links {
+		if link.Rel == "self" {
+			href = link.HRef
 		}
 	}
 
 	// if we didn't find it with the above then
 	// try using aliases
 	if href == "" {
-		aliases := result["aliases"].([]interface{})
 		// take the last alias because mastodon has the
 		// https://instance.tld/@user first which
 		// doesn't work as an href
-		href = aliases[len(aliases)-1].(string)
+		href = result.Aliases[len(result.Aliases)-1]
 	}
 
 	return href
