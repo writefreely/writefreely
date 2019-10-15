@@ -2,7 +2,6 @@
 @secondary: rgb(114, 191, 133);
 @subheaders: #444;
 @headerTextColor: black;
-@headerTextColorDarkMode: white;
 @sansFont: 'Open Sans', 'Segoe UI', Tahoma, Arial, sans-serif;
 @serifFont: Lora, 'Palatino Linotype', 'Book Antiqua', 'New York', 'DejaVu serif', serif;
 @monoFont: Hack, consolas, Menlo-Regular, Menlo, Monaco, 'ubuntu mono', monospace, monospace;
@@ -10,10 +9,6 @@
 @errUrgentCol: #ecc63c;
 @proSelectedCol: #71D571;
 @textLinkColor: rgb(0, 0, 238);
-
-:root {
-    color-scheme: light dark;
-}
 
 body {
 	font-family: @serifFont;
@@ -1515,54 +1510,4 @@ div.row {
 }
 pre.code-block {
 	overflow-x: auto;
-}
-
-@media (prefers-color-scheme: dark) {
-    body{
-		color: #eee;
-		background: #111;
-
-		.post-title a:link{
-			color: #ccc;
-		}
-
-		&#collection{
-			color: #eee;
-
-			pre{
-				background: #060606;
-			}
-		}
-
-		h1, header h2 {
-			a {
-				color: @headerTextColorDarkMode;
-				&:hover {
-					color: #cfcfcf;
-				}
-			}
-		}
-
-		#nav#manage ul a, .dropdown-nav ul a, nav#manage ul ul a, nav#manage ul a{
-			color: #ccc;
-		}
-
-		.dropdown-nav ul ul, .dropdown-nav ul li:hover, nav#manage ul ul, nav#manage ul ul li:hover, nav#manage ul li:hover{
-			background: #222;
-		}
-
-		#official-writing h2, #official-writing h3, #official-writing h4, #wrapper h2, #wrapper h3, #wrapper h4{
-			color: #ddd;
-		}
-
-		a {
-			color: rgb(162, 162, 255);
-		}
-
-		a:visited{
-			color: rgb(201, 138, 253);
-		}
-
-	}
-
 }
