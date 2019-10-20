@@ -15,7 +15,7 @@ Please use the [GitHub issue tracker](https://github.com/writeas/writefreely/iss
 * **Only reporting bugs in the issue tracker**
 * Providing as much information as possible to replicate the issue, including server logs around the incident
 * Including the `[app]` section of your configuration, if related
-* Breaking issues into smaller pieces if they're larger or have many parts
+* Breaking issues into smaller pieces if they're larger or have many parts.
 
 ## Contributing code
 
