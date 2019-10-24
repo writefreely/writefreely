@@ -405,6 +405,31 @@ body {
 	}
 }
 
+nav#full-nav {
+	margin: 0;
+
+	.left-side {
+		display: inline-block;
+
+		a:first-child {
+			margin-left: 0;
+		}
+	}
+
+	.right-side {
+		float: right;
+	}
+}
+
+nav#full-nav a.simple-btn, .tool button {
+	font-family: @sansFont;
+	border: 1px solid #ccc !important;
+	padding: .5rem 1rem;
+	margin: 0;
+	.rounded(.25em);
+	text-decoration: none;
+}
+
 .post-title {
 	a {
 		&:link {

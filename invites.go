@@ -119,6 +119,36 @@ func handleViewInvite(app *App, w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	expired := i.Expired()
+	if !expired && i.MaxUses.Valid && i.MaxUses.Int64 > 0 {
+		// Invite has a max-use number, so check if we're past that limit
+		i.uses = app.db.GetUsersInvitedCount(inviteCode)
+		expired = i.uses >= i.MaxUses.Int64
+	}
+
+	if u := getUserSession(app, r); u != nil {
+		// check if invite belongs to another user
+		// error can be ignored as not important in this case
+		if ownInvite, _ := app.db.IsUsersInvite(inviteCode, u.ID); !ownInvite {
+			addSessionFlash(app, w, r, "You're already registered and logged in.", nil)
+			// show homepage
+			return impart.HTTPError{http.StatusFound, "/me/settings"}
+		}
+
+		// show invite instructions
+		p := struct {
+			*UserPage
+			Invite  *Invite
+			Expired bool
+		}{
+			UserPage: NewUserPage(app, r, u, "Invite to "+app.cfg.App.SiteName, nil),
+			Invite:   i,
+			Expired:  expired,
+		}
+		showUserPage(w, "invite-help", p)
+		return nil
+	}
+
 	p := struct {
 		page.StaticPage
 		Error   string
@@ -129,14 +159,8 @@ func handleViewInvite(app *App, w http.ResponseWriter, r *http.Request) error {
 		Invite:     inviteCode,
 	}
 
-	if i.Expired() {
+	if expired {
 		p.Error = "This invite link has expired."
-	}
-
-	if i.MaxUses.Valid && i.MaxUses.Int64 > 0 {
-		if c := app.db.GetUsersInvitedCount(inviteCode); c >= i.MaxUses.Int64 {
-			p.Error = "This invite link has expired."
-		}
 	}
 
 	// Get error messages

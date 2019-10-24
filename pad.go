@@ -49,7 +49,7 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 	var err error
 	if appData.User != nil {
-		appData.Blogs, err = app.db.GetPublishableCollections(appData.User)
+		appData.Blogs, err = app.db.GetPublishableCollections(appData.User, app.cfg.App.Host)
 		if err != nil {
 			log.Error("Unable to get user's blogs for Pad: %v", err)
 		}
@@ -60,16 +60,13 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 
 	padTmpl := app.cfg.App.Editor
-	if padTmpl == "" {
+	if templates[padTmpl] == nil {
+		log.Info("No template '%s' found. Falling back to default 'pad' template.", padTmpl)
 		padTmpl = "pad"
 	}
 
 	if action == "" && slug == "" {
 		// Not editing any post; simply render the Pad
-		if templates[padTmpl] == nil {
-			log.Info("No template '%s' found. Falling back to default 'pad' template.", padTmpl)
-			padTmpl = "pad"
-		}
 		if err = templates[padTmpl].ExecuteTemplate(w, "pad", appData); err != nil {
 			log.Error("Unable to execute template: %v", err)
 		}

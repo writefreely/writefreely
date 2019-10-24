@@ -28,6 +28,7 @@ import (
 	"github.com/writeas/web-core/data"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/author"
+	"github.com/writeas/writefreely/config"
 	"github.com/writeas/writefreely/page"
 )
 
@@ -59,9 +60,13 @@ func NewUserPage(app *App, r *http.Request, u *User, title string, flashes []str
 	up.Flashes = flashes
 	up.Path = r.URL.Path
 	up.IsAdmin = u.IsAdmin()
-	up.CanInvite = app.cfg.App.UserInvites != "" &&
-		(up.IsAdmin || app.cfg.App.UserInvites != "admin")
+	up.CanInvite = canUserInvite(app.cfg, up.IsAdmin)
 	return up
+}
+
+func canUserInvite(cfg *config.Config, isAdmin bool) bool {
+	return cfg.App.UserInvites != "" &&
+		(isAdmin || cfg.App.UserInvites != "admin")
 }
 
 func (up *UserPage) SetMessaging(u *User) {
@@ -305,10 +310,10 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p := &struct {
 		page.StaticPage
-		To       string
-		Message  template.HTML
-		Flashes  []template.HTML
-		Username string
+		To            string
+		Message       template.HTML
+		Flashes       []template.HTML
+		LoginUsername string
 	}{
 		pageForReq(app, r),
 		r.FormValue("to"),
@@ -547,7 +552,7 @@ func getVerboseAuthUser(app *App, token string, u *User, verbose bool) *AuthUser
 		if err != nil {
 			log.Error("Login: Unable to get user posts: %v", err)
 		}
-		colls, err := app.db.GetCollections(u)
+		colls, err := app.db.GetCollections(u, app.cfg.App.Host)
 		if err != nil {
 			log.Error("Login: Unable to get user collections: %v", err)
 		}
@@ -717,7 +722,7 @@ func viewMyCollectionsAPI(app *App, u *User, w http.ResponseWriter, r *http.Requ
 		return ErrBadRequestedType
 	}
 
-	p, err := app.db.GetCollections(u)
+	p, err := app.db.GetCollections(u, app.cfg.App.Host)
 	if err != nil {
 		return err
 	}
@@ -740,7 +745,7 @@ func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		log.Error("unable to fetch flashes: %v", err)
 	}
 
-	c, err := app.db.GetPublishableCollections(u)
+	c, err := app.db.GetPublishableCollections(u, app.cfg.App.Host)
 	if err != nil {
 		log.Error("unable to fetch collections: %v", err)
 	}
@@ -763,7 +768,7 @@ func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 }
 
 func viewCollections(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
-	c, err := app.db.GetCollections(u)
+	c, err := app.db.GetCollections(u, app.cfg.App.Host)
 	if err != nil {
 		log.Error("unable to fetch collections: %v", err)
 		return fmt.Errorf("No collections")

@@ -65,18 +65,23 @@
 		}
 		body#collection header nav {
 			display: inline !important;
+		}
+		body#collection header nav:not(#full-nav):not(#user-nav) {
 			margin: 0 0 0 1em !important;
 		}
 		header nav#user-nav {
 			margin-left: 0 !important;
+		}
+		body#collection header nav.tabs a:first-child {
+			margin-left: 1em;
 		}
 		</style>
 {{end}}
 {{define "body-attrs"}}id="collection"{{end}}
 {{define "content"}}
 	<div class="content-container snug" style="max-width: 40rem;">
-		<h1 style="text-align:center">Reader</h1>
-		<p>Read the latest posts from {{.SiteName}}. {{if .Username}}To showcase your writing here, go to your <a href="/me/c/">blog</a> settings and select the <em>Public</em> option.{{end}}</p>
+		<h1>{{.ContentTitle}}</h1>
+		<p{{if .SelTopic}} style="text-align:center"{{end}}>{{if .SelTopic}}#{{.SelTopic}} posts{{else}}{{.Content}}{{end}}</p>
 	</div>
 		<div id="wrapper">
 		{{ if gt (len .Posts) 0 }}
