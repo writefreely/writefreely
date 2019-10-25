@@ -71,7 +71,7 @@ func (app *App) FetchPublicPosts() (interface{}, error) {
 	FROM collections c
 	LEFT JOIN posts p ON p.collection_id = c.id
 	LEFT JOIN users u ON u.id = p.owner_id
-	WHERE c.privacy = 1 AND (p.created >= ` + app.db.dateSub(3, "month") + ` AND p.created <= ` + app.db.now() + ` AND pinned_position IS NULL) AND u.suspended = 0
+	WHERE c.privacy = 1 AND (p.created >= ` + app.db.dateSub(3, "month") + ` AND p.created <= ` + app.db.now() + ` AND pinned_position IS NULL) AND u.status = 0
 	ORDER BY p.created DESC`)
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)

@@ -82,7 +82,7 @@ func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Re
 	}
 	suspended, err := app.db.IsUserSuspended(c.OwnerID)
 	if err != nil {
-		log.Error("fetch collection inbox: get owner: %v", err)
+		log.Error("fetch collection activities: %v", err)
 		return ErrInternalGeneral
 	}
 	if suspended {
@@ -115,7 +115,7 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 	}
 	suspended, err := app.db.IsUserSuspended(c.OwnerID)
 	if err != nil {
-		log.Error("fetch collection inbox: get owner: %v", err)
+		log.Error("fetch collection outbox: %v", err)
 		return ErrInternalGeneral
 	}
 	if suspended {
@@ -176,7 +176,7 @@ func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Req
 	}
 	suspended, err := app.db.IsUserSuspended(c.OwnerID)
 	if err != nil {
-		log.Error("fetch collection inbox: get owner: %v", err)
+		log.Error("fetch collection followers: %v", err)
 		return ErrInternalGeneral
 	}
 	if suspended {
@@ -230,7 +230,7 @@ func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Req
 	}
 	suspended, err := app.db.IsUserSuspended(c.OwnerID)
 	if err != nil {
-		log.Error("fetch collection inbox: get owner: %v", err)
+		log.Error("fetch collection following: %v", err)
 		return ErrInternalGeneral
 	}
 	if suspended {
@@ -272,7 +272,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 	}
 	suspended, err := app.db.IsUserSuspended(c.OwnerID)
 	if err != nil {
-		log.Error("fetch collection inbox: get owner: %v", err)
+		log.Error("fetch collection inbox: %v", err)
 		return ErrInternalGeneral
 	}
 	if suspended {

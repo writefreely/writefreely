@@ -230,28 +230,27 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 	return nil
 }
 
-func handleAdminToggleUserSuspended(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+func handleAdminToggleUserStatus(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	username := vars["username"]
 	if username == "" {
 		return impart.HTTPError{http.StatusFound, "/admin/users"}
 	}
 
-	userToToggle, err := app.db.GetUserForAuth(username)
+	user, err := app.db.GetUserForAuth(username)
 	if err != nil {
 		log.Error("failed to get user: %v", err)
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get user from username: %v", err)}
 	}
-	if userToToggle.Suspended {
-		err = app.db.SetUserSuspended(userToToggle.ID, false)
+	if user.Status == UserSuspended {
+		err = app.db.SetUserStatus(user.ID, UserActive)
 	} else {
-		err = app.db.SetUserSuspended(userToToggle.ID, true)
+		err = app.db.SetUserStatus(user.ID, UserSuspended)
 	}
 	if err != nil {
 		log.Error("toggle user suspended: %v", err)
-		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not toggle user suspended: %v")}
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not toggle user status: %v")}
 	}
-	// TODO: invalidate sessions
 	return impart.HTTPError{http.StatusFound, fmt.Sprintf("/admin/user/%s#status", username)}
 }
 

@@ -21,7 +21,7 @@
 			<td style="text-align:center">
 				<a 
 				href="/admin/user/{{.Username}}#status"
-				title="View or change account status">{{if .Suspended}}suspended{{else}}active{{end}}</a></td>
+				title="View or change account status">{{if eq .Status 1}}suspended{{else}}active{{end}}</a></td>
 		</tr>
 		{{end}}
 	</table>

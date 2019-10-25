@@ -19,6 +19,13 @@ import (
 	"github.com/writeas/writefreely/key"
 )
 
+type UserStatus int
+
+const (
+	UserActive = iota
+	UserSuspended
+)
+
 type (
 	userCredentials struct {
 		Alias string `json:"alias" schema:"alias"`
@@ -59,7 +66,7 @@ type (
 		HasPass    bool        `json:"has_pass"`
 		Email      zero.String `json:"email"`
 		Created    time.Time   `json:"created"`
-		Suspended  bool        `json:"suspended"`
+		Status     UserStatus  `json:"status"`
 
 		clearEmail string `json:"email"`
 	}

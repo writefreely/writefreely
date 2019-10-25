@@ -10,10 +10,10 @@
 
 package migrations
 
-func supportUserSuspension(db *datastore) error {
+func supportUserStatus(db *datastore) error {
 	t, err := db.Begin()
 
-	_, err = t.Exec(`ALTER TABLE users ADD COLUMN suspended ` + db.typeBool() + ` DEFAULT '0' NOT NULL`)
+	_, err = t.Exec(`ALTER TABLE users ADD COLUMN status ` + db.typeInt() + ` DEFAULT '0' NOT NULL`)
 	if err != nil {
 		t.Rollback()
 		return err

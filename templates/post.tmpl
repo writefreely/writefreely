@@ -36,6 +36,9 @@
 	</head>
 	<body id="post">
 
+		{{if .Suspended}}
+			{{template "user-suspended"}}
+		{{end}}
 		<header>
 			<h1 dir="{{.Direction}}"><a href="/">{{.SiteName}}</a></h1>
 			<nav>

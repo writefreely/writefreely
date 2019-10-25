@@ -383,7 +383,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	suspended, err := app.db.IsUserSuspended(ownerID.Int64)
 	if err != nil {
-		log.Error("view post: get collection owner: %v", err)
+		log.Error("view post: %v", err)
 		return ErrInternalGeneral
 	}
 
@@ -509,7 +509,7 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 	suspended, err := app.db.IsUserSuspended(userID)
 	if err != nil {
-		log.Error("new post: get user: %v", err)
+		log.Error("new post: %v", err)
 		return ErrInternalGeneral
 	}
 	if suspended {
@@ -683,7 +683,7 @@ func existingPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	suspended, err := app.db.IsUserSuspended(userID)
 	if err != nil {
-		log.Error("existing post: get user: %v", err)
+		log.Error("existing post: %v", err)
 		return ErrInternalGeneral
 	}
 	if suspended {
@@ -886,7 +886,7 @@ func addPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	suspended, err := app.db.IsUserSuspended(ownerID)
 	if err != nil {
-		log.Error("add post: get user: %v", err)
+		log.Error("add post: %v", err)
 		return ErrInternalGeneral
 	}
 	if suspended {
@@ -989,7 +989,7 @@ func pinPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	suspended, err := app.db.IsUserSuspended(userID)
 	if err != nil {
-		log.Error("pin post: get user: %v", err)
+		log.Error("pin post: %v", err)
 		return ErrInternalGeneral
 	}
 	if suspended {
@@ -1063,7 +1063,7 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 	suspended, err := app.db.IsUserSuspended(ownerID)
 	if err != nil {
-		log.Error("fetch post: get owner: %v", err)
+		log.Error("fetch post: %v", err)
 		return ErrInternalGeneral
 	}
 
@@ -1333,13 +1333,10 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 
 	suspended, err := app.db.IsUserSuspended(c.OwnerID)
 	if err != nil {
-		log.Error("view collection post: get owner: %v", err)
+		log.Error("view collection post: %v", err)
 		return ErrInternalGeneral
 	}
 
-	if suspended {
-		return ErrPostNotFound
-	}
 	// Check collection permissions
 	if c.IsPrivate() && (u == nil || u.ID != c.OwnerID) {
 		return ErrPostNotFound
@@ -1396,6 +1393,9 @@ Are you sure it was ever here?`,
 	p.Collection = coll
 	p.IsTopLevel = app.cfg.App.SingleUser
 
+	if !p.IsOwner && suspended {
+		return ErrPostNotFound
+	}
 	// Check if post has been unpublished
 	if p.Content == "" && p.Title.String == "" {
 		return impart.HTTPError{http.StatusGone, "Post was unpublished."}
@@ -1445,12 +1445,14 @@ Are you sure it was ever here?`,
 			IsFound        bool
 			IsAdmin        bool
 			CanInvite      bool
+			Suspended      bool
 		}{
 			PublicPost:     p,
 			StaticPage:     pageForReq(app, r),
 			IsOwner:        cr.isCollOwner,
 			IsCustomDomain: cr.isCustomDomain,
 			IsFound:        postFound,
+			Suspended:      suspended,
 		}
 		tp.IsAdmin = u != nil && u.IsAdmin()
 		tp.CanInvite = canUserInvite(app.cfg, tp.IsAdmin)

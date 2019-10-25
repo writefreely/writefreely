@@ -214,8 +214,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   username TEXT NOT NULL UNIQUE,
   password TEXT NOT NULL,
   email TEXT DEFAULT NULL,
-  created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  suspended INTEGER NOT NULL DEFAULT 0
+  created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- --------------------------------------------------------

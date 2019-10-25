@@ -57,10 +57,10 @@ td.active-suspend > input[type="submit"] {
 			<td>{{if .LastPost}}{{.LastPost}}{{else}}Never{{end}}</td>
 		</tr>
 		<tr>
-			<form action="/admin/user/{{.User.Username}}" method="POST">
+			<form action="/admin/user/{{.User.Username}}/status" method="POST">
 				<a id="status"/>
 				<th>Status</th>
-				{{if .User.Suspended}}
+				{{if eq .User.Status 1}}
 				<td class="active-suspend"><p>User is currently Suspended</p><input type="submit" value="Activate"/></td>
 				{{else}}
 				<td class="active-suspend">
