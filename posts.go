@@ -387,10 +387,6 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		return ErrInternalGeneral
 	}
 
-	if suspended {
-		return ErrPostNotFound
-	}
-
 	// Check if post has been unpublished
 	if content == "" {
 		gone = true
@@ -438,9 +434,10 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		page := struct {
 			*AnonymousPost
 			page.StaticPage
-			Username string
-			IsOwner  bool
-			SiteURL  string
+			Username  string
+			IsOwner   bool
+			SiteURL   string
+			Suspended bool
 		}{
 			AnonymousPost: post,
 			StaticPage:    pageForReq(app, r),
@@ -451,6 +448,10 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 			page.IsOwner = ownerID.Valid && ownerID.Int64 == u.ID
 		}
 
+		if !page.IsOwner && suspended {
+			return ErrPostNotFound
+		}
+		page.Suspended = suspended
 		err = templates["post"].ExecuteTemplate(w, "post", page)
 		if err != nil {
 			log.Error("Post template execute error: %v", err)
@@ -1389,7 +1390,7 @@ Are you sure it was ever here?`,
 			return err
 		}
 	}
-	p.IsOwner = owner != nil && p.OwnerID.Valid && owner.ID == p.OwnerID.Int64
+	p.IsOwner = owner != nil && p.OwnerID.Valid && u.ID == p.OwnerID.Int64
 	p.Collection = coll
 	p.IsTopLevel = app.cfg.App.SingleUser
 
