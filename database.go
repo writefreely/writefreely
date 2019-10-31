@@ -61,7 +61,7 @@ type writestore interface {
 	GetAccessToken(userID int64) (string, error)
 	GetTemporaryAccessToken(userID int64, validSecs int) (string, error)
 	GetTemporaryOneTimeAccessToken(userID int64, validSecs int, oneTime bool) (string, error)
-	DeleteAccount(userID int64) (l *string, err error)
+	DeleteAccount(userID int64, posts bool) error
 	ChangeSettings(app *App, u *User, s *userSettings) error
 	ChangePassphrase(userID int64, sudo bool, curPass string, hashedPass []byte) error
 
@@ -2079,22 +2079,14 @@ func (db *datastore) CollectionHasAttribute(id int64, attr string) bool {
 	return true
 }
 
-func (db *datastore) DeleteAccount(userID int64) (l *string, err error) {
-	debug := ""
-	l = &debug
-
-	t, err := db.Begin()
-	if err != nil {
-		stringLogln(l, "Unable to begin: %v", err)
-		return
-	}
-
+// DeleteAccount will delete the entire account for userID, and if posts
+// is true, also all posts associated with the userID
+func (db *datastore) DeleteAccount(userID int64, posts bool) error {
 	// Get all collections
 	rows, err := db.Query("SELECT id, alias FROM collections WHERE owner_id = ?", userID)
 	if err != nil {
-		t.Rollback()
-		stringLogln(l, "Unable to get collections: %v", err)
-		return
+		log.Error("Unable to get collections: %v", err)
+		return err
 	}
 	defer rows.Close()
 	colls := []Collection{}
@@ -2102,13 +2094,20 @@ func (db *datastore) DeleteAccount(userID int64) (l *string, err error) {
 	for rows.Next() {
 		err = rows.Scan(&c.ID, &c.Alias)
 		if err != nil {
-			t.Rollback()
-			stringLogln(l, "Unable to scan collection cols: %v", err)
-			return
+			log.Error("Unable to scan collection cols: %v", err)
+			return err
 		}
 		colls = append(colls, c)
 	}
 
+	// Start transaction
+	t, err := db.Begin()
+	if err != nil {
+		log.Error("Unable to begin: %v", err)
+		return err
+	}
+
+	// Clean up all collection related information
 	var res sql.Result
 	for _, c := range colls {
 		// TODO: user deleteCollection() func
@@ -2116,89 +2115,143 @@ func (db *datastore) DeleteAccount(userID int64) (l *string, err error) {
 		res, err = t.Exec("DELETE FROM collectionattributes WHERE collection_id = ?", c.ID)
 		if err != nil {
 			t.Rollback()
-			stringLogln(l, "Unable to delete attributes on %s: %v", c.Alias, err)
-			return
+			log.Error("Unable to delete attributes on %s: %v", c.Alias, err)
+			return err
 		}
 		rs, _ := res.RowsAffected()
-		stringLogln(l, "Deleted %d for %s from collectionattributes", rs, c.Alias)
+		log.Info("Deleted %d for %s from collectionattributes", rs, c.Alias)
 
 		// Remove any optional collection password
 		res, err = t.Exec("DELETE FROM collectionpasswords WHERE collection_id = ?", c.ID)
 		if err != nil {
 			t.Rollback()
-			stringLogln(l, "Unable to delete passwords on %s: %v", c.Alias, err)
-			return
+			log.Error("Unable to delete passwords on %s: %v", c.Alias, err)
+			return err
 		}
 		rs, _ = res.RowsAffected()
-		stringLogln(l, "Deleted %d for %s from collectionpasswords", rs, c.Alias)
+		log.Info("Deleted %d for %s from collectionpasswords", rs, c.Alias)
 
 		// Remove redirects to this collection
 		res, err = t.Exec("DELETE FROM collectionredirects WHERE new_alias = ?", c.Alias)
 		if err != nil {
 			t.Rollback()
-			stringLogln(l, "Unable to delete redirects on %s: %v", c.Alias, err)
-			return
+			log.Error("Unable to delete redirects on %s: %v", c.Alias, err)
+			return err
 		}
 		rs, _ = res.RowsAffected()
-		stringLogln(l, "Deleted %d for %s from collectionredirects", rs, c.Alias)
+		log.Info("Deleted %d for %s from collectionredirects", rs, c.Alias)
+
+		// Remove any collection keys
+		res, err = t.Exec("DELETE FROM collectionkeys WHERE collection_id = ?", c.ID)
+		if err != nil {
+			t.Rollback()
+			log.Error("Unable to delete keys on %s: %v", c.Alias, err)
+			return err
+		}
+		rs, _ = res.RowsAffected()
+		log.Info("Deleted %d for %s from collectionkeys", rs, c.Alias)
+
+		// only remove collection in posts if not deleting the user posts
+		if !posts {
+			// Float all collection's posts
+			res, err = t.Exec("UPDATE posts SET collection_id = NULL WHERE collection_id = ? AND owner_id = ?", c.ID, userID)
+			if err != nil {
+				t.Rollback()
+				log.Error("Unable to update collection %s for posts: %v", err)
+				return err
+			}
+			rs, _ = res.RowsAffected()
+			log.Info("Removed %d posts from collection %s", rs, c.Alias)
+		}
+
+		// TODO: federate delete collection
+
+		// Remove remote follows
+		res, err = t.Exec("DELETE FROM remotefollows WHERE collection_id = ?", c.ID)
+		if err != nil {
+			t.Rollback()
+			log.Error("Unable to delete remote follows on %s: %v", c.Alias, err)
+			return err
+		}
+		rs, _ = res.RowsAffected()
+		log.Info("Deleted %d for %s from remotefollows", rs, c.Alias)
 	}
 
 	// Delete collections
 	res, err = t.Exec("DELETE FROM collections WHERE owner_id = ?", userID)
 	if err != nil {
 		t.Rollback()
-		stringLogln(l, "Unable to delete collections: %v", err)
-		return
+		log.Error("Unable to delete collections: %v", err)
+		return err
 	}
 	rs, _ := res.RowsAffected()
-	stringLogln(l, "Deleted %d from collections", rs)
+	log.Info("Deleted %d from collections", rs)
 
 	// Delete tokens
 	res, err = t.Exec("DELETE FROM accesstokens WHERE user_id = ?", userID)
 	if err != nil {
 		t.Rollback()
-		stringLogln(l, "Unable to delete access tokens: %v", err)
-		return
+		log.Error("Unable to delete access tokens: %v", err)
+		return err
 	}
 	rs, _ = res.RowsAffected()
-	stringLogln(l, "Deleted %d from accesstokens", rs)
+	log.Info("Deleted %d from accesstokens", rs)
 
 	// Delete posts
-	res, err = t.Exec("DELETE FROM posts WHERE owner_id = ?", userID)
-	if err != nil {
-		t.Rollback()
-		stringLogln(l, "Unable to delete posts: %v", err)
-		return
+	if posts {
+		// TODO: should maybe get each row so we can federate a delete
+		// if so needs to be outside of transaction like collections
+		res, err = t.Exec("DELETE FROM posts WHERE owner_id = ?", userID)
+		if err != nil {
+			t.Rollback()
+			log.Error("Unable to delete posts: %v", err)
+			return err
+		}
+		rs, _ = res.RowsAffected()
+		log.Info("Deleted %d from posts", rs)
 	}
-	rs, _ = res.RowsAffected()
-	stringLogln(l, "Deleted %d from posts", rs)
 
+	// Delete user attributes
 	res, err = t.Exec("DELETE FROM userattributes WHERE user_id = ?", userID)
 	if err != nil {
 		t.Rollback()
-		stringLogln(l, "Unable to delete attributes: %v", err)
-		return
+		log.Error("Unable to delete attributes: %v", err)
+		return err
 	}
 	rs, _ = res.RowsAffected()
-	stringLogln(l, "Deleted %d from userattributes", rs)
+	log.Info("Deleted %d from userattributes", rs)
 
+	// Delete user invites
+	res, err = t.Exec("DELETE FROM userinvites WHERE owner_id = ?", userID)
+	if err != nil {
+		t.Rollback()
+		log.Error("Unable to delete invites: %v", err)
+		return err
+	}
+	rs, _ = res.RowsAffected()
+	log.Info("Deleted %d from userinvites", rs)
+
+	// Delete the user
 	res, err = t.Exec("DELETE FROM users WHERE id = ?", userID)
 	if err != nil {
 		t.Rollback()
-		stringLogln(l, "Unable to delete user: %v", err)
-		return
+		log.Error("Unable to delete user: %v", err)
+		return err
 	}
 	rs, _ = res.RowsAffected()
-	stringLogln(l, "Deleted %d from users", rs)
+	log.Info("Deleted %d from users", rs)
 
+	// Commit all changes to the database
 	err = t.Commit()
 	if err != nil {
 		t.Rollback()
-		stringLogln(l, "Unable to commit: %v", err)
-		return
+		log.Error("Unable to commit: %v", err)
+		return err
 	}
 
-	return
+	// TODO: federate delete actor
+
+	return nil
 }
 
 func (db *datastore) GetAPActorKeys(collectionID int64) ([]byte, []byte) {

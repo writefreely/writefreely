@@ -1068,3 +1068,7 @@ func getTempInfo(app *App, key string, r *http.Request, w http.ResponseWriter) s
 	// Return value
 	return s
 }
+
+func deleteAccount(app *App, userID int64, posts bool) error {
+	return app.db.DeleteAccount(userID, posts)
+}
