@@ -682,21 +682,24 @@ func ResetPassword(apper Apper, username string) error {
 }
 
 // DoDeleteAccount runs the confirmation and account delete process.
-func DoDeleteAccount(apper Apper, userID int64, posts bool) error {
+func DoDeleteAccount(apper Apper, username string) error {
 	// Connect to the database
 	apper.LoadConfig()
 	connectToDatabase(apper.App())
 	defer shutdown(apper.App())
 
-	// do not delete the root admin account
-	// TODO: check for other admins and skip?
-	if userID == 1 {
-		log.Error("Can not delete admin account")
+	// check user exists
+	u, err := apper.App().db.GetUserForAuth(username)
+	if err != nil {
+		log.Error("%s", err)
 		os.Exit(1)
 	}
-	// check user exists
-	if _, err := apper.App().db.GetUserByID(userID); err != nil {
-		log.Error("%s", err)
+	userID := u.ID
+
+	// do not delete the admin account
+	// TODO: check for other admins and skip?
+	if u.IsAdmin() {
+		log.Error("Can not delete admin account")
 		os.Exit(1)
 	}
 
@@ -705,17 +708,17 @@ func DoDeleteAccount(apper Apper, userID int64, posts bool) error {
 		Templates: &promptui.PromptTemplates{
 			Success: "{{ . | bold | faint }}: ",
 		},
-		Label:     fmt.Sprintf("Delete user with ID: %d", userID),
+		Label:     fmt.Sprintf("Really delete user : %s", username),
 		IsConfirm: true,
 	}
-	_, err := prompt.Run()
+	_, err = prompt.Run()
 	if err != nil {
 		log.Info("Aborted...")
 		os.Exit(0)
 	}
 
 	log.Info("Deleting...")
-	err = deleteAccount(apper.App(), userID, posts)
+	err = deleteAccount(apper.App(), userID)
 	if err != nil {
 		log.Error("%s", err)
 		os.Exit(1)

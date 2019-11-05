@@ -39,8 +39,7 @@ func main() {
 	// Admin actions
 	createAdmin := flag.String("create-admin", "", "Create an admin with the given username:password")
 	createUser := flag.String("create-user", "", "Create a regular user with the given username:password")
-	deleteUserID := flag.Int64("delete-user", 0, "Delete a user with the given id, does not delete posts. Use `--delete-user id --posts`")
-	deletePosts := flag.Bool("posts", false, "Optionally delete the user's posts during account deletion")
+	deleteUsername := flag.String("delete-user", "", "Delete a user with the given username")
 	resetPassUser := flag.String("reset-pass", "", "Reset the given user's password")
 	outputVersion := flag.Bool("v", false, "Output the current version")
 	flag.Parse()
@@ -105,8 +104,8 @@ func main() {
 			os.Exit(1)
 		}
 		os.Exit(0)
-	} else if *deleteUserID != 0 {
-		err := writefreely.DoDeleteAccount(app, *deleteUserID, *deletePosts)
+	} else if *deleteUsername != "" {
+		err := writefreely.DoDeleteAccount(app, *deleteUsername)
 		if err != nil {
 			log.Error(err.Error())
 			os.Exit(1)

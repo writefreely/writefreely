@@ -61,7 +61,7 @@ type writestore interface {
 	GetAccessToken(userID int64) (string, error)
 	GetTemporaryAccessToken(userID int64, validSecs int) (string, error)
 	GetTemporaryOneTimeAccessToken(userID int64, validSecs int, oneTime bool) (string, error)
-	DeleteAccount(userID int64, posts bool) error
+	DeleteAccount(userID int64) error
 	ChangeSettings(app *App, u *User, s *userSettings) error
 	ChangePassphrase(userID int64, sudo bool, curPass string, hashedPass []byte) error
 
@@ -2079,9 +2079,8 @@ func (db *datastore) CollectionHasAttribute(id int64, attr string) bool {
 	return true
 }
 
-// DeleteAccount will delete the entire account for userID, and if posts
-// is true, also all posts associated with the userID
-func (db *datastore) DeleteAccount(userID int64, posts bool) error {
+// DeleteAccount will delete the entire account for userID
+func (db *datastore) DeleteAccount(userID int64) error {
 	// Get all collections
 	rows, err := db.Query("SELECT id, alias FROM collections WHERE owner_id = ?", userID)
 	if err != nil {
@@ -2110,7 +2109,6 @@ func (db *datastore) DeleteAccount(userID int64, posts bool) error {
 	// Clean up all collection related information
 	var res sql.Result
 	for _, c := range colls {
-		// TODO: user deleteCollection() func
 		// Delete tokens
 		res, err = t.Exec("DELETE FROM collectionattributes WHERE collection_id = ?", c.ID)
 		if err != nil {
@@ -2151,18 +2149,15 @@ func (db *datastore) DeleteAccount(userID int64, posts bool) error {
 		rs, _ = res.RowsAffected()
 		log.Info("Deleted %d for %s from collectionkeys", rs, c.Alias)
 
-		// only remove collection in posts if not deleting the user posts
-		if !posts {
-			// Float all collection's posts
-			res, err = t.Exec("UPDATE posts SET collection_id = NULL WHERE collection_id = ? AND owner_id = ?", c.ID, userID)
-			if err != nil {
-				t.Rollback()
-				log.Error("Unable to update collection %s for posts: %v", err)
-				return err
-			}
-			rs, _ = res.RowsAffected()
-			log.Info("Removed %d posts from collection %s", rs, c.Alias)
+		// Float all collection's posts
+		res, err = t.Exec("UPDATE posts SET collection_id = NULL WHERE collection_id = ? AND owner_id = ?", c.ID, userID)
+		if err != nil {
+			t.Rollback()
+			log.Error("Unable to update collection %s for posts: %v", c.Alias, err)
+			return err
 		}
+		rs, _ = res.RowsAffected()
+		log.Info("Removed %d posts from collection %s", rs, c.Alias)
 
 		// TODO: federate delete collection
 
@@ -2198,18 +2193,16 @@ func (db *datastore) DeleteAccount(userID int64, posts bool) error {
 	log.Info("Deleted %d from accesstokens", rs)
 
 	// Delete posts
-	if posts {
-		// TODO: should maybe get each row so we can federate a delete
-		// if so needs to be outside of transaction like collections
-		res, err = t.Exec("DELETE FROM posts WHERE owner_id = ?", userID)
-		if err != nil {
-			t.Rollback()
-			log.Error("Unable to delete posts: %v", err)
-			return err
-		}
-		rs, _ = res.RowsAffected()
-		log.Info("Deleted %d from posts", rs)
+	// TODO: should maybe get each row so we can federate a delete
+	// if so needs to be outside of transaction like collections
+	res, err = t.Exec("DELETE FROM posts WHERE owner_id = ?", userID)
+	if err != nil {
+		t.Rollback()
+		log.Error("Unable to delete posts: %v", err)
+		return err
 	}
+	rs, _ = res.RowsAffected()
+	log.Info("Deleted %d from posts", rs)
 
 	// Delete user attributes
 	res, err = t.Exec("DELETE FROM userattributes WHERE user_id = ?", userID)
