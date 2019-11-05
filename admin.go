@@ -123,6 +123,7 @@ func handleViewAdminUsers(app *App, u *User, w http.ResponseWriter, r *http.Requ
 		*UserPage
 		Config  config.AppCfg
 		Message string
+		Flashes []string
 
 		Users      *[]User
 		CurPage    int
@@ -134,6 +135,7 @@ func handleViewAdminUsers(app *App, u *User, w http.ResponseWriter, r *http.Requ
 		Message:  r.FormValue("m"),
 	}
 
+	p.Flashes, _ = getSessionFlashes(app, w, r, nil)
 	p.TotalUsers = app.db.GetAllUsersCount()
 	ttlPages := p.TotalUsers / adminUsersPerPage
 	p.TotalPages = []int{}
@@ -228,6 +230,37 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 
 	showUserPage(w, "view-user", p)
 	return nil
+}
+
+func handleAdminDeleteUser(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	if !u.IsAdmin() {
+		return impart.HTTPError{http.StatusForbidden, "Administrator privileges required for this action"}
+	}
+
+	vars := mux.Vars(r)
+	username := vars["username"]
+	confirmUsername := r.PostFormValue("confirm-username")
+
+	if confirmUsername != username {
+		return impart.HTTPError{http.StatusBadRequest, "Username was not confirmed"}
+	}
+
+	user, err := app.db.GetUserForAuth(username)
+	if err == ErrUserNotFound {
+		return impart.HTTPError{http.StatusNotFound, fmt.Sprintf("User '%s' was not found", username)}
+	} else if err != nil {
+		log.Error("get user for deletion: %v", err)
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get user with username '%s': %v", username, err)}
+	}
+
+	err = app.db.DeleteAccount(user.ID)
+	if err != nil {
+		log.Error("delete user %s: %v", user.Username, err)
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not delete user account for '%s': %v", username, err)}
+	}
+
+	_ = addSessionFlash(app, w, r, fmt.Sprintf("Account for user \"%s\" was deleted successfully.", username), nil)
+	return impart.HTTPError{http.StatusFound, "/admin/users"}
 }
 
 func handleViewAdminPages(app *App, u *User, w http.ResponseWriter, r *http.Request) error {

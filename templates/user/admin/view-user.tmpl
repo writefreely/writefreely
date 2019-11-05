@@ -81,6 +81,18 @@ h3 {
 		{{end}}
 	</table>
 	{{end}}
+
+	{{ if not .User.IsAdmin }}
+	<hr/>
+	<h2>Delete Account</h2>
+	<h3><strong>Danger Zone - This cannot be undone</strong></h3>
+	<p>This will delete the user {{.User.Username}} and all their blogs AND posts.</p>
+	<form action="/admin/user/{{.User.Username}}/delete" method="post">
+		<p>Type their username to confirm deletion.<p>
+		<input name="confirm-username" type="text" title="confirm username to delete" placeholder="confirm username">
+		<input class="danger" type="submit" value="DELETE">
+	</form>
+	{{end}}
 </div>
 
 {{template "footer" .}}

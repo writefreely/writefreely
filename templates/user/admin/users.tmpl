@@ -4,6 +4,12 @@
 <div class="snug content-container">
 	{{template "admin-header" .}}
 
+	<!-- TODO: if other use for flashes use patern like account_import.go -->
+	{{if .Flashes}}
+		<p class="alert success">
+		{{range .Flashes}}{{.}}{{end}}
+		</p>
+	{{end}}
 	<h2 id="posts-header" style="display: flex; justify-content: space-between;">Users <span style="font-style: italic; font-size: 0.75em;">{{.TotalUsers}} total</strong></h2>
 
 	<table class="classy export" style="width:100%">
