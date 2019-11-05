@@ -63,6 +63,18 @@ h3 { font-weight: normal; }
 			<input type="submit" value="Save changes" tabindex="4" />
 		</div>
 	</form>
+
+	{{ if not .IsAdmin }}
+	<hr/>
+	<h2>Delete Account</h2>
+	<h3><strong>Danger Zone - This cannot be undone</strong></h3>
+	<p>This will delete your account and all your blogs and posts. Before continuing make sure to <a href="/me/export">export your data</a>.</p>
+	<form action="/me/delete" method="post">
+		<p>Type your username to confirm deletion.<p>
+		<input name="confirm-username" type="text" title="confirm username to delete" placeholder="confirm username">
+		<input class="danger" type="submit" value="DELETE">
+	</form>
+	{{end}}
 </div>
 
 <script>

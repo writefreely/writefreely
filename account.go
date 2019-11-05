@@ -1068,3 +1068,20 @@ func getTempInfo(app *App, key string, r *http.Request, w http.ResponseWriter) s
 	// Return value
 	return s
 }
+
+func handleUserDelete(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	confirmUsername := r.PostFormValue("confirm-username")
+	if u.Username != confirmUsername {
+		return impart.HTTPError{http.StatusBadRequest, "Confirmation username must match your username exactly."}
+	}
+
+	// TODO: prevent admin delete themselves?
+	err := app.db.DeleteAccount(u.ID)
+	if err != nil {
+		log.Error("user delete account: %v", err)
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not delete account: %v", err)}
+	}
+
+	_ = addSessionFlash(app, w, r, "Account deleted successfully, sorry to see you go.", nil)
+	return impart.HTTPError{http.StatusFound, "/me/logout"}
+}
