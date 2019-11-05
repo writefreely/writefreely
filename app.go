@@ -718,7 +718,7 @@ func DoDeleteAccount(apper Apper, username string) error {
 	}
 
 	log.Info("Deleting...")
-	err = deleteAccount(apper.App(), userID)
+	err = apper.App().db.DeleteAccount(userID)
 	if err != nil {
 		log.Error("%s", err)
 		os.Exit(1)
