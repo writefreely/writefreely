@@ -18,9 +18,7 @@
 			<td><a href="/admin/user/{{.Username}}">{{.Username}}</a></td>
 			<td>{{.CreatedFriendly}}</td>
 			<td style="text-align:center">{{if .IsAdmin}}Admin{{else}}User{{end}}</td>
-			<td style="text-align:center">
-				<a href="/admin/user/{{.Username}}#status" title="View or change account status">{{if .IsSuspended}}suspended{{else}}active{{end}}</a>
-			</td>
+			<td style="text-align:center">{{if .IsSuspended}}Suspended{{else}}Active{{end}}</td>
 		</tr>
 		{{end}}
 	</table>
