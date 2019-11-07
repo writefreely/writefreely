@@ -126,3 +126,7 @@ func (u *User) IsAdmin() bool {
 	// TODO: get this from database
 	return u.ID == 1
 }
+
+func (u *User) IsSuspended() bool {
+	return u.Status&UserSuspended != 0
+}
