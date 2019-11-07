@@ -35,10 +35,6 @@
 		{{template "highlighting" .}}
 	</head>
 	<body id="post">
-
-		{{if .Suspended}}
-			{{template "user-suspended"}}
-		{{end}}
 		<header>
 			<h1 dir="{{.Direction}}"><a href="/">{{.SiteName}}</a></h1>
 			<nav>
@@ -52,6 +48,10 @@
 				{{ end }}
 			</nav>
 		</header>
+
+		{{if .Suspended}}
+			{{template "user-suspended"}}
+		{{end}}
 		
 		<article class="{{.Font}} h-entry">{{if .Title}}<h2 id="title" class="p-name">{{.Title}}</h2>{{end}}{{ if .IsPlainText }}<p id="post-body" class="e-content">{{.Content}}</p>{{ else }}<div id="post-body" class="e-content">{{.HTMLContent}}</div>{{ end }}</article>
 
