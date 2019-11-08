@@ -1380,12 +1380,14 @@ Are you sure it was ever here?`,
 			IsFound        bool
 			IsAdmin        bool
 			CanInvite      bool
+			Hostname       string
 		}{
 			PublicPost:     p,
 			StaticPage:     pageForReq(app, r),
 			IsOwner:        cr.isCollOwner,
 			IsCustomDomain: cr.isCustomDomain,
 			IsFound:        postFound,
+			Hostname:       app.cfg.App.Host,
 		}
 		tp.IsAdmin = u != nil && u.IsAdmin()
 		tp.CanInvite = canUserInvite(app.cfg, tp.IsAdmin)
