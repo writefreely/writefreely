@@ -23,7 +23,7 @@ input.copy-text {
 		<p>This user's password has been reset to:</p>
 		<p><input type="text" class="copy-text" value="{{.NewPassword}}" onfocus="if (this.select) this.select(); else this.setSelectionRange(0, this.value.length);" readonly /></p>
 		<p>They can use this new password to log in to their account. <strong>This will only be shown once</strong>, so be sure to copy it and send it to them now.</p>
-		{{if .User.Email}}<p>Their email address is: <a href="mailto:{{.ClearEmail}}">{{.ClearEmail}}</a></p>{{end}}
+		{{if .ClearEmail}}<p>Their email address is: <a href="mailto:{{.ClearEmail}}">{{.ClearEmail}}</a></p>{{end}}
 		</div>
 	{{end}}
 	<table class="classy export">

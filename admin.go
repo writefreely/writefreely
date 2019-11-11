@@ -184,18 +184,18 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 		Colls:   []inspectedCollection{},
 	}
 
-	flashes, _ := getSessionFlashes(app, w, r, nil)
-	for _, flash := range flashes {
-		if strings.HasPrefix(flash, "SUCCESS: ") {
-			p.NewPassword = strings.TrimPrefix(flash, "SUCCESS: ")
-			p.ClearEmail = u.EmailClear(app.keys)
-		}
-	}
-
 	var err error
 	p.User, err = app.db.GetUserForAuth(username)
 	if err != nil {
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get user: %v", err)}
+	}
+
+	flashes, _ := getSessionFlashes(app, w, r, nil)
+	for _, flash := range flashes {
+		if strings.HasPrefix(flash, "SUCCESS: ") {
+			p.NewPassword = strings.TrimPrefix(flash, "SUCCESS: ")
+			p.ClearEmail = p.User.EmailClear(app.keys)
+		}
 	}
 	p.UserPage = NewUserPage(app, r, u, p.User.Username, nil)
 	p.TotalPosts = app.db.GetUserPostsCount(p.User.ID)
