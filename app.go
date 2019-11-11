@@ -186,8 +186,8 @@ func (app *App) ReqLog(r *http.Request, status int, timeSince time.Duration) str
 	return fmt.Sprintf("\"%s %s\" %d %s \"%s\"", r.Method, r.RequestURI, status, timeSince, r.UserAgent())
 }
 
-// handleViewHome shows page at root path. Will be the Pad if logged in and the
-// catch-all landing page otherwise.
+// handleViewHome shows page at root path. It checks the configuration and
+// authentication state to show the correct page.
 func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 	if app.cfg.App.SingleUser {
 		// Render blog index
@@ -199,6 +199,15 @@ func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 	if !forceLanding {
 		// Show correct page based on user auth status and configured landing path
 		u := getUserSession(app, r)
+
+		if app.cfg.App.Chorus {
+			// This instance is focused on reading, so show Reader on home route if not
+			// private or a private-instance user is logged in.
+			if !app.cfg.App.Private || u != nil {
+				return viewLocalTimeline(app, w, r)
+			}
+		}
+
 		if u != nil {
 			// User is logged in, so show the Pad
 			return handleViewPad(app, w, r)
@@ -208,6 +217,12 @@ func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 			return impart.HTTPError{http.StatusFound, land}
 		}
 	}
+
+	return handleViewLanding(app, w, r)
+}
+
+func handleViewLanding(app *App, w http.ResponseWriter, r *http.Request) error {
+	forceLanding := r.FormValue("landing") == "1"
 
 	p := struct {
 		page.StaticPage
@@ -226,14 +241,14 @@ func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 		log.Error("unable to get landing banner: %v", err)
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get banner: %v", err)}
 	}
-	p.Banner = template.HTML(applyMarkdown([]byte(banner.Content), ""))
+	p.Banner = template.HTML(applyMarkdown([]byte(banner.Content), "", app.cfg))
 
 	content, err := getLandingBody(app)
 	if err != nil {
 		log.Error("unable to get landing content: %v", err)
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get content: %v", err)}
 	}
-	p.Content = template.HTML(applyMarkdown([]byte(content.Content), ""))
+	p.Content = template.HTML(applyMarkdown([]byte(content.Content), "", app.cfg))
 
 	// Get error messages
 	session, err := app.sessionStore.Get(r, cookieName)
@@ -281,7 +296,7 @@ func handleTemplatedPage(app *App, w http.ResponseWriter, r *http.Request, t *te
 			return err
 		}
 		p.ContentTitle = c.Title.String
-		p.Content = template.HTML(applyMarkdown([]byte(c.Content), ""))
+		p.Content = template.HTML(applyMarkdown([]byte(c.Content), "", app.cfg))
 		p.PlainContent = shortPostDescription(stripmd.Strip(c.Content))
 		if !c.Updated.IsZero() {
 			p.Updated = c.Updated.Format("January 2, 2006")
@@ -319,6 +334,8 @@ func pageForReq(app *App, r *http.Request) page.StaticPage {
 		u = getUserSession(app, r)
 		if u != nil {
 			p.Username = u.Username
+			p.IsAdmin = u != nil && u.IsAdmin()
+			p.CanInvite = canUserInvite(app.cfg, p.IsAdmin)
 		}
 	}
 	p.CanViewReader = !app.cfg.App.Private || u != nil

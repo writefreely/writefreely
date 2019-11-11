@@ -28,6 +28,8 @@ type StaticPage struct {
 	Values        map[string]string
 	Flashes       []string
 	CanViewReader bool
+	IsAdmin       bool
+	CanInvite     bool
 }
 
 // SanitizeHost alters the StaticPage to contain a real hostname. This is

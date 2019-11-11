@@ -135,3 +135,30 @@ WriteFreely can communicate with other federated platforms like Mastodon, so peo
 	}
 	return ""
 }
+
+func getReaderSection(app *App) (*instanceContent, error) {
+	c, err := app.db.GetDynamicContent("reader")
+	if err != nil {
+		return nil, err
+	}
+	if c == nil {
+		c = &instanceContent{
+			ID:      "reader",
+			Type:    "section",
+			Content: defaultReaderBanner(app.cfg),
+			Updated: defaultPageUpdatedTime,
+		}
+	}
+	if !c.Title.Valid {
+		c.Title = defaultReaderTitle(app.cfg)
+	}
+	return c, nil
+}
+
+func defaultReaderTitle(cfg *config.Config) sql.NullString {
+	return sql.NullString{String: "Reader", Valid: true}
+}
+
+func defaultReaderBanner(cfg *config.Config) string {
+	return "Read the latest posts from " + cfg.App.SiteName + "."
+}

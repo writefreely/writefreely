@@ -64,11 +64,14 @@ func initTemplate(parentDir, name string) {
 		filepath.Join(parentDir, templatesDir, "include", "footer.tmpl"),
 		filepath.Join(parentDir, templatesDir, "base.tmpl"),
 	}
-	if name == "collection" || name == "collection-tags" {
+	if name == "collection" || name == "collection-tags" || name == "chorus-collection" {
 		// These pages list out collection posts, so we also parse templatesDir + "include/posts.tmpl"
 		files = append(files, filepath.Join(parentDir, templatesDir, "include", "posts.tmpl"))
 	}
-	if name == "collection" || name == "collection-tags" || name == "collection-post" || name == "post" {
+	if name == "chorus-collection" || name == "chorus-collection-post" {
+		files = append(files, filepath.Join(parentDir, templatesDir, "user", "include", "header.tmpl"))
+	}
+	if name == "collection" || name == "collection-tags" || name == "collection-post" || name == "post" || name == "chorus-collection" || name == "chorus-collection-post" {
 		files = append(files, filepath.Join(parentDir, templatesDir, "include", "post-render.tmpl"))
 	}
 	templates[name] = template.Must(template.New("").Funcs(funcMap).ParseFiles(files...))

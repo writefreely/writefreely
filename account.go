@@ -13,6 +13,13 @@ package writefreely
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
+	"net/http"
+	"regexp"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/guregu/null/zero"
@@ -21,13 +28,8 @@ import (
 	"github.com/writeas/web-core/data"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/author"
+	"github.com/writeas/writefreely/config"
 	"github.com/writeas/writefreely/page"
-	"html/template"
-	"net/http"
-	"regexp"
-	"strings"
-	"sync"
-	"time"
 )
 
 type (
@@ -58,9 +60,13 @@ func NewUserPage(app *App, r *http.Request, u *User, title string, flashes []str
 	up.Flashes = flashes
 	up.Path = r.URL.Path
 	up.IsAdmin = u.IsAdmin()
-	up.CanInvite = app.cfg.App.UserInvites != "" &&
-		(up.IsAdmin || app.cfg.App.UserInvites != "admin")
+	up.CanInvite = canUserInvite(app.cfg, up.IsAdmin)
 	return up
+}
+
+func canUserInvite(cfg *config.Config, isAdmin bool) bool {
+	return cfg.App.UserInvites != "" &&
+		(isAdmin || cfg.App.UserInvites != "admin")
 }
 
 func (up *UserPage) SetMessaging(u *User) {
@@ -79,7 +85,7 @@ func apiSignup(app *App, w http.ResponseWriter, r *http.Request) error {
 }
 
 func signup(app *App, w http.ResponseWriter, r *http.Request) (*AuthUser, error) {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 
 	// Get params
 	var ur userRegistration
@@ -114,7 +120,7 @@ func signup(app *App, w http.ResponseWriter, r *http.Request) (*AuthUser, error)
 }
 
 func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWriter, r *http.Request) (*AuthUser, error) {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 
 	// Validate required params (alias)
 	if signup.Alias == "" {
@@ -304,10 +310,10 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p := &struct {
 		page.StaticPage
-		To       string
-		Message  template.HTML
-		Flashes  []template.HTML
-		Username string
+		To            string
+		Message       template.HTML
+		Flashes       []template.HTML
+		LoginUsername string
 	}{
 		pageForReq(app, r),
 		r.FormValue("to"),
@@ -371,7 +377,7 @@ func webLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 var loginAttemptUsers = sync.Map{}
 
 func login(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	oneTimeToken := r.FormValue("with")
 	verbose := r.FormValue("all") == "true" || r.FormValue("verbose") == "1" || r.FormValue("verbose") == "true" || (reqJSON && oneTimeToken != "")
 
@@ -546,7 +552,7 @@ func getVerboseAuthUser(app *App, token string, u *User, verbose bool) *AuthUser
 		if err != nil {
 			log.Error("Login: Unable to get user posts: %v", err)
 		}
-		colls, err := app.db.GetCollections(u)
+		colls, err := app.db.GetCollections(u, app.cfg.App.Host)
 		if err != nil {
 			log.Error("Login: Unable to get user collections: %v", err)
 		}
@@ -574,7 +580,7 @@ func viewExportOptions(app *App, u *User, w http.ResponseWriter, r *http.Request
 func viewExportPosts(app *App, w http.ResponseWriter, r *http.Request) ([]byte, string, error) {
 	var filename string
 	var u = &User{}
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	if reqJSON {
 		// Use given Authorization header
 		accessToken := r.Header.Get("Authorization")
@@ -619,7 +625,7 @@ func viewExportPosts(app *App, w http.ResponseWriter, r *http.Request) ([]byte, 
 
 	// Export as CSV
 	if strings.HasSuffix(r.URL.Path, ".csv") {
-		data = exportPostsCSV(u, posts)
+		data = exportPostsCSV(app.cfg.App.Host, u, posts)
 		return data, filename, err
 	}
 	if strings.HasSuffix(r.URL.Path, ".zip") {
@@ -656,7 +662,7 @@ func viewExportFull(app *App, w http.ResponseWriter, r *http.Request) ([]byte, s
 }
 
 func viewMeAPI(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	uObj := struct {
 		ID       int64  `json:"id,omitempty"`
 		Username string `json:"username,omitempty"`
@@ -680,7 +686,7 @@ func viewMeAPI(app *App, w http.ResponseWriter, r *http.Request) error {
 }
 
 func viewMyPostsAPI(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	if !reqJSON {
 		return ErrBadRequestedType
 	}
@@ -711,12 +717,12 @@ func viewMyPostsAPI(app *App, u *User, w http.ResponseWriter, r *http.Request) e
 }
 
 func viewMyCollectionsAPI(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	if !reqJSON {
 		return ErrBadRequestedType
 	}
 
-	p, err := app.db.GetCollections(u)
+	p, err := app.db.GetCollections(u, app.cfg.App.Host)
 	if err != nil {
 		return err
 	}
@@ -739,7 +745,7 @@ func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		log.Error("unable to fetch flashes: %v", err)
 	}
 
-	c, err := app.db.GetPublishableCollections(u)
+	c, err := app.db.GetPublishableCollections(u, app.cfg.App.Host)
 	if err != nil {
 		log.Error("unable to fetch collections: %v", err)
 	}
@@ -762,7 +768,7 @@ func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 }
 
 func viewCollections(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
-	c, err := app.db.GetCollections(u)
+	c, err := app.db.GetCollections(u, app.cfg.App.Host)
 	if err != nil {
 		log.Error("unable to fetch collections: %v", err)
 		return fmt.Errorf("No collections")
@@ -816,7 +822,7 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 }
 
 func updateSettings(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 
 	var s userSettings
 	var u *User

@@ -31,6 +31,8 @@ input[type=text] {
 	<p class="page-desc content-desc">Describe what your instance is <a href="/about" target="page">about</a>.</p>
 	{{else if eq .Content.ID "privacy"}}
 	<p class="page-desc content-desc">Outline your <a href="/privacy" target="page">privacy policy</a>.</p>
+	{{else if eq .Content.ID "reader"}}
+	<p class="page-desc content-desc">Customize your <a href="/read" target="page">Reader</a> page.</p>
 	{{else if eq .Content.ID "landing"}}
 	<p class="page-desc content-desc">Customize your <a href="/?landing=1" target="page">home page</a>.</p>
 	{{end}}
@@ -38,7 +40,7 @@ input[type=text] {
 	{{if .Message}}<p>{{.Message}}</p>{{end}}
 
 	<form method="post" action="/admin/update/{{.Content.ID}}" onsubmit="savePage(this)">
-		{{if eq .Content.Type "section"}}
+		{{if .Banner}}
 		<label for="banner">
 			Banner
 		</label>
