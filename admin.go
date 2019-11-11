@@ -259,7 +259,7 @@ func handleAdminToggleUserStatus(app *App, u *User, w http.ResponseWriter, r *ht
 		err = app.db.SetUserStatus(user.ID, UserSilenced)
 	}
 	if err != nil {
-		log.Error("toggle user suspended: %v", err)
+		log.Error("toggle user silenced: %v", err)
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not toggle user status: %v")}
 	}
 	return impart.HTTPError{http.StatusFound, fmt.Sprintf("/admin/user/%s#status", username)}

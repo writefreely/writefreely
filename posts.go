@@ -381,7 +381,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	suspended, err := app.db.IsUserSuspended(ownerID.Int64)
+	silenced, err := app.db.IsUserSilenced(ownerID.Int64)
 	if err != nil {
 		log.Error("view post: %v", err)
 		return ErrInternalGeneral
@@ -434,10 +434,10 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		page := struct {
 			*AnonymousPost
 			page.StaticPage
-			Username  string
-			IsOwner   bool
-			SiteURL   string
-			Suspended bool
+			Username string
+			IsOwner  bool
+			SiteURL  string
+			Silenced bool
 		}{
 			AnonymousPost: post,
 			StaticPage:    pageForReq(app, r),
@@ -448,10 +448,10 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 			page.IsOwner = ownerID.Valid && ownerID.Int64 == u.ID
 		}
 
-		if !page.IsOwner && suspended {
+		if !page.IsOwner && silenced {
 			return ErrPostNotFound
 		}
-		page.Suspended = suspended
+		page.Silenced = silenced
 		err = templates["post"].ExecuteTemplate(w, "post", page)
 		if err != nil {
 			log.Error("Post template execute error: %v", err)
@@ -508,13 +508,13 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	} else {
 		userID = app.db.GetUserID(accessToken)
 	}
-	suspended, err := app.db.IsUserSuspended(userID)
+	silenced, err := app.db.IsUserSilenced(userID)
 	if err != nil {
 		log.Error("new post: %v", err)
 		return ErrInternalGeneral
 	}
-	if suspended {
-		return ErrUserSuspended
+	if silenced {
+		return ErrUserSilenced
 	}
 
 	if userID == -1 {
@@ -682,13 +682,13 @@ func existingPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	suspended, err := app.db.IsUserSuspended(userID)
+	silenced, err := app.db.IsUserSilenced(userID)
 	if err != nil {
 		log.Error("existing post: %v", err)
 		return ErrInternalGeneral
 	}
-	if suspended {
-		return ErrUserSuspended
+	if silenced {
+		return ErrUserSilenced
 	}
 
 	// Modify post struct
@@ -885,13 +885,13 @@ func addPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		ownerID = u.ID
 	}
 
-	suspended, err := app.db.IsUserSuspended(ownerID)
+	silenced, err := app.db.IsUserSilenced(ownerID)
 	if err != nil {
 		log.Error("add post: %v", err)
 		return ErrInternalGeneral
 	}
-	if suspended {
-		return ErrUserSuspended
+	if silenced {
+		return ErrUserSilenced
 	}
 
 	// Parse claimed posts in format:
@@ -988,13 +988,13 @@ func pinPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		userID = u.ID
 	}
 
-	suspended, err := app.db.IsUserSuspended(userID)
+	silenced, err := app.db.IsUserSilenced(userID)
 	if err != nil {
 		log.Error("pin post: %v", err)
 		return ErrInternalGeneral
 	}
-	if suspended {
-		return ErrUserSuspended
+	if silenced {
+		return ErrUserSilenced
 	}
 
 	// Parse request
@@ -1062,13 +1062,13 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	suspended, err := app.db.IsUserSuspended(ownerID)
+	silenced, err := app.db.IsUserSilenced(ownerID)
 	if err != nil {
 		log.Error("fetch post: %v", err)
 		return ErrInternalGeneral
 	}
 
-	if suspended {
+	if silenced {
 		return ErrPostNotFound
 	}
 
@@ -1332,7 +1332,7 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 	}
 	c.hostName = app.cfg.App.Host
 
-	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("view collection post: %v", err)
 		return ErrInternalGeneral
@@ -1394,7 +1394,7 @@ Are you sure it was ever here?`,
 	p.Collection = coll
 	p.IsTopLevel = app.cfg.App.SingleUser
 
-	if !p.IsOwner && suspended {
+	if !p.IsOwner && silenced {
 		return ErrPostNotFound
 	}
 	// Check if post has been unpublished
@@ -1446,14 +1446,14 @@ Are you sure it was ever here?`,
 			IsFound        bool
 			IsAdmin        bool
 			CanInvite      bool
-			Suspended      bool
+			Silenced       bool
 		}{
 			PublicPost:     p,
 			StaticPage:     pageForReq(app, r),
 			IsOwner:        cr.isCollOwner,
 			IsCustomDomain: cr.isCustomDomain,
 			IsFound:        postFound,
-			Suspended:      suspended,
+			Silenced:       silenced,
 		}
 		tp.IsAdmin = u != nil && u.IsAdmin()
 		tp.CanInvite = canUserInvite(app.cfg, tp.IsAdmin)

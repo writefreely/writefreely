@@ -79,7 +79,7 @@ func handleCreateUserInvite(app *App, u *User, w http.ResponseWriter, r *http.Re
 	expVal := r.FormValue("expires")
 
 	if u.IsSilenced() {
-		return ErrUserSuspended
+		return ErrUserSilenced
 	}
 
 	var err error

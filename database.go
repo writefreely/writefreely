@@ -308,18 +308,18 @@ func (db *datastore) GetUserByID(id int64) (*User, error) {
 	return u, nil
 }
 
-// IsUserSuspended returns true if the user account associated with id is
-// currently suspended.
-func (db *datastore) IsUserSuspended(id int64) (bool, error) {
+// IsUserSilenced returns true if the user account associated with id is
+// currently silenced.
+func (db *datastore) IsUserSilenced(id int64) (bool, error) {
 	u := &User{ID: id}
 
 	err := db.QueryRow("SELECT status FROM users WHERE id = ?", id).Scan(&u.Status)
 	switch {
 	case err == sql.ErrNoRows:
-		return false, fmt.Errorf("is user suspended: %v", ErrUserNotFound)
+		return false, fmt.Errorf("is user silenced: %v", ErrUserNotFound)
 	case err != nil:
-		log.Error("Couldn't SELECT user password: %v", err)
-		return false, fmt.Errorf("is user suspended: %v", err)
+		log.Error("Couldn't SELECT user status: %v", err)
+		return false, fmt.Errorf("is user silenced: %v", err)
 	}
 
 	return u.IsSilenced(), nil

@@ -36,12 +36,12 @@ func ViewFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 		return nil
 	}
 
-	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("view feed: get user: %v", err)
 		return ErrInternalGeneral
 	}
-	if suspended {
+	if silenced {
 		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host

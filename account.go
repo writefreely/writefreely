@@ -750,7 +750,7 @@ func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		log.Error("unable to fetch collections: %v", err)
 	}
 
-	suspended, err := app.db.IsUserSuspended(u.ID)
+	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
 		log.Error("view articles: %v", err)
 	}
@@ -758,12 +758,12 @@ func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		*UserPage
 		AnonymousPosts *[]PublicPost
 		Collections    *[]Collection
-		Suspended      bool
+		Silenced       bool
 	}{
 		UserPage:       NewUserPage(app, r, u, u.Username+"'s Posts", f),
 		AnonymousPosts: p,
 		Collections:    c,
-		Suspended:      suspended,
+		Silenced:       silenced,
 	}
 	d.UserPage.SetMessaging(u)
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -785,7 +785,7 @@ func viewCollections(app *App, u *User, w http.ResponseWriter, r *http.Request) 
 	uc, _ := app.db.GetUserCollectionCount(u.ID)
 	// TODO: handle any errors
 
-	suspended, err := app.db.IsUserSuspended(u.ID)
+	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
 		log.Error("view collections %v", err)
 		return fmt.Errorf("view collections: %v", err)
@@ -797,13 +797,13 @@ func viewCollections(app *App, u *User, w http.ResponseWriter, r *http.Request) 
 		UsedCollections, TotalCollections int
 
 		NewBlogsDisabled bool
-		Suspended        bool
+		Silenced         bool
 	}{
 		UserPage:         NewUserPage(app, r, u, u.Username+"'s Blogs", f),
 		Collections:      c,
 		UsedCollections:  int(uc),
 		NewBlogsDisabled: !app.cfg.App.CanCreateBlogs(uc),
-		Suspended:        suspended,
+		Silenced:         silenced,
 	}
 	d.UserPage.SetMessaging(u)
 	showUserPage(w, "collections", d)
@@ -821,7 +821,7 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 		return ErrCollectionNotFound
 	}
 
-	suspended, err := app.db.IsUserSuspended(u.ID)
+	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
 		log.Error("view edit collection %v", err)
 		return fmt.Errorf("view edit collection: %v", err)
@@ -830,11 +830,11 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 	obj := struct {
 		*UserPage
 		*Collection
-		Suspended bool
+		Silenced bool
 	}{
 		UserPage:   NewUserPage(app, r, u, "Edit "+c.DisplayTitle(), flashes),
 		Collection: c,
-		Suspended:  suspended,
+		Silenced:   silenced,
 	}
 
 	showUserPage(w, "collection", obj)
@@ -996,7 +996,7 @@ func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error 
 		titleStats = c.DisplayTitle() + " "
 	}
 
-	suspended, err := app.db.IsUserSuspended(u.ID)
+	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
 		log.Error("view stats: %v", err)
 		return err
@@ -1007,13 +1007,13 @@ func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error 
 		Collection  *Collection
 		TopPosts    *[]PublicPost
 		APFollowers int
-		Suspended   bool
+		Silenced    bool
 	}{
 		UserPage:   NewUserPage(app, r, u, titleStats+"Stats", flashes),
 		VisitsBlog: alias,
 		Collection: c,
 		TopPosts:   topPosts,
-		Suspended:  suspended,
+		Silenced:   silenced,
 	}
 	if app.cfg.App.Federation {
 		folls, err := app.db.GetAPFollowers(c)
@@ -1044,16 +1044,16 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 
 	obj := struct {
 		*UserPage
-		Email     string
-		HasPass   bool
-		IsLogOut  bool
-		Suspended bool
+		Email    string
+		HasPass  bool
+		IsLogOut bool
+		Silenced bool
 	}{
-		UserPage:  NewUserPage(app, r, u, "Account Settings", flashes),
-		Email:     fullUser.EmailClear(app.keys),
-		HasPass:   passIsSet,
-		IsLogOut:  r.FormValue("logout") == "1",
-		Suspended: fullUser.IsSilenced(),
+		UserPage: NewUserPage(app, r, u, "Account Settings", flashes),
+		Email:    fullUser.EmailClear(app.keys),
+		HasPass:  passIsSet,
+		IsLogOut: r.FormValue("logout") == "1",
+		Silenced: fullUser.IsSilenced(),
 	}
 
 	showUserPage(w, "settings", obj)

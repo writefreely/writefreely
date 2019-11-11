@@ -80,12 +80,12 @@ func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return err
 	}
-	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("fetch collection activities: %v", err)
 		return ErrInternalGeneral
 	}
-	if suspended {
+	if silenced {
 		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host
@@ -113,12 +113,12 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		return err
 	}
-	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("fetch collection outbox: %v", err)
 		return ErrInternalGeneral
 	}
-	if suspended {
+	if silenced {
 		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host
@@ -174,12 +174,12 @@ func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return err
 	}
-	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("fetch collection followers: %v", err)
 		return ErrInternalGeneral
 	}
-	if suspended {
+	if silenced {
 		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host
@@ -228,12 +228,12 @@ func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return err
 	}
-	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("fetch collection following: %v", err)
 		return ErrInternalGeneral
 	}
-	if suspended {
+	if silenced {
 		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host
@@ -270,12 +270,12 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		// TODO: return Reject?
 		return err
 	}
-	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("fetch collection inbox: %v", err)
 		return ErrInternalGeneral
 	}
-	if suspended {
+	if silenced {
 		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host

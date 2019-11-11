@@ -38,12 +38,12 @@ func (wfr wfResolver) FindUser(username string, host, requestHost string, r []we
 		log.Error("Unable to get blog: %v", err)
 		return nil, err
 	}
-	suspended, err := wfr.db.IsUserSuspended(c.OwnerID)
+	silenced, err := wfr.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
-		log.Error("webfinger find user: check is suspended: %v", err)
+		log.Error("webfinger find user: check is silenced: %v", err)
 		return nil, err
 	}
-	if suspended {
+	if silenced {
 		return nil, wfUserNotFoundErr
 	}
 	c.hostName = wfr.cfg.App.Host

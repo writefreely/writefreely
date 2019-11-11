@@ -269,8 +269,8 @@
 		<script src="/js/h.js"></script>
 		<script>
 function updateMeta() {
-	if ({{.Suspended}}) {
-		alert('Your account is currently supsended, editing posts is disabled.');
+	if ({{.Silenced}}) {
+		alert('Your account is currently silenced, editing posts is disabled.');
 		return
 	}
 	document.getElementById('create-error').style.display = 'none';
