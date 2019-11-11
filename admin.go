@@ -177,6 +177,7 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 		LastPost    string
 		NewPassword string
 		TotalPosts  int64
+		ClearEmail  string
 	}{
 		Config:  app.cfg.App,
 		Message: r.FormValue("m"),
@@ -187,6 +188,7 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 	for _, flash := range flashes {
 		if strings.HasPrefix(flash, "SUCCESS: ") {
 			p.NewPassword = strings.TrimPrefix(flash, "SUCCESS: ")
+			p.ClearEmail = u.EmailClear(app.keys)
 		}
 	}
 

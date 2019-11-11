@@ -9,9 +9,10 @@ h3 {
 }
 input.copy-text {
 	text-align: center;
-	    font-size: 1.2em;
-	    color: #555;
-	margin-left: 1rem;
+	font-size: 1.2em;
+	color: #555;
+	width: 100%;
+	box-sizing: border-box;
 }
 button[type="submit"].danger {
 	padding-left: 2rem;
@@ -22,16 +23,12 @@ button[type="submit"].danger {
 	{{template "admin-header" .}}
 
 	<h2 id="posts-header">{{.User.Username}}</h2>
-	{{if .NewPassword}}<p class="alert success">New password for user <strong>{{.User.Username}}</strong> is
-		<input
-		type="text"
-		class="copy-text"
-		value="{{.NewPassword}}"
-		onfocus="if (this.select) this.select(); else this.setSelectionRange(0, this.value.length);"
-		readonly />
-		<br/><br/>
-		You must share this new password with the user, this is the only time it will be displayed.
-		</p>
+	{{if .NewPassword}}<div class="alert success">
+		<p>This user's password has been reset to:</p>
+		<p><input type="text" class="copy-text" value="{{.NewPassword}}" onfocus="if (this.select) this.select(); else this.setSelectionRange(0, this.value.length);" readonly /></p>
+		<p>They can use this new password to log in to their account. <strong>This will only be shown once</strong>, so be sure to copy it and send it to them now.</p>
+		{{if .User.Email}}<p>Their email address is: <a href="mailto:{{.ClearEmail}}">{{.ClearEmail}}</a></p>{{end}}
+		</div>
 	{{end}}
 	<table class="classy export">
 		<tr>
