@@ -61,7 +61,7 @@ button[type="submit"].danger {
 		<tr>
 			<th>Password</th>
 			<td>
-				{{if not .OwnUserPage}}
+				{{if ne .Username .User.Username}}
 					<form id="reset-form" action="/admin/user/{{.User.Username}}/passphrase" method="post" autocomplete="false">
 					<input type="hidden" name="user" value="{{.User.ID}}"/>
 					<button

@@ -169,9 +169,8 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 
 	p := struct {
 		*UserPage
-		Config      config.AppCfg
-		Message     string
-		OwnUserPage bool
+		Config  config.AppCfg
+		Message string
 
 		User        *User
 		Colls       []inspectedCollection
@@ -196,7 +195,6 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get user: %v", err)}
 	}
-	p.OwnUserPage = u.ID == p.User.ID
 	p.UserPage = NewUserPage(app, r, u, p.User.Username, nil)
 	p.TotalPosts = app.db.GetUserPostsCount(p.User.ID)
 	lp, err := app.db.GetUserLastPostTime(p.User.ID)
