@@ -14,10 +14,6 @@ input.copy-text {
 	width: 100%;
 	box-sizing: border-box;
 }
-button[type="submit"].danger {
-	padding-left: 2rem;
-	padding-right: 2rem;
-}
 </style>
 <div class="snug content-container">
 	{{template "admin-header" .}}
@@ -59,11 +55,9 @@ button[type="submit"].danger {
 			<th>Password</th>
 			<td>
 				{{if ne .Username .User.Username}}
-					<form id="reset-form" action="/admin/user/{{.User.Username}}/passphrase" method="post" autocomplete="false">
+				<form id="reset-form" action="/admin/user/{{.User.Username}}/passphrase" method="post" autocomplete="false">
 					<input type="hidden" name="user" value="{{.User.ID}}"/>
-					<button
-					class="danger"
-					type="submit">Reset</button>
+					<button type="submit">Reset</button>
 				</form>
 				{{else}}
 				<a href="/me/settings" title="Go to reset password page">Change your password</a>
