@@ -7,6 +7,24 @@ table.classy th {
 h3 {
 	font-weight: normal;
 }
+td.active-suspend {
+	display: flex;
+	align-items: center;
+}
+
+td.active-suspend > input[type="submit"] {
+	margin-left: auto;
+	margin-right: 5%;
+}
+
+@media only screen and (max-width: 500px) {
+	td.active-suspend {
+		flex-wrap: wrap;
+	}
+	td.active-suspend > input[type="submit"] {
+		margin: auto;
+	}
+}
 input.copy-text {
 	text-align: center;
 	font-size: 1.2em;
@@ -50,6 +68,21 @@ input.copy-text {
 		<tr>
 			<th>Last Post</th>
 			<td>{{if .LastPost}}{{.LastPost}}{{else}}Never{{end}}</td>
+		</tr>
+		<tr>
+			<form action="/admin/user/{{.User.Username}}/status" method="POST" {{if not .User.IsSilenced}}onsubmit="return confirmSilence()"{{end}}>
+				<a id="status"/>
+				<th>Status</th>
+				<td class="active-suspend">
+				{{if .User.IsSilenced}}
+					<p>Silenced</p>
+					<input type="submit" value="Unsilence"/>
+				{{else}}
+					<p>Active</p>
+					<input class="danger" type="submit" value="Silence" {{if .User.IsAdmin}}disabled{{end}}/>
+				{{end}}
+				</td>
+			</form>
 		</tr>
 		<tr>
 			<th>Password</th>
@@ -110,6 +143,10 @@ input.copy-text {
 </div>
 
 <script type="text/javascript">
+function confirmSilence() {
+	return confirm("Silence this user? They'll still be able to log in and access their posts, but no one else will be able to see them anymore. You can reverse this decision at any time.");
+}
+
 	form = document.getElementById("reset-form");
 	form.addEventListener('submit', function(e) {
 		e.preventDefault();

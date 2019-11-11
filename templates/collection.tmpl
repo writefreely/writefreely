@@ -62,6 +62,9 @@
 		</ul></nav>{{end}}
 		
 		<header>
+		{{if .Suspended}}
+			{{template "user-suspended"}}
+		{{end}}
 		<h1 dir="{{.Direction}}" id="blog-title">{{if .Posts}}{{else}}<span class="writeas-prefix"><a href="/">write.as</a></span> {{end}}<a href="/{{if .IsTopLevel}}{{else}}{{.Prefix}}{{.Alias}}/{{end}}" class="h-card p-author u-url" rel="me author">{{.DisplayTitle}}</a></h1>
 		{{if .Description}}<p class="description p-note">{{.Description}}</p>{{end}}
 		{{/*if not .Public/*}}

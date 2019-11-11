@@ -241,12 +241,37 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 	return nil
 }
 
+func handleAdminToggleUserStatus(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	username := vars["username"]
+	if username == "" {
+		return impart.HTTPError{http.StatusFound, "/admin/users"}
+	}
+
+	user, err := app.db.GetUserForAuth(username)
+	if err != nil {
+		log.Error("failed to get user: %v", err)
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get user from username: %v", err)}
+	}
+	if user.IsSilenced() {
+		err = app.db.SetUserStatus(user.ID, UserActive)
+	} else {
+		err = app.db.SetUserStatus(user.ID, UserSilenced)
+	}
+	if err != nil {
+		log.Error("toggle user suspended: %v", err)
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not toggle user status: %v")}
+	}
+	return impart.HTTPError{http.StatusFound, fmt.Sprintf("/admin/user/%s#status", username)}
+}
+
 func handleAdminResetUserPass(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	username := vars["username"]
 	if username == "" {
 		return impart.HTTPError{http.StatusFound, "/admin/users"}
 	}
+
 	// Generate new random password since none supplied
 	pass := passgen.NewWordish()
 	hashedPass, err := auth.HashPass([]byte(pass))

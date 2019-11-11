@@ -35,9 +35,10 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 	appData := &struct {
 		page.StaticPage
-		Post  *RawPost
-		User  *User
-		Blogs *[]Collection
+		Post      *RawPost
+		User      *User
+		Blogs     *[]Collection
+		Suspended bool
 
 		Editing        bool        // True if we're modifying an existing post
 		EditCollection *Collection // Collection of the post we're editing, if any
@@ -51,6 +52,10 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 		appData.Blogs, err = app.db.GetPublishableCollections(appData.User, app.cfg.App.Host)
 		if err != nil {
 			log.Error("Unable to get user's blogs for Pad: %v", err)
+		}
+		appData.Suspended, err = app.db.IsUserSuspended(appData.User.ID)
+		if err != nil {
+			log.Error("Unable to get users suspension status for Pad: %v", err)
 		}
 	}
 
@@ -119,12 +124,18 @@ func handleViewMeta(app *App, w http.ResponseWriter, r *http.Request) error {
 		EditCollection *Collection // Collection of the post we're editing, if any
 		Flashes        []string
 		NeedsToken     bool
+		Suspended      bool
 	}{
 		StaticPage: pageForReq(app, r),
 		Post:       &RawPost{Font: "norm"},
 		User:       getUserSession(app, r),
 	}
 	var err error
+	appData.Suspended, err = app.db.IsUserSuspended(appData.User.ID)
+	if err != nil {
+		log.Error("view meta: get user suspended status: %v", err)
+		return ErrInternalGeneral
+	}
 
 	if action == "" && slug == "" {
 		return ErrPostNotFound

@@ -7,6 +7,9 @@
 	{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 </ul>{{end}}
 
+{{if .Suspended}}
+	{{template "user-suspended"}}
+{{end}}
 <h2>blogs</h2>
 <ul class="atoms collections">
 	{{range $i, $el := .Collections}}<li class="collection"><h3>

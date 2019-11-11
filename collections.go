@@ -71,6 +71,7 @@ type (
 		CurrentPage int
 		TotalPages  int
 		Format      *CollectionFormat
+		Suspended   bool
 	}
 	SubmittedCollection struct {
 		// Data used for updating a given collection
@@ -379,6 +380,7 @@ func newCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 
 	var userID int64
+	var err error
 	if reqJSON && !c.Web {
 		accessToken = r.Header.Get("Authorization")
 		if accessToken == "" {
@@ -394,6 +396,14 @@ func newCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 			return ErrNotLoggedIn
 		}
 		userID = u.ID
+	}
+	suspended, err := app.db.IsUserSuspended(userID)
+	if err != nil {
+		log.Error("new collection: %v", err)
+		return ErrInternalGeneral
+	}
+	if suspended {
+		return ErrUserSuspended
 	}
 
 	if !author.IsValidUsername(app.cfg, c.Alias) {
@@ -477,6 +487,7 @@ func fetchCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 			res.Owner = u
 		}
 	}
+	// TODO: check suspended
 	app.db.GetPostsCount(res, isCollOwner)
 	// Strip non-public information
 	res.Collection.ForPublic()
@@ -725,8 +736,13 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 	if c == nil || err != nil {
 		return err
 	}
-
 	c.hostName = app.cfg.App.Host
+
+	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	if err != nil {
+		log.Error("view collection: %v", err)
+		return ErrInternalGeneral
+	}
 
 	// Serve ActivityStreams data now, if requested
 	if strings.Contains(r.Header.Get("Accept"), "application/activity+json") {
@@ -784,6 +800,10 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 			log.Error("Error getting user for collection: %v", err)
 		}
 	}
+	if !isOwner && suspended {
+		return ErrCollectionNotFound
+	}
+	displayPage.Suspended = isOwner && suspended
 	displayPage.Owner = owner
 	coll.Owner = displayPage.Owner
 
@@ -886,6 +906,10 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 			log.Error("Error getting user for collection: %v", err)
 		}
 	}
+	if !isOwner && u.IsSilenced() {
+		return ErrCollectionNotFound
+	}
+	displayPage.Suspended = u.IsSilenced()
 	displayPage.Owner = owner
 	coll.Owner = displayPage.Owner
 	// Add more data
@@ -924,11 +948,10 @@ func existingCollection(app *App, w http.ResponseWriter, r *http.Request) error 
 	collAlias := vars["alias"]
 	isWeb := r.FormValue("web") == "1"
 
-	var u *User
+	u := &User{}
 	if reqJSON && !isWeb {
 		// Ensure an access token was given
 		accessToken := r.Header.Get("Authorization")
-		u = &User{}
 		u.ID = app.db.GetUserID(accessToken)
 		if u.ID == -1 {
 			return ErrBadAccessToken
@@ -938,6 +961,16 @@ func existingCollection(app *App, w http.ResponseWriter, r *http.Request) error 
 		if u == nil {
 			return ErrNotLoggedIn
 		}
+	}
+
+	suspended, err := app.db.IsUserSuspended(u.ID)
+	if err != nil {
+		log.Error("existing collection: %v", err)
+		return ErrInternalGeneral
+	}
+
+	if suspended {
+		return ErrUserSuspended
 	}
 
 	if r.Method == "DELETE" {
@@ -952,7 +985,6 @@ func existingCollection(app *App, w http.ResponseWriter, r *http.Request) error 
 	}
 
 	c := SubmittedCollection{OwnerID: uint64(u.ID)}
-	var err error
 
 	if reqJSON {
 		// Decode JSON request

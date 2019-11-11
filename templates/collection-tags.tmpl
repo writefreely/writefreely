@@ -53,6 +53,9 @@
 			</nav>
 		</header>
 		
+		{{if .Suspended}}
+			{{template "user-suspended"}}
+		{{end}}
 		{{if .Posts}}<section id="wrapper" itemscope itemtype="http://schema.org/Blog">{{else}}<div id="wrapper">{{end}}
 			<h1>{{.Tag}}</h1>
 			{{template "posts" .}}
