@@ -57,16 +57,16 @@ td.active-suspend > input[type="submit"] {
 			<td>{{if .LastPost}}{{.LastPost}}{{else}}Never{{end}}</td>
 		</tr>
 		<tr>
-			<form action="/admin/user/{{.User.Username}}/status" method="POST" {{if not .User.IsSuspended}}onsubmit="return confirmSuspend()"{{end}}>
+			<form action="/admin/user/{{.User.Username}}/status" method="POST" {{if not .User.IsSilenced}}onsubmit="return confirmSilence()"{{end}}>
 				<a id="status"/>
 				<th>Status</th>
 				<td class="active-suspend">
 				{{if .User.IsSuspended}}
-					<p>Suspended</p>
-					<input type="submit" value="Activate"/>
+					<p>Silenced</p>
+					<input type="submit" value="Unsilence"/>
 				{{else}}
 					<p>Active</p>
-					<input class="danger" type="submit" value="Suspend" {{if .User.IsAdmin}}disabled{{end}}/>
+					<input class="danger" type="submit" value="Silence" {{if .User.IsAdmin}}disabled{{end}}/>
 				{{end}}
 				</td>
 			</form>
@@ -117,8 +117,8 @@ td.active-suspend > input[type="submit"] {
 </div>
 
 <script type="text/javascript">
-function confirmSuspend() {
-	return confirm("Suspend this user? They'll still be able to log in and access their posts, but no one else will be able to see them anymore. You can reverse this decision at any time.");
+function confirmSilence() {
+	return confirm("Silence this user? They'll still be able to log in and access their posts, but no one else will be able to see them anymore. You can reverse this decision at any time.");
 }
 </script>
 

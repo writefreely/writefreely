@@ -48,7 +48,7 @@ var (
 	ErrUserNotFound      = impart.HTTPError{http.StatusNotFound, "User doesn't exist."}
 	ErrUserNotFoundEmail = impart.HTTPError{http.StatusNotFound, "Please enter your username instead of your email address."}
 
-	ErrUserSuspended = impart.HTTPError{http.StatusForbidden, "Account is suspended, contact the administrator."}
+	ErrUserSuspended = impart.HTTPError{http.StatusForbidden, "Account is silenced."}
 )
 
 // Post operation errors

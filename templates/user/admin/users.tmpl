@@ -18,7 +18,7 @@
 			<td><a href="/admin/user/{{.Username}}">{{.Username}}</a></td>
 			<td>{{.CreatedFriendly}}</td>
 			<td style="text-align:center">{{if .IsAdmin}}Admin{{else}}User{{end}}</td>
-			<td style="text-align:center">{{if .IsSuspended}}Suspended{{else}}Active{{end}}</td>
+			<td style="text-align:center">{{if .IsSilenced}}Silenced{{else}}Active{{end}}</td>
 		</tr>
 		{{end}}
 	</table>
