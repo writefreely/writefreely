@@ -246,7 +246,7 @@ func handleAdminResetUserPass(app *App, u *User, w http.ResponseWriter, r *http.
 		return impart.HTTPError{http.StatusFound, "/admin/users"}
 	}
 	// Generate new random password since none supplied
-	pass := passgen.New()
+	pass := passgen.NewWordish()
 	hashedPass, err := auth.HashPass([]byte(pass))
 	if err != nil {
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not create password hash: %v", err)}
