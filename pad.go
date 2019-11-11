@@ -61,7 +61,9 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	padTmpl := app.cfg.App.Editor
 	if templates[padTmpl] == nil {
-		log.Info("No template '%s' found. Falling back to default 'pad' template.", padTmpl)
+		if padTmpl != "" {
+			log.Info("No template '%s' found. Falling back to default 'pad' template.", padTmpl)
+		}
 		padTmpl = "pad"
 	}
 
