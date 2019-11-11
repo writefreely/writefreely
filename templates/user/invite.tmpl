@@ -31,6 +31,9 @@ table td {
 </style>
 
 <div class="snug content-container">
+	{{if .Suspended}}
+		{{template "user-suspended"}}
+	{{end}}
 	<h1>Invite people</h1>
 	<p>Invite others to join <em>{{.SiteName}}</em> by generating and sharing invite links below.</p>
 
