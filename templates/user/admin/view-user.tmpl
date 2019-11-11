@@ -119,8 +119,10 @@ button[type="submit"].danger {
 	form = document.getElementById("reset-form");
 	form.addEventListener('submit', function(e) {
 		e.preventDefault();
-		agreed = confirm("Really reset password for {{.User.Username}}?\nYou will have to record and share the new password with them.");
-		if (agreed === true) { form.submit();}
+		agreed = confirm("Reset this user's password? This will generate a new temporary password that you'll need to share with them, and invalidate their old one.");
+		if (agreed === true) {
+			form.submit();
+		}
 	});
 </script>
 {{template "footer" .}}
