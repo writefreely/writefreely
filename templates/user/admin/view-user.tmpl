@@ -7,12 +7,25 @@ table.classy th {
 h3 {
 	font-weight: normal;
 }
+input.copy-text {
+	text-align: center;
+	font-size: 1.2em;
+	color: #555;
+	width: 100%;
+	box-sizing: border-box;
+}
 </style>
 <div class="snug content-container">
 	{{template "admin-header" .}}
 
 	<h2 id="posts-header">{{.User.Username}}</h2>
-
+	{{if .NewPassword}}<div class="alert success">
+		<p>This user's password has been reset to:</p>
+		<p><input type="text" class="copy-text" value="{{.NewPassword}}" onfocus="if (this.select) this.select(); else this.setSelectionRange(0, this.value.length);" readonly /></p>
+		<p>They can use this new password to log in to their account. <strong>This will only be shown once</strong>, so be sure to copy it and send it to them now.</p>
+		{{if .ClearEmail}}<p>Their email address is: <a href="mailto:{{.ClearEmail}}">{{.ClearEmail}}</a></p>{{end}}
+		</div>
+	{{end}}
 	<table class="classy export">
 		<tr>
 			<th>No.</th>
@@ -37,6 +50,19 @@ h3 {
 		<tr>
 			<th>Last Post</th>
 			<td>{{if .LastPost}}{{.LastPost}}{{else}}Never{{end}}</td>
+		</tr>
+		<tr>
+			<th>Password</th>
+			<td>
+				{{if ne .Username .User.Username}}
+				<form id="reset-form" action="/admin/user/{{.User.Username}}/passphrase" method="post" autocomplete="false">
+					<input type="hidden" name="user" value="{{.User.ID}}"/>
+					<button type="submit">Reset</button>
+				</form>
+				{{else}}
+				<a href="/me/settings" title="Go to reset password page">Change your password</a>
+				{{end}}
+			</td>
 		</tr>
 	</table>
 
@@ -83,5 +109,15 @@ h3 {
 	{{end}}
 </div>
 
+<script type="text/javascript">
+	form = document.getElementById("reset-form");
+	form.addEventListener('submit', function(e) {
+		e.preventDefault();
+		agreed = confirm("Reset this user's password? This will generate a new temporary password that you'll need to share with them, and invalidate their old one.");
+		if (agreed === true) {
+			form.submit();
+		}
+	});
+</script>
 {{template "footer" .}}
 {{end}}
