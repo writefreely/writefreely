@@ -906,10 +906,10 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 			log.Error("Error getting user for collection: %v", err)
 		}
 	}
-	if !isOwner && u.IsSuspended() {
+	if !isOwner && u.IsSilenced() {
 		return ErrCollectionNotFound
 	}
-	displayPage.Suspended = u.IsSuspended()
+	displayPage.Suspended = u.IsSilenced()
 	displayPage.Owner = owner
 	coll.Owner = displayPage.Owner
 	// Add more data

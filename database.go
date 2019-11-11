@@ -322,7 +322,7 @@ func (db *datastore) IsUserSuspended(id int64) (bool, error) {
 		return false, fmt.Errorf("is user suspended: %v", err)
 	}
 
-	return u.IsSuspended(), nil
+	return u.IsSilenced(), nil
 }
 
 // DoesUserNeedAuth returns true if the user hasn't provided any methods for

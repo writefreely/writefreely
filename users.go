@@ -23,7 +23,7 @@ type UserStatus int
 
 const (
 	UserActive = iota
-	UserSuspended
+	UserSilenced
 )
 
 type (
@@ -127,6 +127,6 @@ func (u *User) IsAdmin() bool {
 	return u.ID == 1
 }
 
-func (u *User) IsSuspended() bool {
-	return u.Status&UserSuspended != 0
+func (u *User) IsSilenced() bool {
+	return u.Status&UserSilenced != 0
 }

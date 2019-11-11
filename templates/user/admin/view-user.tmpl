@@ -61,7 +61,7 @@ td.active-suspend > input[type="submit"] {
 				<a id="status"/>
 				<th>Status</th>
 				<td class="active-suspend">
-				{{if .User.IsSuspended}}
+				{{if .User.IsSilenced}}
 					<p>Silenced</p>
 					<input type="submit" value="Unsilence"/>
 				{{else}}
