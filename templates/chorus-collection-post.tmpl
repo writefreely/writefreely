@@ -80,7 +80,7 @@ article time.dt-published {
 			</p>
 			<nav>
 				{{if .PinnedPosts}}
-				{{range .PinnedPosts}}<a class="pinned{{if eq .Slug.String $.Slug.String}} selected{{end}}" href="{{if not $.SingleUser}}/{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL .Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}
+				{{range .PinnedPosts}}<a class="pinned{{if eq .Slug.String $.Slug.String}} selected{{end}}" href="{{if not $.SingleUser}}/{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}
 				{{end}}
 			</nav>
 			<hr>

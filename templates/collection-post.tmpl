@@ -50,7 +50,7 @@
 		<h1 dir="{{.Direction}}" id="blog-title"><a rel="author" href="{{if .IsTopLevel}}/{{else}}/{{.Collection.Alias}}/{{end}}" class="h-card p-author">{{.Collection.DisplayTitle}}</a></h1>
 			<nav>
 				{{if .PinnedPosts}}
-				{{range .PinnedPosts}}<a class="pinned{{if eq .Slug.String $.Slug.String}} selected{{end}}" href="{{if not $.SingleUser}}/{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL .Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}
+				{{range .PinnedPosts}}<a class="pinned{{if eq .Slug.String $.Slug.String}} selected{{end}}" href="{{if not $.SingleUser}}/{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}
 				{{end}}
 				{{ if and .IsOwner .IsFound }}<span class="views" dir="ltr"><strong>{{largeNumFmt .Views}}</strong> {{pluralize "view" "views" .Views}}</span>
 				<a class="xtra-feature" href="/{{if not .SingleUser}}{{.Collection.Alias}}/{{end}}{{.Slug.String}}/edit" dir="{{.Direction}}">Edit</a>
