@@ -78,7 +78,7 @@ func handleCreateUserInvite(app *App, u *User, w http.ResponseWriter, r *http.Re
 	muVal := r.FormValue("uses")
 	expVal := r.FormValue("expires")
 
-	if u.Status == UserSuspended {
+	if u.IsSuspended() {
 		return ErrUserSuspended
 	}
 

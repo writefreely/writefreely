@@ -1053,7 +1053,7 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		Email:     fullUser.EmailClear(app.keys),
 		HasPass:   passIsSet,
 		IsLogOut:  r.FormValue("logout") == "1",
-		Suspended: fullUser.Status == UserSuspended,
+		Suspended: fullUser.IsSuspended(),
 	}
 
 	showUserPage(w, "settings", obj)
