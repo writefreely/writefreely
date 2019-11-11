@@ -1061,9 +1061,9 @@ func (p *Post) processPost() PublicPost {
 	return *res
 }
 
-func (p *PublicPost) CanonicalURL() string {
+func (p *PublicPost) CanonicalURL(hostName string) string {
 	if p.Collection == nil || p.Collection.Alias == "" {
-		return p.Collection.hostName + "/" + p.ID
+		return hostName + "/" + p.ID
 	}
 	return p.Collection.CanonicalURL() + p.Slug.String
 }
@@ -1072,7 +1072,7 @@ func (p *PublicPost) ActivityObject(cfg *config.Config) *activitystreams.Object 
 	o := activitystreams.NewArticleObject()
 	o.ID = p.Collection.FederatedAPIBase() + "api/posts/" + p.ID
 	o.Published = p.Created
-	o.URL = p.CanonicalURL()
+	o.URL = p.CanonicalURL(cfg.App.Host)
 	o.AttributedTo = p.Collection.FederatedAccount()
 	o.CC = []string{
 		p.Collection.FederatedAccount() + "/followers",

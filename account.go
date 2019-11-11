@@ -625,7 +625,7 @@ func viewExportPosts(app *App, w http.ResponseWriter, r *http.Request) ([]byte, 
 
 	// Export as CSV
 	if strings.HasSuffix(r.URL.Path, ".csv") {
-		data = exportPostsCSV(u, posts)
+		data = exportPostsCSV(app.cfg.App.Host, u, posts)
 		return data, filename, err
 	}
 	if strings.HasSuffix(r.URL.Path, ".zip") {
