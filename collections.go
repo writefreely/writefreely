@@ -339,7 +339,7 @@ func (c *Collection) RenderMathJax() bool {
 }
 
 func newCollection(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	alias := r.FormValue("alias")
 	title := r.FormValue("title")
 
@@ -464,7 +464,7 @@ func fetchCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 	c.hostName = app.cfg.App.Host
 
 	// Redirect users who aren't requesting JSON
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	if !reqJSON {
 		return impart.HTTPError{http.StatusFound, c.CanonicalURL()}
 	}
@@ -943,7 +943,7 @@ func handleCollectionPostRedirect(app *App, w http.ResponseWriter, r *http.Reque
 }
 
 func existingCollection(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	vars := mux.Vars(r)
 	collAlias := vars["alias"]
 	isWeb := r.FormValue("web") == "1"

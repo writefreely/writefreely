@@ -85,7 +85,7 @@ func apiSignup(app *App, w http.ResponseWriter, r *http.Request) error {
 }
 
 func signup(app *App, w http.ResponseWriter, r *http.Request) (*AuthUser, error) {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 
 	// Get params
 	var ur userRegistration
@@ -120,7 +120,7 @@ func signup(app *App, w http.ResponseWriter, r *http.Request) (*AuthUser, error)
 }
 
 func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWriter, r *http.Request) (*AuthUser, error) {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 
 	// Validate required params (alias)
 	if signup.Alias == "" {
@@ -377,7 +377,7 @@ func webLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 var loginAttemptUsers = sync.Map{}
 
 func login(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	oneTimeToken := r.FormValue("with")
 	verbose := r.FormValue("all") == "true" || r.FormValue("verbose") == "1" || r.FormValue("verbose") == "true" || (reqJSON && oneTimeToken != "")
 
@@ -580,7 +580,7 @@ func viewExportOptions(app *App, u *User, w http.ResponseWriter, r *http.Request
 func viewExportPosts(app *App, w http.ResponseWriter, r *http.Request) ([]byte, string, error) {
 	var filename string
 	var u = &User{}
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	if reqJSON {
 		// Use given Authorization header
 		accessToken := r.Header.Get("Authorization")
@@ -625,7 +625,7 @@ func viewExportPosts(app *App, w http.ResponseWriter, r *http.Request) ([]byte, 
 
 	// Export as CSV
 	if strings.HasSuffix(r.URL.Path, ".csv") {
-		data = exportPostsCSV(u, posts)
+		data = exportPostsCSV(app.cfg.App.Host, u, posts)
 		return data, filename, err
 	}
 	if strings.HasSuffix(r.URL.Path, ".zip") {
@@ -662,7 +662,7 @@ func viewExportFull(app *App, w http.ResponseWriter, r *http.Request) ([]byte, s
 }
 
 func viewMeAPI(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	uObj := struct {
 		ID       int64  `json:"id,omitempty"`
 		Username string `json:"username,omitempty"`
@@ -686,7 +686,7 @@ func viewMeAPI(app *App, w http.ResponseWriter, r *http.Request) error {
 }
 
 func viewMyPostsAPI(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	if !reqJSON {
 		return ErrBadRequestedType
 	}
@@ -717,7 +717,7 @@ func viewMyPostsAPI(app *App, u *User, w http.ResponseWriter, r *http.Request) e
 }
 
 func viewMyCollectionsAPI(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	if !reqJSON {
 		return ErrBadRequestedType
 	}
@@ -842,7 +842,7 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 }
 
 func updateSettings(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 
 	var s userSettings
 	var u *User

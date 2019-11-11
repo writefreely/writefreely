@@ -295,7 +295,7 @@ func viewLocalTimelineFeed(app *App, w http.ResponseWriter, req *http.Request) e
 		}
 
 		title = p.PlainDisplayTitle()
-		permalink = p.CanonicalURL()
+		permalink = p.CanonicalURL(app.cfg.App.Host)
 		if p.Collection != nil {
 			author = p.Collection.Title
 		} else {

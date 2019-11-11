@@ -483,7 +483,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 //   /posts?collection={alias}
 // ? /collections/{alias}/posts
 func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	vars := mux.Vars(r)
 	collAlias := vars["alias"]
 	if collAlias == "" {
@@ -617,7 +617,7 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 }
 
 func existingPost(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	vars := mux.Vars(r)
 	postID := vars["post"]
 
@@ -1118,9 +1118,9 @@ func (p *Post) processPost() PublicPost {
 	return *res
 }
 
-func (p *PublicPost) CanonicalURL() string {
+func (p *PublicPost) CanonicalURL(hostName string) string {
 	if p.Collection == nil || p.Collection.Alias == "" {
-		return p.Collection.hostName + "/" + p.ID
+		return hostName + "/" + p.ID
 	}
 	return p.Collection.CanonicalURL() + p.Slug.String
 }
@@ -1129,7 +1129,7 @@ func (p *PublicPost) ActivityObject(cfg *config.Config) *activitystreams.Object 
 	o := activitystreams.NewArticleObject()
 	o.ID = p.Collection.FederatedAPIBase() + "api/posts/" + p.ID
 	o.Published = p.Created
-	o.URL = p.CanonicalURL()
+	o.URL = p.CanonicalURL(cfg.App.Host)
 	o.AttributedTo = p.Collection.FederatedAccount()
 	o.CC = []string{
 		p.Collection.FederatedAccount() + "/followers",
