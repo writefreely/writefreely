@@ -1039,7 +1039,6 @@ func pinPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	var collID int64
-	var ownerID int64
 	var coll *Collection
 	var err error
 	vars := mux.Vars(r)
@@ -1055,14 +1054,13 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 			return err
 		}
 		collID = coll.ID
-		ownerID = coll.OwnerID
 	}
 
 	p, err := app.db.GetPost(vars["post"], collID)
 	if err != nil {
 		return err
 	}
-	suspended, err := app.db.IsUserSuspended(ownerID)
+	suspended, err := app.db.IsUserSuspended(p.OwnerID.Int64)
 	if err != nil {
 		log.Error("fetch post: %v", err)
 		return ErrInternalGeneral
