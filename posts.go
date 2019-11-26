@@ -384,7 +384,6 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	suspended, err := app.db.IsUserSuspended(ownerID.Int64)
 	if err != nil {
 		log.Error("view post: %v", err)
-		return ErrInternalGeneral
 	}
 
 	// Check if post has been unpublished
@@ -511,7 +510,6 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	suspended, err := app.db.IsUserSuspended(userID)
 	if err != nil {
 		log.Error("new post: %v", err)
-		return ErrInternalGeneral
 	}
 	if suspended {
 		return ErrUserSuspended
@@ -685,7 +683,6 @@ func existingPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	suspended, err := app.db.IsUserSuspended(userID)
 	if err != nil {
 		log.Error("existing post: %v", err)
-		return ErrInternalGeneral
 	}
 	if suspended {
 		return ErrUserSuspended
@@ -888,7 +885,6 @@ func addPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	suspended, err := app.db.IsUserSuspended(ownerID)
 	if err != nil {
 		log.Error("add post: %v", err)
-		return ErrInternalGeneral
 	}
 	if suspended {
 		return ErrUserSuspended
@@ -991,7 +987,6 @@ func pinPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	suspended, err := app.db.IsUserSuspended(userID)
 	if err != nil {
 		log.Error("pin post: %v", err)
-		return ErrInternalGeneral
 	}
 	if suspended {
 		return ErrUserSuspended
@@ -1065,7 +1060,6 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	suspended, err := app.db.IsUserSuspended(ownerID)
 	if err != nil {
 		log.Error("fetch post: %v", err)
-		return ErrInternalGeneral
 	}
 
 	if suspended {
@@ -1335,7 +1329,6 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 	suspended, err := app.db.IsUserSuspended(c.OwnerID)
 	if err != nil {
 		log.Error("view collection post: %v", err)
-		return ErrInternalGeneral
 	}
 
 	// Check collection permissions
