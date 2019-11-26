@@ -8,7 +8,7 @@
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link rel="canonical" href="{{.CanonicalURL}}" />
+		<link rel="canonical" href="{{.CanonicalURL .Host}}" />
 		<meta name="generator" content="WriteFreely">
 		<meta name="title" content="{{.PlainDisplayTitle}} {{localhtml "title dash" .Language.String}} {{if .Collection.Title}}{{.Collection.Title}}{{else}}{{.Collection.Alias}}{{end}}">
 		<meta name="description" content="{{.Summary}}">
@@ -25,7 +25,7 @@
 		<meta property="og:description" content="{{.Summary}}" />
 		<meta property="og:site_name" content="{{.Collection.DisplayTitle}}" />
 		<meta property="og:type" content="article" />
-		<meta property="og:url" content="{{.CanonicalURL}}" />
+		<meta property="og:url" content="{{.CanonicalURL .Host}}" />
 		<meta property="og:updated_time" content="{{.Created8601}}" />
 		{{range .Images}}<meta property="og:image" content="{{.}}" />{{else}}<meta property="og:image" content="{{.Collection.AvatarURL}}">{{end}}
 		<meta property="article:published_time" content="{{.Created8601}}">
@@ -65,6 +65,9 @@ article time.dt-published {
 
 		{{template "user-navigation" .}}
 		
+		{{if .Suspended}}
+			{{template "user-suspended"}}
+		{{end}}
 		<article id="post-body" class="{{.Font}} h-entry">{{if .IsScheduled}}<p class="badge">Scheduled</p>{{end}}{{if .Title.String}}<h2 id="title" class="p-name">{{.FormattedDisplayTitle}}</h2>{{end}}{{/* TODO: check format: if .Collection.Format.ShowDates*/}}<time class="dt-published" datetime="{{.Created}}" pubdate itemprop="datePublished" content="{{.Created}}">{{.DisplayDate}}</time><div class="e-content">{{.HTMLContent}}</div></article>
 
 		{{ if .Collection.ShowFooterBranding }}
@@ -77,7 +80,7 @@ article time.dt-published {
 			</p>
 			<nav>
 				{{if .PinnedPosts}}
-				{{range .PinnedPosts}}<a class="pinned{{if eq .Slug.String $.Slug.String}} selected{{end}}" href="{{if not $.SingleUser}}/{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}
+				{{range .PinnedPosts}}<a class="pinned{{if eq .Slug.String $.Slug.String}} selected{{end}}" href="{{if not $.SingleUser}}/{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}
 				{{end}}
 			</nav>
 			<hr>

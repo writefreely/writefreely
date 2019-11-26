@@ -41,6 +41,14 @@ func (wfr wfResolver) FindUser(username string, host, requestHost string, r []we
 		log.Error("Unable to get blog: %v", err)
 		return nil, err
 	}
+	suspended, err := wfr.db.IsUserSuspended(c.OwnerID)
+	if err != nil {
+		log.Error("webfinger find user: check is suspended: %v", err)
+		return nil, err
+	}
+	if suspended {
+		return nil, wfUserNotFoundErr
+	}
 	c.hostName = wfr.cfg.App.Host
 	if wfr.cfg.App.SingleUser {
 		// Ensure handle matches user-chosen one on single-user blogs

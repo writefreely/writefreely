@@ -22,13 +22,10 @@
 			</nav>
 		</nav>
 		{{else}}
-		{{ if .Chorus }}<nav id="full-nav">
+		<nav id="full-nav">
 			<div class="left-side">
 				<h1><a href="/" title="Return to editor">{{.SiteName}}</a></h1>
 			</div>
-		{{ else }}
-			<h1><a href="/" title="Return to editor">{{.SiteName}}</a></h1>
-		{{ end }}
 		<nav id="user-nav">
 			{{if .Username}}
 			<nav class="dropdown-nav">
@@ -62,6 +59,7 @@
 				{{else}}
 					<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>
 					{{if not .DisableDrafts}}<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>{{end}}
+					{{if and (and .LocalTimeline .CanViewReader) (not .Chorus)}}<a href="/read">Reader</a>{{end}}
 				{{end}}
 			</nav>
 		</nav>

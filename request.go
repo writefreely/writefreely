@@ -10,9 +10,13 @@
 
 package writefreely
 
-import "mime"
+import (
+	"mime"
+	"net/http"
+)
 
-func IsJSON(h string) bool {
-	ct, _, _ := mime.ParseMediaType(h)
-	return ct == "application/json"
+func IsJSON(r *http.Request) bool {
+	ct, _, _ := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	accept := r.Header.Get("Accept")
+	return ct == "application/json" || accept == "application/json"
 }
