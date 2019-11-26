@@ -405,6 +405,31 @@ body {
 	}
 }
 
+nav#full-nav {
+	margin: 0;
+
+	.left-side {
+		display: inline-block;
+
+		a:first-child {
+			margin-left: 0;
+		}
+	}
+
+	.right-side {
+		float: right;
+	}
+}
+
+nav#full-nav a.simple-btn, .tool button {
+	font-family: @sansFont;
+	border: 1px solid #ccc !important;
+	padding: .5rem 1rem;
+	margin: 0;
+	.rounded(.25em);
+	text-decoration: none;
+}
+
 .post-title {
 	a {
 		&:link {
@@ -491,9 +516,16 @@ abbr {
 body#collection article p, body#subpage article p {
 	.article-p;
 }
-pre, body#post article, body#collection article, body#subpage article, body#subpage #wrapper h1 {
+pre, body#post article, #post .alert, #subpage .alert, body#collection article, body#subpage article, body#subpage #wrapper h1 {
 	max-width: 40rem;
 	margin: 0 auto;
+}
+#collection header .alert, #post .alert, #subpage .alert {
+	margin-bottom: 1em;
+	p {
+		text-align: left;
+		line-height: 1.4;
+	}
 }
 textarea, pre, body#post article, body#collection article p {
 	&.norm, &.sans, &.wrap {

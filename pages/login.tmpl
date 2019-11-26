@@ -12,8 +12,8 @@
 	</ul>{{end}}
 
 	<form action="/auth/login" method="post" style="text-align: center;margin-top:1em;" onsubmit="disableSubmit()">
-		<input type="text" name="alias" placeholder="Username" value="{{.Username}}" {{if not .Username}}autofocus{{end}} /><br />
-		<input type="password" name="pass" placeholder="Password" {{if .Username}}autofocus{{end}} /><br />
+		<input type="text" name="alias" placeholder="Username" value="{{.LoginUsername}}" {{if not .LoginUsername}}autofocus{{end}} /><br />
+		<input type="password" name="pass" placeholder="Password" {{if .LoginUsername}}autofocus{{end}} /><br />
 		{{if .To}}<input type="hidden" name="to" value="{{.To}}" />{{end}}
 		<input type="submit" id="btn-login" value="Login" />
 	</form>

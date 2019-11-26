@@ -772,7 +772,7 @@ func (h *Handler) handleError(w http.ResponseWriter, r *http.Request, err error)
 		return
 	}
 
-	if IsJSON(r.Header.Get("Content-Type")) {
+	if IsJSON(r) {
 		impart.WriteError(w, impart.HTTPError{http.StatusInternalServerError, "This is an unhelpful error message for a miscellaneous internal error."})
 		return
 	}

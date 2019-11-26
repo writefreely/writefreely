@@ -28,6 +28,7 @@ import (
 	"github.com/writeas/web-core/data"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/author"
+	"github.com/writeas/writefreely/config"
 	"github.com/writeas/writefreely/page"
 )
 
@@ -59,9 +60,13 @@ func NewUserPage(app *App, r *http.Request, u *User, title string, flashes []str
 	up.Flashes = flashes
 	up.Path = r.URL.Path
 	up.IsAdmin = u.IsAdmin()
-	up.CanInvite = app.cfg.App.UserInvites != "" &&
-		(up.IsAdmin || app.cfg.App.UserInvites != "admin")
+	up.CanInvite = canUserInvite(app.cfg, up.IsAdmin)
 	return up
+}
+
+func canUserInvite(cfg *config.Config, isAdmin bool) bool {
+	return cfg.App.UserInvites != "" &&
+		(isAdmin || cfg.App.UserInvites != "admin")
 }
 
 func (up *UserPage) SetMessaging(u *User) {
@@ -80,7 +85,7 @@ func apiSignup(app *App, w http.ResponseWriter, r *http.Request) error {
 }
 
 func signup(app *App, w http.ResponseWriter, r *http.Request) (*AuthUser, error) {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 
 	// Get params
 	var ur userRegistration
@@ -115,7 +120,7 @@ func signup(app *App, w http.ResponseWriter, r *http.Request) (*AuthUser, error)
 }
 
 func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWriter, r *http.Request) (*AuthUser, error) {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 
 	// Validate required params (alias)
 	if signup.Alias == "" {
@@ -305,10 +310,10 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p := &struct {
 		page.StaticPage
-		To       string
-		Message  template.HTML
-		Flashes  []template.HTML
-		Username string
+		To            string
+		Message       template.HTML
+		Flashes       []template.HTML
+		LoginUsername string
 	}{
 		pageForReq(app, r),
 		r.FormValue("to"),
@@ -372,7 +377,7 @@ func webLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 var loginAttemptUsers = sync.Map{}
 
 func login(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	oneTimeToken := r.FormValue("with")
 	verbose := r.FormValue("all") == "true" || r.FormValue("verbose") == "1" || r.FormValue("verbose") == "true" || (reqJSON && oneTimeToken != "")
 
@@ -547,7 +552,7 @@ func getVerboseAuthUser(app *App, token string, u *User, verbose bool) *AuthUser
 		if err != nil {
 			log.Error("Login: Unable to get user posts: %v", err)
 		}
-		colls, err := app.db.GetCollections(u)
+		colls, err := app.db.GetCollections(u, app.cfg.App.Host)
 		if err != nil {
 			log.Error("Login: Unable to get user collections: %v", err)
 		}
@@ -575,7 +580,7 @@ func viewExportOptions(app *App, u *User, w http.ResponseWriter, r *http.Request
 func viewExportPosts(app *App, w http.ResponseWriter, r *http.Request) ([]byte, string, error) {
 	var filename string
 	var u = &User{}
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	if reqJSON {
 		// Use given Authorization header
 		accessToken := r.Header.Get("Authorization")
@@ -620,7 +625,7 @@ func viewExportPosts(app *App, w http.ResponseWriter, r *http.Request) ([]byte, 
 
 	// Export as CSV
 	if strings.HasSuffix(r.URL.Path, ".csv") {
-		data = exportPostsCSV(u, posts)
+		data = exportPostsCSV(app.cfg.App.Host, u, posts)
 		return data, filename, err
 	}
 	if strings.HasSuffix(r.URL.Path, ".zip") {
@@ -657,7 +662,7 @@ func viewExportFull(app *App, w http.ResponseWriter, r *http.Request) ([]byte, s
 }
 
 func viewMeAPI(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	uObj := struct {
 		ID       int64  `json:"id,omitempty"`
 		Username string `json:"username,omitempty"`
@@ -681,7 +686,7 @@ func viewMeAPI(app *App, w http.ResponseWriter, r *http.Request) error {
 }
 
 func viewMyPostsAPI(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	if !reqJSON {
 		return ErrBadRequestedType
 	}
@@ -712,12 +717,12 @@ func viewMyPostsAPI(app *App, u *User, w http.ResponseWriter, r *http.Request) e
 }
 
 func viewMyCollectionsAPI(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	if !reqJSON {
 		return ErrBadRequestedType
 	}
 
-	p, err := app.db.GetCollections(u)
+	p, err := app.db.GetCollections(u, app.cfg.App.Host)
 	if err != nil {
 		return err
 	}
@@ -740,19 +745,25 @@ func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		log.Error("unable to fetch flashes: %v", err)
 	}
 
-	c, err := app.db.GetPublishableCollections(u)
+	c, err := app.db.GetPublishableCollections(u, app.cfg.App.Host)
 	if err != nil {
 		log.Error("unable to fetch collections: %v", err)
 	}
 
+	suspended, err := app.db.IsUserSuspended(u.ID)
+	if err != nil {
+		log.Error("view articles: %v", err)
+	}
 	d := struct {
 		*UserPage
 		AnonymousPosts *[]PublicPost
 		Collections    *[]Collection
+		Suspended      bool
 	}{
 		UserPage:       NewUserPage(app, r, u, u.Username+"'s Posts", f),
 		AnonymousPosts: p,
 		Collections:    c,
+		Suspended:      suspended,
 	}
 	d.UserPage.SetMessaging(u)
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -763,7 +774,7 @@ func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 }
 
 func viewCollections(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
-	c, err := app.db.GetCollections(u)
+	c, err := app.db.GetCollections(u, app.cfg.App.Host)
 	if err != nil {
 		log.Error("unable to fetch collections: %v", err)
 		return fmt.Errorf("No collections")
@@ -774,6 +785,11 @@ func viewCollections(app *App, u *User, w http.ResponseWriter, r *http.Request) 
 	uc, _ := app.db.GetUserCollectionCount(u.ID)
 	// TODO: handle any errors
 
+	suspended, err := app.db.IsUserSuspended(u.ID)
+	if err != nil {
+		log.Error("view collections %v", err)
+		return fmt.Errorf("view collections: %v", err)
+	}
 	d := struct {
 		*UserPage
 		Collections *[]Collection
@@ -781,11 +797,13 @@ func viewCollections(app *App, u *User, w http.ResponseWriter, r *http.Request) 
 		UsedCollections, TotalCollections int
 
 		NewBlogsDisabled bool
+		Suspended        bool
 	}{
 		UserPage:         NewUserPage(app, r, u, u.Username+"'s Blogs", f),
 		Collections:      c,
 		UsedCollections:  int(uc),
 		NewBlogsDisabled: !app.cfg.App.CanCreateBlogs(uc),
+		Suspended:        suspended,
 	}
 	d.UserPage.SetMessaging(u)
 	showUserPage(w, "collections", d)
@@ -803,13 +821,20 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 		return ErrCollectionNotFound
 	}
 
+	suspended, err := app.db.IsUserSuspended(u.ID)
+	if err != nil {
+		log.Error("view edit collection %v", err)
+		return fmt.Errorf("view edit collection: %v", err)
+	}
 	flashes, _ := getSessionFlashes(app, w, r, nil)
 	obj := struct {
 		*UserPage
 		*Collection
+		Suspended bool
 	}{
 		UserPage:   NewUserPage(app, r, u, "Edit "+c.DisplayTitle(), flashes),
 		Collection: c,
+		Suspended:  suspended,
 	}
 
 	showUserPage(w, "collection", obj)
@@ -817,7 +842,7 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 }
 
 func updateSettings(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 
 	var s userSettings
 	var u *User
@@ -971,17 +996,24 @@ func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error 
 		titleStats = c.DisplayTitle() + " "
 	}
 
+	suspended, err := app.db.IsUserSuspended(u.ID)
+	if err != nil {
+		log.Error("view stats: %v", err)
+		return err
+	}
 	obj := struct {
 		*UserPage
 		VisitsBlog  string
 		Collection  *Collection
 		TopPosts    *[]PublicPost
 		APFollowers int
+		Suspended   bool
 	}{
 		UserPage:   NewUserPage(app, r, u, titleStats+"Stats", flashes),
 		VisitsBlog: alias,
 		Collection: c,
 		TopPosts:   topPosts,
+		Suspended:  suspended,
 	}
 	if app.cfg.App.Federation {
 		folls, err := app.db.GetAPFollowers(c)
@@ -1012,14 +1044,16 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 
 	obj := struct {
 		*UserPage
-		Email    string
-		HasPass  bool
-		IsLogOut bool
+		Email     string
+		HasPass   bool
+		IsLogOut  bool
+		Suspended bool
 	}{
-		UserPage: NewUserPage(app, r, u, "Account Settings", flashes),
-		Email:    fullUser.EmailClear(app.keys),
-		HasPass:  passIsSet,
-		IsLogOut: r.FormValue("logout") == "1",
+		UserPage:  NewUserPage(app, r, u, "Account Settings", flashes),
+		Email:     fullUser.EmailClear(app.keys),
+		HasPass:   passIsSet,
+		IsLogOut:  r.FormValue("logout") == "1",
+		Suspended: fullUser.IsSilenced(),
 	}
 
 	showUserPage(w, "settings", obj)

@@ -11,10 +11,6 @@
 package writefreely
 
 import (
-	"github.com/dustin/go-humanize"
-	"github.com/writeas/web-core/l10n"
-	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/config"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -22,6 +18,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/dustin/go-humanize"
+	"github.com/writeas/web-core/l10n"
+	"github.com/writeas/web-core/log"
+	"github.com/writeas/writefreely/config"
 )
 
 var (
@@ -63,12 +64,16 @@ func initTemplate(parentDir, name string) {
 		filepath.Join(parentDir, templatesDir, name+".tmpl"),
 		filepath.Join(parentDir, templatesDir, "include", "footer.tmpl"),
 		filepath.Join(parentDir, templatesDir, "base.tmpl"),
+		filepath.Join(parentDir, templatesDir, "user", "include", "suspended.tmpl"),
 	}
-	if name == "collection" || name == "collection-tags" {
+	if name == "collection" || name == "collection-tags" || name == "chorus-collection" {
 		// These pages list out collection posts, so we also parse templatesDir + "include/posts.tmpl"
 		files = append(files, filepath.Join(parentDir, templatesDir, "include", "posts.tmpl"))
 	}
-	if name == "collection" || name == "collection-tags" || name == "collection-post" || name == "post" {
+	if name == "chorus-collection" || name == "chorus-collection-post" {
+		files = append(files, filepath.Join(parentDir, templatesDir, "user", "include", "header.tmpl"))
+	}
+	if name == "collection" || name == "collection-tags" || name == "collection-post" || name == "post" || name == "chorus-collection" || name == "chorus-collection-post" {
 		files = append(files, filepath.Join(parentDir, templatesDir, "include", "post-render.tmpl"))
 	}
 	templates[name] = template.Must(template.New("").Funcs(funcMap).ParseFiles(files...))
@@ -83,6 +88,7 @@ func initPage(parentDir, path, key string) {
 		path,
 		filepath.Join(parentDir, templatesDir, "include", "footer.tmpl"),
 		filepath.Join(parentDir, templatesDir, "base.tmpl"),
+		filepath.Join(parentDir, templatesDir, "user", "include", "suspended.tmpl"),
 	))
 }
 
@@ -95,6 +101,7 @@ func initUserPage(parentDir, path, key string) {
 		path,
 		filepath.Join(parentDir, templatesDir, "user", "include", "header.tmpl"),
 		filepath.Join(parentDir, templatesDir, "user", "include", "footer.tmpl"),
+		filepath.Join(parentDir, templatesDir, "user", "include", "suspended.tmpl"),
 	))
 }
 

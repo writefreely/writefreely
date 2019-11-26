@@ -13,16 +13,19 @@ package writefreely
 import (
 	"database/sql"
 	"fmt"
-	"github.com/gogits/gogs/pkg/tool"
+	"net/http"
+	"runtime"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/log"
+	"github.com/writeas/web-core/passgen"
+	"github.com/writeas/writefreely/appstats"
 	"github.com/writeas/writefreely/config"
-	"net/http"
-	"runtime"
-	"strconv"
-	"time"
 )
 
 var (
@@ -169,11 +172,12 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 		Config  config.AppCfg
 		Message string
 
-		User     *User
-		Colls    []inspectedCollection
-		LastPost string
-
-		TotalPosts int64
+		User        *User
+		Colls       []inspectedCollection
+		LastPost    string
+		NewPassword string
+		TotalPosts  int64
+		ClearEmail  string
 	}{
 		Config:  app.cfg.App,
 		Message: r.FormValue("m"),
@@ -185,6 +189,14 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get user: %v", err)}
 	}
+
+	flashes, _ := getSessionFlashes(app, w, r, nil)
+	for _, flash := range flashes {
+		if strings.HasPrefix(flash, "SUCCESS: ") {
+			p.NewPassword = strings.TrimPrefix(flash, "SUCCESS: ")
+			p.ClearEmail = p.User.EmailClear(app.keys)
+		}
+	}
 	p.UserPage = NewUserPage(app, r, u, p.User.Username, nil)
 	p.TotalPosts = app.db.GetUserPostsCount(p.User.ID)
 	lp, err := app.db.GetUserLastPostTime(p.User.ID)
@@ -195,7 +207,7 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 		p.LastPost = lp.Format("January 2, 2006, 3:04 PM")
 	}
 
-	colls, err := app.db.GetCollections(p.User)
+	colls, err := app.db.GetCollections(p.User, app.cfg.App.Host)
 	if err != nil {
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get user's collections: %v", err)}
 	}
@@ -227,6 +239,62 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 
 	showUserPage(w, "view-user", p)
 	return nil
+}
+
+func handleAdminToggleUserStatus(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	username := vars["username"]
+	if username == "" {
+		return impart.HTTPError{http.StatusFound, "/admin/users"}
+	}
+
+	user, err := app.db.GetUserForAuth(username)
+	if err != nil {
+		log.Error("failed to get user: %v", err)
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get user from username: %v", err)}
+	}
+	if user.IsSilenced() {
+		err = app.db.SetUserStatus(user.ID, UserActive)
+	} else {
+		err = app.db.SetUserStatus(user.ID, UserSilenced)
+	}
+	if err != nil {
+		log.Error("toggle user suspended: %v", err)
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not toggle user status: %v")}
+	}
+	return impart.HTTPError{http.StatusFound, fmt.Sprintf("/admin/user/%s#status", username)}
+}
+
+func handleAdminResetUserPass(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	username := vars["username"]
+	if username == "" {
+		return impart.HTTPError{http.StatusFound, "/admin/users"}
+	}
+
+	// Generate new random password since none supplied
+	pass := passgen.NewWordish()
+	hashedPass, err := auth.HashPass([]byte(pass))
+	if err != nil {
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not create password hash: %v", err)}
+	}
+
+	userIDVal := r.FormValue("user")
+	log.Info("ADMIN: Changing user %s password", userIDVal)
+	id, err := strconv.Atoi(userIDVal)
+	if err != nil {
+		return impart.HTTPError{http.StatusBadRequest, fmt.Sprintf("Invalid user ID: %v", err)}
+	}
+
+	err = app.db.ChangePassphrase(int64(id), true, "", hashedPass)
+	if err != nil {
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not update passphrase: %v", err)}
+	}
+	log.Info("ADMIN: Successfully changed.")
+
+	addSessionFlash(app, w, r, fmt.Sprintf("SUCCESS: %s", pass), nil)
+
+	return impart.HTTPError{http.StatusFound, fmt.Sprintf("/admin/user/%s", username)}
 }
 
 func handleViewAdminPages(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
@@ -319,6 +387,8 @@ func handleViewAdminPage(app *App, u *User, w http.ResponseWriter, r *http.Reque
 		}
 		p.Content, err = getLandingBody(app)
 		p.Content.ID = "landing"
+	} else if slug == "reader" {
+		p.Content, err = getReaderSection(app)
 	} else {
 		p.Content, err = app.db.GetDynamicContent(slug)
 	}
@@ -342,7 +412,7 @@ func handleAdminUpdateSite(app *App, u *User, w http.ResponseWriter, r *http.Req
 	id := vars["page"]
 
 	// Validate
-	if id != "about" && id != "privacy" && id != "landing" {
+	if id != "about" && id != "privacy" && id != "landing" && id != "reader" {
 		return impart.HTTPError{http.StatusNotFound, "No such page."}
 	}
 
@@ -356,6 +426,9 @@ func handleAdminUpdateSite(app *App, u *User, w http.ResponseWriter, r *http.Req
 			return impart.HTTPError{http.StatusFound, "/admin/page/" + id + m}
 		}
 		err = app.db.UpdateDynamicContent("landing-body", "", r.FormValue("content"), "section")
+	} else if id == "reader" {
+		// Update sections with titles
+		err = app.db.UpdateDynamicContent(id, r.FormValue("title"), r.FormValue("content"), "section")
 	} else {
 		// Update page
 		err = app.db.UpdateDynamicContent(id, r.FormValue("title"), r.FormValue("content"), "page")
@@ -402,37 +475,37 @@ func handleAdminUpdateConfig(apper Apper, u *User, w http.ResponseWriter, r *htt
 }
 
 func updateAppStats() {
-	sysStatus.Uptime = tool.TimeSincePro(appStartTime)
+	sysStatus.Uptime = appstats.TimeSincePro(appStartTime)
 
 	m := new(runtime.MemStats)
 	runtime.ReadMemStats(m)
 	sysStatus.NumGoroutine = runtime.NumGoroutine()
 
-	sysStatus.MemAllocated = tool.FileSize(int64(m.Alloc))
-	sysStatus.MemTotal = tool.FileSize(int64(m.TotalAlloc))
-	sysStatus.MemSys = tool.FileSize(int64(m.Sys))
+	sysStatus.MemAllocated = appstats.FileSize(int64(m.Alloc))
+	sysStatus.MemTotal = appstats.FileSize(int64(m.TotalAlloc))
+	sysStatus.MemSys = appstats.FileSize(int64(m.Sys))
 	sysStatus.Lookups = m.Lookups
 	sysStatus.MemMallocs = m.Mallocs
 	sysStatus.MemFrees = m.Frees
 
-	sysStatus.HeapAlloc = tool.FileSize(int64(m.HeapAlloc))
-	sysStatus.HeapSys = tool.FileSize(int64(m.HeapSys))
-	sysStatus.HeapIdle = tool.FileSize(int64(m.HeapIdle))
-	sysStatus.HeapInuse = tool.FileSize(int64(m.HeapInuse))
-	sysStatus.HeapReleased = tool.FileSize(int64(m.HeapReleased))
+	sysStatus.HeapAlloc = appstats.FileSize(int64(m.HeapAlloc))
+	sysStatus.HeapSys = appstats.FileSize(int64(m.HeapSys))
+	sysStatus.HeapIdle = appstats.FileSize(int64(m.HeapIdle))
+	sysStatus.HeapInuse = appstats.FileSize(int64(m.HeapInuse))
+	sysStatus.HeapReleased = appstats.FileSize(int64(m.HeapReleased))
 	sysStatus.HeapObjects = m.HeapObjects
 
-	sysStatus.StackInuse = tool.FileSize(int64(m.StackInuse))
-	sysStatus.StackSys = tool.FileSize(int64(m.StackSys))
-	sysStatus.MSpanInuse = tool.FileSize(int64(m.MSpanInuse))
-	sysStatus.MSpanSys = tool.FileSize(int64(m.MSpanSys))
-	sysStatus.MCacheInuse = tool.FileSize(int64(m.MCacheInuse))
-	sysStatus.MCacheSys = tool.FileSize(int64(m.MCacheSys))
-	sysStatus.BuckHashSys = tool.FileSize(int64(m.BuckHashSys))
-	sysStatus.GCSys = tool.FileSize(int64(m.GCSys))
-	sysStatus.OtherSys = tool.FileSize(int64(m.OtherSys))
+	sysStatus.StackInuse = appstats.FileSize(int64(m.StackInuse))
+	sysStatus.StackSys = appstats.FileSize(int64(m.StackSys))
+	sysStatus.MSpanInuse = appstats.FileSize(int64(m.MSpanInuse))
+	sysStatus.MSpanSys = appstats.FileSize(int64(m.MSpanSys))
+	sysStatus.MCacheInuse = appstats.FileSize(int64(m.MCacheInuse))
+	sysStatus.MCacheSys = appstats.FileSize(int64(m.MCacheSys))
+	sysStatus.BuckHashSys = appstats.FileSize(int64(m.BuckHashSys))
+	sysStatus.GCSys = appstats.FileSize(int64(m.GCSys))
+	sysStatus.OtherSys = appstats.FileSize(int64(m.OtherSys))
 
-	sysStatus.NextGC = tool.FileSize(int64(m.NextGC))
+	sysStatus.NextGC = appstats.FileSize(int64(m.NextGC))
 	sysStatus.LastGC = fmt.Sprintf("%.1fs", float64(time.Now().UnixNano()-int64(m.LastGC))/1000/1000/1000)
 	sysStatus.PauseTotalNs = fmt.Sprintf("%.1fs", float64(m.PauseTotalNs)/1000/1000/1000)
 	sysStatus.PauseNs = fmt.Sprintf("%.3fs", float64(m.PauseNs[(m.NumGC+255)%256])/1000/1000/1000)

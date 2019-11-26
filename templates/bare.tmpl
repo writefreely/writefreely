@@ -19,73 +19,21 @@
 		
 		<header id="tools">
 			<div id="clip">
-				{{if not .SingleUser}}<h1><a href="/me/c/" title="View blogs"><img class="ic-24dp" src="/img/ic_blogs_dark@2x.png" /></a></h1>{{end}}
+				{{if not .SingleUser}}<h1>{{if .Chorus}}<a href="/" title="Home">{{else}}<a href="/me/c/" title="View blogs">{{end}}{{.SiteName}}</a></h1>{{end}}
 				<nav id="target" {{if .SingleUser}}style="margin-left:0"{{end}}><ul>
-						{{if .Editing}}<li>{{if .EditCollection}}<a href="{{.EditCollection.CanonicalURL}}">{{.EditCollection.Title}}</a>{{else}}<a>Draft</a>{{end}}</li>
-						{{else}}<li><a id="publish-to"><span id="target-name">Draft</span> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
-						<ul>
-							<li class="menu-heading">Publish to...</li>
-							{{if .Blogs}}{{range $idx, $el := .Blogs}}
-								<li class="target{{if eq $idx 0}} selected{{end}}" id="blog-{{$el.Alias}}"><a href="#{{$el.Alias}}"><i class="material-icons md-18">public</i> {{if $el.Title}}{{$el.Title}}{{else}}{{$el.Alias}}{{end}}</a></li>
-							{{end}}{{end}}
-							<li class="target" id="blog-anonymous"><a href="#anonymous"><i class="material-icons md-18">description</i> <em>Draft</em></a></li>
-							<li id="user-separator" class="separator"><hr /></li>
-						{{ if .SingleUser }}
-							<li><a href="/"><i class="material-icons md-18">launch</i> View Blog</a></li>
-							<li><a href="/me/c/{{.Username}}"><i class="material-icons md-18">palette</i> Customize</a></li>
-							<li><a href="/me/c/{{.Username}}/stats"><i class="material-icons md-18">trending_up</i> Stats</a></li>
-						{{ else }}
-							<li><a href="/me/c/"><i class="material-icons md-18">library_books</i> View Blogs</a></li>
-						{{ end }}
-							<li><a href="/me/posts/"><i class="material-icons md-18">view_list</i> View Drafts</a></li>
-							<li><a href="/me/logout"><i class="material-icons md-18">power_settings_new</i>  Log out</a></li>
-						</ul>
-					</li>{{end}}
-				</ul></nav>
-				<nav id="font-picker" class="if-room room-3 hidden" style="margin-left:-1em"><ul>
-						<li><a href="#" id="" onclick="return false"><img class="ic-24dp" src="/img/ic_font_dark@2x.png" /> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
-						<ul style="text-align: center">
-							<li class="menu-heading">Font</li>
-							<li class="selected"><a class="font norm" href="#norm">Serif</a></li>
-							<li><a class="font sans" href="#sans">Sans-serif</a></li>
-							<li><a class="font wrap" href="#wrap">Monospace</a></li>
-						</ul>
-					</li>
+						<li>{{if .Blogs}}<a href="{{$c := index .Blogs 0}}{{$c.CanonicalURL}}">My Posts</a>{{else}}<a>Draft</a>{{end}}</li>
 				</ul></nav>
 				<span id="wc" class="hidden if-room room-4">0 words</span>
 			</div>
 			<noscript style="margin-left: 2em;"><strong>NOTE</strong>: for now, you'll need Javascript enabled to post.</noscript>
 			<div id="belt">
 				{{if .Editing}}<div class="tool hidden if-room"><a href="{{if .EditCollection}}{{.EditCollection.CanonicalURL}}{{.Post.Slug}}/edit/meta{{else}}/{{if .SingleUser}}d/{{end}}{{.Post.Id}}/meta{{end}}" title="Edit post metadata" id="edit-meta"><img class="ic-24dp" src="/img/ic_info_dark@2x.png" /></a></div>{{end}}
-				<div class="tool hidden if-room room-2"><a href="#theme" title="Toggle theme" id="toggle-theme"><img class="ic-24dp" src="/img/ic_brightness_dark@2x.png" /></a></div>
-				<div class="tool if-room room-1"><a href="{{if not .User}}/pad/posts{{else}}/me/posts/{{end}}" title="View posts" id="view-posts"><img class="ic-24dp" src="/img/ic_list_dark@2x.png" /></a></div>
-				<div class="tool"><a href="#publish" title="Publish" id="publish"><img class="ic-24dp" src="/img/ic_send_dark@2x.png" /></a></div>
+				<div class="tool"><button title="Publish your writing" id="publish" style="font-weight: bold">Post</button></div>
 			</div>
 		</header>
 
 		<script src="/js/h.js"></script>
 		<script>
-		function toggleTheme() {
-			var btns = Array.prototype.slice.call(document.getElementById('tools').querySelectorAll('a img'));
-			var newTheme = '';
-			if (document.body.classList.contains('light')) {
-				newTheme = 'dark';
-				document.body.className = document.body.className.replace(/(?:^|\s)light(?!\S)/g, newTheme);
-				for (var i=0; i<btns.length; i++) {
-					btns[i].src = btns[i].src.replace('_dark@2x.png', '@2x.png');
-				}
-			} else {
-				newTheme = 'light';
-				document.body.className = document.body.className.replace(/(?:^|\s)dark(?!\S)/g, newTheme);
-				for (var i=0; i<btns.length; i++) {
-					btns[i].src = btns[i].src.replace('@2x.png', '_dark@2x.png');
-				}
-			}
-			H.set('padTheme', newTheme);
-		}
-		if (H.get('padTheme', 'light') != 'light') {
-			toggleTheme();
-		}
 		var $writer = H.getEl('writer');
 		var $btnPublish = H.getEl('publish');
 		var $wc = H.getEl("wc");
@@ -131,24 +79,17 @@
 		{{else}}var canPublish = true;{{end}}
 		var publishing = false;
 		var justPublished = false;
-		var suspended = {{.Suspended}};
+
 		var publish = function(content, font) {
-			if (suspended === true) {
-				alert("Your account is silenced, so you can't publish or update posts.");
-				return;
-			}
 			{{if and (and .Post.Id (not .Post.Slug)) (not .User)}}
 			if (!token) {
 				alert("You don't have permission to update this post.");
 				return;
 			}
-			if ($btnPublish.el.className == 'disabled') {
-				return;
-			}
 			{{end}}
-			$btnPublish.el.children[0].textContent = 'more_horiz';
 			publishing = true;
-			var xpostTarg = H.get('crosspostTarget', '[]');
+			$btnPublish.el.textContent = 'Posting...';
+			$btnPublish.el.disabled = true;
 
 			var http = new XMLHttpRequest();
 			var lang = navigator.languages ? navigator.languages[0] : (navigator.language || navigator.userLanguage);
@@ -171,11 +112,10 @@
 			params.token = token;
 			{{ else }}
 			var url = "/api/posts";
-			var postTarget = H.get('postTarget', 'anonymous');
+			var postTarget = '{{if .Blogs}}{{$c := index .Blogs 0}}{{$c.Alias}}{{else}}anonymous{{end}}';
 			if (postTarget != 'anonymous') {
 				url = "/api/collections/" + postTarget + "/posts";
 			}
-			params.crosspost = JSON.parse(xpostTarg);
 			{{ end }}
 
 			http.open("POST", url, true);
@@ -231,7 +171,7 @@
 						window.location = nextURL;
 						{{end}}
 					} else {
-						$btnPublish.el.children[0].textContent = 'send';
+						$btnPublish.el.textContent = 'Post';
 						alert("Failed to post. Please try again.");
 					}
 				}
@@ -259,81 +199,10 @@
 			}
 		});
 
-		H.getEl('toggle-theme').on('click', function(e) {
-			e.preventDefault();
-			var newTheme = 'light';
-			if (document.body.className == 'light') {
-				newTheme = 'dark';
-			}
-			toggleTheme();
-		});
-
-		var targets = document.querySelectorAll('#target li.target a');
-		for (var i=0; i<targets.length; i++) {
-			targets[i].addEventListener('click', function(e) {
-				e.preventDefault();
-				var targetName = this.href.substring(this.href.indexOf('#')+1);
-				H.set('postTarget', targetName);
-
-				document.querySelector('#target li.target.selected').classList.remove('selected');
-				this.parentElement.classList.add('selected');
-				var newText = this.innerText.split(' ');
-				newText.shift();
-				document.getElementById('target-name').innerText = newText.join(' ');
-			});
-		}
-		var postTarget = H.get('postTarget', '{{if .Blogs}}{{$blog := index .Blogs 0}}{{$blog.Alias}}{{else}}anonymous{{end}}');
-		if (location.hash != '') {
-			postTarget = location.hash.substring(1);
-			// TODO: pushState to /pad (or whatever the URL is) so we live on a clean URL
-			location.hash = '';
-		}
-		var pte = document.querySelector('#target li.target#blog-'+postTarget+' a');
-		if (pte != null) {
-			pte.click();
-		} else {
-			postTarget = 'anonymous';
-			H.set('postTarget', postTarget);
-		}
-
-		var sansLoaded = false;
 		WebFontConfig = {
 			custom: { families: [ 'Lora:400,700:latin' ], urls: [ '/css/fonts.css' ] }
 		};
-		var loadSans = function() {
-		  if (sansLoaded) return;
-		  sansLoaded = true;
-		  WebFontConfig.custom.families.push('Open+Sans:400,700:latin');
-		  try {
-			  (function() {
-				var wf=document.createElement('script');
-				wf.src = '/js/webfont.js';
-				wf.type='text/javascript';
-				wf.async='true';
-				var s=document.getElementsByTagName('script')[0];
-				s.parentNode.insertBefore(wf, s);
-			  })();
-		  } catch (e) {}
-		};
-		var fonts = document.querySelectorAll('nav#font-picker a.font');
-		for (var i=0; i<fonts.length; i++) {
-			fonts[i].addEventListener('click', function(e) {
-				e.preventDefault();
-				selectedFont = this.href.substring(this.href.indexOf('#')+1);
-				$writer.el.className = selectedFont;
-				document.querySelector('nav#font-picker li.selected').classList.remove('selected');
-				this.parentElement.classList.add('selected');
-				H.set('{{if .Editing}}draft{{.Post.Id}}font{{else}}padFont{{end}}', selectedFont);
-				if (selectedFont == 'sans') {
-					loadSans();
-				}
-			});
-		}
 		var selectedFont = H.get('{{if .Editing}}draft{{.Post.Id}}font{{else}}padFont{{end}}', '{{.Post.Font}}');
-		var sfe = document.querySelector('nav#font-picker a.font.'+selectedFont);
-		if (sfe != null) {
-			sfe.click();
-		}
 
 		var doneTyping = function() {
 			if (draftDoc == 'lastDoc' || $writer.el.value != origDoc) {
@@ -362,6 +231,5 @@
 		  // whatevs
 		}
 		</script>
-		<link href="/css/icons.css" rel="stylesheet">
 	</body>
 </html>{{end}}

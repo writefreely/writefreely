@@ -68,7 +68,12 @@ type (
 		JSDisabled bool   `ini:"disable_js"`
 		WebFonts   bool   `ini:"webfonts"`
 		Landing    string `ini:"landing"`
+		SimpleNav  bool   `ini:"simple_nav"`
 		WFModesty  bool   `ini:"wf_modesty"`
+
+		// Site functionality
+		Chorus        bool `ini:"chorus"`
+		DisableDrafts bool `ini:"disable_drafts"`
 
 		// Users
 		SingleUser       bool `ini:"single_user"`

@@ -7,6 +7,7 @@ GOBUILD=$(GOCMD) build $(LDFLAGS)
 GOTEST=$(GOCMD) test $(LDFLAGS)
 GOGET=$(GOCMD) get
 BINARY_NAME=writefreely
+BUILDPATH=build/$(BINARY_NAME)
 DOCKERCMD=docker
 IMAGE_NAME=writeas/writefreely
 TMPBIN=./tmp
@@ -69,39 +70,40 @@ install : build
 	cd less/; $(MAKE) install $(MFLAGS)
 
 release : clean ui assets
-	mkdir build
-	cp -r templates build
-	cp -r pages build
-	cp -r static build
-	mkdir build/keys
+	mkdir -p $(BUILDPATH)
+	cp -r templates $(BUILDPATH)
+	cp -r pages $(BUILDPATH)
+	cp -r static $(BUILDPATH)
+	mkdir $(BUILDPATH)/keys
 	$(MAKE) build-linux
-	mv build/$(BINARY_NAME)-linux-amd64 build/$(BINARY_NAME)
-	cd build; tar -cvzf ../$(BINARY_NAME)_$(GITREV)_linux_amd64.tar.gz *
-	rm build/$(BINARY_NAME)
+	mv build/$(BINARY_NAME)-linux-amd64 $(BUILDPATH)/$(BINARY_NAME)
+	tar -cvzf $(BINARY_NAME)_$(GITREV)_linux_amd64.tar.gz -C build $(BINARY_NAME)
+	rm $(BUILDPATH)/$(BINARY_NAME)
 	$(MAKE) build-arm7
-	mv build/$(BINARY_NAME)-linux-arm-7 build/$(BINARY_NAME)
-	cd build; tar -cvzf ../$(BINARY_NAME)_$(GITREV)_linux_arm7.tar.gz *
-	rm build/$(BINARY_NAME)
+	mv build/$(BINARY_NAME)-linux-arm-7 $(BUILDPATH)/$(BINARY_NAME)
+	tar -cvzf $(BINARY_NAME)_$(GITREV)_linux_arm7.tar.gz -C build $(BINARY_NAME)
+	rm $(BUILDPATH)/$(BINARY_NAME)
 	$(MAKE) build-darwin
-	mv build/$(BINARY_NAME)-darwin-10.6-amd64 build/$(BINARY_NAME)
-	cd build; tar -cvzf ../$(BINARY_NAME)_$(GITREV)_macos_amd64.tar.gz *
-	rm build/$(BINARY_NAME)
+	mv build/$(BINARY_NAME)-darwin-10.6-amd64 $(BUILDPATH)/$(BINARY_NAME)
+	tar -cvzf $(BINARY_NAME)_$(GITREV)_macos_amd64.tar.gz -C build $(BINARY_NAME)
+	rm $(BUILDPATH)/$(BINARY_NAME)
 	$(MAKE) build-windows
-	mv build/$(BINARY_NAME)-windows-4.0-amd64.exe build/$(BINARY_NAME).exe
-	cd build; zip -r ../$(BINARY_NAME)_$(GITREV)_windows_amd64.zip ./*
+	mv build/$(BINARY_NAME)-windows-4.0-amd64.exe $(BUILDPATH)/$(BINARY_NAME).exe
+	cd build; zip -r ../$(BINARY_NAME)_$(GITREV)_windows_amd64.zip ./$(BINARY_NAME)
+	rm $(BUILDPATH)/$(BINARY_NAME)
 	$(MAKE) build-docker
 	$(MAKE) release-docker
 
 # This assumes you're on linux/amd64
 release-linux : clean ui
-	mkdir build
-	cp -r templates build
-	cp -r pages build
-	cp -r static build
-	mkdir build/keys
+	mkdir -p $(BUILDPATH)
+	cp -r templates $(BUILDPATH)
+	cp -r pages $(BUILDPATH)
+	cp -r static $(BUILDPATH)
+	mkdir $(BUILDPATH)/keys
 	$(MAKE) build-no-sqlite
-	mv cmd/writefreely/$(BINARY_NAME) build/$(BINARY_NAME)
-	cd build; tar -cvzf ../$(BINARY_NAME)_$(GITREV)_linux_amd64.tar.gz *
+	mv cmd/writefreely/$(BINARY_NAME) $(BUILDPATH)/$(BINARY_NAME)
+	tar -cvzf $(BINARY_NAME)_$(GITREV)_linux_amd64.tar.gz -C build $(BINARY_NAME)
 
 release-docker :
 	$(DOCKERCMD) push $(IMAGE_NAME)

@@ -7,13 +7,16 @@
 	{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 </ul>{{end}}
 
+{{if .Suspended}}
+	{{template "user-suspended"}}
+{{end}}
 <h2>blogs</h2>
 <ul class="atoms collections">
 	{{range $i, $el := .Collections}}<li class="collection"><h3>
 		<a class="title" href="/{{.Alias}}/">{{if .Title}}{{.Title}}{{else}}{{.Alias}}{{end}}</a>
 	</h3> 
 	<h4>
-		<a class="action new-post" href="/#{{.Alias}}">new post</a>
+		<a class="action new-post" href="{{if $.Chorus}}/new{{else}}/{{end}}#{{.Alias}}">new post</a>
 		<a class="action" href="/me/c/{{.Alias}}">customize</a>
 		<a class="action" href="/me/c/{{.Alias}}/stats">stats</a>
 	</h4>

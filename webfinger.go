@@ -11,11 +11,12 @@
 package writefreely
 
 import (
+	"net/http"
+
 	"github.com/writeas/go-webfinger"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
-	"net/http"
 )
 
 type wfResolver struct {
@@ -36,6 +37,14 @@ func (wfr wfResolver) FindUser(username string, host, requestHost string, r []we
 	if err != nil {
 		log.Error("Unable to get blog: %v", err)
 		return nil, err
+	}
+	suspended, err := wfr.db.IsUserSuspended(c.OwnerID)
+	if err != nil {
+		log.Error("webfinger find user: check is suspended: %v", err)
+		return nil, err
+	}
+	if suspended {
+		return nil, wfUserNotFoundErr
 	}
 	c.hostName = wfr.cfg.App.Host
 	if wfr.cfg.App.SingleUser {

@@ -80,6 +80,14 @@ func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return err
 	}
+	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	if err != nil {
+		log.Error("fetch collection activities: %v", err)
+		return ErrInternalGeneral
+	}
+	if suspended {
+		return ErrCollectionNotFound
+	}
 	c.hostName = app.cfg.App.Host
 
 	p := c.PersonObject()
@@ -105,6 +113,14 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		return err
 	}
+	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	if err != nil {
+		log.Error("fetch collection outbox: %v", err)
+		return ErrInternalGeneral
+	}
+	if suspended {
+		return ErrCollectionNotFound
+	}
 	c.hostName = app.cfg.App.Host
 
 	if app.cfg.App.SingleUser {
@@ -129,10 +145,10 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 	ocp := activitystreams.NewOrderedCollectionPage(accountRoot, "outbox", res.TotalPosts, p)
 	ocp.OrderedItems = []interface{}{}
 
-	posts, err := app.db.GetPosts(c, p, false, true, false)
+	posts, err := app.db.GetPosts(app.cfg, c, p, false, true, false)
 	for _, pp := range *posts {
 		pp.Collection = res
-		o := pp.ActivityObject()
+		o := pp.ActivityObject(app.cfg)
 		a := activitystreams.NewCreateActivity(o)
 		ocp.OrderedItems = append(ocp.OrderedItems, *a)
 	}
@@ -157,6 +173,14 @@ func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Req
 	}
 	if err != nil {
 		return err
+	}
+	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	if err != nil {
+		log.Error("fetch collection followers: %v", err)
+		return ErrInternalGeneral
+	}
+	if suspended {
+		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host
 
@@ -204,6 +228,14 @@ func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return err
 	}
+	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	if err != nil {
+		log.Error("fetch collection following: %v", err)
+		return ErrInternalGeneral
+	}
+	if suspended {
+		return ErrCollectionNotFound
+	}
 	c.hostName = app.cfg.App.Host
 
 	accountRoot := c.FederatedAccount()
@@ -237,6 +269,14 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 	if err != nil {
 		// TODO: return Reject?
 		return err
+	}
+	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	if err != nil {
+		log.Error("fetch collection inbox: %v", err)
+		return ErrInternalGeneral
+	}
+	if suspended {
+		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host
 
@@ -375,11 +415,11 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 				// Add follower locally, since it wasn't found before
 				res, err := t.Exec("INSERT INTO remoteusers (actor_id, inbox, shared_inbox) VALUES (?, ?, ?)", fullActor.ID, fullActor.Inbox, fullActor.Endpoints.SharedInbox)
 				if err != nil {
-					if !app.db.isDuplicateKeyErr(err) {
-						t.Rollback()
-						log.Error("Couldn't add new remoteuser in DB: %v\n", err)
-						return
-					}
+					// if duplicate key, res will be nil and panic on
+					// res.LastInsertId below
+					t.Rollback()
+					log.Error("Couldn't add new remoteuser in DB: %v\n", err)
+					return
 				}
 
 				followerID, err = res.LastInsertId()
@@ -524,7 +564,7 @@ func deleteFederatedPost(app *App, p *PublicPost, collID int64) error {
 	}
 	p.Collection.hostName = app.cfg.App.Host
 	actor := p.Collection.PersonObject(collID)
-	na := p.ActivityObject()
+	na := p.ActivityObject(app.cfg)
 
 	// Add followers
 	p.Collection.ID = collID
@@ -570,7 +610,7 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 		}
 	}
 	actor := p.Collection.PersonObject(collID)
-	na := p.ActivityObject()
+	na := p.ActivityObject(app.cfg)
 
 	// Add followers
 	p.Collection.ID = collID

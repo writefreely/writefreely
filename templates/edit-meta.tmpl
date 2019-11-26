@@ -269,6 +269,10 @@
 		<script src="/js/h.js"></script>
 		<script>
 function updateMeta() {
+	if ({{.Suspended}}) {
+		alert('Your account is currently supsended, editing posts is disabled.');
+		return
+	}
 	document.getElementById('create-error').style.display = 'none';
 	var $created = document.getElementById('created');
 	var dateStr = $created.value.trim();

@@ -17,6 +17,9 @@ td.none {
 </style>
 
 <div class="content-container snug">
+	{{if .Suspended}}
+		{{template "user-suspended"}}
+	{{end}}
 	<h2 id="posts-header">{{if .Collection}}{{.Collection.DisplayTitle}} {{end}}Stats</h2>
 
 	<p>Stats for all time.</p>

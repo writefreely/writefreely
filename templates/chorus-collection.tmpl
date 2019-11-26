@@ -28,6 +28,26 @@
 		<meta property="og:description" content="{{.Description}}" />
 		<meta property="og:image" content="{{.AvatarURL}}">
 		{{if .StyleSheet}}<style type="text/css">{{.StyleSheetDisplay}}</style>{{end}}
+	<style type="text/css">
+body#collection header {
+	max-width: 40em;
+	margin: 1em auto;
+    text-align: left;
+	padding: 0;
+}
+body#collection header.multiuser {
+    max-width: 100%;
+    margin: 1em;
+}
+body#collection header nav:not(.pinned-posts) {
+	display: inline;
+}
+body#collection header nav.dropdown-nav,
+body#collection header nav.tabs,
+body#collection header nav.tabs a:first-child {
+	margin: 0 0 0 1em;
+}
+	</style>
 
 		{{if .RenderMathJax}}
 		  <!-- Add mathjax logic -->
@@ -39,38 +59,18 @@
 
 	</head>
 	<body id="collection" itemscope itemtype="http://schema.org/WebPage">
-		{{if or .IsOwner .SingleUser}}<nav id="manage"><ul>
-			<li><a onclick="void(0)">&#9776; Menu</a>
-				<ul>
-					{{ if .IsOwner }}
-					{{if .SingleUser}}
-					<li><a href="/me/new">New Post</a></li>
-					{{else}}
-					<li><a href="/#{{.Alias}}" class="write">{{.SiteName}}</a></li>
-					{{end}}
-					{{if .SimpleNav}}<li><a href="/new#{{.Alias}}">New Post</a></li>{{end}}
-					<li><a href="/me/c/{{.Alias}}">Customize</a></li>
-					<li><a href="/me/c/{{.Alias}}/stats">Stats</a></li>
-					<li class="separator"><hr /></li>
-					{{if not .SingleUser}}<li><a href="/me/c/"><img class="ic-18dp" src="/img/ic_blogs_dark@2x.png" /> View Blogs</a></li>{{end}}
-					<li><a href="/me/posts/"><img class="ic-18dp" src="/img/ic_list_dark@2x.png" /> View Drafts</a></li>
-					{{ else }}
-					<li><a href="/login">Log in</a></li>
-					{{ end }}
-				</ul>
-			</li>
-		</ul></nav>{{end}}
+		{{template "user-navigation" .}}
 		
-		<header>
 		{{if .Suspended}}
 			{{template "user-suspended"}}
 		{{end}}
-		<h1 dir="{{.Direction}}" id="blog-title">{{if .Posts}}{{else}}<span class="writeas-prefix"><a href="/">write.as</a></span> {{end}}<a href="/{{if .IsTopLevel}}{{else}}{{.Prefix}}{{.Alias}}/{{end}}" class="h-card p-author u-url" rel="me author">{{.DisplayTitle}}</a></h1>
+		<header>
+		<h1 dir="{{.Direction}}" id="blog-title"><a href="/{{if .IsTopLevel}}{{else}}{{.Prefix}}{{.Alias}}/{{end}}" class="h-card p-author u-url" rel="me author">{{.DisplayTitle}}</a></h1>
 		{{if .Description}}<p class="description p-note">{{.Description}}</p>{{end}}
 		{{/*if not .Public/*}}
 			<!--p class="meta-note"><span>Private collection</span>. Only you can see this page.</p-->
 		{{/*end*/}}
-		{{if .PinnedPosts}}<nav>
+		{{if .PinnedPosts}}<nav class="pinned-posts">
 			{{range .PinnedPosts}}<a class="pinned" href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}</nav>
 		{{end}}
 		</header>
@@ -177,10 +177,10 @@ function pinPost(e, postID, slug, title) {
 		// Visibly remove post from collection
 		var $postEl = document.getElementById('post-' + postID);
 		$postEl.parentNode.removeChild($postEl);
-		var $header = document.getElementsByTagName('header')[0];
+		var $header = document.querySelector('header:not(.multiuser)');
 		var $pinnedNavs = $header.getElementsByTagName('nav');
 		// Add link to nav
-		var link = '<a class="pinned" href="{{if not .SingleUser}}/{{.Alias}}/{{end}}'+slug+'">'+title+'</a>';
+		var link = '<a class="pinned" href="/{{.Alias}}/'+slug+'">'+title+'</a>';
 		if ($pinnedNavs.length == 0) {
 			$header.insertAdjacentHTML("beforeend", '<nav>'+link+'</nav>');
 		} else {

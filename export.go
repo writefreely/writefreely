@@ -20,7 +20,7 @@ import (
 	"github.com/writeas/web-core/log"
 )
 
-func exportPostsCSV(u *User, posts *[]PublicPost) []byte {
+func exportPostsCSV(hostName string, u *User, posts *[]PublicPost) []byte {
 	var b bytes.Buffer
 
 	r := [][]string{
@@ -30,8 +30,9 @@ func exportPostsCSV(u *User, posts *[]PublicPost) []byte {
 		var blog string
 		if p.Collection != nil {
 			blog = p.Collection.Alias
+			p.Collection.hostName = hostName
 		}
-		f := []string{p.ID, p.Slug.String, blog, p.CanonicalURL(), p.Created8601(), p.Title.String, strings.Replace(p.Content, "\n", "\\n", -1)}
+		f := []string{p.ID, p.Slug.String, blog, p.CanonicalURL(hostName), p.Created8601(), p.Title.String, strings.Replace(p.Content, "\n", "\\n", -1)}
 		r = append(r, f)
 	}
 
@@ -104,7 +105,7 @@ func compileFullExport(app *App, u *User) *ExportUser {
 		User: u,
 	}
 
-	colls, err := app.db.GetCollections(u)
+	colls, err := app.db.GetCollections(u, app.cfg.App.Host)
 	if err != nil {
 		log.Error("unable to fetch collections: %v", err)
 	}
@@ -118,7 +119,7 @@ func compileFullExport(app *App, u *User) *ExportUser {
 	var collObjs []CollectionObj
 	for _, c := range *colls {
 		co := &CollectionObj{Collection: c}
-		co.Posts, err = app.db.GetPosts(&c, 0, true, false, true)
+		co.Posts, err = app.db.GetPosts(app.cfg, &c, 0, true, false, true)
 		if err != nil {
 			log.Error("unable to get collection posts: %v", err)
 		}

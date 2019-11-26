@@ -13,6 +13,12 @@ package writefreely
 import (
 	"database/sql"
 	"fmt"
+	"html/template"
+	"math"
+	"net/http"
+	"strconv"
+	"time"
+
 	. "github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
 	stripmd "github.com/writeas/go-strip-markdown"
@@ -20,11 +26,6 @@ import (
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/memo"
 	"github.com/writeas/writefreely/page"
-	"html/template"
-	"math"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 const (
@@ -47,6 +48,13 @@ type readPublication struct {
 	Posts       *[]PublicPost
 	CurrentPage int
 	TotalPages  int
+	SelTopic    string
+	IsAdmin     bool
+	CanInvite   bool
+
+	// Customizable page content
+	ContentTitle string
+	Content      template.HTML
 }
 
 func initLocalTimeline(app *App) {
@@ -62,7 +70,8 @@ func (app *App) FetchPublicPosts() (interface{}, error) {
 	rows, err := app.db.Query(`SELECT p.id, alias, c.title, p.slug, p.title, p.content, p.text_appearance, p.language, p.rtl, p.created, p.updated
 	FROM collections c
 	LEFT JOIN posts p ON p.collection_id = c.id
-	WHERE c.privacy = 1 AND (p.created >= ` + app.db.dateSub(3, "month") + ` AND p.created <= ` + app.db.now() + ` AND pinned_position IS NULL)
+	LEFT JOIN users u ON u.id = p.owner_id
+	WHERE c.privacy = 1 AND (p.created >= ` + app.db.dateSub(3, "month") + ` AND p.created <= ` + app.db.now() + ` AND pinned_position IS NULL) AND u.status = 0
 	ORDER BY p.created DESC`)
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)
@@ -97,7 +106,7 @@ func (app *App) FetchPublicPosts() (interface{}, error) {
 		}
 
 		p.extractData()
-		p.HTMLContent = template.HTML(applyMarkdown([]byte(p.Content), ""))
+		p.HTMLContent = template.HTML(applyMarkdown([]byte(p.Content), "", app.cfg))
 		fp := p.processPost()
 		if isCollectionPost {
 			fp.Collection = &CollectionObj{Collection: *c}
@@ -197,13 +206,25 @@ func showLocalTimeline(app *App, w http.ResponseWriter, r *http.Request, page in
 	}
 
 	d := &readPublication{
-		pageForReq(app, r),
-		&posts,
-		page,
-		ttlPages,
+		StaticPage:  pageForReq(app, r),
+		Posts:       &posts,
+		CurrentPage: page,
+		TotalPages:  ttlPages,
+		SelTopic:    tag,
 	}
+	if app.cfg.App.Chorus {
+		u := getUserSession(app, r)
+		d.IsAdmin = u != nil && u.IsAdmin()
+		d.CanInvite = canUserInvite(app.cfg, d.IsAdmin)
+	}
+	c, err := getReaderSection(app)
+	if err != nil {
+		return err
+	}
+	d.ContentTitle = c.Title.String
+	d.Content = template.HTML(applyMarkdown([]byte(c.Content), "", app.cfg))
 
-	err := templates["read"].ExecuteTemplate(w, "base", d)
+	err = templates["read"].ExecuteTemplate(w, "base", d)
 	if err != nil {
 		log.Error("Unable to render reader: %v", err)
 		fmt.Fprintf(w, ":(")
@@ -274,7 +295,7 @@ func viewLocalTimelineFeed(app *App, w http.ResponseWriter, req *http.Request) e
 		}
 
 		title = p.PlainDisplayTitle()
-		permalink = p.CanonicalURL()
+		permalink = p.CanonicalURL(app.cfg.App.Host)
 		if p.Collection != nil {
 			author = p.Collection.Title
 		} else {
@@ -286,7 +307,7 @@ func viewLocalTimelineFeed(app *App, w http.ResponseWriter, req *http.Request) e
 			Title:       title,
 			Link:        &Link{Href: permalink},
 			Description: "<![CDATA[" + stripmd.Strip(p.Content) + "]]>",
-			Content:     applyMarkdown([]byte(p.Content), ""),
+			Content:     applyMarkdown([]byte(p.Content), "", app.cfg),
 			Author:      &Author{author, ""},
 			Created:     p.Created,
 			Updated:     p.Updated,
