@@ -1038,7 +1038,6 @@ func pinPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	var collID int64
-	var ownerID int64
 	var coll *Collection
 	var err error
 	vars := mux.Vars(r)
@@ -1048,25 +1047,33 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		if err != nil {
 			return err
 		}
-		coll.hostName = app.cfg.App.Host
-		_, err = apiCheckCollectionPermissions(app, r, coll)
-		if err != nil {
-			return err
-		}
 		collID = coll.ID
-		ownerID = coll.OwnerID
 	}
 
 	p, err := app.db.GetPost(vars["post"], collID)
 	if err != nil {
 		return err
 	}
-	suspended, err := app.db.IsUserSuspended(ownerID)
+	if coll == nil && p.CollectionID.Valid {
+		// Collection post is getting fetched by post ID, not coll alias + post slug, so get coll info now.
+		coll, err = app.db.GetCollectionByID(p.CollectionID.Int64)
+		if err != nil {
+			return err
+		}
+	}
+	if coll != nil {
+		coll.hostName = app.cfg.App.Host
+		_, err = apiCheckCollectionPermissions(app, r, coll)
+		if err != nil {
+			return err
+		}
+	}
+
+	suspended, err := app.db.IsUserSuspended(p.OwnerID.Int64)
 	if err != nil {
 		log.Error("fetch post: %v", err)
 		return ErrInternalGeneral
 	}
-
 	if suspended {
 		return ErrPostNotFound
 	}
@@ -1075,13 +1082,6 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	accept := r.Header.Get("Accept")
 	if strings.Contains(accept, "application/activity+json") {
-		// Fetch information about the collection this belongs to
-		if coll == nil && p.CollectionID.Valid {
-			coll, err = app.db.GetCollectionByID(p.CollectionID.Int64)
-			if err != nil {
-				return err
-			}
-		}
 		if coll == nil {
 			// This is a draft post; 404 for now
 			// TODO: return ActivityObject
