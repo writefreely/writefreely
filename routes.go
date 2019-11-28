@@ -113,6 +113,9 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	// Sign up validation
 	write.HandleFunc("/api/alias", handler.All(handleUsernameCheck)).Methods("POST")
 
+	apiGenerate := write.PathPrefix("/api/generate/").Subrouter()
+	apiGenerate.HandleFunc("/markdownify", handler.All(handleRenderMarkdown)).Methods("POST")
+
 	// Handle collections
 	write.HandleFunc("/api/collections", handler.All(newCollection)).Methods("POST")
 	apiColls := write.PathPrefix("/api/collections/").Subrouter()

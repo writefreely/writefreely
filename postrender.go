@@ -11,9 +11,12 @@
 package writefreely
 
 import (
+	"encoding/json"
 	"fmt"
 	"html"
 	"html/template"
+	"io/ioutil"
+	"net/http"
 	"regexp"
 	"strings"
 	"unicode"
@@ -236,4 +239,43 @@ func shortPostDescription(content string) string {
 		truncation = 3
 	}
 	return strings.TrimSpace(fmt.Sprintf(fmtStr, strings.Replace(stringmanip.Substring(content, 0, maxLen-truncation), "\n", " ", -1)))
+}
+
+func handleRenderMarkdown(app *App, w http.ResponseWriter, r *http.Request) error {
+	// TODO: accept header
+	if !IsJSON(r.Header.Get("Content-Type")) {
+		fmt.Println("missing header")
+	}
+
+	in := struct {
+		BaseURL string `json:"base_url"`
+		RawBody string `json:"raw_body"`
+	}{
+		BaseURL: "",
+	}
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return ErrInternalGeneral
+	}
+
+	err = json.Unmarshal(body, &in)
+	if err != nil {
+		return ErrInternalGeneral
+	}
+
+	out := struct {
+		Body string `json:"body"`
+	}{
+		Body: applyMarkdown([]byte(in.RawBody), in.BaseURL, nil),
+	}
+
+	js, err := json.Marshal(out)
+	if err != nil {
+		return ErrInternalGeneral
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(js)
+	return nil
 }
