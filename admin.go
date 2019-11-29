@@ -16,12 +16,14 @@ import (
 	"net/http"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/log"
+	"github.com/writeas/web-core/passgen"
 	"github.com/writeas/writefreely/appstats"
 	"github.com/writeas/writefreely/config"
 )
@@ -170,11 +172,12 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 		Config  config.AppCfg
 		Message string
 
-		User     *User
-		Colls    []inspectedCollection
-		LastPost string
-
-		TotalPosts int64
+		User        *User
+		Colls       []inspectedCollection
+		LastPost    string
+		NewPassword string
+		TotalPosts  int64
+		ClearEmail  string
 	}{
 		Config:  app.cfg.App,
 		Message: r.FormValue("m"),
@@ -185,6 +188,14 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 	p.User, err = app.db.GetUserForAuth(username)
 	if err != nil {
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get user: %v", err)}
+	}
+
+	flashes, _ := getSessionFlashes(app, w, r, nil)
+	for _, flash := range flashes {
+		if strings.HasPrefix(flash, "SUCCESS: ") {
+			p.NewPassword = strings.TrimPrefix(flash, "SUCCESS: ")
+			p.ClearEmail = p.User.EmailClear(app.keys)
+		}
 	}
 	p.UserPage = NewUserPage(app, r, u, p.User.Username, nil)
 	p.TotalPosts = app.db.GetUserPostsCount(p.User.ID)
@@ -228,6 +239,62 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 
 	showUserPage(w, "view-user", p)
 	return nil
+}
+
+func handleAdminToggleUserStatus(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	username := vars["username"]
+	if username == "" {
+		return impart.HTTPError{http.StatusFound, "/admin/users"}
+	}
+
+	user, err := app.db.GetUserForAuth(username)
+	if err != nil {
+		log.Error("failed to get user: %v", err)
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get user from username: %v", err)}
+	}
+	if user.IsSilenced() {
+		err = app.db.SetUserStatus(user.ID, UserActive)
+	} else {
+		err = app.db.SetUserStatus(user.ID, UserSilenced)
+	}
+	if err != nil {
+		log.Error("toggle user suspended: %v", err)
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not toggle user status: %v")}
+	}
+	return impart.HTTPError{http.StatusFound, fmt.Sprintf("/admin/user/%s#status", username)}
+}
+
+func handleAdminResetUserPass(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	username := vars["username"]
+	if username == "" {
+		return impart.HTTPError{http.StatusFound, "/admin/users"}
+	}
+
+	// Generate new random password since none supplied
+	pass := passgen.NewWordish()
+	hashedPass, err := auth.HashPass([]byte(pass))
+	if err != nil {
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not create password hash: %v", err)}
+	}
+
+	userIDVal := r.FormValue("user")
+	log.Info("ADMIN: Changing user %s password", userIDVal)
+	id, err := strconv.Atoi(userIDVal)
+	if err != nil {
+		return impart.HTTPError{http.StatusBadRequest, fmt.Sprintf("Invalid user ID: %v", err)}
+	}
+
+	err = app.db.ChangePassphrase(int64(id), true, "", hashedPass)
+	if err != nil {
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not update passphrase: %v", err)}
+	}
+	log.Info("ADMIN: Successfully changed.")
+
+	addSessionFlash(app, w, r, fmt.Sprintf("SUCCESS: %s", pass), nil)
+
+	return impart.HTTPError{http.StatusFound, fmt.Sprintf("/admin/user/%s", username)}
 }
 
 func handleViewAdminPages(app *App, u *User, w http.ResponseWriter, r *http.Request) error {

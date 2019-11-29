@@ -45,7 +45,7 @@ require (
 	github.com/writeas/openssl-go v1.0.0 // indirect
 	github.com/writeas/saturday v1.7.1
 	github.com/writeas/slug v1.2.0
-	github.com/writeas/web-core v1.0.0
+	github.com/writeas/web-core v1.2.0
 	github.com/writefreely/go-nodeinfo v1.2.0
 	golang.org/x/crypto v0.0.0-20190208162236-193df9c0f06f
 	golang.org/x/lint v0.0.0-20181217174547-8f45f776aaf1 // indirect

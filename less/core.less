@@ -516,9 +516,16 @@ abbr {
 body#collection article p, body#subpage article p {
 	.article-p;
 }
-pre, body#post article, body#collection article, body#subpage article, body#subpage #wrapper h1 {
+pre, body#post article, #post .alert, #subpage .alert, body#collection article, body#subpage article, body#subpage #wrapper h1 {
 	max-width: 40rem;
 	margin: 0 auto;
+}
+#collection header .alert, #post .alert, #subpage .alert {
+	margin-bottom: 1em;
+	p {
+		text-align: left;
+		line-height: 1.4;
+	}
 }
 textarea, pre, body#post article, body#collection article p {
 	&.norm, &.sans, &.wrap {

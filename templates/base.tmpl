@@ -22,7 +22,7 @@
 			{{ end }}
 			{{if not .SingleUser}}
 			<nav id="user-nav">
-				{{if and .Chorus .Username}}
+				{{if .Username}}
 				<nav class="dropdown-nav">
 					<ul><li><a>{{.Username}}</a> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /><ul>
 							{{if .IsAdmin}}<li><a href="/admin">Admin dashboard</a></li>{{end}}
@@ -39,10 +39,10 @@
 					{{ if and .SimpleNav (not .SingleUser) }}
 					{{if and (and .LocalTimeline .CanViewReader) .Chorus}}<a href="/"{{if eq .Path "/"}} class="selected"{{end}}>Home</a>{{end}}
 					{{ end }}
-					<a href="/about"{{if eq .Path "/about"}} class="selected"{{end}}>About</a>
+					{{if or .Chorus (not .Username)}}<a href="/about"{{if eq .Path "/about"}} class="selected"{{end}}>About</a>{{end}}
 					{{ if not .SingleUser }}
 						{{ if .Username }}
-					{{if gt .MaxBlogs 1}}<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>{{end}}
+					{{if or (not .Chorus) (gt .MaxBlogs 1)}}<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>{{end}}
 					{{if and (and .Chorus (eq .MaxBlogs 1)) .Username}}<a href="/{{.Username}}/"{{if eq .Path (printf "/%s/" .Username)}} class="selected"{{end}}>My Posts</a>{{end}}
 					{{if not .DisableDrafts}}<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>{{end}}
 						{{ end }}
