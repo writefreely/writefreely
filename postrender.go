@@ -239,8 +239,7 @@ func shortPostDescription(content string) string {
 }
 
 func handleRenderMarkdown(app *App, w http.ResponseWriter, r *http.Request) error {
-	// TODO: accept header
-	if !IsJSON(r.Header.Get("Content-Type")) {
+	if !IsJSON(r) {
 		fmt.Println("missing header")
 	}
 
