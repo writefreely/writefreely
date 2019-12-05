@@ -1126,7 +1126,12 @@ func (p *PublicPost) CanonicalURL(hostName string) string {
 }
 
 func (p *PublicPost) ActivityObject(cfg *config.Config) *activitystreams.Object {
-	o := activitystreams.NewArticleObject()
+	var o *activitystreams.Object
+	if strings.Index(p.Content, "\n\n") == -1 {
+		o = activitystreams.NewNoteObject()
+	} else {
+		o = activitystreams.NewArticleObject()
+	}
 	o.ID = p.Collection.FederatedAPIBase() + "api/posts/" + p.ID
 	o.Published = p.Created
 	o.URL = p.CanonicalURL(cfg.App.Host)
