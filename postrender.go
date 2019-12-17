@@ -15,7 +15,6 @@ import (
 	"fmt"
 	"html"
 	"html/template"
-	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
@@ -24,7 +23,9 @@ import (
 
 	"github.com/microcosm-cc/bluemonday"
 	stripmd "github.com/writeas/go-strip-markdown"
+	"github.com/writeas/impart"
 	blackfriday "github.com/writeas/saturday"
+	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/stringmanip"
 	"github.com/writeas/writefreely/config"
 	"github.com/writeas/writefreely/parse"
@@ -240,7 +241,7 @@ func shortPostDescription(content string) string {
 
 func handleRenderMarkdown(app *App, w http.ResponseWriter, r *http.Request) error {
 	if !IsJSON(r) {
-		fmt.Println("missing header")
+		return impart.HTTPError{Status: http.StatusUnsupportedMediaType, Message: "Markdown API only supports JSON requests"}
 	}
 
 	in := struct {
@@ -250,28 +251,12 @@ func handleRenderMarkdown(app *App, w http.ResponseWriter, r *http.Request) erro
 		BaseURL: "",
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&in)
 	if err != nil {
-		return ErrInternalGeneral
+		log.Error("Couldn't parse markdown JSON request: %v", err)
+		return ErrBadJSON
 	}
 
-	err = json.Unmarshal(body, &in)
-	if err != nil {
-		return ErrInternalGeneral
-	}
-
-	out := struct {
-		Body string `json:"body"`
-	}{
-		Body: applyMarkdown([]byte(in.RawBody), in.BaseURL, nil),
-	}
-
-	js, err := json.Marshal(out)
-	if err != nil {
-		return ErrInternalGeneral
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(js)
-	return nil
+	return impart.WriteSuccess(w, applyMarkdown([]byte(in.RawBody), in.BaseURL, app.cfg), http.StatusOK)
 }
