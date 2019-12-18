@@ -381,9 +381,12 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	suspended, err := app.db.IsUserSuspended(ownerID.Int64)
-	if err != nil {
-		log.Error("view post: %v", err)
+	var suspended bool
+	if found {
+		suspended, err = app.db.IsUserSuspended(ownerID.Int64)
+		if err != nil {
+			log.Error("view post: %v", err)
+		}
 	}
 
 	// Check if post has been unpublished
