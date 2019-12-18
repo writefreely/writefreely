@@ -1342,8 +1342,12 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 	if c.IsPrivate() && (u == nil || u.ID != c.OwnerID) {
 		return ErrPostNotFound
 	}
-	if c.IsProtected() && ((u == nil || u.ID != c.OwnerID) && !isAuthorizedForCollection(app, c.Alias, r)) {
-		return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "/?g=" + slug}
+	if c.IsProtected() && (u == nil || u.ID != c.OwnerID) {
+		if suspended {
+			return ErrPostNotFound
+		} else if !isAuthorizedForCollection(app, c.Alias, r) {
+			return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "/?g=" + slug}
+		}
 	}
 
 	cr.isCollOwner = u != nil && c.OwnerID == u.ID
