@@ -1347,7 +1347,6 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 			return ErrPostNotFound
 		} else if !isAuthorizedForCollection(app, c.Alias, r) {
 			return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "/?g=" + slug}
-
 		}
 	}
 
