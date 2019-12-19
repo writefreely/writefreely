@@ -258,5 +258,11 @@ func handleRenderMarkdown(app *App, w http.ResponseWriter, r *http.Request) erro
 		return ErrBadJSON
 	}
 
-	return impart.WriteSuccess(w, applyMarkdown([]byte(in.RawBody), in.BaseURL, app.cfg), http.StatusOK)
+	out := struct {
+		Body string `json:"body"`
+	}{
+		Body: applyMarkdown([]byte(in.RawBody), in.BaseURL, app.cfg),
+	}
+
+	return impart.WriteSuccess(w, out, http.StatusOK)
 }
