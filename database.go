@@ -11,8 +11,12 @@
 package writefreely
 
 import (
+	"context"
+	"crypto/rand"
 	"database/sql"
 	"fmt"
+	"github.com/pkg/errors"
+	"math/big"
 	"net/http"
 	"strings"
 	"time"
@@ -2453,6 +2457,59 @@ func (db *datastore) GetCollectionLastPostTime(id int64) (*time.Time, error) {
 	return &t, nil
 }
 
+func (db *datastore) GenerateOAuthState(ctx context.Context) (string, error) {
+	state, err := randString(24)
+	if err != nil {
+		return "", err
+	}
+	_, err = db.ExecContext(ctx, "INSERT INTO oauth_client_state (state, used, created_at) VALUES (?, FALSE, NOW())", state)
+	if err != nil {
+		return "", fmt.Errorf("unable to record oauth client state: %w", err)
+	}
+	return state, nil
+}
+
+func (db *datastore) ValidateOAuthState(ctx context.Context, state string) error {
+	res, err := db.ExecContext(ctx, "UPDATE oauth_client_state SET used = TRUE WHERE state = ?", state)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected != 1 {
+		return fmt.Errorf("state not found")
+	}
+	return nil
+}
+
+func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID, remoteUserID int64) error {
+	var err error
+	if db.driverName == driverSQLite {
+		_, err = db.ExecContext(ctx, "INSERT OR REPLACE INTO users_oauth (user_id, remote_user_id) VALUES (?, ?)", localUserID, remoteUserID)
+	} else {
+		_, err = db.ExecContext(ctx, "INSERT INTO users_oauth (user_id, remote_user_id) VALUES (?, ?) "+db.upsert("user_id"), localUserID, remoteUserID)
+	}
+	if err != nil {
+		log.Error("Unable to INSERT users_oauth for '%d': %v", localUserID, err)
+	}
+	return err
+}
+
+// GetIDForRemoteUser returns a user ID associated with a remote user ID.
+func (db *datastore) GetIDForRemoteUser(ctx context.Context, remoteUserID int64) (int64, error) {
+	var userID int64 = -1
+	err := db.
+		QueryRowContext(ctx, "SELECT user_id FROM users_oauth WHERE remote_user_id = ?", remoteUserID).
+		Scan(&userID)
+	// Not finding a record is OK.
+	if err != nil && err != sql.ErrNoRows {
+		return -1, err
+	}
+	return userID, nil
+}
+
 // DatabaseInitialized returns whether or not the current datastore has been
 // initialized with the correct schema.
 // Currently, it checks to see if the `users` table exists.
@@ -2482,4 +2539,27 @@ func stringLogln(log *string, s string, v ...interface{}) {
 func handleFailedPostInsert(err error) error {
 	log.Error("Couldn't insert into posts: %v", err)
 	return err
+}
+
+func randString(length int) (string, error) {
+	// every printable character on a US keyboard
+	charset := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
+	out := make([]rune, length)
+
+	setLen := big.NewInt(int64(len(charset)))
+	for idx := 0; idx < length; idx++ {
+		offset, err := rand.Int(rand.Reader, setLen)
+		if err != nil {
+			return "", err
+		}
+
+		if !offset.IsUint64() {
+			// this should (in theory) never happen
+			return "", errors.Errorf("Non-Uint64 offset returned from rand.Int")
+		}
+
+		out[idx] = charset[offset.Uint64()]
+	}
+
+	return string(out), nil
 }

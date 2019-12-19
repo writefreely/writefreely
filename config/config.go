@@ -92,6 +92,15 @@ type (
 		LocalTimeline bool   `ini:"local_timeline"`
 		UserInvites   string `ini:"user_invites"`
 
+		// OAuth
+		EnableOAuth bool `ini:"enable_oauth"`
+		OAuthProviderAuthLocation    string `ini:"oauth_auth_location"`
+		OAuthProviderTokenLocation   string `ini:"oauth_token_location"`
+		OAuthProviderInspectLocation string `ini:"oauth_inspect_location"`
+		OAuthClientCallbackLocation  string `ini:"oauth_callback_location"`
+		OAuthClientID                string `ini:"oauth_client_id"`
+		OAuthClientSecret            string `ini:"oauth_client_secret"`
+
 		// Defaults
 		DefaultVisibility string `ini:"default_visibility"`
 	}
