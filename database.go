@@ -128,6 +128,11 @@ type writestore interface {
 	GetUserLastPostTime(id int64) (*time.Time, error)
 	GetCollectionLastPostTime(id int64) (*time.Time, error)
 
+	GetIDForRemoteUser(ctx context.Context, remoteUserID int64) (int64, error)
+	RecordRemoteUserID(ctx context.Context, localUserID, remoteUserID int64) error
+	ValidateOAuthState(ctx context.Context, state string) error
+	GenerateOAuthState(ctx context.Context) (string, error)
+
 	DatabaseInitialized() bool
 }
 
@@ -2489,7 +2494,7 @@ func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID, remote
 	if db.driverName == driverSQLite {
 		_, err = db.ExecContext(ctx, "INSERT OR REPLACE INTO users_oauth (user_id, remote_user_id) VALUES (?, ?)", localUserID, remoteUserID)
 	} else {
-		_, err = db.ExecContext(ctx, "INSERT INTO users_oauth (user_id, remote_user_id) VALUES (?, ?) "+db.upsert("user_id"), localUserID, remoteUserID)
+		_, err = db.ExecContext(ctx, "INSERT INTO users_oauth (user_id, remote_user_id) VALUES (?, ?) "+db.upsert("user_id") + " user_id = ?", localUserID, remoteUserID, localUserID)
 	}
 	if err != nil {
 		log.Error("Unable to INSERT users_oauth for '%d': %v", localUserID, err)

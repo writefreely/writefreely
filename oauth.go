@@ -3,9 +3,9 @@ package writefreely
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/sessions"
 	"github.com/guregu/null/zero"
-	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
@@ -67,12 +67,15 @@ type HttpClient interface {
 }
 
 type oauthHandler struct {
+	Config     *config.Config
+	DB         OAuthDatastore
+	Store      sessions.Store
 	HttpClient HttpClient
 }
 
 // buildAuthURL returns a URL used to initiate authentication.
-func buildAuthURL(app OAuthDatastoreProvider, ctx context.Context, clientID, authLocation, callbackURL string) (string, error) {
-	state, err := app.DB().GenerateOAuthState(ctx)
+func buildAuthURL(db OAuthDatastore, ctx context.Context, clientID, authLocation, callbackURL string) (string, error) {
+	state, err := db.GenerateOAuthState(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -91,43 +94,49 @@ func buildAuthURL(app OAuthDatastoreProvider, ctx context.Context, clientID, aut
 	return u.String(), nil
 }
 
-func (h oauthHandler) viewOauthInit(app OAuthDatastoreProvider, w http.ResponseWriter, r *http.Request) error {
-	location, err := buildAuthURL(app, r.Context(), app.Config().App.OAuthClientID, app.Config().App.OAuthProviderAuthLocation, app.Config().App.OAuthClientCallbackLocation)
+// app *App, w http.ResponseWriter, r *http.Request
+func (h oauthHandler) viewOauthInit(w http.ResponseWriter, r *http.Request) {
+	location, err := buildAuthURL(h.DB, r.Context(), h.Config.App.OAuthClientID, h.Config.App.OAuthProviderAuthLocation, h.Config.App.OAuthClientCallbackLocation)
 	if err != nil {
-		log.ErrorLog.Println(err)
-		return impart.HTTPError{Status: http.StatusInternalServerError, Message: "Could not prepare OAuth redirect URL."}
+		failOAuthRequest(w, http.StatusInternalServerError, "could not prepare oauth redirect url")
+		return
 	}
 	http.Redirect(w, r, location, http.StatusTemporaryRedirect)
-	return nil
 }
 
-func (h oauthHandler) viewOauthCallback(app OAuthDatastoreProvider, w http.ResponseWriter, r *http.Request) error {
+func (h oauthHandler) viewOauthCallback(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	code := r.FormValue("code")
 	state := r.FormValue("state")
 
-	err := app.DB().ValidateOAuthState(ctx, state)
+	err := h.DB.ValidateOAuthState(ctx, state)
 	if err != nil {
-		return err
+		failOAuthRequest(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 
-	tokenResponse, err := h.exchangeOauthCode(app, ctx, code)
+	tokenResponse, err := h.exchangeOauthCode(ctx, code)
 	if err != nil {
-		return err
+		failOAuthRequest(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 
 	// Now that we have the access token, let's use it real quick to make sur
 	// it really really works.
-	tokenInfo, err := h.inspectOauthAccessToken(app, ctx, tokenResponse.AccessToken)
+	tokenInfo, err := h.inspectOauthAccessToken(ctx, tokenResponse.AccessToken)
 	if err != nil {
-		return err
+		failOAuthRequest(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 
-	localUserID, err := app.DB().GetIDForRemoteUser(ctx, tokenInfo.UserID)
+	localUserID, err := h.DB.GetIDForRemoteUser(ctx, tokenInfo.UserID)
 	if err != nil {
-		return err
+		failOAuthRequest(w, http.StatusInternalServerError, err.Error())
+		return
 	}
+
+	fmt.Println("local user id", localUserID)
 
 	if localUserID == -1 {
 		// We don't have, nor do we want, the password from the origin, so we
@@ -136,12 +145,14 @@ func (h oauthHandler) viewOauthCallback(app OAuthDatastoreProvider, w http.Respo
 		//flow.
 		randPass, err := randString(14)
 		if err != nil {
-			return err
+			failOAuthRequest(w, http.StatusInternalServerError, err.Error())
+			return
 		}
 		hashedPass, err := auth.HashPass([]byte(randPass))
 		if err != nil {
 			log.ErrorLog.Println(err)
-			return impart.HTTPError{http.StatusInternalServerError, "Could not create password hash."}
+			failOAuthRequest(w, http.StatusInternalServerError, "unable to create password hash")
+			return
 		}
 		newUser := &User{
 			Username:   tokenInfo.Username,
@@ -151,32 +162,40 @@ func (h oauthHandler) viewOauthCallback(app OAuthDatastoreProvider, w http.Respo
 			Created:    time.Now().Truncate(time.Second).UTC(),
 		}
 
-		err = app.DB().CreateUser(app.Config(), newUser, newUser.Username)
+		err = h.DB.CreateUser(h.Config, newUser, newUser.Username)
 		if err != nil {
-			return err
+			failOAuthRequest(w, http.StatusInternalServerError, err.Error())
+			return
 		}
 
-		err = app.DB().RecordRemoteUserID(ctx, newUser.ID, tokenInfo.UserID)
+		err = h.DB.RecordRemoteUserID(ctx, newUser.ID, tokenInfo.UserID)
 		if err != nil {
-			return err
+			failOAuthRequest(w, http.StatusInternalServerError, err.Error())
+			return
 		}
 
-		return loginOrFail(app, w, r, newUser)
+		if err := loginOrFail(h.Store, w, r, newUser); err != nil {
+			failOAuthRequest(w, http.StatusInternalServerError, err.Error())
+		}
+		return
 	}
 
-	user, err := app.DB().GetUserForAuthByID(localUserID)
+	user, err := h.DB.GetUserForAuthByID(localUserID)
 	if err != nil {
-		return err
+		failOAuthRequest(w, http.StatusInternalServerError, err.Error())
+		return
 	}
-	return loginOrFail(app, w, r, user)
+	if err = loginOrFail(h.Store, w, r, user); err != nil {
+		failOAuthRequest(w, http.StatusInternalServerError, err.Error())
+	}
 }
 
-func (h oauthHandler) exchangeOauthCode(app OAuthDatastoreProvider, ctx context.Context, code string) (*TokenResponse, error) {
+func (h oauthHandler) exchangeOauthCode(ctx context.Context, code string) (*TokenResponse, error) {
 	form := url.Values{}
 	form.Add("grant_type", "authorization_code")
-	form.Add("redirect_uri", app.Config().App.OAuthClientCallbackLocation)
+	form.Add("redirect_uri", h.Config.App.OAuthClientCallbackLocation)
 	form.Add("code", code)
-	req, err := http.NewRequest("POST", app.Config().App.OAuthProviderTokenLocation, strings.NewReader(form.Encode()))
+	req, err := http.NewRequest("POST", h.Config.App.OAuthProviderTokenLocation, strings.NewReader(form.Encode()))
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +203,7 @@ func (h oauthHandler) exchangeOauthCode(app OAuthDatastoreProvider, ctx context.
 	req.Header.Set("User-Agent", "writefreely")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.SetBasicAuth(app.Config().App.OAuthClientID, app.Config().App.OAuthClientSecret)
+	req.SetBasicAuth(h.Config.App.OAuthClientID, h.Config.App.OAuthClientSecret)
 
 	resp, err := h.HttpClient.Do(req)
 	if err != nil {
@@ -207,8 +226,8 @@ func (h oauthHandler) exchangeOauthCode(app OAuthDatastoreProvider, ctx context.
 	return &tokenResponse, nil
 }
 
-func (h oauthHandler) inspectOauthAccessToken(app OAuthDatastoreProvider, ctx context.Context, accessToken string) (*InspectResponse, error) {
-	req, err := http.NewRequest("GET", app.Config().App.OAuthProviderInspectLocation, nil)
+func (h oauthHandler) inspectOauthAccessToken(ctx context.Context, accessToken string) (*InspectResponse, error) {
+	req, err := http.NewRequest("GET", h.Config.App.OAuthProviderInspectLocation, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -238,15 +257,27 @@ func (h oauthHandler) inspectOauthAccessToken(app OAuthDatastoreProvider, ctx co
 	return &inspectResponse, nil
 }
 
-func loginOrFail(app OAuthDatastoreProvider, w http.ResponseWriter, r *http.Request, user *User) error {
-	session, err := app.SessionStore().Get(r, cookieName)
-	if err != nil {
-		return err
-	}
+func loginOrFail(store sessions.Store, w http.ResponseWriter, r *http.Request, user *User) error {
+	// An error may be returned, but a valid session should always be returned.
+	session, _ := store.Get(r, cookieName)
 	session.Values[cookieUserVal] = user.Cookie()
-	if err = session.Save(r, w); err != nil {
+	if err := session.Save(r, w); err != nil {
+		fmt.Println("error saving session", err)
 		return err
 	}
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 	return nil
+}
+
+// failOAuthRequest is an HTTP handler helper that formats returned error
+// messages.
+func failOAuthRequest(w http.ResponseWriter, statusCode int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	err := json.NewEncoder(w).Encode(map[string]interface{}{
+		"error": message,
+	})
+	if err != nil {
+		panic(err)
+	}
 }

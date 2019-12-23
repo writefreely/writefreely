@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/gorilla/sessions"
 	"github.com/stretchr/testify/assert"
-	"github.com/writeas/impart"
 	"github.com/writeas/writefreely/config"
 	"net/http"
 	"net/http/httptest"
@@ -125,14 +124,18 @@ func (m *MockOAuthDatastore) GenerateOAuthState(ctx context.Context) (string, er
 }
 
 func TestViewOauthInit(t *testing.T) {
-	h := oauthHandler{}
+
 	t.Run("success", func(t *testing.T) {
 		app := &MockOAuthDatastoreProvider{}
+		h := oauthHandler{
+			Config: app.Config(),
+			DB:     app.DB(),
+			Store:  app.SessionStore(),
+		}
 		req, err := http.NewRequest("GET", "/oauth/client", nil)
 		assert.NoError(t, err)
 		rr := httptest.NewRecorder()
-		err = h.viewOauthInit(app, rr, req)
-		assert.NoError(t, err)
+		h.viewOauthInit(rr, req)
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
 		locURI, err := url.Parse(rr.Header().Get("Location"))
 		assert.NoError(t, err)
@@ -153,12 +156,18 @@ func TestViewOauthInit(t *testing.T) {
 				}
 			},
 		}
+		h := oauthHandler{
+			Config: app.Config(),
+			DB:     app.DB(),
+			Store:  app.SessionStore(),
+		}
 		req, err := http.NewRequest("GET", "/oauth/client", nil)
 		assert.NoError(t, err)
 		rr := httptest.NewRecorder()
-		err = h.viewOauthInit(app, rr, req)
-		assert.Error(t, err)
-		assert.Equal(t, impart.HTTPError{Status: http.StatusInternalServerError, Message: "Could not prepare OAuth redirect URL."}, err)
+		h.viewOauthInit(rr, req)
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+		expected := `{"error":"could not prepare oauth redirect url"}` + "\n"
+		assert.Equal(t, expected, rr.Body.String())
 	})
 }
 
@@ -166,6 +175,9 @@ func TestViewOauthCallback(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		app := &MockOAuthDatastoreProvider{}
 		h := oauthHandler{
+			Config: app.Config(),
+			DB:     app.DB(),
+			Store:  app.SessionStore(),
 			HttpClient: &MockHTTPClient{
 				DoDo: func(req *http.Request) (*http.Response, error) {
 					switch req.URL.String() {
@@ -190,7 +202,7 @@ func TestViewOauthCallback(t *testing.T) {
 		req, err := http.NewRequest("GET", "/oauth/callback", nil)
 		assert.NoError(t, err)
 		rr := httptest.NewRecorder()
-		err = h.viewOauthCallback(app, rr, req)
+		h.viewOauthCallback(rr, req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
 
