@@ -18,7 +18,7 @@ func TestOAuthDatastore(t *testing.T) {
 			driverName: "",
 		}
 
-		state, err := ds.GenerateOAuthState(ctx)
+		state, err := ds.GenerateOAuthState(ctx, "", "")
 		assert.NoError(t, err)
 		assert.Len(t, state, 24)
 

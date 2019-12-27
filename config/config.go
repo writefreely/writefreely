@@ -56,6 +56,25 @@ type (
 		Port     int    `ini:"port"`
 	}
 
+	OAuthCfg struct {
+		Enabled bool `ini:"enable"`
+
+		// write.as
+		WriteAsProviderAuthLocation    string `ini:"wa_auth_location"`
+		WriteAsProviderTokenLocation   string `ini:"wa_token_location"`
+		WriteAsProviderInspectLocation string `ini:"wa_inspect_location"`
+		WriteAsClientCallbackLocation  string `ini:"wa_callback_location"`
+		WriteAsClientID                string `ini:"wa_client_id"`
+		WriteAsClientSecret            string `ini:"wa_client_secret"`
+		WriteAsAuthLocation            string
+
+		// slack
+		SlackClientID     string `ini:"slack_client_id"`
+		SlackClientSecret string `ini:"slack_client_secret"`
+		SlackTeamID       string `init:"slack_team_id"`
+		SlackAuthLocation string
+	}
+
 	// AppCfg holds values that affect how the application functions
 	AppCfg struct {
 		SiteName string `ini:"site_name"`
@@ -92,17 +111,10 @@ type (
 		LocalTimeline bool   `ini:"local_timeline"`
 		UserInvites   string `ini:"user_invites"`
 
-		// OAuth
-		EnableOAuth bool `ini:"enable_oauth"`
-		OAuthProviderAuthLocation    string `ini:"oauth_auth_location"`
-		OAuthProviderTokenLocation   string `ini:"oauth_token_location"`
-		OAuthProviderInspectLocation string `ini:"oauth_inspect_location"`
-		OAuthClientCallbackLocation  string `ini:"oauth_callback_location"`
-		OAuthClientID                string `ini:"oauth_client_id"`
-		OAuthClientSecret            string `ini:"oauth_client_secret"`
-
 		// Defaults
 		DefaultVisibility string `ini:"default_visibility"`
+
+		OAuth OAuthCfg `ini:"oauth"`
 	}
 
 	// Config holds the complete configuration for running a writefreely instance

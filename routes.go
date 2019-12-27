@@ -86,9 +86,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 		DB:         apper.App().DB(),
 		Store:      apper.App().SessionStore(),
 	}
-
-	write.HandleFunc("/oauth/write.as", oauthHandler.viewOauthInit).Methods("GET")
-	write.HandleFunc("/oauth/callback", oauthHandler.viewOauthCallback).Methods("GET")
+	oauthHandler.configureRoutes(write)
 
 	// Handle logged in user sections
 	me := write.PathPrefix("/me").Subrouter()

@@ -125,10 +125,10 @@ type writestore interface {
 	GetUserLastPostTime(id int64) (*time.Time, error)
 	GetCollectionLastPostTime(id int64) (*time.Time, error)
 
-	GetIDForRemoteUser(ctx context.Context, remoteUserID int64) (int64, error)
-	RecordRemoteUserID(ctx context.Context, localUserID, remoteUserID int64) error
-	ValidateOAuthState(ctx context.Context, state string) error
-	GenerateOAuthState(ctx context.Context) (string, error)
+	GetIDForRemoteUser(context.Context, int64) (int64, error)
+	RecordRemoteUserID(context.Context, int64, int64) error
+	ValidateOAuthState(context.Context, string, string, string) error
+	GenerateOAuthState(context.Context, string, string) (string, error)
 
 	DatabaseInitialized() bool
 }
@@ -137,6 +137,8 @@ type datastore struct {
 	*sql.DB
 	driverName string
 }
+
+var _ writestore = &datastore{}
 
 func (db *datastore) now() string {
 	if db.driverName == driverSQLite {
@@ -2459,17 +2461,17 @@ func (db *datastore) GetCollectionLastPostTime(id int64) (*time.Time, error) {
 	return &t, nil
 }
 
-func (db *datastore) GenerateOAuthState(ctx context.Context) (string, error) {
+func (db *datastore) GenerateOAuthState(ctx context.Context, provider, clientID string) (string, error) {
 	state := store.Generate62RandomString(24)
-	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_state (state, used, created_at) VALUES (?, FALSE, NOW())", state)
+	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_state (state, provider, client_id, used, created_at) VALUES (?, ?, ?, FALSE, NOW())", state, provider, clientID)
 	if err != nil {
 		return "", fmt.Errorf("unable to record oauth client state: %w", err)
 	}
 	return state, nil
 }
 
-func (db *datastore) ValidateOAuthState(ctx context.Context, state string) error {
-	res, err := db.ExecContext(ctx, "UPDATE oauth_client_state SET used = TRUE WHERE state = ?", state)
+func (db *datastore) ValidateOAuthState(ctx context.Context, state, provider, clientID string) error {
+	res, err := db.ExecContext(ctx, "UPDATE oauth_client_state SET used = TRUE WHERE state = ? AND provider = ? AND client_id = ?", state, provider, clientID)
 	if err != nil {
 		return err
 	}
