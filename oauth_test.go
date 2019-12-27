@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gorilla/sessions"
 	"github.com/stretchr/testify/assert"
+	"github.com/writeas/nerds/store"
 	"github.com/writeas/writefreely/config"
 	"net/http"
 	"net/http/httptest"
@@ -120,7 +121,7 @@ func (m *MockOAuthDatastore) GenerateOAuthState(ctx context.Context) (string, er
 	if m.DoGenerateOAuthState != nil {
 		return m.DoGenerateOAuthState(ctx)
 	}
-	return randString(14)
+	return store.Generate62RandomString(14), nil
 }
 
 func TestViewOauthInit(t *testing.T) {

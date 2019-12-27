@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gorilla/sessions"
 	"github.com/guregu/null/zero"
+	"github.com/writeas/nerds/store"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
@@ -143,11 +144,7 @@ func (h oauthHandler) viewOauthCallback(w http.ResponseWriter, r *http.Request) 
 		//create a random string. If the user needs to set a password, they
 		//can do so through the settings page or through the password reset
 		//flow.
-		randPass, err := randString(14)
-		if err != nil {
-			failOAuthRequest(w, http.StatusInternalServerError, err.Error())
-			return
-		}
+		randPass := store.Generate62RandomString(14)
 		hashedPass, err := auth.HashPass([]byte(randPass))
 		if err != nil {
 			log.ErrorLog.Println(err)
