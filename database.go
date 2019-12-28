@@ -14,6 +14,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	wf_db "github.com/writeas/writefreely/db"
 	"net/http"
 	"strings"
 	"time"
@@ -125,9 +126,9 @@ type writestore interface {
 	GetUserLastPostTime(id int64) (*time.Time, error)
 	GetCollectionLastPostTime(id int64) (*time.Time, error)
 
-	GetIDForRemoteUser(context.Context, int64) (int64, error)
-	RecordRemoteUserID(context.Context, int64, int64) error
-	ValidateOAuthState(context.Context, string, string, string) error
+	GetIDForRemoteUser(context.Context, string) (int64, error)
+	RecordRemoteUserID(context.Context, int64, string) error
+	ValidateOAuthState(context.Context, string) (string, string, error)
 	GenerateOAuthState(context.Context, string, string) (string, error)
 
 	DatabaseInitialized() bool
@@ -2470,22 +2471,35 @@ func (db *datastore) GenerateOAuthState(ctx context.Context, provider, clientID 
 	return state, nil
 }
 
-func (db *datastore) ValidateOAuthState(ctx context.Context, state, provider, clientID string) error {
-	res, err := db.ExecContext(ctx, "UPDATE oauth_client_state SET used = TRUE WHERE state = ? AND provider = ? AND client_id = ?", state, provider, clientID)
+func (db *datastore) ValidateOAuthState(ctx context.Context, state string) (string, string, error) {
+	var provider string
+	var clientID string
+	err := wf_db.RunTransactionWithOptions(ctx, db.DB, &sql.TxOptions{}, func(ctx context.Context, tx *sql.Tx) error {
+		err := tx.QueryRow("SELECT provider, client_id FROM oauth_client_state WHERE state = ? AND used = FALSE", state).Scan(&provider, &clientID)
+		if err != nil {
+			return err
+		}
+
+		res, err := tx.ExecContext(ctx, "UPDATE oauth_client_state SET used = TRUE WHERE state = ?", state)
+		if err != nil {
+			return err
+		}
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if rowsAffected != 1 {
+			return fmt.Errorf("state not found")
+		}
+		return nil
+	})
 	if err != nil {
-		return err
+		return "", "", nil
 	}
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return fmt.Errorf("state not found")
-	}
-	return nil
+	return provider, clientID, nil
 }
 
-func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID, remoteUserID int64) error {
+func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID int64, remoteUserID string) error {
 	var err error
 	if db.driverName == driverSQLite {
 		_, err = db.ExecContext(ctx, "INSERT OR REPLACE INTO users_oauth (user_id, remote_user_id) VALUES (?, ?)", localUserID, remoteUserID)
@@ -2499,7 +2513,7 @@ func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID, remote
 }
 
 // GetIDForRemoteUser returns a user ID associated with a remote user ID.
-func (db *datastore) GetIDForRemoteUser(ctx context.Context, remoteUserID int64) (int64, error) {
+func (db *datastore) GetIDForRemoteUser(ctx context.Context, remoteUserID string) (int64, error) {
 	var userID int64 = -1
 	err := db.
 		QueryRowContext(ctx, "SELECT user_id FROM users_oauth WHERE remote_user_id = ?", remoteUserID).
