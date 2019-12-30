@@ -53,8 +53,8 @@ type OAuthDatastoreProvider interface {
 // OAuthDatastore provides a minimal interface of data store methods used in
 // oauth functionality.
 type OAuthDatastore interface {
-	GetIDForRemoteUser(context.Context, string) (int64, error)
-	RecordRemoteUserID(context.Context, int64, string) error
+	GetIDForRemoteUser(context.Context, string, string, string) (int64, error)
+	RecordRemoteUserID(context.Context, int64, string, string, string, string) error
 	ValidateOAuthState(context.Context, string) (string, string, error)
 	GenerateOAuthState(context.Context, string, string) (string, error)
 
@@ -140,7 +140,7 @@ func (h oauthHandler) viewOauthCallback(w http.ResponseWriter, r *http.Request) 
 	code := r.FormValue("code")
 	state := r.FormValue("state")
 
-	_, _, err := h.DB.ValidateOAuthState(ctx, state)
+	provider, clientID, err := h.DB.ValidateOAuthState(ctx, state)
 	if err != nil {
 		failOAuthRequest(w, http.StatusInternalServerError, err.Error())
 		return
@@ -160,7 +160,7 @@ func (h oauthHandler) viewOauthCallback(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	localUserID, err := h.DB.GetIDForRemoteUser(ctx, tokenInfo.UserID)
+	localUserID, err := h.DB.GetIDForRemoteUser(ctx, tokenInfo.UserID, provider, clientID)
 	if err != nil {
 		failOAuthRequest(w, http.StatusInternalServerError, err.Error())
 		return
@@ -191,7 +191,7 @@ func (h oauthHandler) viewOauthCallback(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		err = h.DB.RecordRemoteUserID(ctx, newUser.ID, tokenInfo.UserID)
+		err = h.DB.RecordRemoteUserID(ctx, newUser.ID, tokenInfo.UserID, provider, clientID, tokenResponse.AccessToken)
 		if err != nil {
 			failOAuthRequest(w, http.StatusInternalServerError, err.Error())
 			return

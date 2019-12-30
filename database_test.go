@@ -31,12 +31,19 @@ func TestOAuthDatastore(t *testing.T) {
 
 		var localUserID int64 = 99
 		var remoteUserID = "100"
-		err = ds.RecordRemoteUserID(ctx, localUserID, remoteUserID)
+		err = ds.RecordRemoteUserID(ctx, localUserID, remoteUserID, "test", "test", "access_token_a")
 		assert.NoError(t, err)
 
-		countRows(t, ctx, db, 1, "SELECT COUNT(*) FROM `users_oauth` WHERE `user_id` = ? AND `remote_user_id` = ?", localUserID, remoteUserID)
+		countRows(t, ctx, db, 1, "SELECT COUNT(*) FROM `users_oauth` WHERE `user_id` = ? AND `remote_user_id` = ? AND access_token = 'access_token_a'", localUserID, remoteUserID)
 
-		foundUserID, err := ds.GetIDForRemoteUser(ctx, remoteUserID)
+		err = ds.RecordRemoteUserID(ctx, localUserID, remoteUserID, "test", "test", "access_token_b")
+		assert.NoError(t, err)
+
+		countRows(t, ctx, db, 1, "SELECT COUNT(*) FROM `users_oauth` WHERE `user_id` = ? AND `remote_user_id` = ? AND access_token = 'access_token_b'", localUserID, remoteUserID)
+
+		countRows(t, ctx, db, 1, "SELECT COUNT(*) FROM `users_oauth`")
+
+		foundUserID, err := ds.GetIDForRemoteUser(ctx, remoteUserID, "test", "test")
 		assert.NoError(t, err)
 		assert.Equal(t, localUserID, foundUserID)
 	})

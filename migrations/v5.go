@@ -7,7 +7,7 @@ import (
 	wf_db "github.com/writeas/writefreely/db"
 )
 
-func oauth_slack(db *datastore) error {
+func oauthSlack(db *datastore) error {
 	dialect := wf_db.DialectMySQL
 	if db.driverName == driverSQLite {
 		dialect = wf_db.DialectSQLite
@@ -26,6 +26,32 @@ func oauth_slack(db *datastore) error {
 						"client_id",
 						wf_db.ColumnTypeVarChar,
 						wf_db.OptionalInt{Set: true, Value: 128,})),
+			dialect.
+				AlterTable("users_oauth").
+				ChangeColumn("remote_user_id",
+					dialect.
+						Column(
+							"remote_user_id",
+							wf_db.ColumnTypeVarChar,
+							wf_db.OptionalInt{Set: true, Value: 128,})).
+				AddColumn(dialect.
+					Column(
+						"provider",
+						wf_db.ColumnTypeVarChar,
+						wf_db.OptionalInt{Set: true, Value: 24,})).
+				AddColumn(dialect.
+					Column(
+						"client_id",
+						wf_db.ColumnTypeVarChar,
+						wf_db.OptionalInt{Set: true, Value: 128,})).
+				AddColumn(dialect.
+					Column(
+						"access_token",
+						wf_db.ColumnTypeVarChar,
+						wf_db.OptionalInt{Set: true, Value: 512,})),
+			dialect.DropIndex("remote_user_id", "users_oauth"),
+			dialect.DropIndex("user_id", "users_oauth"),
+			dialect.CreateUniqueIndex("users_oauth", "users_oauth", "user_id", "provider", "client_id"),
 		}
 		for _, builder := range builders {
 			query, err := builder.ToSQL()

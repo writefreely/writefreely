@@ -18,6 +18,18 @@ func (b *AlterTableSqlBuilder) AddColumn(col *Column) *AlterTableSqlBuilder {
 	return b
 }
 
+func (b *AlterTableSqlBuilder) ChangeColumn(name string, col *Column) *AlterTableSqlBuilder {
+	if colVal, err := col.String(); err == nil {
+		b.Changes = append(b.Changes, fmt.Sprintf("CHANGE COLUMN %s %s", name, colVal))
+	}
+	return b
+}
+
+func (b *AlterTableSqlBuilder) AddUniqueConstraint(name string, columns ...string) *AlterTableSqlBuilder {
+	b.Changes = append(b.Changes, fmt.Sprintf("ADD CONSTRAINT %s UNIQUE (%s)", name, strings.Join(columns, ", ")))
+	return b
+}
+
 func (b *AlterTableSqlBuilder) ToSQL() (string, error) {
 	var str strings.Builder
 

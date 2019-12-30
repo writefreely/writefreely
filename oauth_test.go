@@ -23,9 +23,9 @@ type MockOAuthDatastoreProvider struct {
 type MockOAuthDatastore struct {
 	DoGenerateOAuthState func(context.Context, string, string) (string, error)
 	DoValidateOAuthState func(context.Context, string) (string, string, error)
-	DoGetIDForRemoteUser func(context.Context, string) (int64, error)
+	DoGetIDForRemoteUser func(context.Context, string, string, string) (int64, error)
 	DoCreateUser         func(*config.Config, *User, string) error
-	DoRecordRemoteUserID func(context.Context, int64, string) error
+	DoRecordRemoteUserID func(context.Context, int64, string, string, string, string) error
 	DoGetUserForAuthByID func(int64) (*User, error)
 }
 
@@ -92,9 +92,9 @@ func (m *MockOAuthDatastore) ValidateOAuthState(ctx context.Context, state strin
 	return "", "", nil
 }
 
-func (m *MockOAuthDatastore) GetIDForRemoteUser(ctx context.Context, remoteUserID string) (int64, error) {
+func (m *MockOAuthDatastore) GetIDForRemoteUser(ctx context.Context, remoteUserID, provider, clientID string) (int64, error) {
 	if m.DoGetIDForRemoteUser != nil {
-		return m.DoGetIDForRemoteUser(ctx, remoteUserID)
+		return m.DoGetIDForRemoteUser(ctx, remoteUserID, provider, clientID)
 	}
 	return -1, nil
 }
@@ -107,9 +107,9 @@ func (m *MockOAuthDatastore) CreateUser(cfg *config.Config, u *User, username st
 	return nil
 }
 
-func (m *MockOAuthDatastore) RecordRemoteUserID(ctx context.Context, localUserID int64, remoteUserID string) error {
+func (m *MockOAuthDatastore) RecordRemoteUserID(ctx context.Context, localUserID int64, remoteUserID, provider, clientID, accessToken string) error {
 	if m.DoRecordRemoteUserID != nil {
-		return m.DoRecordRemoteUserID(ctx, localUserID, remoteUserID)
+		return m.DoRecordRemoteUserID(ctx, localUserID, remoteUserID, provider, clientID, accessToken)
 	}
 	return nil
 }

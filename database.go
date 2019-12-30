@@ -126,8 +126,8 @@ type writestore interface {
 	GetUserLastPostTime(id int64) (*time.Time, error)
 	GetCollectionLastPostTime(id int64) (*time.Time, error)
 
-	GetIDForRemoteUser(context.Context, string) (int64, error)
-	RecordRemoteUserID(context.Context, int64, string) error
+	GetIDForRemoteUser(context.Context, string, string, string) (int64, error)
+	RecordRemoteUserID(context.Context, int64, string, string, string, string) error
 	ValidateOAuthState(context.Context, string) (string, string, error)
 	GenerateOAuthState(context.Context, string, string) (string, error)
 
@@ -2499,12 +2499,12 @@ func (db *datastore) ValidateOAuthState(ctx context.Context, state string) (stri
 	return provider, clientID, nil
 }
 
-func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID int64, remoteUserID string) error {
+func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID int64, remoteUserID, provider, clientID, accessToken string) error {
 	var err error
 	if db.driverName == driverSQLite {
-		_, err = db.ExecContext(ctx, "INSERT OR REPLACE INTO users_oauth (user_id, remote_user_id) VALUES (?, ?)", localUserID, remoteUserID)
+		_, err = db.ExecContext(ctx, "INSERT OR REPLACE INTO users_oauth (user_id, remote_user_id, provider, client_id, access_token) VALUES (?, ?, ?, ?, ?)", localUserID, remoteUserID, provider, clientID, accessToken)
 	} else {
-		_, err = db.ExecContext(ctx, "INSERT INTO users_oauth (user_id, remote_user_id) VALUES (?, ?) "+db.upsert("user_id")+" user_id = ?", localUserID, remoteUserID, localUserID)
+		_, err = db.ExecContext(ctx, "INSERT INTO users_oauth (user_id, remote_user_id, provider, client_id, access_token) VALUES (?, ?, ?, ?, ?) "+db.upsert("user")+" access_token = ?", localUserID, remoteUserID, provider, clientID, accessToken, accessToken)
 	}
 	if err != nil {
 		log.Error("Unable to INSERT users_oauth for '%d': %v", localUserID, err)
@@ -2513,10 +2513,10 @@ func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID int64, 
 }
 
 // GetIDForRemoteUser returns a user ID associated with a remote user ID.
-func (db *datastore) GetIDForRemoteUser(ctx context.Context, remoteUserID string) (int64, error) {
+func (db *datastore) GetIDForRemoteUser(ctx context.Context, remoteUserID, provider, clientID string) (int64, error) {
 	var userID int64 = -1
 	err := db.
-		QueryRowContext(ctx, "SELECT user_id FROM users_oauth WHERE remote_user_id = ?", remoteUserID).
+		QueryRowContext(ctx, "SELECT user_id FROM users_oauth WHERE remote_user_id = ? AND provider = ? AND client_id = ?", remoteUserID, provider, clientID).
 		Scan(&userID)
 	// Not finding a record is OK.
 	if err != nil && err != sql.ErrNoRows {

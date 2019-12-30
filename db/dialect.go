@@ -41,3 +41,36 @@ func (d DialectType) AlterTable(name string) *AlterTableSqlBuilder {
 		panic(fmt.Sprintf("unexpected dialect: %d", d))
 	}
 }
+
+func (d DialectType) CreateUniqueIndex(name, table string, columns ...string) *CreateIndexSqlBuilder {
+	switch d {
+	case DialectSQLite:
+		return &CreateIndexSqlBuilder{Dialect: DialectSQLite, Name: name, Table: table, Unique: true, Columns: columns}
+	case DialectMySQL:
+		return &CreateIndexSqlBuilder{Dialect: DialectMySQL, Name: name, Table: table, Unique: true, Columns: columns}
+	default:
+		panic(fmt.Sprintf("unexpected dialect: %d", d))
+	}
+}
+
+func (d DialectType) CreateIndex(name, table string, columns ...string) *CreateIndexSqlBuilder {
+	switch d {
+	case DialectSQLite:
+		return &CreateIndexSqlBuilder{Dialect: DialectSQLite, Name: name, Table: table, Unique: false, Columns: columns}
+	case DialectMySQL:
+		return &CreateIndexSqlBuilder{Dialect: DialectMySQL, Name: name, Table: table, Unique: false, Columns: columns}
+	default:
+		panic(fmt.Sprintf("unexpected dialect: %d", d))
+	}
+}
+
+func (d DialectType) DropIndex(name, table string) *DropIndexSqlBuilder {
+	switch d {
+	case DialectSQLite:
+		return &DropIndexSqlBuilder{Dialect: DialectSQLite, Name: name, Table: table}
+	case DialectMySQL:
+		return &DropIndexSqlBuilder{Dialect: DialectMySQL, Name: name, Table: table}
+	default:
+		panic(fmt.Sprintf("unexpected dialect: %d", d))
+	}
+}
