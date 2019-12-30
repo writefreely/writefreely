@@ -113,12 +113,14 @@ func (h oauthHandler) viewOauthCallback(w http.ResponseWriter, r *http.Request) 
 
 	err := h.DB.ValidateOAuthState(ctx, state)
 	if err != nil {
+		log.Error("Unable to ValidateOAuthState: %s", err)
 		failOAuthRequest(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	tokenResponse, err := h.exchangeOauthCode(ctx, code)
 	if err != nil {
+		log.Error("Unable to exchangeOauthCode: %s", err)
 		failOAuthRequest(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -127,12 +129,14 @@ func (h oauthHandler) viewOauthCallback(w http.ResponseWriter, r *http.Request) 
 	// it really really works.
 	tokenInfo, err := h.inspectOauthAccessToken(ctx, tokenResponse.AccessToken)
 	if err != nil {
+		log.Error("Unable to inspectOauthAccessToken: %s", err)
 		failOAuthRequest(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	localUserID, err := h.DB.GetIDForRemoteUser(ctx, tokenInfo.UserID)
 	if err != nil {
+		log.Error("Unable to GetIDForRemoteUser: %s", err)
 		failOAuthRequest(w, http.StatusInternalServerError, err.Error())
 		return
 	}
