@@ -25,6 +25,7 @@ type TokenResponse struct {
 	ExpiresIn    int    `json:"expires_in"`
 	RefreshToken string `json:"refresh_token"`
 	TokenType    string `json:"token_type"`
+	Error        string `json:"error"`
 }
 
 // InspectResponse contains data returned when an access token is inspected.
@@ -223,6 +224,11 @@ func (h oauthHandler) exchangeOauthCode(ctx context.Context, code string) (*Toke
 	err = json.Unmarshal(body, &tokenResponse)
 	if err != nil {
 		return nil, err
+	}
+
+	// Check the response for an error message, and return it if there is one.
+	if tokenResponse.Error != "" {
+		return nil, fmt.Errorf(tokenResponse.Error)
 	}
 	return &tokenResponse, nil
 }
