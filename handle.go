@@ -73,7 +73,7 @@ type (
 
 type Handler struct {
 	errors       *ErrorPages
-	sessionStore *sessions.CookieStore
+	sessionStore sessions.Store
 	app          Apper
 }
 
@@ -96,7 +96,7 @@ func NewHandler(apper Apper) *Handler {
 			InternalServerError: template.Must(template.New("").Parse("{{define \"base\"}}<html><head><title>500</title></head><body><p>Internal server error.</p></body></html>{{end}}")),
 			Blank:               template.Must(template.New("").Parse("{{define \"base\"}}<html><head><title>{{.Title}}</title></head><body><p>{{.Content}}</p></body></html>{{end}}")),
 		},
-		sessionStore: apper.App().sessionStore,
+		sessionStore: apper.App().SessionStore(),
 		app:          apper,
 	}
 

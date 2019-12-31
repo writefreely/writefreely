@@ -80,6 +80,16 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	auth.HandleFunc("/read", handler.WebErrors(handleWebCollectionUnlock, UserLevelNone)).Methods("POST")
 	auth.HandleFunc("/me", handler.All(handleAPILogout)).Methods("DELETE")
 
+	oauthHandler := oauthHandler{
+		HttpClient: &http.Client{},
+		Config:     apper.App().Config(),
+		DB:         apper.App().DB(),
+		Store:      apper.App().SessionStore(),
+	}
+
+	write.HandleFunc("/oauth/write.as", oauthHandler.viewOauthInit).Methods("GET")
+	write.HandleFunc("/oauth/callback", oauthHandler.viewOauthCallback).Methods("GET")
+
 	// Handle logged in user sections
 	me := write.PathPrefix("/me").Subrouter()
 	me.HandleFunc("/", handler.Redirect("/me", UserLevelUser))
