@@ -2461,7 +2461,7 @@ func (db *datastore) GetCollectionLastPostTime(id int64) (*time.Time, error) {
 
 func (db *datastore) GenerateOAuthState(ctx context.Context) (string, error) {
 	state := store.Generate62RandomString(24)
-	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_state (state, used, created_at) VALUES (?, FALSE, NOW())", state)
+	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_states (state, used, created_at) VALUES (?, FALSE, NOW())", state)
 	if err != nil {
 		return "", fmt.Errorf("unable to record oauth client state: %w", err)
 	}
@@ -2469,7 +2469,7 @@ func (db *datastore) GenerateOAuthState(ctx context.Context) (string, error) {
 }
 
 func (db *datastore) ValidateOAuthState(ctx context.Context, state string) error {
-	res, err := db.ExecContext(ctx, "UPDATE oauth_client_state SET used = TRUE WHERE state = ?", state)
+	res, err := db.ExecContext(ctx, "UPDATE oauth_client_states SET used = TRUE WHERE state = ?", state)
 	if err != nil {
 		return err
 	}
@@ -2486,12 +2486,12 @@ func (db *datastore) ValidateOAuthState(ctx context.Context, state string) error
 func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID, remoteUserID int64) error {
 	var err error
 	if db.driverName == driverSQLite {
-		_, err = db.ExecContext(ctx, "INSERT OR REPLACE INTO users_oauth (user_id, remote_user_id) VALUES (?, ?)", localUserID, remoteUserID)
+		_, err = db.ExecContext(ctx, "INSERT OR REPLACE INTO oauth_users (user_id, remote_user_id) VALUES (?, ?)", localUserID, remoteUserID)
 	} else {
-		_, err = db.ExecContext(ctx, "INSERT INTO users_oauth (user_id, remote_user_id) VALUES (?, ?) "+db.upsert("user_id")+" user_id = ?", localUserID, remoteUserID, localUserID)
+		_, err = db.ExecContext(ctx, "INSERT INTO oauth_users (user_id, remote_user_id) VALUES (?, ?) "+db.upsert("user_id")+" user_id = ?", localUserID, remoteUserID, localUserID)
 	}
 	if err != nil {
-		log.Error("Unable to INSERT users_oauth for '%d': %v", localUserID, err)
+		log.Error("Unable to INSERT oauth_users for '%d': %v", localUserID, err)
 	}
 	return err
 }
@@ -2500,7 +2500,7 @@ func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID, remote
 func (db *datastore) GetIDForRemoteUser(ctx context.Context, remoteUserID int64) (int64, error) {
 	var userID int64 = -1
 	err := db.
-		QueryRowContext(ctx, "SELECT user_id FROM users_oauth WHERE remote_user_id = ?", remoteUserID).
+		QueryRowContext(ctx, "SELECT user_id FROM oauth_users WHERE remote_user_id = ?", remoteUserID).
 		Scan(&userID)
 	// Not finding a record is OK.
 	if err != nil && err != sql.ErrNoRows {
