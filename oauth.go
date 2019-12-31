@@ -9,6 +9,7 @@ import (
 	"github.com/guregu/null/zero"
 	"github.com/writeas/nerds/store"
 	"github.com/writeas/web-core/auth"
+	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
 	"io"
 	"io/ioutil"
@@ -23,6 +24,7 @@ type TokenResponse struct {
 	ExpiresIn    int    `json:"expires_in"`
 	RefreshToken string `json:"refresh_token"`
 	TokenType    string `json:"token_type"`
+	Error        string `json:"error"`
 }
 
 // InspectResponse contains data returned when an access token is inspected.
@@ -142,12 +144,14 @@ func (h oauthHandler) viewOauthCallback(w http.ResponseWriter, r *http.Request) 
 
 	provider, clientID, err := h.DB.ValidateOAuthState(ctx, state)
 	if err != nil {
+		log.Error("Unable to ValidateOAuthState: %s", err)
 		failOAuthRequest(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	tokenResponse, err := h.oauthClient.exchangeOauthCode(ctx, code)
 	if err != nil {
+		log.Error("Unable to exchangeOauthCode: %s", err)
 		failOAuthRequest(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -156,12 +160,14 @@ func (h oauthHandler) viewOauthCallback(w http.ResponseWriter, r *http.Request) 
 	// it really really works.
 	tokenInfo, err := h.oauthClient.inspectOauthAccessToken(ctx, tokenResponse.AccessToken)
 	if err != nil {
+		log.Error("Unable to inspectOauthAccessToken: %s", err)
 		failOAuthRequest(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	localUserID, err := h.DB.GetIDForRemoteUser(ctx, tokenInfo.UserID, provider, clientID)
 	if err != nil {
+		log.Error("Unable to GetIDForRemoteUser: %s", err)
 		failOAuthRequest(w, http.StatusInternalServerError, err.Error())
 		return
 	}

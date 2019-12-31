@@ -14,7 +14,7 @@ func oauth(db *datastore) error {
 	}
 	return wf_db.RunTransactionWithOptions(context.Background(), db.DB, &sql.TxOptions{}, func(ctx context.Context, tx *sql.Tx) error {
 		createTableUsersOauth, err := dialect.
-			Table("users_oauth").
+			Table("oauth_users").
 			SetIfNotExists(true).
 			Column(dialect.Column("user_id", wf_db.ColumnTypeInteger, wf_db.UnsetSize)).
 			Column(dialect.Column("remote_user_id", wf_db.ColumnTypeInteger, wf_db.UnsetSize)).
@@ -25,7 +25,7 @@ func oauth(db *datastore) error {
 			return err
 		}
 		createTableOauthClientState, err := dialect.
-			Table("oauth_client_state").
+			Table("oauth_client_states").
 			SetIfNotExists(true).
 			Column(dialect.Column("state", wf_db.ColumnTypeVarChar, wf_db.OptionalInt{Set: true, Value: 255})).
 			Column(dialect.Column("used", wf_db.ColumnTypeBool, wf_db.UnsetSize)).

@@ -15,7 +15,7 @@ func oauthSlack(db *datastore) error {
 	return wf_db.RunTransactionWithOptions(context.Background(), db.DB, &sql.TxOptions{}, func(ctx context.Context, tx *sql.Tx) error {
 		builders := []wf_db.SQLBuilder{
 			dialect.
-				AlterTable("oauth_client_state").
+				AlterTable("oauth_client_states").
 				AddColumn(dialect.
 					Column(
 						"provider",
@@ -27,7 +27,7 @@ func oauthSlack(db *datastore) error {
 						wf_db.ColumnTypeVarChar,
 						wf_db.OptionalInt{Set: true, Value: 128,})),
 			dialect.
-				AlterTable("users_oauth").
+				AlterTable("oauth_users").
 				ChangeColumn("remote_user_id",
 					dialect.
 						Column(
@@ -49,9 +49,9 @@ func oauthSlack(db *datastore) error {
 						"access_token",
 						wf_db.ColumnTypeVarChar,
 						wf_db.OptionalInt{Set: true, Value: 512,})),
-			dialect.DropIndex("remote_user_id", "users_oauth"),
-			dialect.DropIndex("user_id", "users_oauth"),
-			dialect.CreateUniqueIndex("users_oauth", "users_oauth", "user_id", "provider", "client_id"),
+			dialect.DropIndex("remote_user_id", "oauth_users"),
+			dialect.DropIndex("user_id", "oauth_users"),
+			dialect.CreateUniqueIndex("oauth_users", "oauth_users", "user_id", "provider", "client_id"),
 		}
 		for _, builder := range builders {
 			query, err := builder.ToSQL()
