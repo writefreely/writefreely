@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gorilla/sessions"
 	"github.com/stretchr/testify/assert"
+	"github.com/writeas/impart"
 	"github.com/writeas/nerds/store"
 	"github.com/writeas/writefreely/config"
 	"net/http"
@@ -139,7 +140,7 @@ func TestViewOauthInit(t *testing.T) {
 			Config: app.Config(),
 			DB:     app.DB(),
 			Store:  app.SessionStore(),
-			oauthClient:writeAsOauthClient{
+			oauthClient: writeAsOauthClient{
 				ClientID:         app.Config().WriteAsOauth.ClientID,
 				ClientSecret:     app.Config().WriteAsOauth.ClientSecret,
 				ExchangeLocation: app.Config().WriteAsOauth.TokenLocation,
@@ -152,9 +153,13 @@ func TestViewOauthInit(t *testing.T) {
 		req, err := http.NewRequest("GET", "/oauth/client", nil)
 		assert.NoError(t, err)
 		rr := httptest.NewRecorder()
-		h.viewOauthInit(rr, req)
-		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
-		locURI, err := url.Parse(rr.Header().Get("Location"))
+		err = h.viewOauthInit(nil, rr, req)
+		assert.NotNil(t, err)
+		httpErr, ok := err.(impart.HTTPError)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusTemporaryRedirect, httpErr.Status)
+		assert.NotEmpty(t, httpErr.Message)
+		locURI, err := url.Parse(httpErr.Message)
 		assert.NoError(t, err)
 		assert.Equal(t, "/oauth/login", locURI.Path)
 		assert.Equal(t, "development", locURI.Query().Get("client_id"))
@@ -177,7 +182,7 @@ func TestViewOauthInit(t *testing.T) {
 			Config: app.Config(),
 			DB:     app.DB(),
 			Store:  app.SessionStore(),
-			oauthClient:writeAsOauthClient{
+			oauthClient: writeAsOauthClient{
 				ClientID:         app.Config().WriteAsOauth.ClientID,
 				ClientSecret:     app.Config().WriteAsOauth.ClientSecret,
 				ExchangeLocation: app.Config().WriteAsOauth.TokenLocation,
@@ -190,10 +195,12 @@ func TestViewOauthInit(t *testing.T) {
 		req, err := http.NewRequest("GET", "/oauth/client", nil)
 		assert.NoError(t, err)
 		rr := httptest.NewRecorder()
-		h.viewOauthInit(rr, req)
-		assert.Equal(t, http.StatusInternalServerError, rr.Code)
-		expected := `{"error":"could not prepare oauth redirect url"}` + "\n"
-		assert.Equal(t, expected, rr.Body.String())
+		err = h.viewOauthInit(nil, rr, req)
+		httpErr, ok := err.(impart.HTTPError)
+		assert.True(t, ok)
+		assert.NotEmpty(t, httpErr.Message)
+		assert.Equal(t, http.StatusInternalServerError, httpErr.Status)
+		assert.Equal(t, "could not prepare oauth redirect url", httpErr.Message)
 	})
 }
 
@@ -236,7 +243,7 @@ func TestViewOauthCallback(t *testing.T) {
 		req, err := http.NewRequest("GET", "/oauth/callback", nil)
 		assert.NoError(t, err)
 		rr := httptest.NewRecorder()
-		h.viewOauthCallback(rr, req)
+		h.viewOauthCallback(nil, rr, req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
 	})

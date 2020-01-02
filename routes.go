@@ -70,8 +70,8 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	write.HandleFunc(nodeinfo.NodeInfoPath, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfoDiscover)))
 	write.HandleFunc(niCfg.InfoURL, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfo)))
 
-	configureSlackOauth(write, apper.App())
-	configureWriteAsOauth(write, apper.App())
+	configureSlackOauth(handler, write, apper.App())
+	configureWriteAsOauth(handler, write, apper.App())
 
 	// Set up dyamic page handlers
 	// Handle auth
