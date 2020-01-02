@@ -2,6 +2,7 @@ package writefreely
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/url"
 	"strings"
@@ -18,6 +19,12 @@ type writeAsOauthClient struct {
 }
 
 var _ oauthClient = writeAsOauthClient{}
+
+const (
+	writeAsAuthLocation     = "https://write.as/oauth/login"
+	writeAsExchangeLocation = "https://write.as/oauth/token"
+	writeAsIdentityLocation = "https://write.as/oauth/inspect"
+)
 
 func (c writeAsOauthClient) GetProvider() string {
 	return "write.as"
@@ -60,10 +67,16 @@ func (c writeAsOauthClient) exchangeOauthCode(ctx context.Context, code string) 
 	if err != nil {
 		return nil, err
 	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("unable to exchange code for access token")
+	}
 
 	var tokenResponse TokenResponse
 	if err := limitedJsonUnmarshal(resp.Body, tokenRequestMaxLen, &tokenResponse); err != nil {
 		return nil, err
+	}
+	if tokenResponse.Error != "" {
+		return nil, errors.New(tokenResponse.Error)
 	}
 	return &tokenResponse, nil
 }
@@ -82,10 +95,16 @@ func (c writeAsOauthClient) inspectOauthAccessToken(ctx context.Context, accessT
 	if err != nil {
 		return nil, err
 	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("unable to inspect access token")
+	}
 
 	var inspectResponse InspectResponse
 	if err := limitedJsonUnmarshal(resp.Body, infoRequestMaxLen, &inspectResponse); err != nil {
 		return nil, err
+	}
+	if inspectResponse.Error != "" {
+		return nil, errors.New(inspectResponse.Error)
 	}
 	return &inspectResponse, nil
 }

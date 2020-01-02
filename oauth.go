@@ -34,6 +34,7 @@ type InspectResponse struct {
 	ExpiresAt time.Time `json:"expires_at"`
 	Username  string    `json:"username"`
 	Email     string    `json:"email"`
+	Error     string    `json:"error"`
 }
 
 // tokenRequestMaxLen is the most bytes that we'll read from the /oauth/token
@@ -104,7 +105,7 @@ func configureSlackOauth(r *mux.Router, app *App) {
 			ClientSecret:     app.Config().SlackOauth.ClientSecret,
 			TeamID:           app.Config().SlackOauth.TeamID,
 			CallbackLocation: app.Config().App.Host + "/oauth/callback",
-			HttpClient:       &http.Client{Timeout: 10 * time.Second},
+			HttpClient:       config.DefaultHTTPClient(),
 		}
 		configureOauthRoutes(r, app, oauthClient)
 	}
@@ -115,11 +116,14 @@ func configureWriteAsOauth(r *mux.Router, app *App) {
 		oauthClient := writeAsOauthClient{
 			ClientID:         app.Config().WriteAsOauth.ClientID,
 			ClientSecret:     app.Config().WriteAsOauth.ClientSecret,
-			ExchangeLocation: app.Config().WriteAsOauth.TokenLocation,
-			InspectLocation:  app.Config().WriteAsOauth.InspectLocation,
-			AuthLocation:     app.Config().WriteAsOauth.AuthLocation,
-			HttpClient:       &http.Client{Timeout: 10 * time.Second},
+			ExchangeLocation: config.OrDefaultString(app.Config().WriteAsOauth.TokenLocation, writeAsExchangeLocation),
+			InspectLocation:  config.OrDefaultString(app.Config().WriteAsOauth.InspectLocation, writeAsIdentityLocation),
+			AuthLocation:     config.OrDefaultString(app.Config().WriteAsOauth.AuthLocation, writeAsAuthLocation),
+			HttpClient:       config.DefaultHTTPClient(),
 			CallbackLocation: app.Config().App.Host + "/oauth/callback",
+		}
+		if oauthClient.ExchangeLocation == "" {
+
 		}
 		configureOauthRoutes(r, app, oauthClient)
 	}
