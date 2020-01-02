@@ -150,9 +150,10 @@ func (c slackOauthClient) inspectOauthAccessToken(ctx context.Context, accessTok
 
 func (resp slackUserIdentityResponse) InspectResponse() *InspectResponse {
 	return &InspectResponse{
-		UserID:   resp.User.ID,
-		Username: slug.Make(resp.User.Name),
-		Email:    resp.User.Email,
+		UserID:      resp.User.ID,
+		Username:    slug.Make(resp.User.Name),
+		DisplayName: resp.User.Name,
+		Email:       resp.User.Email,
 	}
 }
 

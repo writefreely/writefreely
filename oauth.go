@@ -29,12 +29,13 @@ type TokenResponse struct {
 
 // InspectResponse contains data returned when an access token is inspected.
 type InspectResponse struct {
-	ClientID  string    `json:"client_id"`
-	UserID    string    `json:"user_id"`
-	ExpiresAt time.Time `json:"expires_at"`
-	Username  string    `json:"username"`
-	Email     string    `json:"email"`
-	Error     string    `json:"error"`
+	ClientID    string    `json:"client_id"`
+	UserID      string    `json:"user_id"`
+	ExpiresAt   time.Time `json:"expires_at"`
+	Username    string    `json:"username"`
+	DisplayName string    `json:"-"`
+	Email       string    `json:"email"`
+	Error       string    `json:"error"`
 }
 
 // tokenRequestMaxLen is the most bytes that we'll read from the /oauth/token
@@ -194,8 +195,12 @@ func (h oauthHandler) viewOauthCallback(w http.ResponseWriter, r *http.Request) 
 			Email:      zero.NewString(tokenInfo.Email, tokenInfo.Email != ""),
 			Created:    time.Now().Truncate(time.Second).UTC(),
 		}
+		displayName := tokenInfo.DisplayName
+		if len(displayName) == 0 {
+			displayName = tokenInfo.Username
+		}
 
-		err = h.DB.CreateUser(h.Config, newUser, newUser.Username)
+		err = h.DB.CreateUser(h.Config, newUser, displayName)
 		if err != nil {
 			failOAuthRequest(w, http.StatusInternalServerError, err.Error())
 			return
