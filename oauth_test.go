@@ -27,7 +27,7 @@ type MockOAuthDatastore struct {
 	DoGetIDForRemoteUser func(context.Context, string, string, string) (int64, error)
 	DoCreateUser         func(*config.Config, *User, string) error
 	DoRecordRemoteUserID func(context.Context, int64, string, string, string, string) error
-	DoGetUserForAuthByID func(int64) (*User, error)
+	DoGetUserByID        func(int64) (*User, error)
 }
 
 var _ OAuthDatastore = &MockOAuthDatastore{}
@@ -115,9 +115,9 @@ func (m *MockOAuthDatastore) RecordRemoteUserID(ctx context.Context, localUserID
 	return nil
 }
 
-func (m *MockOAuthDatastore) GetUserForAuthByID(userID int64) (*User, error) {
-	if m.DoGetUserForAuthByID != nil {
-		return m.DoGetUserForAuthByID(userID)
+func (m *MockOAuthDatastore) GetUserByID(userID int64) (*User, error) {
+	if m.DoGetUserByID != nil {
+		return m.DoGetUserByID(userID)
 	}
 	user := &User{
 
@@ -137,9 +137,9 @@ func TestViewOauthInit(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		app := &MockOAuthDatastoreProvider{}
 		h := oauthHandler{
-			Config: app.Config(),
-			DB:     app.DB(),
-			Store:  app.SessionStore(),
+			Config:   app.Config(),
+			DB:       app.DB(),
+			Store:    app.SessionStore(),
 			EmailKey: []byte{0xd, 0xe, 0xc, 0xa, 0xf, 0xf, 0xb, 0xa, 0xd},
 			oauthClient: writeAsOauthClient{
 				ClientID:         app.Config().WriteAsOauth.ClientID,
@@ -180,9 +180,9 @@ func TestViewOauthInit(t *testing.T) {
 			},
 		}
 		h := oauthHandler{
-			Config: app.Config(),
-			DB:     app.DB(),
-			Store:  app.SessionStore(),
+			Config:   app.Config(),
+			DB:       app.DB(),
+			Store:    app.SessionStore(),
 			EmailKey: []byte{0xd, 0xe, 0xc, 0xa, 0xf, 0xf, 0xb, 0xa, 0xd},
 			oauthClient: writeAsOauthClient{
 				ClientID:         app.Config().WriteAsOauth.ClientID,
@@ -210,9 +210,9 @@ func TestViewOauthCallback(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		app := &MockOAuthDatastoreProvider{}
 		h := oauthHandler{
-			Config: app.Config(),
-			DB:     app.DB(),
-			Store:  app.SessionStore(),
+			Config:   app.Config(),
+			DB:       app.DB(),
+			Store:    app.SessionStore(),
 			EmailKey: []byte{0xd, 0xe, 0xc, 0xa, 0xf, 0xf, 0xb, 0xa, 0xd},
 			oauthClient: writeAsOauthClient{
 				ClientID:         app.Config().WriteAsOauth.ClientID,

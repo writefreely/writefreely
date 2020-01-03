@@ -63,7 +63,7 @@ type OAuthDatastore interface {
 	GenerateOAuthState(context.Context, string, string) (string, error)
 
 	CreateUser(*config.Config, *User, string) error
-	GetUserForAuthByID(int64) (*User, error)
+	GetUserByID(int64) (*User, error)
 }
 
 type HttpClient interface {
@@ -209,7 +209,7 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 		return nil
 	}
 
-	user, err := h.DB.GetUserForAuthByID(localUserID)
+	user, err := h.DB.GetUserByID(localUserID)
 	if err != nil {
 		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 	}
