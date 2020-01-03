@@ -140,6 +140,7 @@ func TestViewOauthInit(t *testing.T) {
 			Config: app.Config(),
 			DB:     app.DB(),
 			Store:  app.SessionStore(),
+			EmailKey: []byte{0xd, 0xe, 0xc, 0xa, 0xf, 0xf, 0xb, 0xa, 0xd},
 			oauthClient: writeAsOauthClient{
 				ClientID:         app.Config().WriteAsOauth.ClientID,
 				ClientSecret:     app.Config().WriteAsOauth.ClientSecret,
@@ -182,6 +183,7 @@ func TestViewOauthInit(t *testing.T) {
 			Config: app.Config(),
 			DB:     app.DB(),
 			Store:  app.SessionStore(),
+			EmailKey: []byte{0xd, 0xe, 0xc, 0xa, 0xf, 0xf, 0xb, 0xa, 0xd},
 			oauthClient: writeAsOauthClient{
 				ClientID:         app.Config().WriteAsOauth.ClientID,
 				ClientSecret:     app.Config().WriteAsOauth.ClientSecret,
@@ -211,6 +213,7 @@ func TestViewOauthCallback(t *testing.T) {
 			Config: app.Config(),
 			DB:     app.DB(),
 			Store:  app.SessionStore(),
+			EmailKey: []byte{0xd, 0xe, 0xc, 0xa, 0xf, 0xf, 0xb, 0xa, 0xd},
 			oauthClient: writeAsOauthClient{
 				ClientID:         app.Config().WriteAsOauth.ClientID,
 				ClientSecret:     app.Config().WriteAsOauth.ClientSecret,
@@ -243,7 +246,7 @@ func TestViewOauthCallback(t *testing.T) {
 		req, err := http.NewRequest("GET", "/oauth/callback", nil)
 		assert.NoError(t, err)
 		rr := httptest.NewRecorder()
-		h.viewOauthCallback(nil, rr, req)
+		err = h.viewOauthCallback(nil, rr, req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
 	})

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
-	"github.com/guregu/null/zero"
 	"github.com/writeas/impart"
 	"github.com/writeas/nerds/store"
 	"github.com/writeas/web-core/auth"
@@ -83,6 +82,7 @@ type oauthHandler struct {
 	Config      *config.Config
 	DB          OAuthDatastore
 	Store       sessions.Store
+	EmailKey    []byte
 	oauthClient oauthClient
 }
 
@@ -123,9 +123,6 @@ func configureWriteAsOauth(parentHandler *Handler, r *mux.Router, app *App) {
 			HttpClient:       config.DefaultHTTPClient(),
 			CallbackLocation: app.Config().App.Host + "/oauth/callback",
 		}
-		if oauthClient.ExchangeLocation == "" {
-
-		}
 		configureOauthRoutes(parentHandler, r, app, oauthClient)
 	}
 }
@@ -136,6 +133,7 @@ func configureOauthRoutes(parentHandler *Handler, r *mux.Router, app *App, oauth
 		DB:          app.DB(),
 		Store:       app.SessionStore(),
 		oauthClient: oauthClient,
+		EmailKey:    app.keys.EmailKey,
 	}
 	r.HandleFunc("/oauth/"+oauthClient.GetProvider(), parentHandler.OAuth(handler.viewOauthInit)).Methods("GET")
 	r.HandleFunc("/oauth/callback", parentHandler.OAuth(handler.viewOauthCallback)).Methods("GET")
@@ -187,7 +185,7 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 			Username:   tokenInfo.Username,
 			HashedPass: hashedPass,
 			HasPass:    true,
-			Email:      zero.NewString(tokenInfo.Email, tokenInfo.Email != ""),
+			Email:      prepareUserEmail(tokenInfo.Email, h.EmailKey),
 			Created:    time.Now().Truncate(time.Second).UTC(),
 		}
 		displayName := tokenInfo.DisplayName
