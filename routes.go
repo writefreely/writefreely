@@ -70,6 +70,9 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	write.HandleFunc(nodeinfo.NodeInfoPath, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfoDiscover)))
 	write.HandleFunc(niCfg.InfoURL, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfo)))
 
+	configureSlackOauth(handler, write, apper.App())
+	configureWriteAsOauth(handler, write, apper.App())
+
 	// Set up dyamic page handlers
 	// Handle auth
 	auth := write.PathPrefix("/api/auth/").Subrouter()
@@ -79,16 +82,6 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	auth.HandleFunc("/login", handler.All(login)).Methods("POST")
 	auth.HandleFunc("/read", handler.WebErrors(handleWebCollectionUnlock, UserLevelNone)).Methods("POST")
 	auth.HandleFunc("/me", handler.All(handleAPILogout)).Methods("DELETE")
-
-	oauthHandler := oauthHandler{
-		HttpClient: &http.Client{},
-		Config:     apper.App().Config(),
-		DB:         apper.App().DB(),
-		Store:      apper.App().SessionStore(),
-	}
-
-	write.HandleFunc("/oauth/write.as", oauthHandler.viewOauthInit).Methods("GET")
-	write.HandleFunc("/oauth/callback", oauthHandler.viewOauthCallback).Methods("GET")
 
 	// Handle logged in user sections
 	me := write.PathPrefix("/me").Subrouter()
@@ -191,6 +184,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	}
 	write.HandleFunc(draftEditPrefix+"/{post}", handler.Web(handleViewPost, UserLevelOptional))
 	write.HandleFunc("/", handler.Web(handleViewHome, UserLevelOptional))
+
 	return r
 }
 

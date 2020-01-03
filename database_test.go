@@ -18,25 +18,32 @@ func TestOAuthDatastore(t *testing.T) {
 			driverName: "",
 		}
 
-		state, err := ds.GenerateOAuthState(ctx)
+		state, err := ds.GenerateOAuthState(ctx, "test", "development")
 		assert.NoError(t, err)
 		assert.Len(t, state, 24)
 
 		countRows(t, ctx, db, 1, "SELECT COUNT(*) FROM `oauth_client_states` WHERE `state` = ? AND `used` = false", state)
 
-		err = ds.ValidateOAuthState(ctx, state)
+		_, _, err = ds.ValidateOAuthState(ctx, state)
 		assert.NoError(t, err)
 
 		countRows(t, ctx, db, 1, "SELECT COUNT(*) FROM `oauth_client_states` WHERE `state` = ? AND `used` = true", state)
 
 		var localUserID int64 = 99
-		var remoteUserID int64 = 100
-		err = ds.RecordRemoteUserID(ctx, localUserID, remoteUserID)
+		var remoteUserID = "100"
+		err = ds.RecordRemoteUserID(ctx, localUserID, remoteUserID, "test", "test", "access_token_a")
 		assert.NoError(t, err)
 
-		countRows(t, ctx, db, 1, "SELECT COUNT(*) FROM `oauth_users` WHERE `user_id` = ? AND `remote_user_id` = ?", localUserID, remoteUserID)
+		countRows(t, ctx, db, 1, "SELECT COUNT(*) FROM `oauth_users` WHERE `user_id` = ? AND `remote_user_id` = ? AND access_token = 'access_token_a'", localUserID, remoteUserID)
 
-		foundUserID, err := ds.GetIDForRemoteUser(ctx, remoteUserID)
+		err = ds.RecordRemoteUserID(ctx, localUserID, remoteUserID, "test", "test", "access_token_b")
+		assert.NoError(t, err)
+
+		countRows(t, ctx, db, 1, "SELECT COUNT(*) FROM `oauth_users` WHERE `user_id` = ? AND `remote_user_id` = ? AND access_token = 'access_token_b'", localUserID, remoteUserID)
+
+		countRows(t, ctx, db, 1, "SELECT COUNT(*) FROM `oauth_users`")
+
+		foundUserID, err := ds.GetIDForRemoteUser(ctx, remoteUserID, "test", "test")
 		assert.NoError(t, err)
 		assert.Equal(t, localUserID, foundUserID)
 	})

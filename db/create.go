@@ -5,7 +5,6 @@ import (
 	"strings"
 )
 
-type DialectType int
 type ColumnType int
 
 type OptionalInt struct {
@@ -42,11 +41,6 @@ type CreateTableSqlBuilder struct {
 }
 
 const (
-	DialectSQLite DialectType = iota
-	DialectMySQL  DialectType = iota
-)
-
-const (
 	ColumnTypeBool     ColumnType = iota
 	ColumnTypeSmallInt ColumnType = iota
 	ColumnTypeInteger  ColumnType = iota
@@ -60,28 +54,6 @@ var _ SQLBuilder = &CreateTableSqlBuilder{}
 
 var UnsetSize OptionalInt = OptionalInt{Set: false, Value: 0}
 var UnsetDefault OptionalString = OptionalString{Set: false, Value: ""}
-
-func (d DialectType) Column(name string, t ColumnType, size OptionalInt) *Column {
-	switch d {
-	case DialectSQLite:
-		return &Column{Dialect: DialectSQLite, Name: name, Type: t, Size: size}
-	case DialectMySQL:
-		return &Column{Dialect: DialectMySQL, Name: name, Type: t, Size: size}
-	default:
-		panic(fmt.Sprintf("unexpected dialect: %d", d))
-	}
-}
-
-func (d DialectType) Table(name string) *CreateTableSqlBuilder {
-	switch d {
-	case DialectSQLite:
-		return &CreateTableSqlBuilder{Dialect: DialectSQLite, Name: name}
-	case DialectMySQL:
-		return &CreateTableSqlBuilder{Dialect: DialectMySQL, Name: name}
-	default:
-		panic(fmt.Sprintf("unexpected dialect: %d", d))
-	}
-}
 
 func (d ColumnType) Format(dialect DialectType, size OptionalInt) (string, error) {
 	if dialect != DialectMySQL && dialect != DialectSQLite {
@@ -269,3 +241,4 @@ func (b *CreateTableSqlBuilder) ToSQL() (string, error) {
 
 	return str.String(), nil
 }
+
