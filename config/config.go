@@ -42,6 +42,8 @@ type (
 		PagesParentDir     string `ini:"pages_parent_dir"`
 		KeysParentDir      string `ini:"keys_parent_dir"`
 
+		HashSeed string `ini:"hash_seed"`
+
 		Dev bool `ini:"-"`
 	}
 

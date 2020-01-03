@@ -3,6 +3,8 @@ package writefreely
 import (
 	"context"
 	"errors"
+	"fmt"
+	"github.com/writeas/nerds/store"
 	"github.com/writeas/slug"
 	"net/http"
 	"net/url"
@@ -151,7 +153,7 @@ func (c slackOauthClient) inspectOauthAccessToken(ctx context.Context, accessTok
 func (resp slackUserIdentityResponse) InspectResponse() *InspectResponse {
 	return &InspectResponse{
 		UserID:      resp.User.ID,
-		Username:    slug.Make(resp.User.Name),
+		Username:    fmt.Sprintf("%s-%s", slug.Make(resp.User.Name), store.Generate62RandomString(5)),
 		DisplayName: resp.User.Name,
 		Email:       resp.User.Email,
 	}

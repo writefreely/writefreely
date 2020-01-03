@@ -7,8 +7,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/writeas/impart"
-	"github.com/writeas/nerds/store"
-	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
 	"io"
@@ -137,6 +135,7 @@ func configureOauthRoutes(parentHandler *Handler, r *mux.Router, app *App, oauth
 	}
 	r.HandleFunc("/oauth/"+oauthClient.GetProvider(), parentHandler.OAuth(handler.viewOauthInit)).Methods("GET")
 	r.HandleFunc("/oauth/callback", parentHandler.OAuth(handler.viewOauthCallback)).Methods("GET")
+	r.HandleFunc("/oauth/signup", parentHandler.OAuth(handler.viewOauthSignup)).Methods("POST")
 }
 
 func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http.Request) error {
@@ -171,52 +170,31 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 	}
 
-	if localUserID == -1 {
-		// We don't have, nor do we want, the password from the origin, so we
-		//create a random string. If the user needs to set a password, they
-		//can do so through the settings page or through the password reset
-		//flow.
-		randPass := store.Generate62RandomString(14)
-		hashedPass, err := auth.HashPass([]byte(randPass))
+	if localUserID != -1 {
+		user, err := h.DB.GetUserByID(localUserID)
 		if err != nil {
-			return impart.HTTPError{http.StatusInternalServerError, "unable to create password hash"}
-		}
-		newUser := &User{
-			Username:   tokenInfo.Username,
-			HashedPass: hashedPass,
-			HasPass:    true,
-			Email:      prepareUserEmail(tokenInfo.Email, h.EmailKey),
-			Created:    time.Now().Truncate(time.Second).UTC(),
-		}
-		displayName := tokenInfo.DisplayName
-		if len(displayName) == 0 {
-			displayName = tokenInfo.Username
-		}
-
-		err = h.DB.CreateUser(h.Config, newUser, displayName)
-		if err != nil {
+			log.Error("Unable to GetUserByID %d: %s", localUserID, err)
 			return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 		}
-
-		err = h.DB.RecordRemoteUserID(ctx, newUser.ID, tokenInfo.UserID, provider, clientID, tokenResponse.AccessToken)
-		if err != nil {
-			return impart.HTTPError{http.StatusInternalServerError, err.Error()}
-		}
-
-		if err := loginOrFail(h.Store, w, r, newUser); err != nil {
+		if err = loginOrFail(h.Store, w, r, user); err != nil {
+			log.Error("Unable to loginOrFail %d: %s", localUserID, err)
 			return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 		}
 		return nil
 	}
 
-	user, err := h.DB.GetUserByID(localUserID)
-	if err != nil {
-		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
+	tp := &oauthSignupPageParams{
+		AccessToken:     tokenResponse.AccessToken,
+		TokenUsername:   tokenInfo.Username,
+		TokenAlias:      tokenInfo.DisplayName,
+		TokenEmail:      tokenInfo.Email,
+		TokenRemoteUser: tokenInfo.UserID,
+		Provider:        provider,
+		ClientID:        clientID,
 	}
-	if err = loginOrFail(h.Store, w, r, user); err != nil {
-		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
-	}
-	return nil
+	tp.TokenHash = tp.HashTokenParams(h.Config.Server.HashSeed)
+
+	return h.showOauthSignupPage(app, w, r, tp, nil)
 }
 
 func limitedJsonUnmarshal(body io.ReadCloser, n int, thing interface{}) error {
