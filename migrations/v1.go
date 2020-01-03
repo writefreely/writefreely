@@ -12,7 +12,7 @@ package migrations
 
 func supportUserInvites(db *datastore) error {
 	t, err := db.Begin()
-	_, err = t.Exec(`CREATE TABLE IF NOT EXISTS userinvites (
+	_, err = t.Exec(`CREATE TABLE userinvites (
 		  id ` + db.typeChar(6) + ` NOT NULL ,
 		  owner_id ` + db.typeInt() + ` NOT NULL ,
 		  max_uses ` + db.typeSmallInt() + ` NULL ,
@@ -26,7 +26,7 @@ func supportUserInvites(db *datastore) error {
 		return err
 	}
 
-	_, err = t.Exec(`CREATE TABLE IF NOT EXISTS usersinvited (
+	_, err = t.Exec(`CREATE TABLE usersinvited (
 		  invite_id ` + db.typeChar(6) + ` NOT NULL ,
 		  user_id ` + db.typeInt() + ` NOT NULL ,
 		  PRIMARY KEY (invite_id, user_id)

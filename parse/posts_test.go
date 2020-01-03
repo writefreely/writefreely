@@ -13,7 +13,6 @@ package parse
 import "testing"
 
 func TestPostLede(t *testing.T) {
-	t.Skip("tests fails and I don't know why")
 	text := map[string]string{
 		"早安。跨出舒適圈，才能前往":                                                                                                                                                             "早安。",
 		"早安。This is my post. It is great.":                                                                                                                                          "早安。",

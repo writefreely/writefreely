@@ -549,6 +549,37 @@ func (h *Handler) All(f handlerFunc) http.HandlerFunc {
 	}
 }
 
+func (h *Handler) OAuth(f handlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		h.handleOAuthError(w, r, func() error {
+			// TODO: return correct "success" status
+			status := 200
+			start := time.Now()
+
+			defer func() {
+				if e := recover(); e != nil {
+					log.Error("%s:\n%s", e, debug.Stack())
+					impart.WriteError(w, impart.HTTPError{http.StatusInternalServerError, "Something didn't work quite right."})
+					status = 500
+				}
+
+				log.Info(h.app.ReqLog(r, status, time.Since(start)))
+			}()
+
+			err := f(h.app.App(), w, r)
+			if err != nil {
+				if err, ok := err.(impart.HTTPError); ok {
+					status = err.Status
+				} else {
+					status = 500
+				}
+			}
+
+			return err
+		}())
+	}
+}
+
 func (h *Handler) AllReader(f handlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		h.handleError(w, r, func() error {
@@ -777,6 +808,25 @@ func (h *Handler) handleError(w http.ResponseWriter, r *http.Request, err error)
 		return
 	}
 	h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
+}
+
+func (h *Handler) handleOAuthError(w http.ResponseWriter, r *http.Request, err error) {
+	if err == nil {
+		return
+	}
+
+	if err, ok := err.(impart.HTTPError); ok {
+		if err.Status >= 300 && err.Status < 400 {
+			sendRedirect(w, err.Status, err.Message)
+			return
+		}
+
+		impart.WriteOAuthError(w, err)
+		return
+	}
+
+	impart.WriteOAuthError(w, impart.HTTPError{http.StatusInternalServerError, "This is an unhelpful error message for a miscellaneous internal error."})
+	return
 }
 
 func correctPageFromLoginAttempt(r *http.Request) string {

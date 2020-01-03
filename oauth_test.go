@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gorilla/sessions"
 	"github.com/stretchr/testify/assert"
+	"github.com/writeas/impart"
 	"github.com/writeas/nerds/store"
 	"github.com/writeas/writefreely/config"
 	"net/http"
@@ -26,7 +27,7 @@ type MockOAuthDatastore struct {
 	DoGetIDForRemoteUser func(context.Context, string, string, string) (int64, error)
 	DoCreateUser         func(*config.Config, *User, string) error
 	DoRecordRemoteUserID func(context.Context, int64, string, string, string, string) error
-	DoGetUserForAuthByID func(int64) (*User, error)
+	DoGetUserByID        func(int64) (*User, error)
 }
 
 var _ OAuthDatastore = &MockOAuthDatastore{}
@@ -114,9 +115,9 @@ func (m *MockOAuthDatastore) RecordRemoteUserID(ctx context.Context, localUserID
 	return nil
 }
 
-func (m *MockOAuthDatastore) GetUserForAuthByID(userID int64) (*User, error) {
-	if m.DoGetUserForAuthByID != nil {
-		return m.DoGetUserForAuthByID(userID)
+func (m *MockOAuthDatastore) GetUserByID(userID int64) (*User, error) {
+	if m.DoGetUserByID != nil {
+		return m.DoGetUserByID(userID)
 	}
 	user := &User{
 
@@ -136,10 +137,11 @@ func TestViewOauthInit(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		app := &MockOAuthDatastoreProvider{}
 		h := oauthHandler{
-			Config: app.Config(),
-			DB:     app.DB(),
-			Store:  app.SessionStore(),
-			oauthClient:writeAsOauthClient{
+			Config:   app.Config(),
+			DB:       app.DB(),
+			Store:    app.SessionStore(),
+			EmailKey: []byte{0xd, 0xe, 0xc, 0xa, 0xf, 0xf, 0xb, 0xa, 0xd},
+			oauthClient: writeAsOauthClient{
 				ClientID:         app.Config().WriteAsOauth.ClientID,
 				ClientSecret:     app.Config().WriteAsOauth.ClientSecret,
 				ExchangeLocation: app.Config().WriteAsOauth.TokenLocation,
@@ -152,9 +154,13 @@ func TestViewOauthInit(t *testing.T) {
 		req, err := http.NewRequest("GET", "/oauth/client", nil)
 		assert.NoError(t, err)
 		rr := httptest.NewRecorder()
-		h.viewOauthInit(rr, req)
-		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
-		locURI, err := url.Parse(rr.Header().Get("Location"))
+		err = h.viewOauthInit(nil, rr, req)
+		assert.NotNil(t, err)
+		httpErr, ok := err.(impart.HTTPError)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusTemporaryRedirect, httpErr.Status)
+		assert.NotEmpty(t, httpErr.Message)
+		locURI, err := url.Parse(httpErr.Message)
 		assert.NoError(t, err)
 		assert.Equal(t, "/oauth/login", locURI.Path)
 		assert.Equal(t, "development", locURI.Query().Get("client_id"))
@@ -174,10 +180,11 @@ func TestViewOauthInit(t *testing.T) {
 			},
 		}
 		h := oauthHandler{
-			Config: app.Config(),
-			DB:     app.DB(),
-			Store:  app.SessionStore(),
-			oauthClient:writeAsOauthClient{
+			Config:   app.Config(),
+			DB:       app.DB(),
+			Store:    app.SessionStore(),
+			EmailKey: []byte{0xd, 0xe, 0xc, 0xa, 0xf, 0xf, 0xb, 0xa, 0xd},
+			oauthClient: writeAsOauthClient{
 				ClientID:         app.Config().WriteAsOauth.ClientID,
 				ClientSecret:     app.Config().WriteAsOauth.ClientSecret,
 				ExchangeLocation: app.Config().WriteAsOauth.TokenLocation,
@@ -190,10 +197,12 @@ func TestViewOauthInit(t *testing.T) {
 		req, err := http.NewRequest("GET", "/oauth/client", nil)
 		assert.NoError(t, err)
 		rr := httptest.NewRecorder()
-		h.viewOauthInit(rr, req)
-		assert.Equal(t, http.StatusInternalServerError, rr.Code)
-		expected := `{"error":"could not prepare oauth redirect url"}` + "\n"
-		assert.Equal(t, expected, rr.Body.String())
+		err = h.viewOauthInit(nil, rr, req)
+		httpErr, ok := err.(impart.HTTPError)
+		assert.True(t, ok)
+		assert.NotEmpty(t, httpErr.Message)
+		assert.Equal(t, http.StatusInternalServerError, httpErr.Status)
+		assert.Equal(t, "could not prepare oauth redirect url", httpErr.Message)
 	})
 }
 
@@ -201,9 +210,10 @@ func TestViewOauthCallback(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		app := &MockOAuthDatastoreProvider{}
 		h := oauthHandler{
-			Config: app.Config(),
-			DB:     app.DB(),
-			Store:  app.SessionStore(),
+			Config:   app.Config(),
+			DB:       app.DB(),
+			Store:    app.SessionStore(),
+			EmailKey: []byte{0xd, 0xe, 0xc, 0xa, 0xf, 0xf, 0xb, 0xa, 0xd},
 			oauthClient: writeAsOauthClient{
 				ClientID:         app.Config().WriteAsOauth.ClientID,
 				ClientSecret:     app.Config().WriteAsOauth.ClientSecret,
@@ -236,7 +246,7 @@ func TestViewOauthCallback(t *testing.T) {
 		req, err := http.NewRequest("GET", "/oauth/callback", nil)
 		assert.NoError(t, err)
 		rr := httptest.NewRecorder()
-		h.viewOauthCallback(rr, req)
+		err = h.viewOauthCallback(nil, rr, req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
 	})

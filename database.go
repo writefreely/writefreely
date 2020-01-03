@@ -2464,7 +2464,7 @@ func (db *datastore) GetCollectionLastPostTime(id int64) (*time.Time, error) {
 
 func (db *datastore) GenerateOAuthState(ctx context.Context, provider, clientID string) (string, error) {
 	state := store.Generate62RandomString(24)
-	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_state (state, provider, client_id, used, created_at) VALUES (?, ?, ?, FALSE, NOW())", state, provider, clientID)
+	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_states (state, provider, client_id, used, created_at) VALUES (?, ?, ?, FALSE, NOW())", state, provider, clientID)
 	if err != nil {
 		return "", fmt.Errorf("unable to record oauth client state: %w", err)
 	}
@@ -2475,12 +2475,12 @@ func (db *datastore) ValidateOAuthState(ctx context.Context, state string) (stri
 	var provider string
 	var clientID string
 	err := wf_db.RunTransactionWithOptions(ctx, db.DB, &sql.TxOptions{}, func(ctx context.Context, tx *sql.Tx) error {
-		err := tx.QueryRow("SELECT provider, client_id FROM oauth_client_state WHERE state = ? AND used = FALSE", state).Scan(&provider, &clientID)
+		err := tx.QueryRow("SELECT provider, client_id FROM oauth_client_states WHERE state = ? AND used = FALSE", state).Scan(&provider, &clientID)
 		if err != nil {
 			return err
 		}
 
-		res, err := tx.ExecContext(ctx, "UPDATE oauth_client_state SET used = TRUE WHERE state = ?", state)
+		res, err := tx.ExecContext(ctx, "UPDATE oauth_client_states SET used = TRUE WHERE state = ?", state)
 		if err != nil {
 			return err
 		}
@@ -2502,12 +2502,12 @@ func (db *datastore) ValidateOAuthState(ctx context.Context, state string) (stri
 func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID int64, remoteUserID, provider, clientID, accessToken string) error {
 	var err error
 	if db.driverName == driverSQLite {
-		_, err = db.ExecContext(ctx, "INSERT OR REPLACE INTO users_oauth (user_id, remote_user_id, provider, client_id, access_token) VALUES (?, ?, ?, ?, ?)", localUserID, remoteUserID, provider, clientID, accessToken)
+		_, err = db.ExecContext(ctx, "INSERT OR REPLACE INTO oauth_users (user_id, remote_user_id, provider, client_id, access_token) VALUES (?, ?, ?, ?, ?)", localUserID, remoteUserID, provider, clientID, accessToken)
 	} else {
-		_, err = db.ExecContext(ctx, "INSERT INTO users_oauth (user_id, remote_user_id, provider, client_id, access_token) VALUES (?, ?, ?, ?, ?) "+db.upsert("user")+" access_token = ?", localUserID, remoteUserID, provider, clientID, accessToken, accessToken)
+		_, err = db.ExecContext(ctx, "INSERT INTO oauth_users (user_id, remote_user_id, provider, client_id, access_token) VALUES (?, ?, ?, ?, ?) "+db.upsert("user")+" access_token = ?", localUserID, remoteUserID, provider, clientID, accessToken, accessToken)
 	}
 	if err != nil {
-		log.Error("Unable to INSERT users_oauth for '%d': %v", localUserID, err)
+		log.Error("Unable to INSERT oauth_users for '%d': %v", localUserID, err)
 	}
 	return err
 }
@@ -2516,7 +2516,7 @@ func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID int64, 
 func (db *datastore) GetIDForRemoteUser(ctx context.Context, remoteUserID, provider, clientID string) (int64, error) {
 	var userID int64 = -1
 	err := db.
-		QueryRowContext(ctx, "SELECT user_id FROM users_oauth WHERE remote_user_id = ? AND provider = ? AND client_id = ?", remoteUserID, provider, clientID).
+		QueryRowContext(ctx, "SELECT user_id FROM oauth_users WHERE remote_user_id = ? AND provider = ? AND client_id = ?", remoteUserID, provider, clientID).
 		Scan(&userID)
 	// Not finding a record is OK.
 	if err != nil && err != sql.ErrNoRows {

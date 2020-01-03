@@ -2,6 +2,7 @@ package writefreely
 
 import (
 	"context"
+	"errors"
 	"github.com/writeas/slug"
 	"net/http"
 	"net/url"
@@ -17,10 +18,12 @@ type slackOauthClient struct {
 }
 
 type slackExchangeResponse struct {
+	OK          bool   `json:"ok"`
 	AccessToken string `json:"access_token"`
 	Scope       string `json:"scope"`
 	TeamName    string `json:"team_name"`
 	TeamID      string `json:"team_id"`
+	Error       string `json:"error"`
 }
 
 type slackIdentity struct {
@@ -103,10 +106,16 @@ func (c slackOauthClient) exchangeOauthCode(ctx context.Context, code string) (*
 	if err != nil {
 		return nil, err
 	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("unable to exchange code for access token")
+	}
 
 	var tokenResponse slackExchangeResponse
 	if err := limitedJsonUnmarshal(resp.Body, tokenRequestMaxLen, &tokenResponse); err != nil {
 		return nil, err
+	}
+	if !tokenResponse.OK {
+		return nil, errors.New(tokenResponse.Error)
 	}
 	return tokenResponse.TokenResponse(), nil
 }
@@ -125,19 +134,26 @@ func (c slackOauthClient) inspectOauthAccessToken(ctx context.Context, accessTok
 	if err != nil {
 		return nil, err
 	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("unable to inspect access token")
+	}
 
 	var inspectResponse slackUserIdentityResponse
 	if err := limitedJsonUnmarshal(resp.Body, infoRequestMaxLen, &inspectResponse); err != nil {
 		return nil, err
+	}
+	if !inspectResponse.OK {
+		return nil, errors.New(inspectResponse.Error)
 	}
 	return inspectResponse.InspectResponse(), nil
 }
 
 func (resp slackUserIdentityResponse) InspectResponse() *InspectResponse {
 	return &InspectResponse{
-		UserID:   resp.User.ID,
-		Username: slug.Make(resp.User.Name),
-		Email:    resp.User.Email,
+		UserID:      resp.User.ID,
+		Username:    slug.Make(resp.User.Name),
+		DisplayName: resp.User.Name,
+		Email:       resp.User.Email,
 	}
 }
 
