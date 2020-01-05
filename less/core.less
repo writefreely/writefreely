@@ -684,18 +684,19 @@ select.inputform, textarea.inputform {
 	border: 1px solid #999;
 }
 
-input, button, select.inputform, textarea.inputform {
+input, button, select.inputform, textarea.inputform, a.btn {
 	padding: 0.5em;
 	font-family: @serifFont;
 	font-size: 100%;
 	.rounded(.25em);
-	&[type=submit], &.submit {
+	&[type=submit], &.submit, &.cta {
 		border: 1px solid @primary;
 		background: @primary;
 		color: white;
 		.transition(0.2s);
 		&:hover {
 			background-color: lighten(@primary, 3%);
+			text-decoration: none;
 		}
 		&:disabled {
 			cursor: default;
