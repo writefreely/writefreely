@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -245,11 +245,9 @@ func handleRenderMarkdown(app *App, w http.ResponseWriter, r *http.Request) erro
 	}
 
 	in := struct {
-		BaseURL string `json:"base_url"`
-		RawBody string `json:"raw_body"`
-	}{
-		BaseURL: "",
-	}
+		CollectionURL string `json:"collection_url"`
+		RawBody       string `json:"raw_body"`
+	}{}
 
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&in)
@@ -261,7 +259,7 @@ func handleRenderMarkdown(app *App, w http.ResponseWriter, r *http.Request) erro
 	out := struct {
 		Body string `json:"body"`
 	}{
-		Body: applyMarkdown([]byte(in.RawBody), in.BaseURL, app.cfg),
+		Body: applyMarkdown([]byte(in.RawBody), in.CollectionURL, app.cfg),
 	}
 
 	return impart.WriteSuccess(w, out, http.StatusOK)
