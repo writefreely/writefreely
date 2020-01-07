@@ -56,7 +56,7 @@ var (
 	debugging bool
 
 	// Software version can be set from git env using -ldflags
-	softwareVer = "0.11.1"
+	softwareVer = "0.11.2"
 
 	// DEPRECATED VARS
 	isSingleUser bool
@@ -70,7 +70,7 @@ type App struct {
 	cfg          *config.Config
 	cfgFile      string
 	keys         *key.Keychain
-	sessionStore *sessions.CookieStore
+	sessionStore sessions.Store
 	formDecoder  *schema.Decoder
 
 	timeline *localTimeline
@@ -99,6 +99,14 @@ func (app *App) SetConfig(cfg *config.Config) {
 // SetKeys updates the App's Keychain to the given value.
 func (app *App) SetKeys(k *key.Keychain) {
 	app.keys = k
+}
+
+func (app *App) SessionStore() sessions.Store {
+	return app.sessionStore
+}
+
+func (app *App) SetSessionStore(s sessions.Store) {
+	app.sessionStore = s
 }
 
 // Apper is the interface for getting data into and out of a WriteFreely

@@ -56,6 +56,20 @@ type (
 		Port     int    `ini:"port"`
 	}
 
+	WriteAsOauthCfg struct {
+		ClientID        string `ini:"client_id"`
+		ClientSecret    string `ini:"client_secret"`
+		AuthLocation    string `ini:"auth_location"`
+		TokenLocation   string `ini:"token_location"`
+		InspectLocation string `ini:"inspect_location"`
+	}
+
+	SlackOauthCfg struct {
+		ClientID     string `ini:"client_id"`
+		ClientSecret string `ini:"client_secret"`
+		TeamID       string `ini:"team_id"`
+	}
+
 	// AppCfg holds values that affect how the application functions
 	AppCfg struct {
 		SiteName string `ini:"site_name"`
@@ -98,9 +112,11 @@ type (
 
 	// Config holds the complete configuration for running a writefreely instance
 	Config struct {
-		Server   ServerCfg   `ini:"server"`
-		Database DatabaseCfg `ini:"database"`
-		App      AppCfg      `ini:"app"`
+		Server       ServerCfg       `ini:"server"`
+		Database     DatabaseCfg     `ini:"database"`
+		App          AppCfg          `ini:"app"`
+		SlackOauth   SlackOauthCfg   `ini:"oauth.slack"`
+		WriteAsOauth WriteAsOauthCfg `ini:"oauth.writeas"`
 	}
 )
 
