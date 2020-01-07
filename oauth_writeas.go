@@ -34,6 +34,10 @@ func (c writeAsOauthClient) GetClientID() string {
 	return c.ClientID
 }
 
+func (c writeAsOauthClient) GetCallbackLocation() string {
+	return c.CallbackLocation
+}
+
 func (c writeAsOauthClient) buildLoginURL(state string) (string, error) {
 	u, err := url.Parse(c.AuthLocation)
 	if err != nil {

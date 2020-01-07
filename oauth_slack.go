@@ -62,6 +62,10 @@ func (c slackOauthClient) GetClientID() string {
 	return c.ClientID
 }
 
+func (c slackOauthClient) GetCallbackLocation() string {
+	return c.CallbackLocation
+}
+
 func (c slackOauthClient) buildLoginURL(state string) (string, error) {
 	u, err := url.Parse(slackAuthLocation)
 	if err != nil {

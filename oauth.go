@@ -3,6 +3,7 @@ package writefreely
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -12,6 +13,8 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 )
 
@@ -71,17 +74,25 @@ type HttpClient interface {
 type oauthClient interface {
 	GetProvider() string
 	GetClientID() string
+	GetCallbackLocation() string
 	buildLoginURL(state string) (string, error)
 	exchangeOauthCode(ctx context.Context, code string) (*TokenResponse, error)
 	inspectOauthAccessToken(ctx context.Context, accessToken string) (*InspectResponse, error)
 }
 
+type oauthStateRegisterer struct {
+	location         string
+	callbackLocation string
+	httpClient       HttpClient
+}
+
 type oauthHandler struct {
-	Config      *config.Config
-	DB          OAuthDatastore
-	Store       sessions.Store
-	EmailKey    []byte
-	oauthClient oauthClient
+	Config               *config.Config
+	DB                   OAuthDatastore
+	Store                sessions.Store
+	EmailKey             []byte
+	oauthClient          oauthClient
+	oauthStateRegisterer *oauthStateRegisterer
 }
 
 func (h oauthHandler) viewOauthInit(app *App, w http.ResponseWriter, r *http.Request) error {
@@ -90,6 +101,13 @@ func (h oauthHandler) viewOauthInit(app *App, w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return impart.HTTPError{http.StatusInternalServerError, "could not prepare oauth redirect url"}
 	}
+
+	if h.oauthStateRegisterer != nil {
+		if err := h.oauthStateRegisterer.register(ctx, state); err != nil {
+			return impart.HTTPError{http.StatusInternalServerError, "could not register state location"}
+		}
+	}
+
 	location, err := h.oauthClient.buildLoginURL(state)
 	if err != nil {
 		return impart.HTTPError{http.StatusInternalServerError, "could not prepare oauth redirect url"}
@@ -99,19 +117,36 @@ func (h oauthHandler) viewOauthInit(app *App, w http.ResponseWriter, r *http.Req
 
 func configureSlackOauth(parentHandler *Handler, r *mux.Router, app *App) {
 	if app.Config().SlackOauth.ClientID != "" {
-		oauthClient := slackOauthClient{
-			ClientID:         app.Config().SlackOauth.ClientID,
-			ClientSecret:     app.Config().SlackOauth.ClientSecret,
-			TeamID:           app.Config().SlackOauth.TeamID,
-			CallbackLocation: app.Config().App.Host + "/oauth/callback",
-			HttpClient:       config.DefaultHTTPClient(),
+		var stateRegisterClient *oauthStateRegisterer = nil
+		if app.Config().SlackOauth.StateRegisterLocation != "" {
+			stateRegisterClient = &oauthStateRegisterer{
+				location:         app.Config().SlackOauth.StateRegisterLocation,
+				callbackLocation: app.Config().App.Host + "/oauth/callback",
+				httpClient:       config.DefaultHTTPClient(),
+			}
 		}
-		configureOauthRoutes(parentHandler, r, app, oauthClient)
+		oauthClient := slackOauthClient{
+			ClientID:     app.Config().SlackOauth.ClientID,
+			ClientSecret: app.Config().SlackOauth.ClientSecret,
+			TeamID:       app.Config().SlackOauth.TeamID,
+			HttpClient:   config.DefaultHTTPClient(),
+			//CallbackLocation: app.Config().App.Host + "/oauth/callback",
+			CallbackLocation: "http://localhost:5000/callback",
+		}
+		configureOauthRoutes(parentHandler, r, app, oauthClient, stateRegisterClient)
 	}
 }
 
 func configureWriteAsOauth(parentHandler *Handler, r *mux.Router, app *App) {
 	if app.Config().WriteAsOauth.ClientID != "" {
+		var stateRegisterClient *oauthStateRegisterer = nil
+		if app.Config().WriteAsOauth.StateRegisterLocation != "" {
+			stateRegisterClient = &oauthStateRegisterer{
+				location:         app.Config().WriteAsOauth.StateRegisterLocation,
+				callbackLocation: app.Config().App.Host + "/oauth/callback",
+				httpClient:       config.DefaultHTTPClient(),
+			}
+		}
 		oauthClient := writeAsOauthClient{
 			ClientID:         app.Config().WriteAsOauth.ClientID,
 			ClientSecret:     app.Config().WriteAsOauth.ClientSecret,
@@ -119,19 +154,20 @@ func configureWriteAsOauth(parentHandler *Handler, r *mux.Router, app *App) {
 			InspectLocation:  config.OrDefaultString(app.Config().WriteAsOauth.InspectLocation, writeAsIdentityLocation),
 			AuthLocation:     config.OrDefaultString(app.Config().WriteAsOauth.AuthLocation, writeAsAuthLocation),
 			HttpClient:       config.DefaultHTTPClient(),
-			CallbackLocation: app.Config().App.Host + "/oauth/callback",
+			CallbackLocation: "http://localhost:5000/callback",
 		}
-		configureOauthRoutes(parentHandler, r, app, oauthClient)
+		configureOauthRoutes(parentHandler, r, app, oauthClient, stateRegisterClient)
 	}
 }
 
-func configureOauthRoutes(parentHandler *Handler, r *mux.Router, app *App, oauthClient oauthClient) {
+func configureOauthRoutes(parentHandler *Handler, r *mux.Router, app *App, oauthClient oauthClient, stateRegisterClient *oauthStateRegisterer) {
 	handler := &oauthHandler{
-		Config:      app.Config(),
-		DB:          app.DB(),
-		Store:       app.SessionStore(),
-		oauthClient: oauthClient,
-		EmailKey:    app.keys.EmailKey,
+		Config:               app.Config(),
+		DB:                   app.DB(),
+		Store:                app.SessionStore(),
+		oauthClient:          oauthClient,
+		EmailKey:             app.keys.EmailKey,
+		oauthStateRegisterer: stateRegisterClient,
 	}
 	r.HandleFunc("/oauth/"+oauthClient.GetProvider(), parentHandler.OAuth(handler.viewOauthInit)).Methods("GET")
 	r.HandleFunc("/oauth/callback", parentHandler.OAuth(handler.viewOauthCallback)).Methods("GET")
@@ -195,6 +231,29 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 	tp.TokenHash = tp.HashTokenParams(h.Config.Server.HashSeed)
 
 	return h.showOauthSignupPage(app, w, r, tp, nil)
+}
+
+func (r *oauthStateRegisterer) register(ctx context.Context, state string) error {
+	form := url.Values{}
+	form.Add("state", state)
+	form.Add("location", r.callbackLocation)
+	req, err := http.NewRequestWithContext(ctx, "POST", r.location, strings.NewReader(form.Encode()))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("User-Agent", "writefreely")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := r.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusCreated {
+		return errors.New("register state and location")
+	}
+
+	return nil
 }
 
 func limitedJsonUnmarshal(body io.ReadCloser, n int, thing interface{}) error {

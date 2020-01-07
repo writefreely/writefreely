@@ -59,17 +59,19 @@ type (
 	}
 
 	WriteAsOauthCfg struct {
-		ClientID        string `ini:"client_id"`
-		ClientSecret    string `ini:"client_secret"`
-		AuthLocation    string `ini:"auth_location"`
-		TokenLocation   string `ini:"token_location"`
-		InspectLocation string `ini:"inspect_location"`
+		ClientID              string `ini:"client_id"`
+		ClientSecret          string `ini:"client_secret"`
+		AuthLocation          string `ini:"auth_location"`
+		TokenLocation         string `ini:"token_location"`
+		InspectLocation       string `ini:"inspect_location"`
+		StateRegisterLocation string `ini:"state_register_location"`
 	}
 
 	SlackOauthCfg struct {
-		ClientID     string `ini:"client_id"`
-		ClientSecret string `ini:"client_secret"`
-		TeamID       string `ini:"team_id"`
+		ClientID              string `ini:"client_id"`
+		ClientSecret          string `ini:"client_secret"`
+		TeamID                string `ini:"team_id"`
+		StateRegisterLocation string `ini:"state_register_location"`
 	}
 
 	// AppCfg holds values that affect how the application functions
