@@ -20,7 +20,7 @@ func viewImport(app *App, u *User, w http.ResponseWriter, r *http.Request) error
 	// Fetch extra user data
 	p := NewUserPage(app, r, u, "Import", nil)
 
-	c, err := app.db.GetCollections(u)
+	c, err := app.db.GetCollections(u, app.Config().App.Host)
 	if err != nil {
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("unable to fetch collections: %v", err)}
 	}
