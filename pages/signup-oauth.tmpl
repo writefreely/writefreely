@@ -2,31 +2,111 @@
 <meta name="description" content="Log in to {{.SiteName}}.">
 <meta itemprop="description" content="Log in to {{.SiteName}}.">
 <style>input{margin-bottom:0.5em;}</style>
+<style type="text/css">
+h2 {
+	font-weight: normal;
+}
+#pricing.content-container div.form-container #payment-form {
+	display: block !important;
+}
+#pricing #signup-form table {
+	max-width: inherit !important;
+	width: 100%;
+}
+#pricing #payment-form table {
+	margin-top: 0 !important;
+	max-width: inherit !important;
+	width: 100%;
+}
+tr.subscription {
+	border-spacing: 0;
+}
+#pricing.content-container tr.subscription button {
+	margin-top: 0 !important;
+	margin-bottom: 0 !important;
+	width: 100%;
+}
+#pricing tr.subscription td {
+	padding: 0 0.5em;
+}
+#pricing table.billing > tbody > tr > td:first-child {
+	vertical-align: middle !important;
+}
+.billing-section {
+	display: none;
+}
+.billing-section.bill-me {
+	display: table-row;
+}
+#btn-create {
+	color: white !important;
+}
+#total-price {
+	padding-left: 0.5em;
+}
+#alias-site.demo {
+	color: #999;
+}
+#alias-site {
+	text-align: left;
+	margin: 0.5em 0;
+}
+form dd {
+	margin: 0;
+}
+</style>
 {{end}}
 {{define "content"}}
-<div class="tight content-container">
+<div id="pricing" class="tight content-container">
 	<h1>Log in to {{.SiteName}}</h1>
 
 	{{if .Flashes}}<ul class="errors">
 		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 	</ul>{{end}}
 
-	<form action="/oauth/signup" method="post" style="text-align: center;margin-top:1em;" onsubmit="disableSubmit()">
-	    <input type="hidden" name="access_token" value="{{ .AccessToken }}" />
-	    <input type="hidden" name="token_username" value="{{ .TokenUsername }}" />
-	    <input type="hidden" name="token_alias" value="{{ .TokenAlias }}" />
-	    <input type="hidden" name="token_email" value="{{ .TokenEmail }}" />
-	    <input type="hidden" name="token_remote_user" value="{{ .TokenRemoteUser }}" />
-	    <input type="hidden" name="provider" value="{{ .Provider }}" />
-	    <input type="hidden" name="client_id" value="{{ .ClientID }}" />
-	    <input type="hidden" name="signature" value="{{ .TokenHash }}" />
+    <div id="billing">
+	    <form action="/oauth/signup" method="post" style="text-align: center;margin-top:1em;" onsubmit="disableSubmit()">
+	        <input type="hidden" name="access_token" value="{{ .AccessToken }}" />
+	        <input type="hidden" name="token_username" value="{{ .TokenUsername }}" />
+	        <input type="hidden" name="token_alias" value="{{ .TokenAlias }}" />
+	        <input type="hidden" name="token_email" value="{{ .TokenEmail }}" />
+	        <input type="hidden" name="token_remote_user" value="{{ .TokenRemoteUser }}" />
+	        <input type="hidden" name="provider" value="{{ .Provider }}" />
+	        <input type="hidden" name="client_id" value="{{ .ClientID }}" />
+	        <input type="hidden" name="signature" value="{{ .TokenHash }}" />
 
-		<input type="text" name="username" placeholder="Username" value="{{.Username}}" /><br />
-		<input type="text" name="alias" placeholder="Alias"{{ if .Alias }} value="{{.Alias}}"{{ end }} /><br />
-		<input type="text" name="email" placeholder="Email"{{ if .Email }} value="{{.Email}}"{{ end }} /><br />
-		<input type="password" name="password" placeholder="Password" /><br />
-		<input type="submit" id="btn-login" value="Login" />
-	</form>
+            <dl class="billing">
+                <label>
+                    <dt>Blog Title</dt>
+                    <dd>
+                        <input type="text" style="width: 100%; box-sizing: border-box;" name="alias" placeholder="Alias"{{ if .Alias }} value="{{.Alias}}"{{ end }} />
+                    </dd>
+                </label>
+                <label>
+                    <dt>Username</dt>
+					<dd>
+		<input type="text" name="username" style="width: 100%; box-sizing: border-box;" placeholder="Username" value="{{.Username}}" /><br />
+		{{if .Federation}}<p id="alias-site" class="demo">@<strong>your-username</strong>@{{.FriendlyHost}}</p>{{else}}<p id="alias-site" class="demo">{{.FriendlyHost}}/<strong>your-username</strong></p>{{end}}
+                    </dd>
+                </label>
+                <label>
+                    <dt>Email</dt>
+                    <dd>
+<input type="text" name="email" style="width: 100%; box-sizing: border-box;" placeholder="Email"{{ if .Email }} value="{{.Email}}"{{ end }} />
+                    </dd>
+                </label>
+                <label>
+                    <dt>Password</dt>
+                    <dd>
+<input type="password" name="password" style="width: 100%; box-sizing: border-box;" placeholder="Password" /><br />
+                    </dd>
+                </label>
+                <dt>
+                    <input type="submit" id="btn-login" value="Login" />
+                </dt>
+            </dl>
+        </form>
+    </div>
 
 <script type="text/javascript">
 function disableSubmit() {
