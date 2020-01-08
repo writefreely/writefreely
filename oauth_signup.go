@@ -125,21 +125,18 @@ func (h oauthHandler) viewOauthSignup(app *App, w http.ResponseWriter, r *http.R
 
 func (h oauthHandler) validateOauthSignup(r *http.Request) error {
 	username := r.FormValue(oauthParamUsername)
-	if len(username) < 5 {
+	if len(username) < h.Config.App.MinUsernameLen {
 		return impart.HTTPError{Status: http.StatusBadRequest, Message: "Username is too short."}
 	}
-	if len(username) > 20 {
+	if len(username) > 100 {
 		return impart.HTTPError{Status: http.StatusBadRequest, Message: "Username is too long."}
 	}
 	alias := r.FormValue(oauthParamAlias)
-	if len(alias) < 5 {
+	if len(alias) == 0 {
 		return impart.HTTPError{Status: http.StatusBadRequest, Message: "Alias is too short."}
 	}
-	if len(alias) > 20 {
-		return impart.HTTPError{Status: http.StatusBadRequest, Message: "Alias is too long."}
-	}
 	password := r.FormValue("password")
-	if len(password) < 5 {
+	if len(password) == 0 {
 		return impart.HTTPError{Status: http.StatusBadRequest, Message: "Password is too short."}
 	}
 	email := r.FormValue(oauthParamEmail)
