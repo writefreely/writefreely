@@ -7,13 +7,13 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/writeas/impart"
-	"github.com/writeas/nerds/store"
-	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 )
 
@@ -73,17 +73,25 @@ type HttpClient interface {
 type oauthClient interface {
 	GetProvider() string
 	GetClientID() string
+	GetCallbackLocation() string
 	buildLoginURL(state string) (string, error)
 	exchangeOauthCode(ctx context.Context, code string) (*TokenResponse, error)
 	inspectOauthAccessToken(ctx context.Context, accessToken string) (*InspectResponse, error)
 }
 
+type callbackProxyClient struct {
+	server           string
+	callbackLocation string
+	httpClient       HttpClient
+}
+
 type oauthHandler struct {
-	Config      *config.Config
-	DB          OAuthDatastore
-	Store       sessions.Store
-	EmailKey    []byte
-	oauthClient oauthClient
+	Config        *config.Config
+	DB            OAuthDatastore
+	Store         sessions.Store
+	EmailKey      []byte
+	oauthClient   oauthClient
+	callbackProxy *callbackProxyClient
 }
 
 func (h oauthHandler) viewOauthInit(app *App, w http.ResponseWriter, r *http.Request) error {
@@ -92,6 +100,13 @@ func (h oauthHandler) viewOauthInit(app *App, w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return impart.HTTPError{http.StatusInternalServerError, "could not prepare oauth redirect url"}
 	}
+
+	if h.callbackProxy != nil {
+		if err := h.callbackProxy.register(ctx, state); err != nil {
+			return impart.HTTPError{http.StatusInternalServerError, "could not register state server"}
+		}
+	}
+
 	location, err := h.oauthClient.buildLoginURL(state)
 	if err != nil {
 		return impart.HTTPError{http.StatusInternalServerError, "could not prepare oauth redirect url"}
@@ -101,19 +116,42 @@ func (h oauthHandler) viewOauthInit(app *App, w http.ResponseWriter, r *http.Req
 
 func configureSlackOauth(parentHandler *Handler, r *mux.Router, app *App) {
 	if app.Config().SlackOauth.ClientID != "" {
+		callbackLocation := app.Config().App.Host + "/oauth/callback"
+
+		var stateRegisterClient *callbackProxyClient = nil
+		if app.Config().SlackOauth.CallbackProxyAPI != "" {
+			stateRegisterClient = &callbackProxyClient{
+				server:           app.Config().SlackOauth.CallbackProxyAPI,
+				callbackLocation: app.Config().App.Host + "/oauth/callback",
+				httpClient:       config.DefaultHTTPClient(),
+			}
+			callbackLocation = app.Config().SlackOauth.CallbackProxy
+		}
 		oauthClient := slackOauthClient{
 			ClientID:         app.Config().SlackOauth.ClientID,
 			ClientSecret:     app.Config().SlackOauth.ClientSecret,
 			TeamID:           app.Config().SlackOauth.TeamID,
-			CallbackLocation: app.Config().App.Host + "/oauth/callback",
 			HttpClient:       config.DefaultHTTPClient(),
+			CallbackLocation: callbackLocation,
 		}
-		configureOauthRoutes(parentHandler, r, app, oauthClient)
+		configureOauthRoutes(parentHandler, r, app, oauthClient, stateRegisterClient)
 	}
 }
 
 func configureWriteAsOauth(parentHandler *Handler, r *mux.Router, app *App) {
 	if app.Config().WriteAsOauth.ClientID != "" {
+		callbackLocation := app.Config().App.Host + "/oauth/callback"
+
+		var callbackProxy *callbackProxyClient = nil
+		if app.Config().WriteAsOauth.CallbackProxy != "" {
+			callbackProxy = &callbackProxyClient{
+				server:           app.Config().WriteAsOauth.CallbackProxyAPI,
+				callbackLocation: app.Config().App.Host + "/oauth/callback",
+				httpClient:       config.DefaultHTTPClient(),
+			}
+			callbackLocation = app.Config().SlackOauth.CallbackProxy
+		}
+
 		oauthClient := writeAsOauthClient{
 			ClientID:         app.Config().WriteAsOauth.ClientID,
 			ClientSecret:     app.Config().WriteAsOauth.ClientSecret,
@@ -121,22 +159,24 @@ func configureWriteAsOauth(parentHandler *Handler, r *mux.Router, app *App) {
 			InspectLocation:  config.OrDefaultString(app.Config().WriteAsOauth.InspectLocation, writeAsIdentityLocation),
 			AuthLocation:     config.OrDefaultString(app.Config().WriteAsOauth.AuthLocation, writeAsAuthLocation),
 			HttpClient:       config.DefaultHTTPClient(),
-			CallbackLocation: app.Config().App.Host + "/oauth/callback",
+			CallbackLocation: callbackLocation,
 		}
-		configureOauthRoutes(parentHandler, r, app, oauthClient)
+		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
 	}
 }
 
-func configureOauthRoutes(parentHandler *Handler, r *mux.Router, app *App, oauthClient oauthClient) {
+func configureOauthRoutes(parentHandler *Handler, r *mux.Router, app *App, oauthClient oauthClient, callbackProxy *callbackProxyClient) {
 	handler := &oauthHandler{
-		Config:      app.Config(),
-		DB:          app.DB(),
-		Store:       app.SessionStore(),
-		oauthClient: oauthClient,
-		EmailKey:    app.keys.EmailKey,
+		Config:        app.Config(),
+		DB:            app.DB(),
+		Store:         app.SessionStore(),
+		oauthClient:   oauthClient,
+		EmailKey:      app.keys.EmailKey,
+		callbackProxy: callbackProxy,
 	}
 	r.HandleFunc("/oauth/"+oauthClient.GetProvider(), parentHandler.OAuth(handler.viewOauthInit)).Methods("GET")
 	r.HandleFunc("/oauth/callback", parentHandler.OAuth(handler.viewOauthCallback)).Methods("GET")
+	r.HandleFunc("/oauth/signup", parentHandler.OAuth(handler.viewOauthSignup)).Methods("POST")
 }
 
 func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http.Request) error {
@@ -171,51 +211,53 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 	}
 
-	if localUserID == -1 {
-		// We don't have, nor do we want, the password from the origin, so we
-		//create a random string. If the user needs to set a password, they
-		//can do so through the settings page or through the password reset
-		//flow.
-		randPass := store.Generate62RandomString(14)
-		hashedPass, err := auth.HashPass([]byte(randPass))
+	if localUserID != -1 {
+		user, err := h.DB.GetUserByID(localUserID)
 		if err != nil {
-			return impart.HTTPError{http.StatusInternalServerError, "unable to create password hash"}
-		}
-		newUser := &User{
-			Username:   tokenInfo.Username,
-			HashedPass: hashedPass,
-			HasPass:    true,
-			Email:      prepareUserEmail(tokenInfo.Email, h.EmailKey),
-			Created:    time.Now().Truncate(time.Second).UTC(),
-		}
-		displayName := tokenInfo.DisplayName
-		if len(displayName) == 0 {
-			displayName = tokenInfo.Username
-		}
-
-		err = h.DB.CreateUser(h.Config, newUser, displayName)
-		if err != nil {
+			log.Error("Unable to GetUserByID %d: %s", localUserID, err)
 			return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 		}
-
-		err = h.DB.RecordRemoteUserID(ctx, newUser.ID, tokenInfo.UserID, provider, clientID, tokenResponse.AccessToken)
-		if err != nil {
-			return impart.HTTPError{http.StatusInternalServerError, err.Error()}
-		}
-
-		if err := loginOrFail(h.Store, w, r, newUser); err != nil {
+		if err = loginOrFail(h.Store, w, r, user); err != nil {
+			log.Error("Unable to loginOrFail %d: %s", localUserID, err)
 			return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 		}
 		return nil
 	}
 
-	user, err := h.DB.GetUserByID(localUserID)
+	tp := &oauthSignupPageParams{
+		AccessToken:     tokenResponse.AccessToken,
+		TokenUsername:   tokenInfo.Username,
+		TokenAlias:      tokenInfo.DisplayName,
+		TokenEmail:      tokenInfo.Email,
+		TokenRemoteUser: tokenInfo.UserID,
+		Provider:        provider,
+		ClientID:        clientID,
+	}
+	tp.TokenHash = tp.HashTokenParams(h.Config.Server.HashSeed)
+
+	return h.showOauthSignupPage(app, w, r, tp, nil)
+}
+
+func (r *callbackProxyClient) register(ctx context.Context, state string) error {
+	form := url.Values{}
+	form.Add("state", state)
+	form.Add("location", r.callbackLocation)
+	req, err := http.NewRequestWithContext(ctx, "POST", r.server, strings.NewReader(form.Encode()))
 	if err != nil {
-		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
+		return err
 	}
-	if err = loginOrFail(h.Store, w, r, user); err != nil {
-		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
+	req.Header.Set("User-Agent", "writefreely")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := r.httpClient.Do(req)
+	if err != nil {
+		return err
 	}
+	if resp.StatusCode != http.StatusCreated {
+		return fmt.Errorf("unable register state location: %d", resp.StatusCode)
+	}
+
 	return nil
 }
 

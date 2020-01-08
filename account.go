@@ -306,12 +306,16 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		Message       template.HTML
 		Flashes       []template.HTML
 		LoginUsername string
+		OauthSlack    bool
+		OauthWriteAs  bool
 	}{
 		pageForReq(app, r),
 		r.FormValue("to"),
 		template.HTML(""),
 		[]template.HTML{},
 		getTempInfo(app, "login-user", r, w),
+		app.Config().SlackOauth.ClientID != "",
+		app.Config().WriteAsOauth.ClientID != "",
 	}
 
 	if earlyError != "" {

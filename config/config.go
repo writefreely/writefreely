@@ -42,6 +42,8 @@ type (
 		PagesParentDir     string `ini:"pages_parent_dir"`
 		KeysParentDir      string `ini:"keys_parent_dir"`
 
+		HashSeed string `ini:"hash_seed"`
+
 		Dev bool `ini:"-"`
 	}
 
@@ -57,17 +59,21 @@ type (
 	}
 
 	WriteAsOauthCfg struct {
-		ClientID        string `ini:"client_id"`
-		ClientSecret    string `ini:"client_secret"`
-		AuthLocation    string `ini:"auth_location"`
-		TokenLocation   string `ini:"token_location"`
-		InspectLocation string `ini:"inspect_location"`
+		ClientID         string `ini:"client_id"`
+		ClientSecret     string `ini:"client_secret"`
+		AuthLocation     string `ini:"auth_location"`
+		TokenLocation    string `ini:"token_location"`
+		InspectLocation  string `ini:"inspect_location"`
+		CallbackProxy    string `ini:"callback_proxy"`
+		CallbackProxyAPI string `ini:"callback_proxy_api"`
 	}
 
 	SlackOauthCfg struct {
-		ClientID     string `ini:"client_id"`
-		ClientSecret string `ini:"client_secret"`
-		TeamID       string `ini:"team_id"`
+		ClientID         string `ini:"client_id"`
+		ClientSecret     string `ini:"client_secret"`
+		TeamID           string `ini:"team_id"`
+		CallbackProxy    string `ini:"callback_proxy"`
+		CallbackProxyAPI string `ini:"callback_proxy_api"`
 	}
 
 	// AppCfg holds values that affect how the application functions
