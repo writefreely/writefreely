@@ -152,9 +152,8 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 			continue
 		}
 
-		// create public post
-
-		if coll.ID != 0 && app.cfg.App.Federation {
+		// Federate post, if necessary
+		if app.cfg.App.Federation && coll.ID > 0 {
 			go federatePost(
 				app,
 				&PublicPost{
