@@ -56,6 +56,27 @@ func viewImport(app *App, u *User, w http.ResponseWriter, r *http.Request) error
 func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	// limit 10MB per submission
 	r.ParseMultipartForm(10 << 20)
+
+	collAlias := r.PostFormValue("collection")
+	coll := &Collection{
+		ID: 0,
+	}
+	var err error
+	if collAlias != "" {
+		coll, err = app.db.GetCollection(collAlias)
+		if err != nil {
+			log.Error("Unable to get collection for import: %s", err)
+			return err
+		}
+		// Only allow uploading to collection if current user is owner
+		if coll.OwnerID != u.ID {
+			err := ErrUnauthorizedGeneral
+			_ = addSessionFlash(app, w, r, err.Message, nil)
+			return err
+		}
+		coll.hostName = app.cfg.App.Host
+	}
+
 	files := r.MultipartForm.File["files"]
 	var fileErrs []error
 	filesSubmitted := len(files)
@@ -105,14 +126,9 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 			continue
 		}
 
-		post.Collection = r.PostFormValue("collection")
-		coll, _ := app.db.GetCollection(post.Collection)
-		if coll == nil {
-			coll = &Collection{
-				ID: 0,
-			}
+		if collAlias != "" {
+			post.Collection = collAlias
 		}
-		coll.hostName = app.cfg.App.Host
 		created := post.Created.Format("2006-01-02T15:04:05Z")
 		submittedPost := SubmittedPost{
 			Title:   &post.Title,
