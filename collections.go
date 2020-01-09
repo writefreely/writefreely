@@ -63,6 +63,7 @@ type (
 		TotalPosts int           `json:"total_posts"`
 		Owner      *User         `json:"owner,omitempty"`
 		Posts      *[]PublicPost `json:"posts,omitempty"`
+		Format     *CollectionFormat
 	}
 	DisplayCollection struct {
 		*CollectionObj
@@ -70,7 +71,6 @@ type (
 		IsTopLevel  bool
 		CurrentPage int
 		TotalPages  int
-		Format      *CollectionFormat
 		Suspended   bool
 	}
 	SubmittedCollection struct {
@@ -556,6 +556,13 @@ type CollectionPage struct {
 	CanInvite      bool
 }
 
+func NewCollectionObj(c *Collection) *CollectionObj {
+	return &CollectionObj{
+		Collection: *c,
+		Format:     c.NewFormat(),
+	}
+}
+
 func (c *CollectionObj) ScriptDisplay() template.JS {
 	return template.JS(c.Script)
 }
@@ -705,11 +712,10 @@ func checkUserForCollection(app *App, cr *collectionReq, r *http.Request, isPost
 
 func newDisplayCollection(c *Collection, cr *collectionReq, page int) *DisplayCollection {
 	coll := &DisplayCollection{
-		CollectionObj: &CollectionObj{Collection: *c},
+		CollectionObj: NewCollectionObj(c),
 		CurrentPage:   page,
 		Prefix:        cr.prefix,
 		IsTopLevel:    isSingleUser,
-		Format:        c.NewFormat(),
 	}
 	c.db.GetPostsCount(coll.CollectionObj, cr.isCollOwner)
 	return coll
