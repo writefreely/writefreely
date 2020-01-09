@@ -86,31 +86,31 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		ok := func() bool {
 			file, err := formFile.Open()
 			if err != nil {
-				fileErrs = append(fileErrs, fmt.Errorf("failed to open form file: %s", formFile.Filename))
-				log.Error("import textfile: open from form: %v", err)
+				fileErrs = append(fileErrs, fmt.Errorf("Unable to read file %s", formFile.Filename))
+				log.Error("import file: open from form: %v", err)
 				return false
 			}
 			defer file.Close()
 
 			tempFile, err := ioutil.TempFile("", "post-upload-*.txt")
 			if err != nil {
-				fileErrs = append(fileErrs, fmt.Errorf("failed to create temporary file for: %s", formFile.Filename))
-				log.Error("import textfile: create temp file: %v", err)
+				fileErrs = append(fileErrs, fmt.Errorf("Internal error for %s", formFile.Filename))
+				log.Error("import file: create temp file %s: %v", formFile.Filename, err)
 				return false
 			}
 			defer tempFile.Close()
 
 			_, err = io.Copy(tempFile, file)
 			if err != nil {
-				fileErrs = append(fileErrs, fmt.Errorf("failed to copy file into temporary location: %s", formFile.Filename))
-				log.Error("import textfile: copy to temp: %v", err)
+				fileErrs = append(fileErrs, fmt.Errorf("Internal error for %s", formFile.Filename))
+				log.Error("import file: copy to temp location %s: %v", formFile.Filename, err)
 				return false
 			}
 
 			info, err := tempFile.Stat()
 			if err != nil {
-				fileErrs = append(fileErrs, fmt.Errorf("failed to get file info of: %s", formFile.Filename))
-				log.Error("import textfile: stat temp file: %v", err)
+				fileErrs = append(fileErrs, fmt.Errorf("Internal error for %s", formFile.Filename))
+				log.Error("import file: stat temp file %s: %v", formFile.Filename, err)
 				return false
 			}
 			fname = info.Name()
