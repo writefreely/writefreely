@@ -62,7 +62,7 @@
 		{{if .Suspended}}
 			{{template "user-suspended"}}
 		{{end}}
-		<article id="post-body" class="{{.Font}} h-entry {{if not .IsFound}}error-page{{end}}">{{if .IsScheduled}}<p class="badge">Scheduled</p>{{end}}{{if .Title.String}}<h2 id="title" class="p-name">{{.FormattedDisplayTitle}}</h2>{{end}}<div class="e-content">{{.HTMLContent}}</div></article>
+		<article id="post-body" class="{{.Font}} h-entry {{if not .IsFound}}error-page{{end}}">{{if .IsScheduled}}<p class="badge">Scheduled</p>{{end}}{{if .Title.String}}<h2 id="title" class="p-name{{if $.Collection.Format.ShowDates}} dated{{end}}">{{.FormattedDisplayTitle}}</h2>{{end}}{{if $.Collection.Format.ShowDates}}<time class="dt-published" datetime="{{.Created}}" pubdate itemprop="datePublished" content="{{.Created}}">{{.DisplayDate}}</time>{{end}}<div class="e-content">{{.HTMLContent}}</div></article>
 
 		{{ if .Collection.ShowFooterBranding }}
 		<footer dir="ltr"><hr><nav><p style="font-size: 0.9em">{{localhtml "published with write.as" .Language.String}}</p></nav></footer>
