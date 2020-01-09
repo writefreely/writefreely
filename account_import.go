@@ -82,36 +82,45 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 	filesSubmitted := len(files)
 	var filesImported int
 	for _, formFile := range files {
-		file, err := formFile.Open()
-		if err != nil {
-			fileErrs = append(fileErrs, fmt.Errorf("failed to open form file: %s", formFile.Filename))
-			log.Error("import textfile: open from form: %v", err)
-			continue
-		}
-		defer file.Close()
+		fname := ""
+		ok := func() bool {
+			file, err := formFile.Open()
+			if err != nil {
+				fileErrs = append(fileErrs, fmt.Errorf("failed to open form file: %s", formFile.Filename))
+				log.Error("import textfile: open from form: %v", err)
+				return false
+			}
+			defer file.Close()
 
-		tempFile, err := ioutil.TempFile("", "post-upload-*.txt")
-		if err != nil {
-			fileErrs = append(fileErrs, fmt.Errorf("failed to create temporary file for: %s", formFile.Filename))
-			log.Error("import textfile: create temp file: %v", err)
-			continue
-		}
-		defer tempFile.Close()
+			tempFile, err := ioutil.TempFile("", "post-upload-*.txt")
+			if err != nil {
+				fileErrs = append(fileErrs, fmt.Errorf("failed to create temporary file for: %s", formFile.Filename))
+				log.Error("import textfile: create temp file: %v", err)
+				return false
+			}
+			defer tempFile.Close()
 
-		_, err = io.Copy(tempFile, file)
-		if err != nil {
-			fileErrs = append(fileErrs, fmt.Errorf("failed to copy file into temporary location: %s", formFile.Filename))
-			log.Error("import textfile: copy to temp: %v", err)
+			_, err = io.Copy(tempFile, file)
+			if err != nil {
+				fileErrs = append(fileErrs, fmt.Errorf("failed to copy file into temporary location: %s", formFile.Filename))
+				log.Error("import textfile: copy to temp: %v", err)
+				return false
+			}
+
+			info, err := tempFile.Stat()
+			if err != nil {
+				fileErrs = append(fileErrs, fmt.Errorf("failed to get file info of: %s", formFile.Filename))
+				log.Error("import textfile: stat temp file: %v", err)
+				return false
+			}
+			fname = info.Name()
+			return true
+		}()
+		if !ok {
 			continue
 		}
 
-		info, err := tempFile.Stat()
-		if err != nil {
-			fileErrs = append(fileErrs, fmt.Errorf("failed to get file info of: %s", formFile.Filename))
-			log.Error("import textfile: stat temp file: %v", err)
-			continue
-		}
-		post, err := wfimport.FromFile(filepath.Join(os.TempDir(), info.Name()))
+		post, err := wfimport.FromFile(filepath.Join(os.TempDir(), fname))
 		if err == wfimport.ErrEmptyFile {
 			// not a real error so don't log
 			_ = addSessionFlash(app, w, r, fmt.Sprintf("%s was empty, import skipped", formFile.Filename), nil)
