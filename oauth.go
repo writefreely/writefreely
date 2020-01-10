@@ -116,13 +116,13 @@ func (h oauthHandler) viewOauthInit(app *App, w http.ResponseWriter, r *http.Req
 
 func configureSlackOauth(parentHandler *Handler, r *mux.Router, app *App) {
 	if app.Config().SlackOauth.ClientID != "" {
-		callbackLocation := app.Config().App.Host + "/oauth/callback"
+		callbackLocation := app.Config().App.Host + "/oauth/callback/slack"
 
 		var stateRegisterClient *callbackProxyClient = nil
 		if app.Config().SlackOauth.CallbackProxyAPI != "" {
 			stateRegisterClient = &callbackProxyClient{
 				server:           app.Config().SlackOauth.CallbackProxyAPI,
-				callbackLocation: app.Config().App.Host + "/oauth/callback",
+				callbackLocation: app.Config().App.Host + "/oauth/callback/slack",
 				httpClient:       config.DefaultHTTPClient(),
 			}
 			callbackLocation = app.Config().SlackOauth.CallbackProxy
@@ -140,13 +140,13 @@ func configureSlackOauth(parentHandler *Handler, r *mux.Router, app *App) {
 
 func configureWriteAsOauth(parentHandler *Handler, r *mux.Router, app *App) {
 	if app.Config().WriteAsOauth.ClientID != "" {
-		callbackLocation := app.Config().App.Host + "/oauth/callback"
+		callbackLocation := app.Config().App.Host + "/oauth/callback/write.as"
 
 		var callbackProxy *callbackProxyClient = nil
 		if app.Config().WriteAsOauth.CallbackProxy != "" {
 			callbackProxy = &callbackProxyClient{
 				server:           app.Config().WriteAsOauth.CallbackProxyAPI,
-				callbackLocation: app.Config().App.Host + "/oauth/callback",
+				callbackLocation: app.Config().App.Host + "/oauth/callback/write.as",
 				httpClient:       config.DefaultHTTPClient(),
 			}
 			callbackLocation = app.Config().SlackOauth.CallbackProxy
@@ -175,7 +175,7 @@ func configureOauthRoutes(parentHandler *Handler, r *mux.Router, app *App, oauth
 		callbackProxy: callbackProxy,
 	}
 	r.HandleFunc("/oauth/"+oauthClient.GetProvider(), parentHandler.OAuth(handler.viewOauthInit)).Methods("GET")
-	r.HandleFunc("/oauth/callback", parentHandler.OAuth(handler.viewOauthCallback)).Methods("GET")
+	r.HandleFunc("/oauth/callback/"+oauthClient.GetProvider(), parentHandler.OAuth(handler.viewOauthCallback)).Methods("GET")
 	r.HandleFunc("/oauth/signup", parentHandler.OAuth(handler.viewOauthSignup)).Methods("POST")
 }
 
