@@ -146,8 +146,7 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		if collAlias != "" {
 			post.Collection = collAlias
 		}
-		ts := fileDates[formFile.Filename] / 1000 // Get timestamp in seconds, not milliseconds
-		dateTime := time.Unix(ts, 0)
+		dateTime := time.Unix(fileDates[formFile.Filename], 0)
 		post.Created = &dateTime
 		created := post.Created.Format("2006-01-02T15:04:05Z")
 		submittedPost := SubmittedPost{
