@@ -25,31 +25,31 @@ build-no-sqlite: assets-no-sqlite deps-no-sqlite
 
 build-linux: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u github.com/karalabe/xgo; \
+		$(GOGET) -u src.techknowlogick.com/xgo; \
 	fi
 	xgo --targets=linux/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
 
 build-windows: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u github.com/karalabe/xgo; \
+		$(GOGET) -u src.techknowlogick.com/xgo; \
 	fi
 	xgo --targets=windows/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
 
 build-darwin: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u github.com/karalabe/xgo; \
+		$(GOGET) -u src.techknowlogick.com/xgo; \
 	fi
 	xgo --targets=darwin/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
 
 build-arm7: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u github.com/karalabe/xgo; \
+		$(GOGET) -u src.techknowlogick.com/xgo; \
 	fi
 	xgo --targets=linux/arm-7, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
 
 build-arm64: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u github.com/karalabe/xgo; \
+		$(GOGET) -u src.techknowlogick.com/xgo; \
 	fi
 	xgo --targets=linux/arm64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
 
@@ -145,7 +145,7 @@ $(TMPBIN)/go-bindata: deps $(TMPBIN)
 	$(GOBUILD) -o $(TMPBIN)/go-bindata github.com/jteeuwen/go-bindata/go-bindata
 
 $(TMPBIN)/xgo: deps $(TMPBIN)
-	$(GOBUILD) -o $(TMPBIN)/xgo github.com/karalabe/xgo
+	$(GOBUILD) -o $(TMPBIN)/xgo src.techknowlogick.com/xgo
 
 ci-assets : $(TMPBIN)/go-bindata
 	$(TMPBIN)/go-bindata -pkg writefreely -ignore=\\.gitignore -tags="!wflib" schema.sql sqlite.sql
