@@ -32,6 +32,7 @@
 				<input id="fileInput" class="fileInput" name="files" type="file" multiple accept="text/markdown, text/plain"/>
 			</label>
 			<input id="fileDates" name="fileDates" hidden/>
+			<input id="tzInput" name="tz" hidden/>
 			<label>
 				Import these posts to:
 				<select name="collection">
@@ -42,13 +43,15 @@
 				</select>
 			</label>
 			<script>
+				const tzInput = document.getElementById('tzInput');
+				tzInput.value = new Date().getTimezoneOffset();
 				const fileInput = document.getElementById('fileInput');
 				const fileDates = document.getElementById('fileDates');
 				fileInput.addEventListener('change', (e) => {
 					const files = e.target.files;
 					let dateMap = {};
 					for (let file of files) {
-						dateMap[file.name] = file.lastModified / 1000;
+						dateMap[file.name] = Math.round(file.lastModified / 1000);
 					}
 					fileDates.value = JSON.stringify(dateMap);
 				})

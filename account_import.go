@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -85,6 +86,7 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		log.Error("invalid form data for file dates: %v", err)
 		return impart.HTTPError{http.StatusBadRequest, "form data for file dates was invalid"}
 	}
+	fileTZ := r.FormValue("tz")
 	files := r.MultipartForm.File["files"]
 	var fileErrs []error
 	filesSubmitted := len(files)
@@ -147,6 +149,12 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 			post.Collection = collAlias
 		}
 		dateTime := time.Unix(fileDates[formFile.Filename], 0)
+		offset, err := strconv.Atoi(fileTZ)
+		if err != nil {
+			log.Error("form time zone offset not a valid integer: %v", err)
+			continue
+		}
+		dateTime = dateTime.Add(time.Minute * time.Duration(offset))
 		post.Created = &dateTime
 		created := post.Created.Format("2006-01-02T15:04:05Z")
 		submittedPost := SubmittedPost{
