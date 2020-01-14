@@ -48,7 +48,7 @@
 					const files = e.target.files;
 					let dateMap = {};
 					for (let file of files) {
-						dateMap[file.name] = file.lastModified;
+						dateMap[file.name] = file.lastModified / 1000;
 					}
 					fileDates.value = JSON.stringify(dateMap);
 				})
