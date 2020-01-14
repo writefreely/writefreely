@@ -1354,7 +1354,7 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 
 	// Fetch extra data about the Collection
 	// TODO: refactor out this logic, shared in collection.go:fetchCollection()
-	coll := &CollectionObj{Collection: *c}
+	coll := NewCollectionObj(c)
 	owner, err := app.db.GetUserByID(coll.OwnerID)
 	if err != nil {
 		// Log the error and just continue
