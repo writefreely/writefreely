@@ -29,8 +29,9 @@
 	<div class="formContainer">
 		<form id="importPosts" class="prominent" enctype="multipart/form-data" action="/api/me/import" method="POST">
 			<label>Select some files to import:
-				<input class="fileInput" name="files" type="file" multiple accept="text/markdown, text/plain"/>
+				<input id="fileInput" class="fileInput" name="files" type="file" multiple accept="text/markdown, text/plain"/>
 			</label>
+			<input id="fileDates" name="fileDates" hidden/>
 			<label>
 				Import these posts to:
 				<select name="collection">
@@ -40,10 +41,21 @@
 					<option value="">Drafts</option>
 				</select>
 			</label>
+			<script>
+				const fileInput = document.getElementById('fileInput');
+				const fileDates = document.getElementById('fileDates');
+				fileInput.addEventListener('change', (e) => {
+					const files = e.target.files;
+					let dateMap = {};
+					for (let file of files) {
+						dateMap[file.name] = file.lastModified;
+					}
+					fileDates.value = JSON.stringify(dateMap);
+				})
+			</script>
 			<input type="submit" value="Import" />
 		</form>
 	</div>
 </div>
-
 {{template "footer" .}}
 {{end}}

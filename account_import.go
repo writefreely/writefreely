@@ -1,6 +1,7 @@
 package writefreely
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/writeas/impart"
@@ -77,6 +79,12 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		coll.hostName = app.cfg.App.Host
 	}
 
+	fileDates := make(map[string]int64)
+	err = json.Unmarshal([]byte(r.FormValue("fileDates")), &fileDates)
+	if err != nil {
+		log.Error("invalid form data for file dates: %v", err)
+		return impart.HTTPError{http.StatusBadRequest, "form data for file dates was invalid"}
+	}
 	files := r.MultipartForm.File["files"]
 	var fileErrs []error
 	filesSubmitted := len(files)
@@ -138,6 +146,8 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		if collAlias != "" {
 			post.Collection = collAlias
 		}
+		dateTime := time.Unix(fileDates[formFile.Filename], 0)
+		post.Created = &dateTime
 		created := post.Created.Format("2006-01-02T15:04:05Z")
 		submittedPost := SubmittedPost{
 			Title:   &post.Title,
