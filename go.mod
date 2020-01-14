@@ -19,7 +19,6 @@ require (
 	github.com/guregu/null v3.4.0+incompatible
 	github.com/ikeikeikeike/go-sitemap-generator/v2 v2.0.2
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
-	github.com/kr/pretty v0.1.0
 	github.com/kylemcc/twitter-text-go v0.0.0-20180726194232-7f582f6736ec
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.3.2
@@ -30,7 +29,7 @@ require (
 	github.com/nicksnyder/go-i18n v1.10.0 // indirect
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/pelletier/go-toml v1.2.0 // indirect
-	github.com/pkg/errors v0.8.1
+	github.com/pkg/errors v0.8.1 // indirect
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
 	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
@@ -46,11 +45,9 @@ require (
 	github.com/writeas/slug v1.2.0
 	github.com/writeas/web-core v1.2.0
 	github.com/writefreely/go-nodeinfo v1.2.0
-	golang.org/x/crypto v0.0.0-20190208162236-193df9c0f06f
+	golang.org/x/crypto v0.0.0-20200109152110-61a87790db17
 	golang.org/x/lint v0.0.0-20181217174547-8f45f776aaf1 // indirect
-	golang.org/x/net v0.0.0-20190206173232-65e2d4e15006 // indirect
-	golang.org/x/sys v0.0.0-20190209173611-3b5209105503 // indirect
-	golang.org/x/tools v0.0.0-20190208222737-3744606dbb67
+	golang.org/x/tools v0.0.0-20190208222737-3744606dbb67 // indirect
 	google.golang.org/appengine v1.4.0 // indirect
 	gopkg.in/alecthomas/kingpin.v3-unstable v3.0.0-20180810215634-df19058c872c // indirect
 	gopkg.in/ini.v1 v1.41.0
