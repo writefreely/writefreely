@@ -41,6 +41,12 @@ build-darwin: deps
 	fi
 	xgo --targets=darwin/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
 
+build-arm6: deps
+	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+		$(GOGET) -u src.techknowlogick.com/xgo; \
+	fi
+	xgo --targets=linux/arm-6, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
+
 build-arm7: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOGET) -u src.techknowlogick.com/xgo; \
@@ -84,6 +90,10 @@ release : clean ui assets
 	$(MAKE) build-linux
 	mv build/$(BINARY_NAME)-linux-amd64 $(BUILDPATH)/$(BINARY_NAME)
 	tar -cvzf $(BINARY_NAME)_$(GITREV)_linux_amd64.tar.gz -C build $(BINARY_NAME)
+	rm $(BUILDPATH)/$(BINARY_NAME)
+	$(MAKE) build-arm6
+	mv build/$(BINARY_NAME)-linux-arm-6 $(BUILDPATH)/$(BINARY_NAME)
+	tar -cvzf $(BINARY_NAME)_$(GITREV)_linux_arm6.tar.gz -C build $(BINARY_NAME)
 	rm $(BUILDPATH)/$(BINARY_NAME)
 	$(MAKE) build-arm7
 	mv build/$(BINARY_NAME)-linux-arm-7 $(BUILDPATH)/$(BINARY_NAME)
