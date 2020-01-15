@@ -1038,11 +1038,24 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 
 	flashes, _ := getSessionFlashes(app, w, r, nil)
 
+	enableOauthSlack := app.Config().SlackOauth.ClientID != ""
+	enableOauthWriteAs := app.Config().WriteAsOauth.ClientID != ""
+
 	oauthAccounts, err := app.db.GetOauthAccounts(r.Context(), u.ID)
 	if err != nil {
 		log.Error("Unable to get oauth accounts for settings: %s", err)
 		return impart.HTTPError{http.StatusInternalServerError, "Unable to retrieve user data. The humans have been alerted."}
 	}
+	for _, oauthAccount := range oauthAccounts {
+		switch oauthAccount.Provider {
+		case "slack":
+			enableOauthSlack = false
+		case "write.as":
+			enableOauthWriteAs = false
+		}
+	}
+
+	displayOauthSection := enableOauthSlack || enableOauthWriteAs || len(oauthAccounts) > 0
 
 	obj := struct {
 		*UserPage
@@ -1050,6 +1063,7 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		HasPass       bool
 		IsLogOut      bool
 		Suspended     bool
+		OauthSection  bool
 		OauthAccounts []oauthAccountInfo
 		OauthSlack    bool
 		OauthWriteAs  bool
@@ -1059,9 +1073,10 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		HasPass:       passIsSet,
 		IsLogOut:      r.FormValue("logout") == "1",
 		Suspended:     fullUser.IsSilenced(),
+		OauthSection:  displayOauthSection,
 		OauthAccounts: oauthAccounts,
-		OauthSlack:    app.Config().SlackOauth.ClientID != "",
-		OauthWriteAs:  app.Config().WriteAsOauth.ClientID != "",
+		OauthSlack:    enableOauthSlack,
+		OauthWriteAs:  enableOauthWriteAs,
 	}
 
 	showUserPage(w, "settings", obj)
