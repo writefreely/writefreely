@@ -66,6 +66,28 @@ h3 { font-weight: normal; }
 			<input type="submit" value="Save changes" tabindex="4" />
 		</div>
 	</form>
+
+	{{ if .OauthAccounts }}
+	    {{ range $oauth_account := .OauthAccounts }}
+		    <form method="post" action="/me/oauth/remove" autocomplete="false">
+		        <input type="hidden" name="provider" value="{{ $oauth_account.Provider }}" />
+		        <input type="hidden" name="client_id" value="{{ $oauth_account.ClientID }}" />
+		        <input type="hidden" name="remote_user_id" value="{{ $oauth_account.RemoteUserID }}" />
+    		    <div class="option">
+    			    <h3>{{ $oauth_account.Provider }} </h3>
+    			    <div class="section">
+    				    <input type="submit" value="Remove" style="margin-left: 1em;" />
+    			    </div>
+    		    </div>
+    	    </form>
+        {{ end }}
+	{{ end }}
+	{{ if .OauthSlack }}
+    	<a class="loginbtn" href="/oauth/slack?attach=t"><img alt="Sign in with Slack" height="40" width="172" src="/img/sign_in_with_slack.png" srcset="/img/sign_in_with_slack.png 1x, /img/sign_in_with_slack@2x.png 2x" /></a>
+    {{ end }}
+    {{ if .OauthWriteAs }}
+        <a class="btn cta loginbtn" id="writeas-login" href="/oauth/write.as?attach=t">Link your <strong>Write.as</strong> account.</a>
+    {{ end }}
 </div>
 
 <script>

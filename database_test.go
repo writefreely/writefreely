@@ -18,13 +18,13 @@ func TestOAuthDatastore(t *testing.T) {
 			driverName: "",
 		}
 
-		state, err := ds.GenerateOAuthState(ctx, "test", "development")
+		state, err := ds.GenerateOAuthState(ctx, "test", "development", 0)
 		assert.NoError(t, err)
 		assert.Len(t, state, 24)
 
 		countRows(t, ctx, db, 1, "SELECT COUNT(*) FROM `oauth_client_states` WHERE `state` = ? AND `used` = false", state)
 
-		_, _, err = ds.ValidateOAuthState(ctx, state)
+		_, _, _, err = ds.ValidateOAuthState(ctx, state)
 		assert.NoError(t, err)
 
 		countRows(t, ctx, db, 1, "SELECT COUNT(*) FROM `oauth_client_states` WHERE `state` = ? AND `used` = true", state)
