@@ -169,9 +169,9 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	draftEditPrefix := ""
 	if apper.App().cfg.App.SingleUser {
 		draftEditPrefix = "/d"
-		write.HandleFunc("/me/new", handler.Web(handleViewPad, UserLevelOptional)).Methods("GET")
+		write.HandleFunc("/me/new", handler.Web(handleViewPad, UserLevelUser)).Methods("GET")
 	} else {
-		write.HandleFunc("/new", handler.Web(handleViewPad, UserLevelOptional)).Methods("GET")
+		write.HandleFunc("/new", handler.Web(handleViewPad, UserLevelUser)).Methods("GET")
 	}
 
 	// All the existing stuff
