@@ -65,6 +65,7 @@ var reservedUsernames = map[string]bool{
 	"metadata":         true,
 	"new":              true,
 	"news":             true,
+	"oauth":            true,
 	"post":             true,
 	"posts":            true,
 	"privacy":          true,
