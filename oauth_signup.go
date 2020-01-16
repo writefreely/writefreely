@@ -133,7 +133,7 @@ func (h oauthHandler) validateOauthSignup(r *http.Request) error {
 	}
 	collTitle := r.FormValue(oauthParamAlias)
 	if len(collTitle) == 0 {
-		return impart.HTTPError{Status: http.StatusBadRequest, Message: "Display name is too short."}
+		collTitle = username
 	}
 	password := r.FormValue("password")
 	if len(password) == 0 {
