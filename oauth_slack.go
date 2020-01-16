@@ -157,7 +157,7 @@ func (c slackOauthClient) inspectOauthAccessToken(ctx context.Context, accessTok
 func (resp slackUserIdentityResponse) InspectResponse() *InspectResponse {
 	return &InspectResponse{
 		UserID:      resp.User.ID,
-		Username:    fmt.Sprintf("%s-%s", slug.Make(resp.User.Name), store.Generate62RandomString(5)),
+		Username:    fmt.Sprintf("%s-%s", slug.Make(resp.User.Name), store.GenerateRandomString("0123456789bcdfghjklmnpqrstvwxyz", 5)),
 		DisplayName: resp.User.Name,
 		Email:       resp.User.Email,
 	}
