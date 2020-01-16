@@ -91,14 +91,20 @@ func (h oauthHandler) viewOauthSignup(app *App, w http.ResponseWriter, r *http.R
 		return h.showOauthSignupPage(app, w, r, tp, err)
 	}
 
-	hashedPass, err := auth.HashPass([]byte(r.FormValue(oauthParamPassword)))
-	if err != nil {
-		return h.showOauthSignupPage(app, w, r, tp, fmt.Errorf("unable to hash password"))
+	var err error
+	hashedPass := []byte{}
+	clearPass := r.FormValue(oauthParamPassword)
+	hasPass := clearPass != ""
+	if hasPass {
+		hashedPass, err = auth.HashPass([]byte(clearPass))
+		if err != nil {
+			return h.showOauthSignupPage(app, w, r, tp, fmt.Errorf("unable to hash password"))
+		}
 	}
 	newUser := &User{
 		Username:   r.FormValue(oauthParamUsername),
 		HashedPass: hashedPass,
-		HasPass:    true,
+		HasPass:    hasPass,
 		Email:      prepareUserEmail(r.FormValue(oauthParamEmail), h.EmailKey),
 		Created:    time.Now().Truncate(time.Second).UTC(),
 	}
@@ -134,10 +140,6 @@ func (h oauthHandler) validateOauthSignup(r *http.Request) error {
 	collTitle := r.FormValue(oauthParamAlias)
 	if len(collTitle) == 0 {
 		collTitle = username
-	}
-	password := r.FormValue("password")
-	if len(password) == 0 {
-		return impart.HTTPError{Status: http.StatusBadRequest, Message: "Password is too short."}
 	}
 	email := r.FormValue(oauthParamEmail)
 	if len(email) > 0 {
