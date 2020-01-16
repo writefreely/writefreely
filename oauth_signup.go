@@ -29,9 +29,9 @@ type viewOauthSignupVars struct {
 	ClientID        string
 	TokenHash       string
 
-	Username string
-	Alias    string
-	Email    string
+	LoginUsername string
+	Alias         string
+	Email         string
 }
 
 const (
@@ -184,9 +184,9 @@ func (h oauthHandler) showOauthSignupPage(app *App, w http.ResponseWriter, r *ht
 		ClientID:        tp.ClientID,
 		TokenHash:       tp.TokenHash,
 
-		Username: username,
-		Alias:    alias,
-		Email:    email,
+		LoginUsername: username,
+		Alias:         collTitle,
+		Email:         email,
 	}
 
 	// Display any error messages

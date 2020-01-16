@@ -85,7 +85,7 @@ form dd {
                 <label>
                     <dt>Username</dt>
 					<dd>
-		<input type="text" id="username" name="username" style="width: 100%; box-sizing: border-box;" placeholder="Username" value="{{.Username}}" /><br />
+		<input type="text" id="username" name="username" style="width: 100%; box-sizing: border-box;" placeholder="Username" value="{{.LoginUsername}}" /><br />
 		{{if .Federation}}<p id="alias-site" class="demo">@<strong>your-username</strong>@{{.FriendlyHost}}</p>{{else}}<p id="alias-site" class="demo">{{.FriendlyHost}}/<strong>your-username</strong></p>{{end}}
                     </dd>
                 </label>
