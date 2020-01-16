@@ -65,7 +65,7 @@ form dd {
 	</ul>{{end}}
 
     <div id="billing">
-	    <form action="/oauth/signup" method="post" style="text-align: center;margin-top:1em;" onsubmit="disableSubmit()">
+	    <form action="/oauth/signup" method="post" style="text-align: center;margin-top:1em;" onsubmit="return disableSubmit()">
 	        <input type="hidden" name="access_token" value="{{ .AccessToken }}" />
 	        <input type="hidden" name="token_username" value="{{ .TokenUsername }}" />
 	        <input type="hidden" name="token_alias" value="{{ .TokenAlias }}" />
@@ -85,7 +85,7 @@ form dd {
                 <label>
                     <dt>Username</dt>
 					<dd>
-		<input type="text" name="username" style="width: 100%; box-sizing: border-box;" placeholder="Username" value="{{.Username}}" /><br />
+		<input type="text" id="username" name="username" style="width: 100%; box-sizing: border-box;" placeholder="Username" value="{{.Username}}" /><br />
 		{{if .Federation}}<p id="alias-site" class="demo">@<strong>your-username</strong>@{{.FriendlyHost}}</p>{{else}}<p id="alias-site" class="demo">{{.FriendlyHost}}/<strong>your-username</strong></p>{{end}}
                     </dd>
                 </label>
@@ -108,11 +108,73 @@ form dd {
         </form>
     </div>
 
+<script type="text/javascript" src="/js/h.js"></script>
 <script type="text/javascript">
+// Copied from signup.tmpl
+// NOTE: this element is named "alias" on signup.tmpl and "username" here
+var $alias = H.getEl('username');
+
 function disableSubmit() {
+    // Validate input
+    if (!aliasOK) {
+        var $a = $alias;
+        $a.el.className = 'error';
+        $a.el.focus();
+        $a.el.scrollIntoView();
+        return false;
+    }
+
 	var $btn = document.getElementById("btn-login");
 	$btn.value = "Logging in...";
 	$btn.disabled = true;
+	return true;
 }
+
+// Copied from signup.tmpl
+var $aliasSite = document.getElementById('alias-site');
+var aliasOK = true;
+var typingTimer;
+var doneTypingInterval = 750;
+var doneTyping = function() {
+    // Check on username
+    var alias = $alias.el.value;
+    if (alias != "") {
+        var params = {
+            username: alias
+        };
+        var http = new XMLHttpRequest();
+        http.open("POST", '/api/alias', true);
+
+        // Send the proper header information along with the request
+        http.setRequestHeader("Content-type", "application/json");
+
+        http.onreadystatechange = function() {
+            if (http.readyState == 4) {
+                data = JSON.parse(http.responseText);
+                if (http.status == 200) {
+                    aliasOK = true;
+                    $alias.removeClass('error');
+                    $aliasSite.className = $aliasSite.className.replace(/(?:^|\s)demo(?!\S)/g, '');
+                    $aliasSite.className = $aliasSite.className.replace(/(?:^|\s)error(?!\S)/g, '');
+                    $aliasSite.innerHTML = '{{ if .Federation }}@<strong>' + data.data + '</strong>@{{.FriendlyHost}}{{ else }}{{.FriendlyHost}}/<strong>' + data.data + '</strong>/{{ end }}';
+                } else {
+                    aliasOK = false;
+                    $alias.setClass('error');
+                    $aliasSite.className = 'error';
+                    $aliasSite.textContent = data.error_msg;
+                }
+            }
+        }
+        http.send(JSON.stringify(params));
+    } else {
+        $aliasSite.className += ' demo';
+        $aliasSite.innerHTML = '{{ if .Federation }}@<strong>your-username</strong>@{{.FriendlyHost}}{{ else }}{{.FriendlyHost}}/<strong>your-username</strong>/{{ end }}';
+    }
+};
+$alias.on('keyup input', function() {
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(doneTyping, doneTypingInterval);
+});
+doneTyping();
 </script>
 {{end}}
