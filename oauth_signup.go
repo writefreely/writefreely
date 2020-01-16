@@ -22,7 +22,7 @@ type viewOauthSignupVars struct {
 
 	AccessToken     string
 	TokenUsername   string
-	TokenAlias      string
+	TokenAlias      string // TODO: rename this to match the data it represents: the collection title
 	TokenEmail      string
 	TokenRemoteUser string
 	Provider        string
@@ -30,7 +30,7 @@ type viewOauthSignupVars struct {
 	TokenHash       string
 
 	LoginUsername string
-	Alias         string
+	Alias         string // TODO: rename this to match the data it represents: the collection title
 	Email         string
 }
 
@@ -52,7 +52,7 @@ const (
 type oauthSignupPageParams struct {
 	AccessToken     string
 	TokenUsername   string
-	TokenAlias      string
+	TokenAlias      string // TODO: rename this to match the data it represents: the collection title
 	TokenEmail      string
 	TokenRemoteUser string
 	ClientID        string
@@ -131,8 +131,8 @@ func (h oauthHandler) validateOauthSignup(r *http.Request) error {
 	if len(username) > 100 {
 		return impart.HTTPError{Status: http.StatusBadRequest, Message: "Username is too long."}
 	}
-	alias := r.FormValue(oauthParamAlias)
-	if len(alias) == 0 {
+	collTitle := r.FormValue(oauthParamAlias)
+	if len(collTitle) == 0 {
 		return impart.HTTPError{Status: http.StatusBadRequest, Message: "Alias is too short."}
 	}
 	password := r.FormValue("password")
@@ -151,7 +151,7 @@ func (h oauthHandler) validateOauthSignup(r *http.Request) error {
 
 func (h oauthHandler) showOauthSignupPage(app *App, w http.ResponseWriter, r *http.Request, tp *oauthSignupPageParams, errMsg error) error {
 	username := tp.TokenUsername
-	alias := tp.TokenAlias
+	collTitle := tp.TokenAlias
 	email := tp.TokenEmail
 
 	session, err := app.sessionStore.Get(r, cookieName)
@@ -164,7 +164,7 @@ func (h oauthHandler) showOauthSignupPage(app *App, w http.ResponseWriter, r *ht
 		username = tmpValue
 	}
 	if tmpValue := r.FormValue(oauthParamAlias); len(tmpValue) > 0 {
-		alias = tmpValue
+		collTitle = tmpValue
 	}
 	if tmpValue := r.FormValue(oauthParamEmail); len(tmpValue) > 0 {
 		email = tmpValue
