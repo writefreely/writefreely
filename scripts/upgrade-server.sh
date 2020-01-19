@@ -31,7 +31,7 @@ fi
 # go ahead and check for the latest release on linux
 echo "Checking for updates..."
 
-url=`curl -s https://api.github.com/repos/writeas/writefreely/releases/latest | grep 'browser_' | grep linux | cut -d\" -f4`
+url=`curl -s https://api.github.com/repos/writeas/writefreely/releases/latest | grep 'browser_' | grep 'linux' | grep 'amd64' | cut -d\" -f4`
 
 # check current version
 
@@ -82,13 +82,25 @@ filename=${parts[-1]}
 echo "Extracting files..."
 tar -zxf $tempdir/$filename -C $tempdir
 
+# stop service
+echo "Stopping writefreely systemd service..."
+if `systemctl start writefreely`; then
+	echo "Success, service stopped."
+else
+	echo "Upgrade failed to stop the systemd service, exiting early."
+	exit 1
+fi
+
 # copy files
 echo "Copying files..."
-cp -r $tempdir/{pages,static,templates,writefreely} .
+cp -r $tempdir/writefreely/{pages,static,templates,writefreely} .
+
+# migrate db
+./writefreely -migrate
 
 # restart service
 echo "Restarting writefreely systemd service..."
-if `systemctl restart writefreely`; then
+if `systemctl start writefreely`; then
 	echo "Success, version has been upgraded to $latest."
 else
 	echo "Upgrade complete, but failed to restart service."
