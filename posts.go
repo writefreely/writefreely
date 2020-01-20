@@ -229,6 +229,10 @@ func (p Post) Summary() string {
 	return shortPostDescription(p.Content)
 }
 
+func (p Post) SummaryHTML() template.HTML {
+	return template.HTML(p.Summary())
+}
+
 // Excerpt shows any text that comes before a (more) tag.
 // TODO: use HTMLExcerpt in templates instead of this method
 func (p *Post) Excerpt() template.HTML {
