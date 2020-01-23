@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -59,6 +59,12 @@ func (ru *RemoteUser) AsPerson() *activitystreams.Person {
 		Endpoints: activitystreams.Endpoints{
 			SharedInbox: ru.SharedInbox,
 		},
+	}
+}
+
+func activityPubClient() http.Client {
+	return http.Client{
+		Timeout: 15 * time.Second,
 	}
 }
 
@@ -502,7 +508,7 @@ func makeActivityPost(hostName string, p *activitystreams.Person, url string, m 
 		}
 	}
 
-	resp, err := http.DefaultClient.Do(r)
+	resp, err := activityPubClient().Do(r)
 	if err != nil {
 		return err
 	}
@@ -538,7 +544,7 @@ func resolveIRI(hostName, url string) ([]byte, error) {
 		}
 	}
 
-	resp, err := http.DefaultClient.Do(r)
+	resp, err := activityPubClient().Do(r)
 	if err != nil {
 		return nil, err
 	}
