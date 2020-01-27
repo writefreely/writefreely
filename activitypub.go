@@ -388,6 +388,11 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 	}
 
 	go func() {
+		if to == nil {
+			log.Error("No to! %v", err)
+			return
+		}
+
 		time.Sleep(2 * time.Second)
 		am, err := a.Serialize()
 		if err != nil {
@@ -396,10 +401,6 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		}
 		am["@context"] = []string{activitystreams.Namespace}
 
-		if to == nil {
-			log.Error("No to! %v", err)
-			return
-		}
 		err = makeActivityPost(app.cfg.App.Host, p, fullActor.Inbox, am)
 		if err != nil {
 			log.Error("Unable to make activity POST: %v", err)
