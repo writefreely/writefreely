@@ -13,6 +13,12 @@ package writefreely
 import (
 	"database/sql"
 	"fmt"
+	"html/template"
+	"math"
+	"net/http"
+	"strconv"
+	"time"
+
 	. "github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
 	stripmd "github.com/writeas/go-strip-markdown"
@@ -20,11 +26,6 @@ import (
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/memo"
 	"github.com/writeas/writefreely/page"
-	"html/template"
-	"math"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 const (
@@ -69,7 +70,8 @@ func (app *App) FetchPublicPosts() (interface{}, error) {
 	rows, err := app.db.Query(`SELECT p.id, alias, c.title, p.slug, p.title, p.content, p.text_appearance, p.language, p.rtl, p.created, p.updated
 	FROM collections c
 	LEFT JOIN posts p ON p.collection_id = c.id
-	WHERE c.privacy = 1 AND (p.created >= ` + app.db.dateSub(3, "month") + ` AND p.created <= ` + app.db.now() + ` AND pinned_position IS NULL)
+	LEFT JOIN users u ON u.id = p.owner_id
+	WHERE c.privacy = 1 AND (p.created >= ` + app.db.dateSub(3, "month") + ` AND p.created <= ` + app.db.now() + ` AND pinned_position IS NULL) AND u.status = 0
 	ORDER BY p.created DESC`)
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)
@@ -293,7 +295,7 @@ func viewLocalTimelineFeed(app *App, w http.ResponseWriter, req *http.Request) e
 		}
 
 		title = p.PlainDisplayTitle()
-		permalink = p.CanonicalURL()
+		permalink = p.CanonicalURL(app.cfg.App.Host)
 		if p.Collection != nil {
 			author = p.Collection.Title
 		} else {

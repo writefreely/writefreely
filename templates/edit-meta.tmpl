@@ -269,6 +269,10 @@
 		<script src="/js/h.js"></script>
 		<script>
 function updateMeta() {
+	if ({{.Suspended}}) {
+		alert("Your account is silenced, so you can't edit posts.");
+		return
+	}
 	document.getElementById('create-error').style.display = 'none';
 	var $created = document.getElementById('created');
 	var dateStr = $created.value.trim();

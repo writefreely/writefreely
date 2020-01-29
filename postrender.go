@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -11,9 +11,11 @@
 package writefreely
 
 import (
+	"encoding/json"
 	"fmt"
 	"html"
 	"html/template"
+	"net/http"
 	"regexp"
 	"strings"
 	"unicode"
@@ -21,7 +23,9 @@ import (
 
 	"github.com/microcosm-cc/bluemonday"
 	stripmd "github.com/writeas/go-strip-markdown"
+	"github.com/writeas/impart"
 	blackfriday "github.com/writeas/saturday"
+	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/stringmanip"
 	"github.com/writeas/writefreely/config"
 	"github.com/writeas/writefreely/parse"
@@ -233,4 +237,30 @@ func shortPostDescription(content string) string {
 		truncation = 3
 	}
 	return strings.TrimSpace(fmt.Sprintf(fmtStr, strings.Replace(stringmanip.Substring(content, 0, maxLen-truncation), "\n", " ", -1)))
+}
+
+func handleRenderMarkdown(app *App, w http.ResponseWriter, r *http.Request) error {
+	if !IsJSON(r) {
+		return impart.HTTPError{Status: http.StatusUnsupportedMediaType, Message: "Markdown API only supports JSON requests"}
+	}
+
+	in := struct {
+		CollectionURL string `json:"collection_url"`
+		RawBody       string `json:"raw_body"`
+	}{}
+
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&in)
+	if err != nil {
+		log.Error("Couldn't parse markdown JSON request: %v", err)
+		return ErrBadJSON
+	}
+
+	out := struct {
+		Body string `json:"body"`
+	}{
+		Body: applyMarkdown([]byte(in.RawBody), in.CollectionURL, app.cfg),
+	}
+
+	return impart.WriteSuccess(w, out, http.StatusOK)
 }

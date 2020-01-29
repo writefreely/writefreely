@@ -6,6 +6,9 @@
 {{if .Flashes}}<ul class="errors">
 	{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 </ul>{{end}}
+{{if .Suspended}}
+	{{template "user-suspended"}}
+{{end}}
 
 <h2 id="posts-header">drafts</h2>
 

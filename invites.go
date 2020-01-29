@@ -78,6 +78,10 @@ func handleCreateUserInvite(app *App, u *User, w http.ResponseWriter, r *http.Re
 	muVal := r.FormValue("uses")
 	expVal := r.FormValue("expires")
 
+	if u.IsSilenced() {
+		return ErrUserSuspended
+	}
+
 	var err error
 	var maxUses int
 	if muVal != "0" {

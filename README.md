@@ -47,15 +47,15 @@ It's designed to be flexible and share your writing widely, so it's built around
 
 ## Hosting
 
-We offer two kinds of hosting services that make WriteFreely deployment painless: [Write.as](https://write.as) for individuals, and [WriteFreely.host](https://writefreely.host) for communities. Besides saving you time, as a customer you directly help fund WriteFreely development.
+We offer two kinds of hosting services that make WriteFreely deployment painless: [Write.as Pro](https://write.as/pro) for individuals, and [Write.as for Teams](https://write.as/for/teams) for businesses. Besides saving you time and effort, both services directly fund WriteFreely development and ensure the long-term sustainability of our open source work.
 
-### [![Write.as](https://write.as/img/writeas-wf-readme.png)](https://write.as/)
+### [![Write.as Pro](https://writefreely.org/img/writeas-pro-readme.png)](https://write.as/pro)
 
-Start a personal blog on [Write.as](https://write.as), our flagship instance. Built to eliminate setup friction and preserve your privacy, Write.as helps you start a blog in seconds. It supports custom domains (with SSL) and multiple blogs / pen names per account. [Read more here](https://write.as/pricing).
+Start a personal blog on [Write.as](https://write.as), our flagship instance. Built to eliminate setup friction and preserve your privacy, Write.as helps you start a blog in seconds. It supports custom domains (with SSL) and multiple blogs / pen names per account. [Read more here](https://write.as/pro).
 
-### [![WriteFreely.host](https://writefreely.host/img/wfhost-wf-readme.png)](https://writefreely.host)
+### [![Write.as for Teams](https://writefreely.org/img/writeas-for-teams-readme.png)](https://write.as/for/teams)
 
-[WriteFreely.host](https://writefreely.host) makes it easy to start a close-knit community — to share knowledge, complement your Mastodon instance, or publish updates in your organization. We take care of the hosting, upgrades, backups, and maintenance so you can focus on writing.
+[Write.as for Teams](https://write.as/for/teams) gives your organization, business, or [open source project](https://write.as/for/open-source) a clutter-free space to share updates or proposals and build your collective knowledge. We take care of hosting, upgrades, backups, and maintenance so your team can focus on writing.
 
 ## Quick start
 
