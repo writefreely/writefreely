@@ -99,7 +99,7 @@ cp -r $tempdir/writefreely/{pages,static,templates,writefreely} .
 ./writefreely -migrate
 
 # restart service
-echo "Restarting writefreely systemd service..."
+echo "Starting writefreely systemd service..."
 if `systemctl start writefreely`; then
 	echo "Success, version has been upgraded to $latest."
 else
