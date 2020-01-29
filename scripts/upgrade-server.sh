@@ -11,7 +11,7 @@
 ##	have not installed the binary `writefreely` in another location.     ##
 ###############################################################################
 #
-#	Copyright © 2019 A Bunch Tell LLC.
+#	Copyright © 2019-2020 A Bunch Tell LLC.
 #
 #	This file is part of WriteFreely.
 #
