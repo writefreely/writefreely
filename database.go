@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -37,6 +37,7 @@ import (
 
 const (
 	mySQLErrDuplicateKey = 1062
+	mySQLErrCollationMix = 1267
 
 	driverMySQL  = "mysql"
 	driverSQLite = "sqlite3"
@@ -2281,7 +2282,7 @@ func (db *datastore) GetUserInvite(id string) (*Invite, error) {
 	var i Invite
 	err := db.QueryRow("SELECT id, max_uses, created, expires, inactive FROM userinvites WHERE id = ?", id).Scan(&i.ID, &i.MaxUses, &i.Created, &i.Expires, &i.Inactive)
 	switch {
-	case err == sql.ErrNoRows:
+	case err == sql.ErrNoRows, db.isIgnorableError(err):
 		return nil, impart.HTTPError{http.StatusNotFound, "Invite doesn't exist."}
 	case err != nil:
 		log.Error("Failed selecting invite: %v", err)
