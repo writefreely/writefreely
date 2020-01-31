@@ -764,6 +764,7 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 	if strings.Contains(r.Header.Get("Accept"), "application/activity+json") {
 		ac := c.PersonObject()
 		ac.Context = []interface{}{activitystreams.Namespace}
+		setCacheControl(w, apCacheTime)
 		return impart.RenderActivityJSON(w, ac, http.StatusOK)
 	}
 

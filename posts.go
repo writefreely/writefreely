@@ -1089,6 +1089,7 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		p.Collection = &CollectionObj{Collection: *coll}
 		po := p.ActivityObject(app.cfg)
 		po.Context = []interface{}{activitystreams.Namespace}
+		setCacheControl(w, apCacheTime)
 		return impart.RenderActivityJSON(w, po, http.StatusOK)
 	}
 
@@ -1430,6 +1431,7 @@ Are you sure it was ever here?`,
 		p.extractData()
 		ap := p.ActivityObject(app.cfg)
 		ap.Context = []interface{}{activitystreams.Namespace}
+		setCacheControl(w, apCacheTime)
 		return impart.RenderActivityJSON(w, ap, http.StatusOK)
 	} else {
 		p.extractData()
