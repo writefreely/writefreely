@@ -58,6 +58,7 @@ require (
 	gopkg.in/alecthomas/kingpin.v3-unstable v3.0.0-20180810215634-df19058c872c // indirect
 	gopkg.in/ini.v1 v1.41.0
 	gopkg.in/yaml.v2 v2.2.2 // indirect
+	src.techknowlogick.com/xgo v0.0.0-20200129005940-d0fae26e014b // indirect
 )
 
 go 1.13
