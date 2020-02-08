@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -35,7 +35,6 @@ import (
 	"github.com/writeas/web-core/i18n"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/tags"
-	"github.com/writeas/writefreely/config"
 	"github.com/writeas/writefreely/page"
 	"github.com/writeas/writefreely/parse"
 )
@@ -229,6 +228,10 @@ func (p Post) Summary() string {
 	return shortPostDescription(p.Content)
 }
 
+func (p Post) SummaryHTML() template.HTML {
+	return template.HTML(p.Summary())
+}
+
 // Excerpt shows any text that comes before a (more) tag.
 // TODO: use HTMLExcerpt in templates instead of this method
 func (p *Post) Excerpt() template.HTML {
@@ -381,6 +384,14 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
+	var suspended bool
+	if found {
+		suspended, err = app.db.IsUserSuspended(ownerID.Int64)
+		if err != nil {
+			log.Error("view post: %v", err)
+		}
+	}
+
 	// Check if post has been unpublished
 	if content == "" {
 		gone = true
@@ -428,9 +439,10 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		page := struct {
 			*AnonymousPost
 			page.StaticPage
-			Username string
-			IsOwner  bool
-			SiteURL  string
+			Username  string
+			IsOwner   bool
+			SiteURL   string
+			Suspended bool
 		}{
 			AnonymousPost: post,
 			StaticPage:    pageForReq(app, r),
@@ -441,6 +453,10 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 			page.IsOwner = ownerID.Valid && ownerID.Int64 == u.ID
 		}
 
+		if !page.IsOwner && suspended {
+			return ErrPostNotFound
+		}
+		page.Suspended = suspended
 		err = templates["post"].ExecuteTemplate(w, "post", page)
 		if err != nil {
 			log.Error("Post template execute error: %v", err)
@@ -472,7 +488,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 //   /posts?collection={alias}
 // ? /collections/{alias}/posts
 func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	vars := mux.Vars(r)
 	collAlias := vars["alias"]
 	if collAlias == "" {
@@ -497,6 +513,14 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	} else {
 		userID = app.db.GetUserID(accessToken)
 	}
+	suspended, err := app.db.IsUserSuspended(userID)
+	if err != nil {
+		log.Error("new post: %v", err)
+	}
+	if suspended {
+		return ErrUserSuspended
+	}
+
 	if userID == -1 {
 		return ErrNotLoggedIn
 	}
@@ -509,7 +533,7 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	var p *SubmittedPost
 	if reqJSON {
 		decoder := json.NewDecoder(r.Body)
-		err := decoder.Decode(&p)
+		err = decoder.Decode(&p)
 		if err != nil {
 			log.Error("Couldn't parse new post JSON request: %v\n", err)
 			return ErrBadJSON
@@ -555,7 +579,6 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	var newPost *PublicPost = &PublicPost{}
 	var coll *Collection
-	var err error
 	if accessToken != "" {
 		newPost, err = app.db.CreateOwnedPost(p, accessToken, collAlias, app.cfg.App.Host)
 	} else {
@@ -598,7 +621,7 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 }
 
 func existingPost(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 	vars := mux.Vars(r)
 	postID := vars["post"]
 
@@ -661,6 +684,14 @@ func existingPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	suspended, err := app.db.IsUserSuspended(userID)
+	if err != nil {
+		log.Error("existing post: %v", err)
+	}
+	if suspended {
+		return ErrUserSuspended
 	}
 
 	// Modify post struct
@@ -857,11 +888,19 @@ func addPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		ownerID = u.ID
 	}
 
+	suspended, err := app.db.IsUserSuspended(ownerID)
+	if err != nil {
+		log.Error("add post: %v", err)
+	}
+	if suspended {
+		return ErrUserSuspended
+	}
+
 	// Parse claimed posts in format:
 	// [{"id": "...", "token": "..."}]
 	var claims *[]ClaimPostRequest
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&claims)
+	err = decoder.Decode(&claims)
 	if err != nil {
 		return ErrBadJSONArray
 	}
@@ -951,13 +990,21 @@ func pinPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		userID = u.ID
 	}
 
+	suspended, err := app.db.IsUserSuspended(userID)
+	if err != nil {
+		log.Error("pin post: %v", err)
+	}
+	if suspended {
+		return ErrUserSuspended
+	}
+
 	// Parse request
 	var posts []struct {
 		ID       string `json:"id"`
 		Position int64  `json:"position"`
 	}
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&posts)
+	err = decoder.Decode(&posts)
 	if err != nil {
 		return ErrBadJSONArray
 	}
@@ -1002,11 +1049,6 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		if err != nil {
 			return err
 		}
-		coll.hostName = app.cfg.App.Host
-		_, err = apiCheckCollectionPermissions(app, r, coll)
-		if err != nil {
-			return err
-		}
 		collID = coll.ID
 	}
 
@@ -1014,18 +1056,33 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	if coll == nil && p.CollectionID.Valid {
+		// Collection post is getting fetched by post ID, not coll alias + post slug, so get coll info now.
+		coll, err = app.db.GetCollectionByID(p.CollectionID.Int64)
+		if err != nil {
+			return err
+		}
+	}
+	if coll != nil {
+		coll.hostName = app.cfg.App.Host
+		_, err = apiCheckCollectionPermissions(app, r, coll)
+		if err != nil {
+			return err
+		}
+	}
+
+	suspended, err := app.db.IsUserSuspended(p.OwnerID.Int64)
+	if err != nil {
+		log.Error("fetch post: %v", err)
+	}
+	if suspended {
+		return ErrPostNotFound
+	}
 
 	p.extractData()
 
 	accept := r.Header.Get("Accept")
 	if strings.Contains(accept, "application/activity+json") {
-		// Fetch information about the collection this belongs to
-		if coll == nil && p.CollectionID.Valid {
-			coll, err = app.db.GetCollectionByID(p.CollectionID.Int64)
-			if err != nil {
-				return err
-			}
-		}
 		if coll == nil {
 			// This is a draft post; 404 for now
 			// TODO: return ActivityObject
@@ -1033,8 +1090,9 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 
 		p.Collection = &CollectionObj{Collection: *coll}
-		po := p.ActivityObject(app.cfg)
+		po := p.ActivityObject(app)
 		po.Context = []interface{}{activitystreams.Namespace}
+		setCacheControl(w, apCacheTime)
 		return impart.RenderActivityJSON(w, po, http.StatusOK)
 	}
 
@@ -1061,18 +1119,19 @@ func (p *Post) processPost() PublicPost {
 	return *res
 }
 
-func (p *PublicPost) CanonicalURL() string {
+func (p *PublicPost) CanonicalURL(hostName string) string {
 	if p.Collection == nil || p.Collection.Alias == "" {
-		return p.Collection.hostName + "/" + p.ID
+		return hostName + "/" + p.ID
 	}
 	return p.Collection.CanonicalURL() + p.Slug.String
 }
 
-func (p *PublicPost) ActivityObject(cfg *config.Config) *activitystreams.Object {
+func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
+	cfg := app.cfg
 	o := activitystreams.NewArticleObject()
 	o.ID = p.Collection.FederatedAPIBase() + "api/posts/" + p.ID
 	o.Published = p.Created
-	o.URL = p.CanonicalURL()
+	o.URL = p.CanonicalURL(cfg.App.Host)
 	o.AttributedTo = p.Collection.FederatedAccount()
 	o.CC = []string{
 		p.Collection.FederatedAccount() + "/followers",
@@ -1107,6 +1166,27 @@ func (p *PublicPost) ActivityObject(cfg *config.Config) *activitystreams.Object 
 				Name: "#" + t,
 			})
 		}
+	}
+	// Find mentioned users
+	mentionedUsers := make(map[string]string)
+
+	stripper := bluemonday.StrictPolicy()
+	content := stripper.Sanitize(p.Content)
+	mentionRegex := regexp.MustCompile(`@[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]+\b`)
+	mentions := mentionRegex.FindAllString(content, -1)
+
+	for _, handle := range mentions {
+		actorIRI, err := app.db.GetProfilePageFromHandle(app, handle)
+		if err != nil {
+			log.Info("Can't find this user either in the database nor in the remote instance")
+			return nil
+		}
+		mentionedUsers[handle] = actorIRI
+	}
+
+	for handle, iri := range mentionedUsers {
+		o.CC = append(o.CC, iri)
+		o.Tag = append(o.Tag, activitystreams.Tag{Type: "Mention", HRef: iri, Name: handle})
 	}
 	return o
 }
@@ -1275,12 +1355,21 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 	}
 	c.hostName = app.cfg.App.Host
 
+	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	if err != nil {
+		log.Error("view collection post: %v", err)
+	}
+
 	// Check collection permissions
 	if c.IsPrivate() && (u == nil || u.ID != c.OwnerID) {
 		return ErrPostNotFound
 	}
-	if c.IsProtected() && ((u == nil || u.ID != c.OwnerID) && !isAuthorizedForCollection(app, c.Alias, r)) {
-		return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "/?g=" + slug}
+	if c.IsProtected() && (u == nil || u.ID != c.OwnerID) {
+		if suspended {
+			return ErrPostNotFound
+		} else if !isAuthorizedForCollection(app, c.Alias, r) {
+			return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "/?g=" + slug}
+		}
 	}
 
 	cr.isCollOwner = u != nil && c.OwnerID == u.ID
@@ -1291,7 +1380,7 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 
 	// Fetch extra data about the Collection
 	// TODO: refactor out this logic, shared in collection.go:fetchCollection()
-	coll := &CollectionObj{Collection: *c}
+	coll := NewCollectionObj(c)
 	owner, err := app.db.GetUserByID(coll.OwnerID)
 	if err != nil {
 		// Log the error and just continue
@@ -1331,6 +1420,9 @@ Are you sure it was ever here?`,
 	p.Collection = coll
 	p.IsTopLevel = app.cfg.App.SingleUser
 
+	if !p.IsOwner && suspended {
+		return ErrPostNotFound
+	}
 	// Check if post has been unpublished
 	if p.Content == "" && p.Title.String == "" {
 		return impart.HTTPError{http.StatusGone, "Post was unpublished."}
@@ -1362,8 +1454,9 @@ Are you sure it was ever here?`,
 			return ErrCollectionPageNotFound
 		}
 		p.extractData()
-		ap := p.ActivityObject(app.cfg)
+		ap := p.ActivityObject(app)
 		ap.Context = []interface{}{activitystreams.Namespace}
+		setCacheControl(w, apCacheTime)
 		return impart.RenderActivityJSON(w, ap, http.StatusOK)
 	} else {
 		p.extractData()
@@ -1380,12 +1473,14 @@ Are you sure it was ever here?`,
 			IsFound        bool
 			IsAdmin        bool
 			CanInvite      bool
+			Suspended      bool
 		}{
 			PublicPost:     p,
 			StaticPage:     pageForReq(app, r),
 			IsOwner:        cr.isCollOwner,
 			IsCustomDomain: cr.isCustomDomain,
 			IsFound:        postFound,
+			Suspended:      suspended,
 		}
 		tp.IsAdmin = u != nil && u.IsAdmin()
 		tp.CanInvite = canUserInvite(app.cfg, tp.IsAdmin)

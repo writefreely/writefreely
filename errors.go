@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -11,8 +11,9 @@
 package writefreely
 
 import (
-	"github.com/writeas/impart"
 	"net/http"
+
+	"github.com/writeas/impart"
 )
 
 // Commonly returned HTTP errors
@@ -44,8 +45,11 @@ var (
 	ErrPostUnpublished        = impart.HTTPError{Status: http.StatusGone, Message: "Post unpublished by author."}
 	ErrPostFetchError         = impart.HTTPError{Status: http.StatusInternalServerError, Message: "We encountered an error getting the post. The humans have been alerted."}
 
-	ErrUserNotFound      = impart.HTTPError{http.StatusNotFound, "User doesn't exist."}
-	ErrUserNotFoundEmail = impart.HTTPError{http.StatusNotFound, "Please enter your username instead of your email address."}
+	ErrUserNotFound       = impart.HTTPError{http.StatusNotFound, "User doesn't exist."}
+	ErrRemoteUserNotFound = impart.HTTPError{http.StatusNotFound, "Remote user not found."}
+	ErrUserNotFoundEmail  = impart.HTTPError{http.StatusNotFound, "Please enter your username instead of your email address."}
+
+	ErrUserSuspended = impart.HTTPError{http.StatusForbidden, "Account is silenced."}
 )
 
 // Post operation errors
