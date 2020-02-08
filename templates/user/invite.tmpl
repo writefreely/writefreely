@@ -8,18 +8,7 @@
 	margin-left: 0.5em;
 	margin-right: 0;
 }
-label {
-	font-weight: bold;
-}
-select {
-	font-size: 1em;
-	width: 100%;
-	padding: 0.5rem;
-	display: block;
-	border-radius: 0.25rem;
-	margin: 0.5rem 0;
-}
-input, table.classy {
+table.classy {
 	width: 100%;
 }
 table.classy.export a {
@@ -34,7 +23,7 @@ table td {
 	<h1>Invite people</h1>
 	<p>Invite others to join <em>{{.SiteName}}</em> by generating and sharing invite links below.</p>
 
-	<form style="margin: 2em 0" action="/api/me/invites" method="post">
+	<form style="margin: 2em 0" class="prominent" action="/api/me/invites" method="post">
 		<div class="row">
 			<div class="half">
 				<label for="uses">Maximum number of uses:</label>

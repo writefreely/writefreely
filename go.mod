@@ -18,8 +18,9 @@ require (
 	github.com/gorilla/feeds v1.1.0
 	github.com/gorilla/mux v1.7.0
 	github.com/gorilla/schema v1.0.2
-	github.com/gorilla/sessions v1.1.3
+	github.com/gorilla/sessions v1.2.0
 	github.com/guregu/null v3.4.0+incompatible
+	github.com/hashicorp/go-multierror v1.0.0
 	github.com/ikeikeikeike/go-sitemap-generator/v2 v2.0.2
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/kylemcc/twitter-text-go v0.0.0-20180726194232-7f582f6736ec
@@ -36,13 +37,14 @@ require (
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
 	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
-	github.com/stretchr/testify v1.3.0 // indirect
+	github.com/stretchr/testify v1.3.0
 	github.com/writeas/activity v0.1.2
 	github.com/writeas/activityserve v0.0.0-20191115095800-dd6d19cc8b89
 	github.com/writeas/go-strip-markdown v2.0.1+incompatible
 	github.com/writeas/go-webfinger v0.0.0-20190106002315-85cf805c86d2
 	github.com/writeas/httpsig v1.0.0
-	github.com/writeas/impart v1.1.0
+	github.com/writeas/impart v1.1.1-0.20191230230525-d3c45ced010d
+	github.com/writeas/import v0.2.0
 	github.com/writeas/monday v0.0.0-20181024183321-54a7dd579219
 	github.com/writeas/nerds v1.0.0
 	github.com/writeas/saturday v1.7.1
@@ -58,6 +60,7 @@ require (
 	gopkg.in/alecthomas/kingpin.v3-unstable v3.0.0-20180810215634-df19058c872c // indirect
 	gopkg.in/ini.v1 v1.41.0
 	gopkg.in/yaml.v2 v2.2.2 // indirect
+	src.techknowlogick.com/xgo v0.0.0-20200129005940-d0fae26e014b // indirect
 )
 
 go 1.13

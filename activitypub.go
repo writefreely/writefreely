@@ -37,6 +37,8 @@ import (
 const (
 	// TODO: delete. don't use this!
 	apCustomHandleDefault = "blog"
+
+	apCacheTime = time.Minute
 )
 
 type RemoteUser struct {
@@ -93,6 +95,7 @@ func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Re
 
 	p := c.PersonObject()
 
+	setCacheControl(w, apCacheTime)
 	return impart.RenderActivityJSON(w, p, http.StatusOK)
 }
 
@@ -154,6 +157,7 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 		ocp.OrderedItems = append(ocp.OrderedItems, *a)
 	}
 
+	setCacheControl(w, apCacheTime)
 	return impart.RenderActivityJSON(w, ocp, http.StatusOK)
 }
 
@@ -208,6 +212,7 @@ func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Req
 			ocp.OrderedItems = append(ocp.OrderedItems, f.ActorID)
 		}
 	*/
+	setCacheControl(w, apCacheTime)
 	return impart.RenderActivityJSON(w, ocp, http.StatusOK)
 }
 
@@ -252,6 +257,7 @@ func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Req
 	// Return outbox page
 	ocp := activitystreams.NewOrderedCollectionPage(accountRoot, "following", 0, p)
 	ocp.OrderedItems = []interface{}{}
+	setCacheControl(w, apCacheTime)
 	return impart.RenderActivityJSON(w, ocp, http.StatusOK)
 }
 
@@ -790,4 +796,8 @@ func unmarshalActor(actorResp []byte, actor *activitystreams.Person) error {
 	}(flexActor.Context)
 
 	return nil
+}
+
+func setCacheControl(w http.ResponseWriter, ttl time.Duration) {
+	w.Header().Set("Cache-Control", fmt.Sprintf("public, max-age=%.0f", ttl.Seconds()))
 }

@@ -10,6 +10,7 @@
 						<li class="separator"><hr /></li>
 						{{if .IsAdmin}}<li><a href="/admin">Admin</a></li>{{end}}
 						<li><a href="/me/settings">Settings</a></li>
+						<li><a href="/me/import">Import posts</a></li>
 						<li><a href="/me/export">Export</a></li>
 						<li class="separator"><hr /></li>
 						<li><a href="/me/logout">Log out</a></li>
@@ -32,6 +33,7 @@
 				<ul><li><a>{{.Username}}</a> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /><ul>
 						{{if .IsAdmin}}<li><a href="/admin">Admin dashboard</a></li>{{end}}
 						<li><a href="/me/settings">Account settings</a></li>
+						<li><a href="/me/import">Import posts</a></li>
 						<li><a href="/me/export">Export</a></li>
 						{{if .CanInvite}}<li><a href="/me/invites">Invite people</a></li>{{end}}
 						<li class="separator"><hr /></li>

@@ -75,6 +75,7 @@
 		{{range .ExternalScripts}}<script type="text/javascript" src="{{.}}" async></script>{{end}}
 		{{if .Collection.Script}}<script type="text/javascript">{{.ScriptDisplay}}</script>{{end}}
 	{{end}}
+	<script src="/js/localdate.js"></script>
 	{{if .IsOwner}}
 	<script src="/js/h.js"></script>
 	<script src="/js/postactions.js"></script>

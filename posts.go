@@ -228,6 +228,10 @@ func (p Post) Summary() string {
 	return shortPostDescription(p.Content)
 }
 
+func (p Post) SummaryHTML() template.HTML {
+	return template.HTML(p.Summary())
+}
+
 // Excerpt shows any text that comes before a (more) tag.
 // TODO: use HTMLExcerpt in templates instead of this method
 func (p *Post) Excerpt() template.HTML {
@@ -380,10 +384,12 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	suspended, err := app.db.IsUserSuspended(ownerID.Int64)
-	if err != nil {
-		log.Error("view post: %v", err)
-		return ErrInternalGeneral
+	var suspended bool
+	if found {
+		suspended, err = app.db.IsUserSuspended(ownerID.Int64)
+		if err != nil {
+			log.Error("view post: %v", err)
+		}
 	}
 
 	// Check if post has been unpublished
@@ -510,7 +516,6 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	suspended, err := app.db.IsUserSuspended(userID)
 	if err != nil {
 		log.Error("new post: %v", err)
-		return ErrInternalGeneral
 	}
 	if suspended {
 		return ErrUserSuspended
@@ -684,7 +689,6 @@ func existingPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	suspended, err := app.db.IsUserSuspended(userID)
 	if err != nil {
 		log.Error("existing post: %v", err)
-		return ErrInternalGeneral
 	}
 	if suspended {
 		return ErrUserSuspended
@@ -887,7 +891,6 @@ func addPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	suspended, err := app.db.IsUserSuspended(ownerID)
 	if err != nil {
 		log.Error("add post: %v", err)
-		return ErrInternalGeneral
 	}
 	if suspended {
 		return ErrUserSuspended
@@ -990,7 +993,6 @@ func pinPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	suspended, err := app.db.IsUserSuspended(userID)
 	if err != nil {
 		log.Error("pin post: %v", err)
-		return ErrInternalGeneral
 	}
 	if suspended {
 		return ErrUserSuspended
@@ -1072,7 +1074,6 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	suspended, err := app.db.IsUserSuspended(p.OwnerID.Int64)
 	if err != nil {
 		log.Error("fetch post: %v", err)
-		return ErrInternalGeneral
 	}
 	if suspended {
 		return ErrPostNotFound
@@ -1091,6 +1092,7 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		p.Collection = &CollectionObj{Collection: *coll}
 		po := p.ActivityObject(app)
 		po.Context = []interface{}{activitystreams.Namespace}
+		setCacheControl(w, apCacheTime)
 		return impart.RenderActivityJSON(w, po, http.StatusOK)
 	}
 
@@ -1356,15 +1358,18 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 	suspended, err := app.db.IsUserSuspended(c.OwnerID)
 	if err != nil {
 		log.Error("view collection post: %v", err)
-		return ErrInternalGeneral
 	}
 
 	// Check collection permissions
 	if c.IsPrivate() && (u == nil || u.ID != c.OwnerID) {
 		return ErrPostNotFound
 	}
-	if c.IsProtected() && ((u == nil || u.ID != c.OwnerID) && !isAuthorizedForCollection(app, c.Alias, r)) {
-		return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "/?g=" + slug}
+	if c.IsProtected() && (u == nil || u.ID != c.OwnerID) {
+		if suspended {
+			return ErrPostNotFound
+		} else if !isAuthorizedForCollection(app, c.Alias, r) {
+			return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "/?g=" + slug}
+		}
 	}
 
 	cr.isCollOwner = u != nil && c.OwnerID == u.ID
@@ -1375,7 +1380,7 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 
 	// Fetch extra data about the Collection
 	// TODO: refactor out this logic, shared in collection.go:fetchCollection()
-	coll := &CollectionObj{Collection: *c}
+	coll := NewCollectionObj(c)
 	owner, err := app.db.GetUserByID(coll.OwnerID)
 	if err != nil {
 		// Log the error and just continue
@@ -1451,6 +1456,7 @@ Are you sure it was ever here?`,
 		p.extractData()
 		ap := p.ActivityObject(app)
 		ap.Context = []interface{}{activitystreams.Namespace}
+		setCacheControl(w, apCacheTime)
 		return impart.RenderActivityJSON(w, ap, http.StatusOK)
 	} else {
 		p.extractData()

@@ -63,6 +63,7 @@ type (
 		TotalPosts int           `json:"total_posts"`
 		Owner      *User         `json:"owner,omitempty"`
 		Posts      *[]PublicPost `json:"posts,omitempty"`
+		Format     *CollectionFormat
 	}
 	DisplayCollection struct {
 		*CollectionObj
@@ -70,7 +71,6 @@ type (
 		IsTopLevel  bool
 		CurrentPage int
 		TotalPages  int
-		Format      *CollectionFormat
 		Suspended   bool
 	}
 	SubmittedCollection struct {
@@ -556,6 +556,13 @@ type CollectionPage struct {
 	CanInvite      bool
 }
 
+func NewCollectionObj(c *Collection) *CollectionObj {
+	return &CollectionObj{
+		Collection: *c,
+		Format:     c.NewFormat(),
+	}
+}
+
 func (c *CollectionObj) ScriptDisplay() template.JS {
 	return template.JS(c.Script)
 }
@@ -648,6 +655,16 @@ func processCollectionPermissions(app *App, cr *collectionReq, u *User, w http.R
 				uname = u.Username
 			}
 
+			// TODO: move this to all permission checks?
+			suspended, err := app.db.IsUserSuspended(c.OwnerID)
+			if err != nil {
+				log.Error("process protected collection permissions: %v", err)
+				return nil, err
+			}
+			if suspended {
+				return nil, ErrCollectionNotFound
+			}
+
 			// See if we've authorized this collection
 			authd := isAuthorizedForCollection(app, c.Alias, r)
 
@@ -695,11 +712,10 @@ func checkUserForCollection(app *App, cr *collectionReq, r *http.Request, isPost
 
 func newDisplayCollection(c *Collection, cr *collectionReq, page int) *DisplayCollection {
 	coll := &DisplayCollection{
-		CollectionObj: &CollectionObj{Collection: *c},
+		CollectionObj: NewCollectionObj(c),
 		CurrentPage:   page,
 		Prefix:        cr.prefix,
 		IsTopLevel:    isSingleUser,
-		Format:        c.NewFormat(),
 	}
 	c.db.GetPostsCount(coll.CollectionObj, cr.isCollOwner)
 	return coll
@@ -748,6 +764,7 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 	if strings.Contains(r.Header.Get("Accept"), "application/activity+json") {
 		ac := c.PersonObject()
 		ac.Context = []interface{}{activitystreams.Namespace}
+		setCacheControl(w, apCacheTime)
 		return impart.RenderActivityJSON(w, ac, http.StatusOK)
 	}
 

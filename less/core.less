@@ -684,18 +684,19 @@ select.inputform, textarea.inputform {
 	border: 1px solid #999;
 }
 
-input, button, select.inputform, textarea.inputform {
+input, button, select.inputform, textarea.inputform, a.btn {
 	padding: 0.5em;
 	font-family: @serifFont;
 	font-size: 100%;
 	.rounded(.25em);
-	&[type=submit], &.submit {
+	&[type=submit], &.submit, &.cta {
 		border: 1px solid @primary;
 		background: @primary;
 		color: white;
 		.transition(0.2s);
 		&:hover {
 			background-color: lighten(@primary, 3%);
+			text-decoration: none;
 		}
 		&:disabled {
 			cursor: default;
@@ -1316,6 +1317,24 @@ form {
 	dd {
 		font-size: 0.86em;
 		line-height: 2;
+	}
+
+	&.prominent {
+		margin: 1em 0;
+
+		label {
+			font-weight: bold;
+		}
+		input, select {
+			width: 100%;
+		}
+		select {
+			font-size: 1em;
+			padding: 0.5rem;
+			display: block;
+			border-radius: 0.25rem;
+			margin: 0.5rem 0;
+		}
 	}
 }
 div.row {
