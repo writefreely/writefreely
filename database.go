@@ -2217,6 +2217,16 @@ func (db *datastore) DeleteAccount(userID int64) error {
 	rs, _ = res.RowsAffected()
 	log.Info("Deleted %d from accesstokens", rs)
 
+	// Delete user attributes
+	res, err = t.Exec("DELETE FROM oauth_users WHERE user_id = ?", userID)
+	if err != nil {
+		t.Rollback()
+		log.Error("Unable to delete oauth_users: %v", err)
+		return err
+	}
+	rs, _ = res.RowsAffected()
+	log.Info("Deleted %d from oauth_users", rs)
+
 	// Delete posts
 	// TODO: should maybe get each row so we can federate a delete
 	// if so needs to be outside of transaction like collections
