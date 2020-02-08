@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -113,9 +113,8 @@ func RemoteLookup(handle string) string {
 
 	var result webfinger.Resource
 	err = json.Unmarshal(body, &result)
-
 	if err != nil {
-		log.Error("Unsupported webfinger response received", err)
+		log.Error("Unsupported webfinger response received: %v", err)
 		return ""
 	}
 
