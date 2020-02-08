@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -861,13 +861,13 @@ func handleViewMention(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	handle := vars["handle"]
 
-	remoteUser, err := app.db.getProfilePageFromHandle(app, handle)
+	remoteUser, err := app.db.GetProfilePageFromHandle(app, handle)
 	if err != nil {
 		log.Error("Couldn't find this user "+handle, err)
 		return nil
 	}
 
-	return impart.HTTPError{Status: http.StatusFound, Message: remoteUser} 
+	return impart.HTTPError{Status: http.StatusFound, Message: remoteUser}
 }
 
 func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) error {

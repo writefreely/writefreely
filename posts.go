@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -1176,7 +1176,7 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 	mentions := mentionRegex.FindAllString(content, -1)
 
 	for _, handle := range mentions {
-		actorIRI, err := app.db.getProfilePageFromHandle(app, handle)
+		actorIRI, err := app.db.GetProfilePageFromHandle(app, handle)
 		if err != nil {
 			log.Info("Can't find this user either in the database nor in the remote instance")
 			return nil

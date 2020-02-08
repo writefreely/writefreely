@@ -2557,18 +2557,17 @@ func handleFailedPostInsert(err error) error {
 	return err
 }
 
-func (db *datastore) getProfilePageFromHandle(app *App, handle string) (actorIRI string, err error) {
-	remoteuser, errRemoteUser := getRemoteUserFromHandle(app, handle)
-	if errRemoteUser != nil {
+func (db *datastore) GetProfilePageFromHandle(app *App, handle string) (string, error) {
+	actorIRI := ""
+	remoteUser, err := getRemoteUserFromHandle(app, handle)
+	if err != nil {
 		// can't find using handle in the table but the table may already have this user without
 		// handle from a previous version
 		actorIRI = RemoteLookup(handle)
 		_, errRemoteUser := getRemoteUser(app, actorIRI)
 		// if it exists then we need to update the handle
 		if errRemoteUser == nil {
-			// query := "UPDATE remoteusers SET handle='" + handle + "' WHERE actor_id='" + iri + "';"
-			// log.Info(query)
-			_, err := app.db.Exec("UPDATE remoteusers SET handle=? WHERE actor_id=?;", handle, actorIRI)
+			_, err := app.db.Exec("UPDATE remoteusers SET handle = ? WHERE actor_id = ?", handle, actorIRI)
 			if err != nil {
 				log.Error("Can't update handle (" + handle + ") in database for user " + actorIRI)
 			}
@@ -2579,15 +2578,17 @@ func (db *datastore) getProfilePageFromHandle(app *App, handle string) (actorIRI
 			if err != nil {
 				log.Error("Couldn't fetch remote actor", err)
 			}
-			fmt.Println(actorIRI, remoteActor.GetInbox(), remoteActor.GetSharedInbox(), handle)
-			_, err = app.db.Exec("INSERT INTO remoteusers (actor_id, inbox, shared_inbox, handle) VALUES( ?, ?, ?, ?)", actorIRI, remoteActor.GetInbox(), remoteActor.GetSharedInbox(), handle)
+			if debugging {
+				log.Info("%s %s %s %s", actorIRI, remoteActor.GetInbox(), remoteActor.GetSharedInbox(), handle)
+			}
+			_, err = app.db.Exec("INSERT INTO remoteusers (actor_id, inbox, shared_inbox, handle) VALUES(?, ?, ?, ?)", actorIRI, remoteActor.GetInbox(), remoteActor.GetSharedInbox(), handle)
 			if err != nil {
 				log.Error("Can't insert remote user in database", err)
 				return "", err
 			}
 		}
 	} else {
-		actorIRI = remoteuser.ActorID
+		actorIRI = remoteUser.ActorID
 	}
 	return actorIRI, nil
 }
