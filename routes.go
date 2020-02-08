@@ -71,7 +71,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	write.HandleFunc(niCfg.InfoURL, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfo)))
 
 	// handle mentions
-	write.HandleFunc("/mention:{handle}", handler.Web(handleViewMention, UserLevelReader))
+	write.HandleFunc("/@/{handle}", handler.Web(handleViewMention, UserLevelReader))
 
 	configureSlackOauth(handler, write, apper.App())
 	configureWriteAsOauth(handler, write, apper.App())
