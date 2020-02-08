@@ -22,6 +22,7 @@ import (
 	"github.com/guregu/null"
 	"github.com/guregu/null/zero"
 	uuid "github.com/nu7hatch/gouuid"
+	"github.com/writeas/activityserve"
 	"github.com/writeas/impart"
 	"github.com/writeas/nerds/store"
 	"github.com/writeas/web-core/activitypub"
@@ -2554,4 +2555,41 @@ func stringLogln(log *string, s string, v ...interface{}) {
 func handleFailedPostInsert(err error) error {
 	log.Error("Couldn't insert into posts: %v", err)
 	return err
+}
+
+func (db *datastore) GetProfilePageFromHandle(app *App, handle string) (string, error) {
+	actorIRI := ""
+	remoteUser, err := getRemoteUserFromHandle(app, handle)
+	if err != nil {
+		// can't find using handle in the table but the table may already have this user without
+		// handle from a previous version
+		// TODO: Make this determination. We should know whether a user exists without a handle, or doesn't exist at all
+		actorIRI = RemoteLookup(handle)
+		_, errRemoteUser := getRemoteUser(app, actorIRI)
+		// if it exists then we need to update the handle
+		if errRemoteUser == nil {
+			_, err := app.db.Exec("UPDATE remoteusers SET handle = ? WHERE actor_id = ?", handle, actorIRI)
+			if err != nil {
+				log.Error("Can't update handle (" + handle + ") in database for user " + actorIRI)
+			}
+		} else {
+			// this probably means we don't have the user in the table so let's try to insert it
+			// here we need to ask the server for the inboxes
+			remoteActor, err := activityserve.NewRemoteActor(actorIRI)
+			if err != nil {
+				log.Error("Couldn't fetch remote actor", err)
+			}
+			if debugging {
+				log.Info("%s %s %s %s", actorIRI, remoteActor.GetInbox(), remoteActor.GetSharedInbox(), handle)
+			}
+			_, err = app.db.Exec("INSERT INTO remoteusers (actor_id, inbox, shared_inbox, handle) VALUES(?, ?, ?, ?)", actorIRI, remoteActor.GetInbox(), remoteActor.GetSharedInbox(), handle)
+			if err != nil {
+				log.Error("Can't insert remote user in database", err)
+				return "", err
+			}
+		}
+	} else {
+		actorIRI = remoteUser.ActorID
+	}
+	return actorIRI, nil
 }
