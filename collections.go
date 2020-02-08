@@ -862,9 +862,9 @@ func handleViewMention(app *App, w http.ResponseWriter, r *http.Request) error {
 	handle := vars["handle"]
 
 	remoteUser, err := app.db.GetProfilePageFromHandle(app, handle)
-	if err != nil {
-		log.Error("Couldn't find this user "+handle, err)
-		return nil
+	if err != nil || remoteUser == "" {
+		log.Error("Couldn't find user %s: %v", handle, err)
+		return ErrRemoteUserNotFound
 	}
 
 	return impart.HTTPError{Status: http.StatusFound, Message: remoteUser}
