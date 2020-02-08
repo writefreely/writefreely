@@ -2184,16 +2184,6 @@ func (db *datastore) DeleteAccount(userID int64) error {
 		rs, _ = res.RowsAffected()
 		log.Info("Deleted %d for %s from collectionkeys", rs, c.Alias)
 
-		// Float all collection's posts
-		res, err = t.Exec("UPDATE posts SET collection_id = NULL WHERE collection_id = ? AND owner_id = ?", c.ID, userID)
-		if err != nil {
-			t.Rollback()
-			log.Error("Unable to update collection %s for posts: %v", c.Alias, err)
-			return err
-		}
-		rs, _ = res.RowsAffected()
-		log.Info("Removed %d posts from collection %s", rs, c.Alias)
-
 		// TODO: federate delete collection
 
 		// Remove remote follows
