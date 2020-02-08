@@ -88,7 +88,7 @@ func applyMarkdownSpecial(data []byte, skipNoFollow bool, baseURL string, cfg *c
 		}
 		md = []byte(hashtagReg.ReplaceAll(md, []byte("<a href=\""+tagPrefix+"$1\" class=\"hashtag\"><span>#</span><span class=\"p-category\">$1</span></a>")))
 		handlePrefix := cfg.App.Host + "/@/"
-		md = []byte(mentionReg.ReplaceAll(md, []byte("<a href=\""+handlePrefix+"$1$2\" class=\"mention\">@$1$2</a>")))
+		md = []byte(mentionReg.ReplaceAll(md, []byte("<a href=\""+handlePrefix+"$1$2\" class=\"u-url mention\">@<span>$1$2</span></a>")))
 	}
 	// Strip out bad HTML
 	policy := getSanitizationPolicy()
