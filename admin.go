@@ -187,7 +187,11 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 	var err error
 	p.User, err = app.db.GetUserForAuth(username)
 	if err != nil {
-		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get user: %v", err)}
+		if err == ErrUserNotFound {
+			return err
+		}
+		log.Error("Could not get user: %v", err)
+		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 	}
 
 	flashes, _ := getSessionFlashes(app, w, r, nil)
