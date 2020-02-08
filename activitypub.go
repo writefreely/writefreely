@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -715,7 +715,7 @@ func getRemoteUserFromHandle(app *App, handle string) (*RemoteUser, error) {
 	err := app.db.QueryRow("SELECT id, actor_id, inbox, shared_inbox FROM remoteusers WHERE handle = ?", handle).Scan(&u.ID, &u.ActorID, &u.Inbox, &u.SharedInbox)
 	switch {
 	case err == sql.ErrNoRows:
-		return nil, impart.HTTPError{http.StatusNotFound, "No remote user with that handle."}
+		return nil, ErrRemoteUserNotFound
 	case err != nil:
 		log.Error("Couldn't get remote user %s: %v", handle, err)
 		return nil, err

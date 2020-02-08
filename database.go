@@ -2563,6 +2563,7 @@ func (db *datastore) GetProfilePageFromHandle(app *App, handle string) (string, 
 	if err != nil {
 		// can't find using handle in the table but the table may already have this user without
 		// handle from a previous version
+		// TODO: Make this determination. We should know whether a user exists without a handle, or doesn't exist at all
 		actorIRI = RemoteLookup(handle)
 		_, errRemoteUser := getRemoteUser(app, actorIRI)
 		// if it exists then we need to update the handle
