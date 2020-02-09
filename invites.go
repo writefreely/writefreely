@@ -56,12 +56,19 @@ func handleViewUserInvites(app *App, u *User, w http.ResponseWriter, r *http.Req
 
 	p := struct {
 		*UserPage
-		Invites *[]Invite
+		Invites   *[]Invite
+		Suspended bool
 	}{
 		UserPage: NewUserPage(app, r, u, "Invite People", f),
 	}
 
 	var err error
+
+	p.Suspended, err = app.db.IsUserSuspended(u.ID)
+	if err != nil {
+		log.Error("view invites: %v", err)
+	}
+
 	p.Invites, err = app.db.GetUserInvites(u.ID)
 	if err != nil {
 		return err
