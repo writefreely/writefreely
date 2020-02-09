@@ -1,3 +1,13 @@
+/*
+ * Copyright © 2019-2020 A Bunch Tell LLC.
+ *
+ * This file is part of WriteFreely.
+ *
+ * WriteFreely is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License, included
+ * in the LICENSE file in this source code package.
+ */
+
 package writefreely
 
 import (
@@ -157,7 +167,7 @@ func (c slackOauthClient) inspectOauthAccessToken(ctx context.Context, accessTok
 func (resp slackUserIdentityResponse) InspectResponse() *InspectResponse {
 	return &InspectResponse{
 		UserID:      resp.User.ID,
-		Username:    fmt.Sprintf("%s-%s", slug.Make(resp.User.Name), store.Generate62RandomString(5)),
+		Username:    fmt.Sprintf("%s-%s", slug.Make(resp.User.Name), store.GenerateRandomString("0123456789bcdfghjklmnpqrstvwxyz", 5)),
 		DisplayName: resp.User.Name,
 		Email:       resp.User.Email,
 	}

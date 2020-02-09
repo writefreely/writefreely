@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -35,7 +35,6 @@ import (
 	"github.com/writeas/web-core/i18n"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/tags"
-	"github.com/writeas/writefreely/config"
 	"github.com/writeas/writefreely/page"
 	"github.com/writeas/writefreely/parse"
 )
@@ -229,6 +228,10 @@ func (p Post) Summary() string {
 	return shortPostDescription(p.Content)
 }
 
+func (p Post) SummaryHTML() template.HTML {
+	return template.HTML(p.Summary())
+}
+
 // Excerpt shows any text that comes before a (more) tag.
 // TODO: use HTMLExcerpt in templates instead of this method
 func (p *Post) Excerpt() template.HTML {
@@ -381,9 +384,9 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	var suspended bool
+	var silenced bool
 	if found {
-		suspended, err = app.db.IsUserSuspended(ownerID.Int64)
+		silenced, err = app.db.IsUserSilenced(ownerID.Int64)
 		if err != nil {
 			log.Error("view post: %v", err)
 		}
@@ -436,10 +439,10 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		page := struct {
 			*AnonymousPost
 			page.StaticPage
-			Username  string
-			IsOwner   bool
-			SiteURL   string
-			Suspended bool
+			Username string
+			IsOwner  bool
+			SiteURL  string
+			Silenced bool
 		}{
 			AnonymousPost: post,
 			StaticPage:    pageForReq(app, r),
@@ -450,10 +453,10 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 			page.IsOwner = ownerID.Valid && ownerID.Int64 == u.ID
 		}
 
-		if !page.IsOwner && suspended {
+		if !page.IsOwner && silenced {
 			return ErrPostNotFound
 		}
-		page.Suspended = suspended
+		page.Silenced = silenced
 		err = templates["post"].ExecuteTemplate(w, "post", page)
 		if err != nil {
 			log.Error("Post template execute error: %v", err)
@@ -510,12 +513,12 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	} else {
 		userID = app.db.GetUserID(accessToken)
 	}
-	suspended, err := app.db.IsUserSuspended(userID)
+	silenced, err := app.db.IsUserSilenced(userID)
 	if err != nil {
 		log.Error("new post: %v", err)
 	}
-	if suspended {
-		return ErrUserSuspended
+	if silenced {
+		return ErrUserSilenced
 	}
 
 	if userID == -1 {
@@ -683,12 +686,12 @@ func existingPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	suspended, err := app.db.IsUserSuspended(userID)
+	silenced, err := app.db.IsUserSilenced(userID)
 	if err != nil {
 		log.Error("existing post: %v", err)
 	}
-	if suspended {
-		return ErrUserSuspended
+	if silenced {
+		return ErrUserSilenced
 	}
 
 	// Modify post struct
@@ -885,12 +888,12 @@ func addPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		ownerID = u.ID
 	}
 
-	suspended, err := app.db.IsUserSuspended(ownerID)
+	silenced, err := app.db.IsUserSilenced(ownerID)
 	if err != nil {
 		log.Error("add post: %v", err)
 	}
-	if suspended {
-		return ErrUserSuspended
+	if silenced {
+		return ErrUserSilenced
 	}
 
 	// Parse claimed posts in format:
@@ -987,12 +990,12 @@ func pinPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		userID = u.ID
 	}
 
-	suspended, err := app.db.IsUserSuspended(userID)
+	silenced, err := app.db.IsUserSilenced(userID)
 	if err != nil {
 		log.Error("pin post: %v", err)
 	}
-	if suspended {
-		return ErrUserSuspended
+	if silenced {
+		return ErrUserSilenced
 	}
 
 	// Parse request
@@ -1068,11 +1071,11 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	suspended, err := app.db.IsUserSuspended(p.OwnerID.Int64)
+	silenced, err := app.db.IsUserSilenced(p.OwnerID.Int64)
 	if err != nil {
 		log.Error("fetch post: %v", err)
 	}
-	if suspended {
+	if silenced {
 		return ErrPostNotFound
 	}
 
@@ -1087,8 +1090,9 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 
 		p.Collection = &CollectionObj{Collection: *coll}
-		po := p.ActivityObject(app.cfg)
+		po := p.ActivityObject(app)
 		po.Context = []interface{}{activitystreams.Namespace}
+		setCacheControl(w, apCacheTime)
 		return impart.RenderActivityJSON(w, po, http.StatusOK)
 	}
 
@@ -1122,7 +1126,8 @@ func (p *PublicPost) CanonicalURL(hostName string) string {
 	return p.Collection.CanonicalURL() + p.Slug.String
 }
 
-func (p *PublicPost) ActivityObject(cfg *config.Config) *activitystreams.Object {
+func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
+	cfg := app.cfg
 	o := activitystreams.NewArticleObject()
 	o.ID = p.Collection.FederatedAPIBase() + "api/posts/" + p.ID
 	o.Published = p.Created
@@ -1161,6 +1166,27 @@ func (p *PublicPost) ActivityObject(cfg *config.Config) *activitystreams.Object 
 				Name: "#" + t,
 			})
 		}
+	}
+	// Find mentioned users
+	mentionedUsers := make(map[string]string)
+
+	stripper := bluemonday.StrictPolicy()
+	content := stripper.Sanitize(p.Content)
+	mentionRegex := regexp.MustCompile(`@[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]+\b`)
+	mentions := mentionRegex.FindAllString(content, -1)
+
+	for _, handle := range mentions {
+		actorIRI, err := app.db.GetProfilePageFromHandle(app, handle)
+		if err != nil {
+			log.Info("Can't find this user either in the database nor in the remote instance")
+			return nil
+		}
+		mentionedUsers[handle] = actorIRI
+	}
+
+	for handle, iri := range mentionedUsers {
+		o.CC = append(o.CC, iri)
+		o.Tag = append(o.Tag, activitystreams.Tag{Type: "Mention", HRef: iri, Name: handle})
 	}
 	return o
 }
@@ -1329,7 +1355,7 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 	}
 	c.hostName = app.cfg.App.Host
 
-	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("view collection post: %v", err)
 	}
@@ -1339,7 +1365,7 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 		return ErrPostNotFound
 	}
 	if c.IsProtected() && (u == nil || u.ID != c.OwnerID) {
-		if suspended {
+		if silenced {
 			return ErrPostNotFound
 		} else if !isAuthorizedForCollection(app, c.Alias, r) {
 			return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "/?g=" + slug}
@@ -1394,7 +1420,7 @@ Are you sure it was ever here?`,
 	p.Collection = coll
 	p.IsTopLevel = app.cfg.App.SingleUser
 
-	if !p.IsOwner && suspended {
+	if !p.IsOwner && silenced {
 		return ErrPostNotFound
 	}
 	// Check if post has been unpublished
@@ -1428,8 +1454,9 @@ Are you sure it was ever here?`,
 			return ErrCollectionPageNotFound
 		}
 		p.extractData()
-		ap := p.ActivityObject(app.cfg)
+		ap := p.ActivityObject(app)
 		ap.Context = []interface{}{activitystreams.Namespace}
+		setCacheControl(w, apCacheTime)
 		return impart.RenderActivityJSON(w, ap, http.StatusOK)
 	} else {
 		p.extractData()
@@ -1446,14 +1473,14 @@ Are you sure it was ever here?`,
 			IsFound        bool
 			IsAdmin        bool
 			CanInvite      bool
-			Suspended      bool
+			Silenced       bool
 		}{
 			PublicPost:     p,
 			StaticPage:     pageForReq(app, r),
 			IsOwner:        cr.isCollOwner,
 			IsCustomDomain: cr.isCustomDomain,
 			IsFound:        postFound,
-			Suspended:      suspended,
+			Silenced:       silenced,
 		}
 		tp.IsAdmin = u != nil && u.IsAdmin()
 		tp.CanInvite = canUserInvite(app.cfg, tp.IsAdmin)

@@ -224,6 +224,11 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 		return nil
 	}
 
+	displayName := tokenInfo.DisplayName
+	if len(displayName) == 0 {
+		displayName = tokenInfo.Username
+	}
+
 	tp := &oauthSignupPageParams{
 		AccessToken:     tokenResponse.AccessToken,
 		TokenUsername:   tokenInfo.Username,

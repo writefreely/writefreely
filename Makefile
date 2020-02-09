@@ -25,31 +25,37 @@ build-no-sqlite: assets-no-sqlite deps-no-sqlite
 
 build-linux: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u github.com/karalabe/xgo; \
+		$(GOGET) -u src.techknowlogick.com/xgo; \
 	fi
 	xgo --targets=linux/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
 
 build-windows: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u github.com/karalabe/xgo; \
+		$(GOGET) -u src.techknowlogick.com/xgo; \
 	fi
 	xgo --targets=windows/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
 
 build-darwin: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u github.com/karalabe/xgo; \
+		$(GOGET) -u src.techknowlogick.com/xgo; \
 	fi
 	xgo --targets=darwin/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
 
+build-arm6: deps
+	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+		$(GOGET) -u src.techknowlogick.com/xgo; \
+	fi
+	xgo --targets=linux/arm-6, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
+
 build-arm7: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u github.com/karalabe/xgo; \
+		$(GOGET) -u src.techknowlogick.com/xgo; \
 	fi
 	xgo --targets=linux/arm-7, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
 
 build-arm64: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u github.com/karalabe/xgo; \
+		$(GOGET) -u src.techknowlogick.com/xgo; \
 	fi
 	xgo --targets=linux/arm64, -dest build/ $(LDFLAGS) -tags='sqlite' -out writefreely ./cmd/writefreely
 
@@ -84,6 +90,10 @@ release : clean ui assets
 	$(MAKE) build-linux
 	mv build/$(BINARY_NAME)-linux-amd64 $(BUILDPATH)/$(BINARY_NAME)
 	tar -cvzf $(BINARY_NAME)_$(GITREV)_linux_amd64.tar.gz -C build $(BINARY_NAME)
+	rm $(BUILDPATH)/$(BINARY_NAME)
+	$(MAKE) build-arm6
+	mv build/$(BINARY_NAME)-linux-arm-6 $(BUILDPATH)/$(BINARY_NAME)
+	tar -cvzf $(BINARY_NAME)_$(GITREV)_linux_arm6.tar.gz -C build $(BINARY_NAME)
 	rm $(BUILDPATH)/$(BINARY_NAME)
 	$(MAKE) build-arm7
 	mv build/$(BINARY_NAME)-linux-arm-7 $(BUILDPATH)/$(BINARY_NAME)
@@ -145,7 +155,7 @@ $(TMPBIN)/go-bindata: deps $(TMPBIN)
 	$(GOBUILD) -o $(TMPBIN)/go-bindata github.com/jteeuwen/go-bindata/go-bindata
 
 $(TMPBIN)/xgo: deps $(TMPBIN)
-	$(GOBUILD) -o $(TMPBIN)/xgo github.com/karalabe/xgo
+	$(GOBUILD) -o $(TMPBIN)/xgo src.techknowlogick.com/xgo
 
 ci-assets : $(TMPBIN)/go-bindata
 	$(TMPBIN)/go-bindata -pkg writefreely -ignore=\\.gitignore -tags="!wflib" schema.sql sqlite.sql

@@ -131,9 +131,9 @@
 		{{else}}var canPublish = true;{{end}}
 		var publishing = false;
 		var justPublished = false;
-		var suspended = {{.Suspended}};
+		var silenced = {{.Silenced}};
 		var publish = function(content, font) {
-			if (suspended === true) {
+			if (silenced === true) {
 				alert("Your account is silenced, so you can't publish or update posts.");
 				return;
 			}
