@@ -1,36 +1,29 @@
+/*
+ * Copyright © 2019 A Bunch Tell LLC.
+ *
+ * This file is part of WriteFreely.
+ *
+ * WriteFreely is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License, included
+ * in the LICENSE file in this source code package.
+ */
+
 package migrations
 
-import (
-	"context"
-	"database/sql"
+func supportActivityPubMentions(db *datastore) error {
+	t, err := db.Begin()
 
-	wf_db "github.com/writeas/writefreely/db"
-)
-
-func oauthAttach(db *datastore) error {
-	dialect := wf_db.DialectMySQL
-	if db.driverName == driverSQLite {
-		dialect = wf_db.DialectSQLite
+	_, err = t.Exec(`ALTER TABLE remoteusers ADD COLUMN handle ` + db.typeVarChar(255) + ` DEFAULT '' NOT NULL`)
+	if err != nil {
+		t.Rollback()
+		return err
 	}
-	return wf_db.RunTransactionWithOptions(context.Background(), db.DB, &sql.TxOptions{}, func(ctx context.Context, tx *sql.Tx) error {
-		builders := []wf_db.SQLBuilder{
-			dialect.
-				AlterTable("oauth_client_states").
-				AddColumn(dialect.
-					Column(
-						"attach_user_id",
-						wf_db.ColumnTypeInteger,
-						wf_db.OptionalInt{Set: true, Value: 24,}).SetNullable(false).SetDefault("0")),
-		}
-		for _, builder := range builders {
-			query, err := builder.ToSQL()
-			if err != nil {
-				return err
-			}
-			if _, err := tx.ExecContext(ctx, query); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+
+	err = t.Commit()
+	if err != nil {
+		t.Rollback()
+		return err
+	}
+
+	return nil
 }

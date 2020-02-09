@@ -61,8 +61,8 @@ body#collection header nav.tabs a:first-child {
 	<body id="collection" itemscope itemtype="http://schema.org/WebPage">
 		{{template "user-navigation" .}}
 		
-		{{if .Suspended}}
-			{{template "user-suspended"}}
+		{{if .Silenced}}
+			{{template "user-silenced"}}
 		{{end}}
 		<header>
 		<h1 dir="{{.Direction}}" id="blog-title"><a href="/{{if .IsTopLevel}}{{else}}{{.Prefix}}{{.Alias}}/{{end}}" class="h-card p-author u-url" rel="me author">{{.DisplayTitle}}</a></h1>
@@ -115,6 +115,7 @@ body#collection header nav.tabs a:first-child {
 		{{if .Script}}<script type="text/javascript">{{.ScriptDisplay}}</script>{{end}}
 	{{end}}
 	<script src="/js/h.js"></script>
+	<script src="/js/localdate.js"></script>
 	<script src="/js/postactions.js"></script>
 	<script type="text/javascript">
 var deleting = false;

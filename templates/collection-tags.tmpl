@@ -53,8 +53,8 @@
 			</nav>
 		</header>
 		
-		{{if .Suspended}}
-			{{template "user-suspended"}}
+		{{if .Silenced}}
+			{{template "user-silenced"}}
 		{{end}}
 		{{if .Posts}}<section id="wrapper" itemscope itemtype="http://schema.org/Blog">{{else}}<div id="wrapper">{{end}}
 			<h1>{{.Tag}}</h1>
@@ -75,6 +75,7 @@
 		{{range .ExternalScripts}}<script type="text/javascript" src="{{.}}" async></script>{{end}}
 		{{if .Collection.Script}}<script type="text/javascript">{{.ScriptDisplay}}</script>{{end}}
 	{{end}}
+	<script src="/js/localdate.js"></script>
 	{{if .IsOwner}}
 	<script src="/js/h.js"></script>
 	<script src="/js/postactions.js"></script>

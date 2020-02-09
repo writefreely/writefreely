@@ -1,3 +1,13 @@
+/*
+ * Copyright © 2020 A Bunch Tell LLC.
+ *
+ * This file is part of WriteFreely.
+ *
+ * WriteFreely is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License, included
+ * in the LICENSE file in this source code package.
+ */
+
 package writefreely
 
 import (
@@ -22,16 +32,16 @@ type viewOauthSignupVars struct {
 
 	AccessToken     string
 	TokenUsername   string
-	TokenAlias      string
+	TokenAlias      string // TODO: rename this to match the data it represents: the collection title
 	TokenEmail      string
 	TokenRemoteUser string
 	Provider        string
 	ClientID        string
 	TokenHash       string
 
-	Username string
-	Alias    string
-	Email    string
+	LoginUsername string
+	Alias         string // TODO: rename this to match the data it represents: the collection title
+	Email         string
 }
 
 const (
@@ -52,7 +62,7 @@ const (
 type oauthSignupPageParams struct {
 	AccessToken     string
 	TokenUsername   string
-	TokenAlias      string
+	TokenAlias      string // TODO: rename this to match the data it represents: the collection title
 	TokenEmail      string
 	TokenRemoteUser string
 	ClientID        string
@@ -91,14 +101,20 @@ func (h oauthHandler) viewOauthSignup(app *App, w http.ResponseWriter, r *http.R
 		return h.showOauthSignupPage(app, w, r, tp, err)
 	}
 
-	hashedPass, err := auth.HashPass([]byte(r.FormValue(oauthParamPassword)))
-	if err != nil {
-		return h.showOauthSignupPage(app, w, r, tp, fmt.Errorf("unable to hash password"))
+	var err error
+	hashedPass := []byte{}
+	clearPass := r.FormValue(oauthParamPassword)
+	hasPass := clearPass != ""
+	if hasPass {
+		hashedPass, err = auth.HashPass([]byte(clearPass))
+		if err != nil {
+			return h.showOauthSignupPage(app, w, r, tp, fmt.Errorf("unable to hash password"))
+		}
 	}
 	newUser := &User{
 		Username:   r.FormValue(oauthParamUsername),
 		HashedPass: hashedPass,
-		HasPass:    true,
+		HasPass:    hasPass,
 		Email:      prepareUserEmail(r.FormValue(oauthParamEmail), h.EmailKey),
 		Created:    time.Now().Truncate(time.Second).UTC(),
 	}
@@ -131,13 +147,9 @@ func (h oauthHandler) validateOauthSignup(r *http.Request) error {
 	if len(username) > 100 {
 		return impart.HTTPError{Status: http.StatusBadRequest, Message: "Username is too long."}
 	}
-	alias := r.FormValue(oauthParamAlias)
-	if len(alias) == 0 {
-		return impart.HTTPError{Status: http.StatusBadRequest, Message: "Alias is too short."}
-	}
-	password := r.FormValue("password")
-	if len(password) == 0 {
-		return impart.HTTPError{Status: http.StatusBadRequest, Message: "Password is too short."}
+	collTitle := r.FormValue(oauthParamAlias)
+	if len(collTitle) == 0 {
+		collTitle = username
 	}
 	email := r.FormValue(oauthParamEmail)
 	if len(email) > 0 {
@@ -151,7 +163,7 @@ func (h oauthHandler) validateOauthSignup(r *http.Request) error {
 
 func (h oauthHandler) showOauthSignupPage(app *App, w http.ResponseWriter, r *http.Request, tp *oauthSignupPageParams, errMsg error) error {
 	username := tp.TokenUsername
-	alias := tp.TokenAlias
+	collTitle := tp.TokenAlias
 	email := tp.TokenEmail
 
 	session, err := app.sessionStore.Get(r, cookieName)
@@ -164,7 +176,7 @@ func (h oauthHandler) showOauthSignupPage(app *App, w http.ResponseWriter, r *ht
 		username = tmpValue
 	}
 	if tmpValue := r.FormValue(oauthParamAlias); len(tmpValue) > 0 {
-		alias = tmpValue
+		collTitle = tmpValue
 	}
 	if tmpValue := r.FormValue(oauthParamEmail); len(tmpValue) > 0 {
 		email = tmpValue
@@ -184,9 +196,9 @@ func (h oauthHandler) showOauthSignupPage(app *App, w http.ResponseWriter, r *ht
 		ClientID:        tp.ClientID,
 		TokenHash:       tp.TokenHash,
 
-		Username: username,
-		Alias:    alias,
-		Email:    email,
+		LoginUsername: username,
+		Alias:         collTitle,
+		Email:         email,
 	}
 
 	// Display any error messages

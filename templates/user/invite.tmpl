@@ -20,6 +20,9 @@ table td {
 </style>
 
 <div class="snug content-container">
+	{{if .Silenced}}
+		{{template "user-silenced"}}
+	{{end}}
 	<h1>Invite people</h1>
 	<p>Invite others to join <em>{{.SiteName}}</em> by generating and sharing invite links below.</p>
 
@@ -27,7 +30,7 @@ table td {
 		<div class="row">
 			<div class="half">
 				<label for="uses">Maximum number of uses:</label>
-				<select id="uses" name="uses">
+				<select id="uses" name="uses" {{if .Silenced}}disabled{{end}}>
 					<option value="0">No limit</option>
 					<option value="1">1 use</option>
 					<option value="5">5 uses</option>
@@ -39,7 +42,7 @@ table td {
 			</div>
 			<div class="half">
 				<label for="expires">Expire after:</label>
-				<select id="expires" name="expires">
+				<select id="expires" name="expires" {{if .Silenced}}disabled{{end}}>
 					<option value="0">Never</option>
 					<option value="30">30 minutes</option>
 					<option value="60">1 hour</option>
@@ -52,7 +55,7 @@ table td {
 			</div>
 		</div>
 		<div class="row">
-			<input type="submit" value="Generate" />
+			<input type="submit" value="Generate" {{if .Silenced}}disabled title="You cannot generate invites while your account is silenced."{{end}} />
 		</div>
 	</form>
 
