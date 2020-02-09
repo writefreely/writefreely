@@ -656,7 +656,7 @@ func processCollectionPermissions(app *App, cr *collectionReq, u *User, w http.R
 			}
 
 			// TODO: move this to all permission checks?
-			suspended, err := app.db.IsUserSuspended(c.OwnerID)
+			suspended, err := app.db.IsUserSilenced(c.OwnerID)
 			if err != nil {
 				log.Error("process protected collection permissions: %v", err)
 				return nil, err

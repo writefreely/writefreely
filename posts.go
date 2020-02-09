@@ -386,7 +386,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	var silenced bool
 	if found {
-		silenced, err = app.db.IsUserSuspended(ownerID.Int64)
+		silenced, err = app.db.IsUserSilenced(ownerID.Int64)
 		if err != nil {
 			log.Error("view post: %v", err)
 		}
@@ -1365,7 +1365,7 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 		return ErrPostNotFound
 	}
 	if c.IsProtected() && (u == nil || u.ID != c.OwnerID) {
-		if suspended {
+		if silenced {
 			return ErrPostNotFound
 		} else if !isAuthorizedForCollection(app, c.Alias, r) {
 			return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "/?g=" + slug}
