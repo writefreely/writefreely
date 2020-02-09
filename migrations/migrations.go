@@ -13,6 +13,7 @@ package migrations
 
 import (
 	"database/sql"
+
 	"github.com/writeas/web-core/log"
 )
 
@@ -55,8 +56,12 @@ func (m *migration) Migrate(db *datastore) error {
 }
 
 var migrations = []Migration{
-	New("support user invites", supportUserInvites),             // -> V1 (v0.8.0)
-	New("support dynamic instance pages", supportInstancePages), // V1 -> V2 (v0.9.0)
+	New("support user invites", supportUserInvites),                 // -> V1 (v0.8.0)
+	New("support dynamic instance pages", supportInstancePages),     // V1 -> V2 (v0.9.0)
+	New("support users suspension", supportUserStatus),              // V2 -> V3 (v0.11.0)
+	New("support oauth", oauth),                                     // V3 -> V4
+	New("support slack oauth", oauthSlack),                          // V4 -> v5
+	New("support ActivityPub mentions", supportActivityPubMentions), // V5 -> V6 (v0.12.0)
 }
 
 // CurrentVer returns the current migration version the application is on

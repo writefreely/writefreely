@@ -8,6 +8,9 @@
 <div class="content-container snug">
 	<div id="overlay"></div>
 
+	{{if .Suspended}}
+		{{template "user-suspended"}}
+	{{end}}
 	<h2>Customize {{.DisplayTitle}} <a href="{{if .SingleUser}}/{{else}}/{{.Alias}}/{{end}}">view blog</a></h2>
 
 	{{if .Flashes}}<ul class="errors">

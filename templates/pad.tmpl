@@ -25,10 +25,10 @@
 						{{else}}<li><a id="publish-to"><span id="target-name">Draft</span> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
 						<ul>
 							<li class="menu-heading">Publish to...</li>
-							<li class="target selected" id="anonymous"><a href="#anonymous"><i class="material-icons md-18">description</i> <em>Draft</em></a></li>
-							{{if .Blogs}}{{range .Blogs}}
-							<li class="target" id="blog-{{.Alias}}"><a href="#{{.Alias}}"><i class="material-icons md-18">public</i> {{if .Title}}{{.Title}}{{else}}{{.Alias}}{{end}}</a></li>
+							{{if .Blogs}}{{range $idx, $el := .Blogs}}
+								<li class="target{{if eq $idx 0}} selected{{end}}" id="blog-{{$el.Alias}}"><a href="#{{$el.Alias}}"><i class="material-icons md-18">public</i> {{if $el.Title}}{{$el.Title}}{{else}}{{$el.Alias}}{{end}}</a></li>
 							{{end}}{{end}}
+							<li class="target" id="blog-anonymous"><a href="#anonymous"><i class="material-icons md-18">description</i> <em>Draft</em></a></li>
 							<li id="user-separator" class="separator"><hr /></li>
 						{{ if .SingleUser }}
 							<li><a href="/"><i class="material-icons md-18">launch</i> View Blog</a></li>
@@ -131,8 +131,12 @@
 		{{else}}var canPublish = true;{{end}}
 		var publishing = false;
 		var justPublished = false;
-
+		var suspended = {{.Suspended}};
 		var publish = function(content, font) {
+			if (suspended === true) {
+				alert("Your account is silenced, so you can't publish or update posts.");
+				return;
+			}
 			{{if and (and .Post.Id (not .Post.Slug)) (not .User)}}
 			if (!token) {
 				alert("You don't have permission to update this post.");
@@ -278,7 +282,7 @@
 				document.getElementById('target-name').innerText = newText.join(' ');
 			});
 		}
-		var postTarget = H.get('postTarget', 'anonymous');
+		var postTarget = H.get('postTarget', '{{if .Blogs}}{{$blog := index .Blogs 0}}{{$blog.Alias}}{{else}}anonymous{{end}}');
 		if (location.hash != '') {
 			postTarget = location.hash.substring(1);
 			// TODO: pushState to /pad (or whatever the URL is) so we live on a clean URL

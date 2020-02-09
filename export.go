@@ -20,7 +20,7 @@ import (
 	"github.com/writeas/web-core/log"
 )
 
-func exportPostsCSV(u *User, posts *[]PublicPost) []byte {
+func exportPostsCSV(hostName string, u *User, posts *[]PublicPost) []byte {
 	var b bytes.Buffer
 
 	r := [][]string{
@@ -30,8 +30,9 @@ func exportPostsCSV(u *User, posts *[]PublicPost) []byte {
 		var blog string
 		if p.Collection != nil {
 			blog = p.Collection.Alias
+			p.Collection.hostName = hostName
 		}
-		f := []string{p.ID, p.Slug.String, blog, p.CanonicalURL(), p.Created8601(), p.Title.String, strings.Replace(p.Content, "\n", "\\n", -1)}
+		f := []string{p.ID, p.Slug.String, blog, p.CanonicalURL(hostName), p.Created8601(), p.Title.String, strings.Replace(p.Content, "\n", "\\n", -1)}
 		r = append(r, f)
 	}
 
