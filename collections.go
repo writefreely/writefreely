@@ -71,7 +71,6 @@ type (
 		IsTopLevel  bool
 		CurrentPage int
 		TotalPages  int
-		Format      *CollectionFormat
 		Silenced    bool
 	}
 	SubmittedCollection struct {
