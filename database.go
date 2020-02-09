@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -11,8 +11,10 @@
 package writefreely
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	wf_db "github.com/writeas/writefreely/db"
 	"net/http"
 	"strings"
 	"time"
@@ -20,6 +22,7 @@ import (
 	"github.com/guregu/null"
 	"github.com/guregu/null/zero"
 	uuid "github.com/nu7hatch/gouuid"
+	"github.com/writeas/activityserve"
 	"github.com/writeas/impart"
 	"github.com/writeas/nerds/store"
 	"github.com/writeas/web-core/activitypub"
@@ -35,6 +38,7 @@ import (
 
 const (
 	mySQLErrDuplicateKey = 1062
+	mySQLErrCollationMix = 1267
 
 	driverMySQL  = "mysql"
 	driverSQLite = "sqlite3"
@@ -124,6 +128,11 @@ type writestore interface {
 	GetUserLastPostTime(id int64) (*time.Time, error)
 	GetCollectionLastPostTime(id int64) (*time.Time, error)
 
+	GetIDForRemoteUser(context.Context, string, string, string) (int64, error)
+	RecordRemoteUserID(context.Context, int64, string, string, string, string) error
+	ValidateOAuthState(context.Context, string) (string, string, error)
+	GenerateOAuthState(context.Context, string, string) (string, error)
+
 	DatabaseInitialized() bool
 }
 
@@ -131,6 +140,8 @@ type datastore struct {
 	*sql.DB
 	driverName string
 }
+
+var _ writestore = &datastore{}
 
 func (db *datastore) now() string {
 	if db.driverName == driverSQLite {
@@ -296,7 +307,7 @@ func (db *datastore) CreateCollection(cfg *config.Config, alias, title string, u
 func (db *datastore) GetUserByID(id int64) (*User, error) {
 	u := &User{ID: id}
 
-	err := db.QueryRow("SELECT username, password, email, created FROM users WHERE id = ?", id).Scan(&u.Username, &u.HashedPass, &u.Email, &u.Created)
+	err := db.QueryRow("SELECT username, password, email, created, status FROM users WHERE id = ?", id).Scan(&u.Username, &u.HashedPass, &u.Email, &u.Created, &u.Status)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, ErrUserNotFound
@@ -306,6 +317,23 @@ func (db *datastore) GetUserByID(id int64) (*User, error) {
 	}
 
 	return u, nil
+}
+
+// IsUserSuspended returns true if the user account associated with id is
+// currently suspended.
+func (db *datastore) IsUserSuspended(id int64) (bool, error) {
+	u := &User{ID: id}
+
+	err := db.QueryRow("SELECT status FROM users WHERE id = ?", id).Scan(&u.Status)
+	switch {
+	case err == sql.ErrNoRows:
+		return false, fmt.Errorf("is user suspended: %v", ErrUserNotFound)
+	case err != nil:
+		log.Error("Couldn't SELECT user password: %v", err)
+		return false, fmt.Errorf("is user suspended: %v", err)
+	}
+
+	return u.IsSilenced(), nil
 }
 
 // DoesUserNeedAuth returns true if the user hasn't provided any methods for
@@ -347,7 +375,7 @@ func (db *datastore) IsUserPassSet(id int64) (bool, error) {
 func (db *datastore) GetUserForAuth(username string) (*User, error) {
 	u := &User{Username: username}
 
-	err := db.QueryRow("SELECT id, password, email, created FROM users WHERE username = ?", username).Scan(&u.ID, &u.HashedPass, &u.Email, &u.Created)
+	err := db.QueryRow("SELECT id, password, email, created, status FROM users WHERE username = ?", username).Scan(&u.ID, &u.HashedPass, &u.Email, &u.Created, &u.Status)
 	switch {
 	case err == sql.ErrNoRows:
 		// Check if they've entered the wrong, unnormalized username
@@ -370,7 +398,7 @@ func (db *datastore) GetUserForAuth(username string) (*User, error) {
 func (db *datastore) GetUserForAuthByID(userID int64) (*User, error) {
 	u := &User{ID: userID}
 
-	err := db.QueryRow("SELECT id, password, email, created FROM users WHERE id = ?", u.ID).Scan(&u.ID, &u.HashedPass, &u.Email, &u.Created)
+	err := db.QueryRow("SELECT id, password, email, created, status FROM users WHERE id = ?", u.ID).Scan(&u.ID, &u.HashedPass, &u.Email, &u.Created, &u.Status)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, ErrUserNotFound
@@ -1629,7 +1657,11 @@ func (db *datastore) GetMeStats(u *User) userMeStats {
 }
 
 func (db *datastore) GetTotalCollections() (collCount int64, err error) {
-	err = db.QueryRow(`SELECT COUNT(*) FROM collections`).Scan(&collCount)
+	err = db.QueryRow(`
+	SELECT COUNT(*) 
+	FROM collections c
+	LEFT JOIN users u ON u.id = c.owner_id
+	WHERE u.status = 0`).Scan(&collCount)
 	if err != nil {
 		log.Error("Unable to fetch collections count: %v", err)
 	}
@@ -1637,7 +1669,11 @@ func (db *datastore) GetTotalCollections() (collCount int64, err error) {
 }
 
 func (db *datastore) GetTotalPosts() (postCount int64, err error) {
-	err = db.QueryRow(`SELECT COUNT(*) FROM posts`).Scan(&postCount)
+	err = db.QueryRow(`
+	SELECT COUNT(*)
+	FROM posts p
+	LEFT JOIN users u ON u.id = p.owner_id
+	WHERE u.status = 0`).Scan(&postCount)
 	if err != nil {
 		log.Error("Unable to fetch posts count: %v", err)
 	}
@@ -2149,16 +2185,6 @@ func (db *datastore) DeleteAccount(userID int64) error {
 		rs, _ = res.RowsAffected()
 		log.Info("Deleted %d for %s from collectionkeys", rs, c.Alias)
 
-		// Float all collection's posts
-		res, err = t.Exec("UPDATE posts SET collection_id = NULL WHERE collection_id = ? AND owner_id = ?", c.ID, userID)
-		if err != nil {
-			t.Rollback()
-			log.Error("Unable to update collection %s for posts: %v", c.Alias, err)
-			return err
-		}
-		rs, _ = res.RowsAffected()
-		log.Info("Removed %d posts from collection %s", rs, c.Alias)
-
 		// TODO: federate delete collection
 
 		// Remove remote follows
@@ -2191,6 +2217,16 @@ func (db *datastore) DeleteAccount(userID int64) error {
 	}
 	rs, _ = res.RowsAffected()
 	log.Info("Deleted %d from accesstokens", rs)
+
+	// Delete user attributes
+	res, err = t.Exec("DELETE FROM oauth_users WHERE user_id = ?", userID)
+	if err != nil {
+		t.Rollback()
+		log.Error("Unable to delete oauth_users: %v", err)
+		return err
+	}
+	rs, _ = res.RowsAffected()
+	log.Info("Deleted %d from oauth_users", rs)
 
 	// Delete posts
 	// TODO: should maybe get each row so we can federate a delete
@@ -2293,7 +2329,7 @@ func (db *datastore) GetUserInvite(id string) (*Invite, error) {
 	var i Invite
 	err := db.QueryRow("SELECT id, max_uses, created, expires, inactive FROM userinvites WHERE id = ?", id).Scan(&i.ID, &i.MaxUses, &i.Created, &i.Expires, &i.Inactive)
 	switch {
-	case err == sql.ErrNoRows:
+	case err == sql.ErrNoRows, db.isIgnorableError(err):
 		return nil, impart.HTTPError{http.StatusNotFound, "Invite doesn't exist."}
 	case err != nil:
 		log.Error("Failed selecting invite: %v", err)
@@ -2405,17 +2441,17 @@ func (db *datastore) GetAllUsers(page uint) (*[]User, error) {
 		limitStr = fmt.Sprintf("%d, %d", (page-1)*adminUsersPerPage, adminUsersPerPage)
 	}
 
-	rows, err := db.Query("SELECT id, username, created FROM users ORDER BY created DESC LIMIT " + limitStr)
+	rows, err := db.Query("SELECT id, username, created, status FROM users ORDER BY created DESC LIMIT " + limitStr)
 	if err != nil {
-		log.Error("Failed selecting from posts: %v", err)
-		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve user posts."}
+		log.Error("Failed selecting from users: %v", err)
+		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve all users."}
 	}
 	defer rows.Close()
 
 	users := []User{}
 	for rows.Next() {
 		u := User{}
-		err = rows.Scan(&u.ID, &u.Username, &u.Created)
+		err = rows.Scan(&u.ID, &u.Username, &u.Created, &u.Status)
 		if err != nil {
 			log.Error("Failed scanning GetAllUsers() row: %v", err)
 			break
@@ -2452,6 +2488,15 @@ func (db *datastore) GetUserLastPostTime(id int64) (*time.Time, error) {
 	return &t, nil
 }
 
+// SetUserStatus changes a user's status in the database. see Users.UserStatus
+func (db *datastore) SetUserStatus(id int64, status UserStatus) error {
+	_, err := db.Exec("UPDATE users SET status = ? WHERE id = ?", status, id)
+	if err != nil {
+		return fmt.Errorf("failed to update user status: %v", err)
+	}
+	return nil
+}
+
 func (db *datastore) GetCollectionLastPostTime(id int64) (*time.Time, error) {
 	var t time.Time
 	err := db.QueryRow("SELECT created FROM posts WHERE collection_id = ? ORDER BY created DESC LIMIT 1", id).Scan(&t)
@@ -2463,6 +2508,69 @@ func (db *datastore) GetCollectionLastPostTime(id int64) (*time.Time, error) {
 		return nil, err
 	}
 	return &t, nil
+}
+
+func (db *datastore) GenerateOAuthState(ctx context.Context, provider, clientID string) (string, error) {
+	state := store.Generate62RandomString(24)
+	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_states (state, provider, client_id, used, created_at) VALUES (?, ?, ?, FALSE, NOW())", state, provider, clientID)
+	if err != nil {
+		return "", fmt.Errorf("unable to record oauth client state: %w", err)
+	}
+	return state, nil
+}
+
+func (db *datastore) ValidateOAuthState(ctx context.Context, state string) (string, string, error) {
+	var provider string
+	var clientID string
+	err := wf_db.RunTransactionWithOptions(ctx, db.DB, &sql.TxOptions{}, func(ctx context.Context, tx *sql.Tx) error {
+		err := tx.QueryRow("SELECT provider, client_id FROM oauth_client_states WHERE state = ? AND used = FALSE", state).Scan(&provider, &clientID)
+		if err != nil {
+			return err
+		}
+
+		res, err := tx.ExecContext(ctx, "UPDATE oauth_client_states SET used = TRUE WHERE state = ?", state)
+		if err != nil {
+			return err
+		}
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if rowsAffected != 1 {
+			return fmt.Errorf("state not found")
+		}
+		return nil
+	})
+	if err != nil {
+		return "", "", nil
+	}
+	return provider, clientID, nil
+}
+
+func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID int64, remoteUserID, provider, clientID, accessToken string) error {
+	var err error
+	if db.driverName == driverSQLite {
+		_, err = db.ExecContext(ctx, "INSERT OR REPLACE INTO oauth_users (user_id, remote_user_id, provider, client_id, access_token) VALUES (?, ?, ?, ?, ?)", localUserID, remoteUserID, provider, clientID, accessToken)
+	} else {
+		_, err = db.ExecContext(ctx, "INSERT INTO oauth_users (user_id, remote_user_id, provider, client_id, access_token) VALUES (?, ?, ?, ?, ?) "+db.upsert("user")+" access_token = ?", localUserID, remoteUserID, provider, clientID, accessToken, accessToken)
+	}
+	if err != nil {
+		log.Error("Unable to INSERT oauth_users for '%d': %v", localUserID, err)
+	}
+	return err
+}
+
+// GetIDForRemoteUser returns a user ID associated with a remote user ID.
+func (db *datastore) GetIDForRemoteUser(ctx context.Context, remoteUserID, provider, clientID string) (int64, error) {
+	var userID int64 = -1
+	err := db.
+		QueryRowContext(ctx, "SELECT user_id FROM oauth_users WHERE remote_user_id = ? AND provider = ? AND client_id = ?", remoteUserID, provider, clientID).
+		Scan(&userID)
+	// Not finding a record is OK.
+	if err != nil && err != sql.ErrNoRows {
+		return -1, err
+	}
+	return userID, nil
 }
 
 // DatabaseInitialized returns whether or not the current datastore has been
@@ -2494,4 +2602,41 @@ func stringLogln(log *string, s string, v ...interface{}) {
 func handleFailedPostInsert(err error) error {
 	log.Error("Couldn't insert into posts: %v", err)
 	return err
+}
+
+func (db *datastore) GetProfilePageFromHandle(app *App, handle string) (string, error) {
+	actorIRI := ""
+	remoteUser, err := getRemoteUserFromHandle(app, handle)
+	if err != nil {
+		// can't find using handle in the table but the table may already have this user without
+		// handle from a previous version
+		// TODO: Make this determination. We should know whether a user exists without a handle, or doesn't exist at all
+		actorIRI = RemoteLookup(handle)
+		_, errRemoteUser := getRemoteUser(app, actorIRI)
+		// if it exists then we need to update the handle
+		if errRemoteUser == nil {
+			_, err := app.db.Exec("UPDATE remoteusers SET handle = ? WHERE actor_id = ?", handle, actorIRI)
+			if err != nil {
+				log.Error("Can't update handle (" + handle + ") in database for user " + actorIRI)
+			}
+		} else {
+			// this probably means we don't have the user in the table so let's try to insert it
+			// here we need to ask the server for the inboxes
+			remoteActor, err := activityserve.NewRemoteActor(actorIRI)
+			if err != nil {
+				log.Error("Couldn't fetch remote actor", err)
+			}
+			if debugging {
+				log.Info("%s %s %s %s", actorIRI, remoteActor.GetInbox(), remoteActor.GetSharedInbox(), handle)
+			}
+			_, err = app.db.Exec("INSERT INTO remoteusers (actor_id, inbox, shared_inbox, handle) VALUES(?, ?, ?, ?)", actorIRI, remoteActor.GetInbox(), remoteActor.GetSharedInbox(), handle)
+			if err != nil {
+				log.Error("Can't insert remote user in database", err)
+				return "", err
+			}
+		}
+	} else {
+		actorIRI = remoteUser.ActorID
+	}
+	return actorIRI, nil
 }

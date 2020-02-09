@@ -13,13 +13,14 @@ package writefreely
 import (
 	"database/sql"
 	"encoding/json"
+	"net/http"
+
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
-	"net/http"
 )
 
 func handleWebSignup(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 
 	// Get params
 	var ur userRegistration
@@ -71,7 +72,7 @@ func handleWebSignup(app *App, w http.ResponseWriter, r *http.Request) error {
 // { "username": "asdf" }
 // result: { code: 204 }
 func handleUsernameCheck(app *App, w http.ResponseWriter, r *http.Request) error {
-	reqJSON := IsJSON(r.Header.Get("Content-Type"))
+	reqJSON := IsJSON(r)
 
 	// Get params
 	var d struct {

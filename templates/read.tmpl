@@ -87,17 +87,17 @@
 		{{ if gt (len .Posts) 0 }}
 		<section itemscope itemtype="http://schema.org/Blog">
 			{{range .Posts}}<article class="{{.Font}} h-entry" itemscope itemtype="http://schema.org/BlogPosting">
-			{{if .Title.String}}<h2 class="post-title" itemprop="name" class="p-name"><a href="{{if .Slug.String}}{{.Collection.CanonicalURL}}{{.Slug.String}}{{else}}{{.CanonicalURL}}.md{{end}}" itemprop="url" class="u-url">{{.PlainDisplayTitle}}</a></h2>
-			<time class="dt-published" datetime="{{.Created}}" pubdate itemprop="datePublished" content="{{.Created}}">{{if not .Title.String}}<a href="{{.Collection.CanonicalURL}}{{.Slug.String}}" itemprop="url">{{end}}{{.DisplayDate}}{{if not .Title.String}}</a>{{end}}</time>
+			{{if .Title.String}}<h2 class="post-title" itemprop="name" class="p-name"><a href="{{if .Slug.String}}{{.Collection.CanonicalURL}}{{.Slug.String}}{{else}}{{.CanonicalURL .Host}}.md{{end}}" itemprop="url" class="u-url">{{.PlainDisplayTitle}}</a></h2>
+			<time class="dt-published" datetime="{{.Created8601}}" pubdate itemprop="datePublished" content="{{.Created}}">{{if not .Title.String}}<a href="{{.Collection.CanonicalURL}}{{.Slug.String}}" itemprop="url">{{end}}{{.DisplayDate}}{{if not .Title.String}}</a>{{end}}</time>
 			{{else}}
-			<h2 class="post-title" itemprop="name"><time class="dt-published" datetime="{{.Created}}" pubdate itemprop="datePublished" content="{{.Created}}"><a href="{{if .Collection}}{{.Collection.CanonicalURL}}{{.Slug.String}}{{else}}{{.CanonicalURL}}.md{{end}}" itemprop="url" class="u-url">{{.DisplayDate}}</a></time></h2>
+			<h2 class="post-title" itemprop="name"><time class="dt-published" datetime="{{.Created8601}}" pubdate itemprop="datePublished" content="{{.Created}}"><a href="{{if .Collection}}{{.Collection.CanonicalURL}}{{.Slug.String}}{{else}}{{.CanonicalURL .Host}}.md{{end}}" itemprop="url" class="u-url">{{.DisplayDate}}</a></time></h2>
 			{{end}}
 			<p class="source">{{if .Collection}}from <a href="{{.Collection.CanonicalURL}}">{{.Collection.DisplayTitle}}</a>{{else}}<em>Anonymous</em>{{end}}</p>
 			{{if .Excerpt}}<div class="p-summary" {{if .Language}}lang="{{.Language.String}}"{{end}} dir="{{.Direction}}">{{.Excerpt}}</div>
 		
-			<a class="read-more" href="{{if .Collection}}{{.Collection.CanonicalURL}}{{.Slug.String}}{{else}}{{.CanonicalURL}}.md{{end}}">{{localstr "Read more..." .Language.String}}</a>{{else}}<div class="e-content preview" {{if .Language}}lang="{{.Language.String}}"{{end}} dir="{{.Direction}}">{{ if not .HTMLContent }}<p id="post-body" class="e-content preview">{{.Content}}</p>{{ else }}{{.HTMLContent}}{{ end }}<div class="over">&nbsp;</div></div>
+			<a class="read-more" href="{{if .Collection}}{{.Collection.CanonicalURL}}{{.Slug.String}}{{else}}{{.CanonicalURL .Host}}.md{{end}}">{{localstr "Read more..." .Language.String}}</a>{{else}}<div class="e-content preview" {{if .Language}}lang="{{.Language.String}}"{{end}} dir="{{.Direction}}">{{ if not .HTMLContent }}<p id="post-body" class="e-content preview">{{.Content}}</p>{{ else }}{{.HTMLContent}}{{ end }}<div class="over">&nbsp;</div></div>
 			
-			<a class="read-more maybe" href="{{if .Collection}}{{.Collection.CanonicalURL}}{{.Slug.String}}{{else}}{{.CanonicalURL}}.md{{end}}">{{localstr "Read more..." .Language.String}}</a>{{end}}</article>
+			<a class="read-more maybe" href="{{if .Collection}}{{.Collection.CanonicalURL}}{{.Slug.String}}{{else}}{{.CanonicalURL .Host}}.md{{end}}">{{localstr "Read more..." .Language.String}}</a>{{end}}</article>
 			{{end}}
 		</section>
 		{{ else }}
@@ -112,7 +112,7 @@
 		</nav>{{end}}
 
 		</div>
-
+		<script src="/js/localdate.js">
 <script type="text/javascript">
 (function() {
 	var $articles = document.querySelectorAll('article');

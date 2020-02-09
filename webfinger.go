@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -11,11 +11,15 @@
 package writefreely
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"strings"
+
 	"github.com/writeas/go-webfinger"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
-	"net/http"
 )
 
 type wfResolver struct {
@@ -36,6 +40,14 @@ func (wfr wfResolver) FindUser(username string, host, requestHost string, r []we
 	if err != nil {
 		log.Error("Unable to get blog: %v", err)
 		return nil, err
+	}
+	suspended, err := wfr.db.IsUserSuspended(c.OwnerID)
+	if err != nil {
+		log.Error("webfinger find user: check is suspended: %v", err)
+		return nil, err
+	}
+	if suspended {
+		return nil, wfUserNotFoundErr
 	}
 	c.hostName = wfr.cfg.App.Host
 	if wfr.cfg.App.SingleUser {
@@ -79,4 +91,50 @@ func (wfr wfResolver) DummyUser(username string, hostname string, r []webfinger.
 
 func (wfr wfResolver) IsNotFoundError(err error) bool {
 	return err == wfUserNotFoundErr
+}
+
+// RemoteLookup looks up a user by handle at a remote server
+// and returns the actor URL
+func RemoteLookup(handle string) string {
+	handle = strings.TrimLeft(handle, "@")
+	// let's take the server part of the handle
+	parts := strings.Split(handle, "@")
+	resp, err := http.Get("https://" + parts[1] + "/.well-known/webfinger?resource=acct:" + handle)
+	if err != nil {
+		log.Error("Error performing webfinger request", err)
+		return ""
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Error("Error reading webfinger response", err)
+		return ""
+	}
+
+	var result webfinger.Resource
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		log.Error("Unsupported webfinger response received: %v", err)
+		return ""
+	}
+
+	var href string
+	// iterate over webfinger links and find the one with
+	// a self "rel"
+	for _, link := range result.Links {
+		if link.Rel == "self" {
+			href = link.HRef
+		}
+	}
+
+	// if we didn't find it with the above then
+	// try using aliases
+	if href == "" {
+		// take the last alias because mastodon has the
+		// https://instance.tld/@user first which
+		// doesn't work as an href
+		href = result.Aliases[len(result.Aliases)-1]
+	}
+
+	return href
 }
