@@ -67,7 +67,6 @@ func handleViewUserInvites(app *App, u *User, w http.ResponseWriter, r *http.Req
 	p.Suspended, err = app.db.IsUserSuspended(u.ID)
 	if err != nil {
 		log.Error("view invites: %v", err)
-		return ErrInternalGeneral
 	}
 
 	p.Invites, err = app.db.GetUserInvites(u.ID)
