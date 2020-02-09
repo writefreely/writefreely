@@ -65,6 +65,12 @@ func (ru *RemoteUser) AsPerson() *activitystreams.Person {
 	}
 }
 
+func activityPubClient() *http.Client {
+	return &http.Client{
+		Timeout: 15 * time.Second,
+	}
+}
+
 func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Server", serverSoftware)
 
@@ -389,6 +395,11 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 	}
 
 	go func() {
+		if to == nil {
+			log.Error("No to! %v", err)
+			return
+		}
+
 		time.Sleep(2 * time.Second)
 		am, err := a.Serialize()
 		if err != nil {
@@ -397,10 +408,6 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		}
 		am["@context"] = []string{activitystreams.Namespace}
 
-		if to == nil {
-			log.Error("No to! %v", err)
-			return
-		}
 		err = makeActivityPost(app.cfg.App.Host, p, fullActor.Inbox, am)
 		if err != nil {
 			log.Error("Unable to make activity POST: %v", err)
@@ -509,7 +516,7 @@ func makeActivityPost(hostName string, p *activitystreams.Person, url string, m 
 		}
 	}
 
-	resp, err := http.DefaultClient.Do(r)
+	resp, err := activityPubClient().Do(r)
 	if err != nil {
 		return err
 	}
@@ -545,7 +552,7 @@ func resolveIRI(hostName, url string) ([]byte, error) {
 		}
 	}
 
-	resp, err := http.DefaultClient.Do(r)
+	resp, err := activityPubClient().Do(r)
 	if err != nil {
 		return nil, err
 	}
