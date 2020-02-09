@@ -156,16 +156,8 @@ func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWr
 		Username:   signup.Alias,
 		HashedPass: hashedPass,
 		HasPass:    createdWithPass,
-		Email:      zero.NewString("", signup.Email != ""),
+		Email:      prepareUserEmail(signup.Email, app.keys.EmailKey),
 		Created:    time.Now().Truncate(time.Second).UTC(),
-	}
-	if signup.Email != "" {
-		encEmail, err := data.Encrypt(app.keys.EmailKey, signup.Email)
-		if err != nil {
-			log.Error("Unable to encrypt email: %s\n", err)
-		} else {
-			u.Email.String = string(encEmail)
-		}
 	}
 
 	// Create actual user
@@ -314,12 +306,16 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		Message       template.HTML
 		Flashes       []template.HTML
 		LoginUsername string
+		OauthSlack    bool
+		OauthWriteAs  bool
 	}{
 		pageForReq(app, r),
 		r.FormValue("to"),
 		template.HTML(""),
 		[]template.HTML{},
 		getTempInfo(app, "login-user", r, w),
+		app.Config().SlackOauth.ClientID != "",
+		app.Config().WriteAsOauth.ClientID != "",
 	}
 
 	if earlyError != "" {
@@ -1096,4 +1092,17 @@ func getTempInfo(app *App, key string, r *http.Request, w http.ResponseWriter) s
 
 	// Return value
 	return s
+}
+
+func prepareUserEmail(input string, emailKey []byte) zero.String {
+	email := zero.NewString("", input != "")
+	if len(input) > 0 {
+		encEmail, err := data.Encrypt(emailKey, input)
+		if err != nil {
+			log.Error("Unable to encrypt email: %s\n", err)
+		} else {
+			email.String = string(encEmail)
+		}
+	}
+	return email
 }

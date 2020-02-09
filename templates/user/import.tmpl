@@ -1,0 +1,61 @@
+{{define "import"}}
+{{template "header" .}}
+	<style>
+		input[type=file] {
+			padding: 0;
+			font-size: 0.86em;
+			display: block;
+			margin: 0.5rem 0;
+		}
+		label {
+			display: block;
+			margin: 1em 0;
+		}
+	</style>
+
+<div class="snug content-container">
+	<h1 id="import-header">Import posts</h1>
+	{{if .Message}}
+	<div class="alert {{if .InfoMsg}}info{{else}}success{{end}}">
+		<p>{{.Message}}</p>
+	</div>
+	{{end}}
+	{{if .Flashes}}
+		<ul class="errors">
+			{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
+		</ul>
+	{{end}}
+	<p>Publish plain text or Markdown files to your account by uploading them below.</p>
+	<div class="formContainer">
+		<form id="importPosts" class="prominent" enctype="multipart/form-data" action="/api/me/import" method="POST">
+			<label>Select some files to import:
+				<input id="fileInput" class="fileInput" name="files" type="file" multiple accept="text/markdown, text/plain"/>
+			</label>
+			<input id="fileDates" name="fileDates" hidden/>
+			<label>
+				Import these posts to:
+				<select name="collection">
+					{{range $i, $el := .Collections}}
+						<option value="{{.Alias}}" {{if eq $i 0}}selected{{end}}>{{.DisplayTitle}}</option>
+					{{end}}
+					<option value="">Drafts</option>
+				</select>
+			</label>
+			<script>
+				const fileInput = document.getElementById('fileInput');
+				const fileDates = document.getElementById('fileDates');
+				fileInput.addEventListener('change', (e) => {
+					const files = e.target.files;
+					let dateMap = {};
+					for (let file of files) {
+						dateMap[file.name] = file.lastModified / 1000;
+					}
+					fileDates.value = JSON.stringify(dateMap);
+				})
+			</script>
+			<input type="submit" value="Import" />
+		</form>
+	</div>
+</div>
+{{template "footer" .}}
+{{end}}

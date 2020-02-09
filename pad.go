@@ -92,6 +92,7 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 		if err != nil {
 			return err
 		}
+		appData.EditCollection.hostName = app.cfg.App.Host
 	} else {
 		// Editing a floating article
 		appData.Post = getRawPost(app, action)
@@ -161,6 +162,7 @@ func handleViewMeta(app *App, w http.ResponseWriter, r *http.Request) error {
 		if err != nil {
 			return err
 		}
+		appData.EditCollection.hostName = app.cfg.App.Host
 	} else {
 		// Editing a floating article
 		appData.Post = getRawPost(app, action)

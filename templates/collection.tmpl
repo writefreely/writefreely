@@ -71,7 +71,7 @@
 			<!--p class="meta-note"><span>Private collection</span>. Only you can see this page.</p-->
 		{{/*end*/}}
 		{{if .PinnedPosts}}<nav>
-			{{range .PinnedPosts}}<a class="pinned" href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL .Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}</nav>
+			{{range .PinnedPosts}}<a class="pinned" href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}</nav>
 		{{end}}
 		</header>
 		
@@ -116,6 +116,7 @@
 	{{end}}
 	<script src="/js/h.js"></script>
 	<script src="/js/postactions.js"></script>
+	<script src="/js/localdate.js"></script>
 	<script type="text/javascript">
 var deleting = false;
 function delPost(e, id, owned) {

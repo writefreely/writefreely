@@ -21,10 +21,10 @@
 			{{end}}
 		{{end}}
 	</h2>
-	{{if $.Format.ShowDates}}<time class="dt-published" datetime="{{.Created}}" pubdate itemprop="datePublished" content="{{.Created}}">{{if not .Title.String}}<a href="{{$.CanonicalURL}}{{.Slug.String}}" itemprop="url">{{end}}{{.DisplayDate}}{{if not .Title.String}}</a>{{end}}</time>{{end}}
+	{{if $.Format.ShowDates}}<time class="dt-published" datetime="{{.Created8601}}" pubdate itemprop="datePublished" content="{{.Created}}">{{if not .Title.String}}<a href="{{$.CanonicalURL}}{{.Slug.String}}" itemprop="url">{{end}}{{.DisplayDate}}{{if not .Title.String}}</a>{{end}}</time>{{end}}
 {{else}}
 <h2 class="post-title" itemprop="name">
-	{{if $.Format.ShowDates}}<time class="dt-published" datetime="{{.Created}}" pubdate itemprop="datePublished" content="{{.Created}}"><a href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{$.CanonicalURL}}{{.Slug.String}}{{end}}" itemprop="url" class="u-url">{{.DisplayDate}}</a></time>{{end}}
+	{{if $.Format.ShowDates}}<time class="dt-published" datetime="{{.Created8601}}" pubdate itemprop="datePublished" content="{{.Created}}"><a href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{$.CanonicalURL}}{{.Slug.String}}{{end}}" itemprop="url" class="u-url">{{.DisplayDate}}</a></time>{{end}}
 	{{if $.IsOwner}}
 		{{if not $.Format.ShowDates}}<a class="user hidden action" href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{$.CanonicalURL}}{{.Slug.String}}{{end}}">view</a>{{end}}
 		<a class="user hidden action" href="/{{if not $.SingleUser}}{{$.Alias}}/{{end}}{{.Slug.String}}/edit">edit</a>

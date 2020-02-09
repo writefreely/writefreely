@@ -11,8 +11,10 @@
 package writefreely
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	wf_db "github.com/writeas/writefreely/db"
 	"net/http"
 	"strings"
 	"time"
@@ -20,6 +22,7 @@ import (
 	"github.com/guregu/null"
 	"github.com/guregu/null/zero"
 	uuid "github.com/nu7hatch/gouuid"
+	"github.com/writeas/activityserve"
 	"github.com/writeas/impart"
 	"github.com/writeas/nerds/store"
 	"github.com/writeas/web-core/activitypub"
@@ -61,7 +64,7 @@ type writestore interface {
 	GetAccessToken(userID int64) (string, error)
 	GetTemporaryAccessToken(userID int64, validSecs int) (string, error)
 	GetTemporaryOneTimeAccessToken(userID int64, validSecs int, oneTime bool) (string, error)
-	DeleteAccount(userID int64) (l *string, err error)
+	DeleteAccount(userID int64) error
 	ChangeSettings(app *App, u *User, s *userSettings) error
 	ChangePassphrase(userID int64, sudo bool, curPass string, hashedPass []byte) error
 
@@ -124,6 +127,11 @@ type writestore interface {
 	GetUserLastPostTime(id int64) (*time.Time, error)
 	GetCollectionLastPostTime(id int64) (*time.Time, error)
 
+	GetIDForRemoteUser(context.Context, string, string, string) (int64, error)
+	RecordRemoteUserID(context.Context, int64, string, string, string, string) error
+	ValidateOAuthState(context.Context, string) (string, string, error)
+	GenerateOAuthState(context.Context, string, string) (string, error)
+
 	DatabaseInitialized() bool
 }
 
@@ -131,6 +139,8 @@ type datastore struct {
 	*sql.DB
 	driverName string
 }
+
+var _ writestore = &datastore{}
 
 func (db *datastore) now() string {
 	if db.driverName == driverSQLite {
@@ -2104,22 +2114,13 @@ func (db *datastore) CollectionHasAttribute(id int64, attr string) bool {
 	return true
 }
 
-func (db *datastore) DeleteAccount(userID int64) (l *string, err error) {
-	debug := ""
-	l = &debug
-
-	t, err := db.Begin()
-	if err != nil {
-		stringLogln(l, "Unable to begin: %v", err)
-		return
-	}
-
+// DeleteAccount will delete the entire account for userID
+func (db *datastore) DeleteAccount(userID int64) error {
 	// Get all collections
 	rows, err := db.Query("SELECT id, alias FROM collections WHERE owner_id = ?", userID)
 	if err != nil {
-		t.Rollback()
-		stringLogln(l, "Unable to get collections: %v", err)
-		return
+		log.Error("Unable to get collections: %v", err)
+		return err
 	}
 	defer rows.Close()
 	colls := []Collection{}
@@ -2127,103 +2128,158 @@ func (db *datastore) DeleteAccount(userID int64) (l *string, err error) {
 	for rows.Next() {
 		err = rows.Scan(&c.ID, &c.Alias)
 		if err != nil {
-			t.Rollback()
-			stringLogln(l, "Unable to scan collection cols: %v", err)
-			return
+			log.Error("Unable to scan collection cols: %v", err)
+			return err
 		}
 		colls = append(colls, c)
 	}
 
+	// Start transaction
+	t, err := db.Begin()
+	if err != nil {
+		log.Error("Unable to begin: %v", err)
+		return err
+	}
+
+	// Clean up all collection related information
 	var res sql.Result
 	for _, c := range colls {
-		// TODO: user deleteCollection() func
 		// Delete tokens
 		res, err = t.Exec("DELETE FROM collectionattributes WHERE collection_id = ?", c.ID)
 		if err != nil {
 			t.Rollback()
-			stringLogln(l, "Unable to delete attributes on %s: %v", c.Alias, err)
-			return
+			log.Error("Unable to delete attributes on %s: %v", c.Alias, err)
+			return err
 		}
 		rs, _ := res.RowsAffected()
-		stringLogln(l, "Deleted %d for %s from collectionattributes", rs, c.Alias)
+		log.Info("Deleted %d for %s from collectionattributes", rs, c.Alias)
 
 		// Remove any optional collection password
 		res, err = t.Exec("DELETE FROM collectionpasswords WHERE collection_id = ?", c.ID)
 		if err != nil {
 			t.Rollback()
-			stringLogln(l, "Unable to delete passwords on %s: %v", c.Alias, err)
-			return
+			log.Error("Unable to delete passwords on %s: %v", c.Alias, err)
+			return err
 		}
 		rs, _ = res.RowsAffected()
-		stringLogln(l, "Deleted %d for %s from collectionpasswords", rs, c.Alias)
+		log.Info("Deleted %d for %s from collectionpasswords", rs, c.Alias)
 
 		// Remove redirects to this collection
 		res, err = t.Exec("DELETE FROM collectionredirects WHERE new_alias = ?", c.Alias)
 		if err != nil {
 			t.Rollback()
-			stringLogln(l, "Unable to delete redirects on %s: %v", c.Alias, err)
-			return
+			log.Error("Unable to delete redirects on %s: %v", c.Alias, err)
+			return err
 		}
 		rs, _ = res.RowsAffected()
-		stringLogln(l, "Deleted %d for %s from collectionredirects", rs, c.Alias)
+		log.Info("Deleted %d for %s from collectionredirects", rs, c.Alias)
+
+		// Remove any collection keys
+		res, err = t.Exec("DELETE FROM collectionkeys WHERE collection_id = ?", c.ID)
+		if err != nil {
+			t.Rollback()
+			log.Error("Unable to delete keys on %s: %v", c.Alias, err)
+			return err
+		}
+		rs, _ = res.RowsAffected()
+		log.Info("Deleted %d for %s from collectionkeys", rs, c.Alias)
+
+		// TODO: federate delete collection
+
+		// Remove remote follows
+		res, err = t.Exec("DELETE FROM remotefollows WHERE collection_id = ?", c.ID)
+		if err != nil {
+			t.Rollback()
+			log.Error("Unable to delete remote follows on %s: %v", c.Alias, err)
+			return err
+		}
+		rs, _ = res.RowsAffected()
+		log.Info("Deleted %d for %s from remotefollows", rs, c.Alias)
 	}
 
 	// Delete collections
 	res, err = t.Exec("DELETE FROM collections WHERE owner_id = ?", userID)
 	if err != nil {
 		t.Rollback()
-		stringLogln(l, "Unable to delete collections: %v", err)
-		return
+		log.Error("Unable to delete collections: %v", err)
+		return err
 	}
 	rs, _ := res.RowsAffected()
-	stringLogln(l, "Deleted %d from collections", rs)
+	log.Info("Deleted %d from collections", rs)
 
 	// Delete tokens
 	res, err = t.Exec("DELETE FROM accesstokens WHERE user_id = ?", userID)
 	if err != nil {
 		t.Rollback()
-		stringLogln(l, "Unable to delete access tokens: %v", err)
-		return
+		log.Error("Unable to delete access tokens: %v", err)
+		return err
 	}
 	rs, _ = res.RowsAffected()
-	stringLogln(l, "Deleted %d from accesstokens", rs)
+	log.Info("Deleted %d from accesstokens", rs)
+
+	// Delete user attributes
+	res, err = t.Exec("DELETE FROM oauth_users WHERE user_id = ?", userID)
+	if err != nil {
+		t.Rollback()
+		log.Error("Unable to delete oauth_users: %v", err)
+		return err
+	}
+	rs, _ = res.RowsAffected()
+	log.Info("Deleted %d from oauth_users", rs)
 
 	// Delete posts
+	// TODO: should maybe get each row so we can federate a delete
+	// if so needs to be outside of transaction like collections
 	res, err = t.Exec("DELETE FROM posts WHERE owner_id = ?", userID)
 	if err != nil {
 		t.Rollback()
-		stringLogln(l, "Unable to delete posts: %v", err)
-		return
+		log.Error("Unable to delete posts: %v", err)
+		return err
 	}
 	rs, _ = res.RowsAffected()
-	stringLogln(l, "Deleted %d from posts", rs)
+	log.Info("Deleted %d from posts", rs)
 
+	// Delete user attributes
 	res, err = t.Exec("DELETE FROM userattributes WHERE user_id = ?", userID)
 	if err != nil {
 		t.Rollback()
-		stringLogln(l, "Unable to delete attributes: %v", err)
-		return
+		log.Error("Unable to delete attributes: %v", err)
+		return err
 	}
 	rs, _ = res.RowsAffected()
-	stringLogln(l, "Deleted %d from userattributes", rs)
+	log.Info("Deleted %d from userattributes", rs)
 
+	// Delete user invites
+	res, err = t.Exec("DELETE FROM userinvites WHERE owner_id = ?", userID)
+	if err != nil {
+		t.Rollback()
+		log.Error("Unable to delete invites: %v", err)
+		return err
+	}
+	rs, _ = res.RowsAffected()
+	log.Info("Deleted %d from userinvites", rs)
+
+	// Delete the user
 	res, err = t.Exec("DELETE FROM users WHERE id = ?", userID)
 	if err != nil {
 		t.Rollback()
-		stringLogln(l, "Unable to delete user: %v", err)
-		return
+		log.Error("Unable to delete user: %v", err)
+		return err
 	}
 	rs, _ = res.RowsAffected()
-	stringLogln(l, "Deleted %d from users", rs)
+	log.Info("Deleted %d from users", rs)
 
+	// Commit all changes to the database
 	err = t.Commit()
 	if err != nil {
 		t.Rollback()
-		stringLogln(l, "Unable to commit: %v", err)
-		return
+		log.Error("Unable to commit: %v", err)
+		return err
 	}
 
-	return
+	// TODO: federate delete actor
+
+	return nil
 }
 
 func (db *datastore) GetAPActorKeys(collectionID int64) ([]byte, []byte) {
@@ -2453,6 +2509,69 @@ func (db *datastore) GetCollectionLastPostTime(id int64) (*time.Time, error) {
 	return &t, nil
 }
 
+func (db *datastore) GenerateOAuthState(ctx context.Context, provider, clientID string) (string, error) {
+	state := store.Generate62RandomString(24)
+	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_states (state, provider, client_id, used, created_at) VALUES (?, ?, ?, FALSE, NOW())", state, provider, clientID)
+	if err != nil {
+		return "", fmt.Errorf("unable to record oauth client state: %w", err)
+	}
+	return state, nil
+}
+
+func (db *datastore) ValidateOAuthState(ctx context.Context, state string) (string, string, error) {
+	var provider string
+	var clientID string
+	err := wf_db.RunTransactionWithOptions(ctx, db.DB, &sql.TxOptions{}, func(ctx context.Context, tx *sql.Tx) error {
+		err := tx.QueryRow("SELECT provider, client_id FROM oauth_client_states WHERE state = ? AND used = FALSE", state).Scan(&provider, &clientID)
+		if err != nil {
+			return err
+		}
+
+		res, err := tx.ExecContext(ctx, "UPDATE oauth_client_states SET used = TRUE WHERE state = ?", state)
+		if err != nil {
+			return err
+		}
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if rowsAffected != 1 {
+			return fmt.Errorf("state not found")
+		}
+		return nil
+	})
+	if err != nil {
+		return "", "", nil
+	}
+	return provider, clientID, nil
+}
+
+func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID int64, remoteUserID, provider, clientID, accessToken string) error {
+	var err error
+	if db.driverName == driverSQLite {
+		_, err = db.ExecContext(ctx, "INSERT OR REPLACE INTO oauth_users (user_id, remote_user_id, provider, client_id, access_token) VALUES (?, ?, ?, ?, ?)", localUserID, remoteUserID, provider, clientID, accessToken)
+	} else {
+		_, err = db.ExecContext(ctx, "INSERT INTO oauth_users (user_id, remote_user_id, provider, client_id, access_token) VALUES (?, ?, ?, ?, ?) "+db.upsert("user")+" access_token = ?", localUserID, remoteUserID, provider, clientID, accessToken, accessToken)
+	}
+	if err != nil {
+		log.Error("Unable to INSERT oauth_users for '%d': %v", localUserID, err)
+	}
+	return err
+}
+
+// GetIDForRemoteUser returns a user ID associated with a remote user ID.
+func (db *datastore) GetIDForRemoteUser(ctx context.Context, remoteUserID, provider, clientID string) (int64, error) {
+	var userID int64 = -1
+	err := db.
+		QueryRowContext(ctx, "SELECT user_id FROM oauth_users WHERE remote_user_id = ? AND provider = ? AND client_id = ?", remoteUserID, provider, clientID).
+		Scan(&userID)
+	// Not finding a record is OK.
+	if err != nil && err != sql.ErrNoRows {
+		return -1, err
+	}
+	return userID, nil
+}
+
 // DatabaseInitialized returns whether or not the current datastore has been
 // initialized with the correct schema.
 // Currently, it checks to see if the `users` table exists.
@@ -2482,4 +2601,41 @@ func stringLogln(log *string, s string, v ...interface{}) {
 func handleFailedPostInsert(err error) error {
 	log.Error("Couldn't insert into posts: %v", err)
 	return err
+}
+
+func (db *datastore) GetProfilePageFromHandle(app *App, handle string) (string, error) {
+	actorIRI := ""
+	remoteUser, err := getRemoteUserFromHandle(app, handle)
+	if err != nil {
+		// can't find using handle in the table but the table may already have this user without
+		// handle from a previous version
+		// TODO: Make this determination. We should know whether a user exists without a handle, or doesn't exist at all
+		actorIRI = RemoteLookup(handle)
+		_, errRemoteUser := getRemoteUser(app, actorIRI)
+		// if it exists then we need to update the handle
+		if errRemoteUser == nil {
+			_, err := app.db.Exec("UPDATE remoteusers SET handle = ? WHERE actor_id = ?", handle, actorIRI)
+			if err != nil {
+				log.Error("Can't update handle (" + handle + ") in database for user " + actorIRI)
+			}
+		} else {
+			// this probably means we don't have the user in the table so let's try to insert it
+			// here we need to ask the server for the inboxes
+			remoteActor, err := activityserve.NewRemoteActor(actorIRI)
+			if err != nil {
+				log.Error("Couldn't fetch remote actor", err)
+			}
+			if debugging {
+				log.Info("%s %s %s %s", actorIRI, remoteActor.GetInbox(), remoteActor.GetSharedInbox(), handle)
+			}
+			_, err = app.db.Exec("INSERT INTO remoteusers (actor_id, inbox, shared_inbox, handle) VALUES(?, ?, ?, ?)", actorIRI, remoteActor.GetInbox(), remoteActor.GetSharedInbox(), handle)
+			if err != nil {
+				log.Error("Can't insert remote user in database", err)
+				return "", err
+			}
+		}
+	} else {
+		actorIRI = remoteUser.ActorID
+	}
+	return actorIRI, nil
 }

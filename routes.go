@@ -70,6 +70,12 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	write.HandleFunc(nodeinfo.NodeInfoPath, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfoDiscover)))
 	write.HandleFunc(niCfg.InfoURL, handler.LogHandlerFunc(http.HandlerFunc(ni.NodeInfo)))
 
+	// handle mentions
+	write.HandleFunc("/@/{handle}", handler.Web(handleViewMention, UserLevelReader))
+
+	configureSlackOauth(handler, write, apper.App())
+	configureWriteAsOauth(handler, write, apper.App())
+
 	// Set up dyamic page handlers
 	// Handle auth
 	auth := write.PathPrefix("/api/auth/").Subrouter()
@@ -94,6 +100,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	me.HandleFunc("/posts/export.json", handler.Download(viewExportPosts, UserLevelUser)).Methods("GET")
 	me.HandleFunc("/export", handler.User(viewExportOptions)).Methods("GET")
 	me.HandleFunc("/export.json", handler.Download(viewExportFull, UserLevelUser)).Methods("GET")
+	me.HandleFunc("/import", handler.User(viewImport)).Methods("GET")
 	me.HandleFunc("/settings", handler.User(viewSettings)).Methods("GET")
 	me.HandleFunc("/invites", handler.User(handleViewUserInvites)).Methods("GET")
 	me.HandleFunc("/logout", handler.Web(viewLogout, UserLevelNone)).Methods("GET")
@@ -106,9 +113,12 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	apiMe.HandleFunc("/password", handler.All(updatePassphrase)).Methods("POST")
 	apiMe.HandleFunc("/self", handler.All(updateSettings)).Methods("POST")
 	apiMe.HandleFunc("/invites", handler.User(handleCreateUserInvite)).Methods("POST")
+	apiMe.HandleFunc("/import", handler.User(handleImport)).Methods("POST")
 
 	// Sign up validation
 	write.HandleFunc("/api/alias", handler.All(handleUsernameCheck)).Methods("POST")
+
+	write.HandleFunc("/api/markdown", handler.All(handleRenderMarkdown)).Methods("POST")
 
 	// Handle collections
 	write.HandleFunc("/api/collections", handler.All(newCollection)).Methods("POST")
@@ -162,9 +172,9 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	draftEditPrefix := ""
 	if apper.App().cfg.App.SingleUser {
 		draftEditPrefix = "/d"
-		write.HandleFunc("/me/new", handler.Web(handleViewPad, UserLevelOptional)).Methods("GET")
+		write.HandleFunc("/me/new", handler.Web(handleViewPad, UserLevelUser)).Methods("GET")
 	} else {
-		write.HandleFunc("/new", handler.Web(handleViewPad, UserLevelOptional)).Methods("GET")
+		write.HandleFunc("/new", handler.Web(handleViewPad, UserLevelUser)).Methods("GET")
 	}
 
 	// All the existing stuff
@@ -181,6 +191,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	}
 	write.HandleFunc(draftEditPrefix+"/{post}", handler.Web(handleViewPost, UserLevelOptional))
 	write.HandleFunc("/", handler.Web(handleViewHome, UserLevelOptional))
+
 	return r
 }
 

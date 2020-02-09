@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -11,9 +11,11 @@
 package writefreely
 
 import (
+	"encoding/json"
 	"fmt"
 	"html"
 	"html/template"
+	"net/http"
 	"regexp"
 	"strings"
 	"unicode"
@@ -21,7 +23,9 @@ import (
 
 	"github.com/microcosm-cc/bluemonday"
 	stripmd "github.com/writeas/go-strip-markdown"
+	"github.com/writeas/impart"
 	blackfriday "github.com/writeas/saturday"
+	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/stringmanip"
 	"github.com/writeas/writefreely/config"
 	"github.com/writeas/writefreely/parse"
@@ -34,6 +38,7 @@ var (
 	titleElementReg = regexp.MustCompile("</?h[1-6]>")
 	hashtagReg      = regexp.MustCompile(`{{\[\[\|\|([^|]+)\|\|\]\]}}`)
 	markeddownReg   = regexp.MustCompile("<p>(.+)</p>")
+	mentionReg      = regexp.MustCompile(`@([A-Za-z0-9._%+-]+)(@[A-Za-z0-9.-]+\.[A-Za-z]+)\b`)
 )
 
 func (p *Post) formatContent(cfg *config.Config, c *Collection, isOwner bool) {
@@ -82,6 +87,8 @@ func applyMarkdownSpecial(data []byte, skipNoFollow bool, baseURL string, cfg *c
 			tagPrefix = "/read/t/"
 		}
 		md = []byte(hashtagReg.ReplaceAll(md, []byte("<a href=\""+tagPrefix+"$1\" class=\"hashtag\"><span>#</span><span class=\"p-category\">$1</span></a>")))
+		handlePrefix := cfg.App.Host + "/@/"
+		md = []byte(mentionReg.ReplaceAll(md, []byte("<a href=\""+handlePrefix+"$1$2\" class=\"u-url mention\">@<span>$1$2</span></a>")))
 	}
 	// Strip out bad HTML
 	policy := getSanitizationPolicy()
@@ -233,4 +240,30 @@ func shortPostDescription(content string) string {
 		truncation = 3
 	}
 	return strings.TrimSpace(fmt.Sprintf(fmtStr, strings.Replace(stringmanip.Substring(content, 0, maxLen-truncation), "\n", " ", -1)))
+}
+
+func handleRenderMarkdown(app *App, w http.ResponseWriter, r *http.Request) error {
+	if !IsJSON(r) {
+		return impart.HTTPError{Status: http.StatusUnsupportedMediaType, Message: "Markdown API only supports JSON requests"}
+	}
+
+	in := struct {
+		CollectionURL string `json:"collection_url"`
+		RawBody       string `json:"raw_body"`
+	}{}
+
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&in)
+	if err != nil {
+		log.Error("Couldn't parse markdown JSON request: %v", err)
+		return ErrBadJSON
+	}
+
+	out := struct {
+		Body string `json:"body"`
+	}{
+		Body: applyMarkdown([]byte(in.RawBody), in.CollectionURL, app.cfg),
+	}
+
+	return impart.WriteSuccess(w, out, http.StatusOK)
 }
