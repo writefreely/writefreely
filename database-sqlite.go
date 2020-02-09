@@ -48,3 +48,15 @@ func (db *datastore) isDuplicateKeyErr(err error) bool {
 
 	return false
 }
+
+func (db *datastore) isIgnorableError(err error) bool {
+	if db.driverName == driverMySQL {
+		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
+			return mysqlErr.Number == mySQLErrCollationMix
+		}
+	} else {
+		log.Error("isIgnorableError: failed check for unrecognized driver '%s'", db.driverName)
+	}
+
+	return false
+}

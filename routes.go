@@ -164,7 +164,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	// Handle special pages first
 	write.HandleFunc("/login", handler.Web(viewLogin, UserLevelNoneRequired))
 	write.HandleFunc("/signup", handler.Web(handleViewLanding, UserLevelNoneRequired))
-	write.HandleFunc("/invite/{code}", handler.Web(handleViewInvite, UserLevelOptional)).Methods("GET")
+	write.HandleFunc("/invite/{code:[a-zA-Z0-9]+}", handler.Web(handleViewInvite, UserLevelOptional)).Methods("GET")
 	// TODO: show a reader-specific 404 page if the function is disabled
 	write.HandleFunc("/read", handler.Web(viewLocalTimeline, UserLevelReader))
 	RouteRead(handler, UserLevelReader, write.PathPrefix("/read").Subrouter())
@@ -178,8 +178,8 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	}
 
 	// All the existing stuff
-	write.HandleFunc(draftEditPrefix+"/{action}/edit", handler.Web(handleViewPad, UserLevelOptional)).Methods("GET")
-	write.HandleFunc(draftEditPrefix+"/{action}/meta", handler.Web(handleViewMeta, UserLevelOptional)).Methods("GET")
+	write.HandleFunc(draftEditPrefix+"/{action}/edit", handler.Web(handleViewPad, UserLevelUser)).Methods("GET")
+	write.HandleFunc(draftEditPrefix+"/{action}/meta", handler.Web(handleViewMeta, UserLevelUser)).Methods("GET")
 	// Collections
 	if apper.App().cfg.App.SingleUser {
 		RouteCollections(handler, write.PathPrefix("/").Subrouter())
