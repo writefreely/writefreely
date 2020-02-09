@@ -49,7 +49,7 @@ var (
 	ErrRemoteUserNotFound = impart.HTTPError{http.StatusNotFound, "Remote user not found."}
 	ErrUserNotFoundEmail  = impart.HTTPError{http.StatusNotFound, "Please enter your username instead of your email address."}
 
-	ErrUserSuspended = impart.HTTPError{http.StatusForbidden, "Account is silenced."}
+	ErrUserSilenced = impart.HTTPError{http.StatusForbidden, "Account is silenced."}
 )
 
 // Post operation errors

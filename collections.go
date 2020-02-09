@@ -71,7 +71,7 @@ type (
 		IsTopLevel  bool
 		CurrentPage int
 		TotalPages  int
-		Suspended   bool
+		Silenced    bool
 	}
 	SubmittedCollection struct {
 		// Data used for updating a given collection
@@ -397,13 +397,13 @@ func newCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 		userID = u.ID
 	}
-	suspended, err := app.db.IsUserSuspended(userID)
+	silenced, err := app.db.IsUserSilenced(userID)
 	if err != nil {
 		log.Error("new collection: %v", err)
 		return ErrInternalGeneral
 	}
-	if suspended {
-		return ErrUserSuspended
+	if silenced {
+		return ErrUserSilenced
 	}
 
 	if !author.IsValidUsername(app.cfg, c.Alias) {
@@ -487,7 +487,7 @@ func fetchCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 			res.Owner = u
 		}
 	}
-	// TODO: check suspended
+	// TODO: check status for silenced
 	app.db.GetPostsCount(res, isCollOwner)
 	// Strip non-public information
 	res.Collection.ForPublic()
@@ -656,7 +656,7 @@ func processCollectionPermissions(app *App, cr *collectionReq, u *User, w http.R
 			}
 
 			// TODO: move this to all permission checks?
-			suspended, err := app.db.IsUserSuspended(c.OwnerID)
+			suspended, err := app.db.IsUserSilenced(c.OwnerID)
 			if err != nil {
 				log.Error("process protected collection permissions: %v", err)
 				return nil, err
@@ -754,7 +754,7 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 	}
 	c.hostName = app.cfg.App.Host
 
-	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("view collection: %v", err)
 		return ErrInternalGeneral
@@ -817,10 +817,10 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 			log.Error("Error getting user for collection: %v", err)
 		}
 	}
-	if !isOwner && suspended {
+	if !isOwner && silenced {
 		return ErrCollectionNotFound
 	}
-	displayPage.Suspended = isOwner && suspended
+	displayPage.Silenced = isOwner && silenced
 	displayPage.Owner = owner
 	coll.Owner = displayPage.Owner
 
@@ -939,7 +939,7 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 			return ErrCollectionNotFound
 		}
 	}
-	displayPage.Suspended = owner != nil && owner.IsSilenced()
+	displayPage.Silenced = owner != nil && owner.IsSilenced()
 	displayPage.Owner = owner
 	coll.Owner = displayPage.Owner
 	// Add more data
@@ -993,14 +993,14 @@ func existingCollection(app *App, w http.ResponseWriter, r *http.Request) error 
 		}
 	}
 
-	suspended, err := app.db.IsUserSuspended(u.ID)
+	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
 		log.Error("existing collection: %v", err)
 		return ErrInternalGeneral
 	}
 
-	if suspended {
-		return ErrUserSuspended
+	if silenced {
+		return ErrUserSilenced
 	}
 
 	if r.Method == "DELETE" {
