@@ -2514,7 +2514,8 @@ func (db *datastore) GetCollectionLastPostTime(id int64) (*time.Time, error) {
 
 func (db *datastore) GenerateOAuthState(ctx context.Context, provider string, clientID string, attachUser int64) (string, error) {
 	state := store.Generate62RandomString(24)
-	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_states (state, provider, client_id, used, created_at, attach_user_id) VALUES (?, ?, ?, FALSE, NOW(), ?)", state, provider, clientID, attachUser)
+	attachUserVal := sql.NullInt64{Valid: attachUser > 0, Int64: attachUser}
+	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_states (state, provider, client_id, used, created_at, attach_user_id) VALUES (?, ?, ?, FALSE, NOW(), ?)", state, provider, clientID, attachUserVal)
 	if err != nil {
 		return "", fmt.Errorf("unable to record oauth client state: %w", err)
 	}
@@ -2524,7 +2525,7 @@ func (db *datastore) GenerateOAuthState(ctx context.Context, provider string, cl
 func (db *datastore) ValidateOAuthState(ctx context.Context, state string) (string, string, int64, error) {
 	var provider string
 	var clientID string
-	var attachUserID int64
+	var attachUserID sql.NullInt64
 	err := wf_db.RunTransactionWithOptions(ctx, db.DB, &sql.TxOptions{}, func(ctx context.Context, tx *sql.Tx) error {
 		err := tx.
 			QueryRowContext(ctx, "SELECT provider, client_id, attach_user_id FROM oauth_client_states WHERE state = ? AND used = FALSE", state).
@@ -2549,7 +2550,7 @@ func (db *datastore) ValidateOAuthState(ctx context.Context, state string) (stri
 	if err != nil {
 		return "", "", 0, nil
 	}
-	return provider, clientID, attachUserID, nil
+	return provider, clientID, attachUserID.Int64, nil
 }
 
 func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID int64, remoteUserID, provider, clientID, accessToken string) error {

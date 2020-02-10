@@ -20,7 +20,7 @@ func oauthAttach(db *datastore) error {
 					Column(
 						"attach_user_id",
 						wf_db.ColumnTypeInteger,
-						wf_db.OptionalInt{Set: true, Value: 24}).SetNullable(false).SetDefault("0")),
+						wf_db.OptionalInt{Set: true, Value: 24}).SetNullable(true)),
 		}
 		for _, builder := range builders {
 			query, err := builder.ToSQL()
