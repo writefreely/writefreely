@@ -23,4 +23,5 @@ max_blogs         = 1
 federation        = true
 public_stats      = true
 private           = false
+update_checks     = true
 
