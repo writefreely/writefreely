@@ -104,7 +104,9 @@
 		<a href="/admin/users" {{if eq .Path "/admin/users"}}class="selected"{{end}}>Users</a>
 		<a href="/admin/pages" {{if eq .Path "/admin/pages"}}class="selected"{{end}}>Pages</a>
 		{{end}}
+		{{if not .Forest}}
 		<a href="/admin/monitor" {{if eq .Path "/admin/monitor"}}class="selected"{{end}}>Monitor</a>
+		{{end}}
 	</nav>
 </header>
 {{end}}
