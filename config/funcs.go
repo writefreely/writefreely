@@ -11,7 +11,9 @@
 package config
 
 import (
+	"net/http"
 	"strings"
+	"time"
 )
 
 // FriendlyHost returns the app's Host sans any schema
@@ -24,4 +26,17 @@ func (ac AppCfg) CanCreateBlogs(currentlyUsed uint64) bool {
 		return true
 	}
 	return int(currentlyUsed) < ac.MaxBlogs
+}
+
+// OrDefaultString returns input or a default value if input is empty.
+func OrDefaultString(input, defaultValue string) string {
+	if len(input) == 0 {
+		return defaultValue
+	}
+	return input
+}
+
+// DefaultHTTPClient returns a sane default HTTP client.
+func DefaultHTTPClient() *http.Client {
+	return &http.Client{Timeout: 10 * time.Second}
 }

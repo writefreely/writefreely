@@ -156,16 +156,8 @@ func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWr
 		Username:   signup.Alias,
 		HashedPass: hashedPass,
 		HasPass:    createdWithPass,
-		Email:      zero.NewString("", signup.Email != ""),
+		Email:      prepareUserEmail(signup.Email, app.keys.EmailKey),
 		Created:    time.Now().Truncate(time.Second).UTC(),
-	}
-	if signup.Email != "" {
-		encEmail, err := data.Encrypt(app.keys.EmailKey, signup.Email)
-		if err != nil {
-			log.Error("Unable to encrypt email: %s\n", err)
-		} else {
-			u.Email.String = string(encEmail)
-		}
 	}
 
 	// Create actual user
@@ -314,12 +306,16 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		Message       template.HTML
 		Flashes       []template.HTML
 		LoginUsername string
+		OauthSlack    bool
+		OauthWriteAs  bool
 	}{
 		pageForReq(app, r),
 		r.FormValue("to"),
 		template.HTML(""),
 		[]template.HTML{},
 		getTempInfo(app, "login-user", r, w),
+		app.Config().SlackOauth.ClientID != "",
+		app.Config().WriteAsOauth.ClientID != "",
 	}
 
 	if earlyError != "" {
@@ -750,14 +746,20 @@ func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		log.Error("unable to fetch collections: %v", err)
 	}
 
+	silenced, err := app.db.IsUserSilenced(u.ID)
+	if err != nil {
+		log.Error("view articles: %v", err)
+	}
 	d := struct {
 		*UserPage
 		AnonymousPosts *[]PublicPost
 		Collections    *[]Collection
+		Silenced       bool
 	}{
 		UserPage:       NewUserPage(app, r, u, u.Username+"'s Posts", f),
 		AnonymousPosts: p,
 		Collections:    c,
+		Silenced:       silenced,
 	}
 	d.UserPage.SetMessaging(u)
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -779,6 +781,11 @@ func viewCollections(app *App, u *User, w http.ResponseWriter, r *http.Request) 
 	uc, _ := app.db.GetUserCollectionCount(u.ID)
 	// TODO: handle any errors
 
+	silenced, err := app.db.IsUserSilenced(u.ID)
+	if err != nil {
+		log.Error("view collections %v", err)
+		return fmt.Errorf("view collections: %v", err)
+	}
 	d := struct {
 		*UserPage
 		Collections *[]Collection
@@ -786,11 +793,13 @@ func viewCollections(app *App, u *User, w http.ResponseWriter, r *http.Request) 
 		UsedCollections, TotalCollections int
 
 		NewBlogsDisabled bool
+		Silenced         bool
 	}{
 		UserPage:         NewUserPage(app, r, u, u.Username+"'s Blogs", f),
 		Collections:      c,
 		UsedCollections:  int(uc),
 		NewBlogsDisabled: !app.cfg.App.CanCreateBlogs(uc),
+		Silenced:         silenced,
 	}
 	d.UserPage.SetMessaging(u)
 	showUserPage(w, "collections", d)
@@ -808,13 +817,20 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 		return ErrCollectionNotFound
 	}
 
+	silenced, err := app.db.IsUserSilenced(u.ID)
+	if err != nil {
+		log.Error("view edit collection %v", err)
+		return fmt.Errorf("view edit collection: %v", err)
+	}
 	flashes, _ := getSessionFlashes(app, w, r, nil)
 	obj := struct {
 		*UserPage
 		*Collection
+		Silenced bool
 	}{
 		UserPage:   NewUserPage(app, r, u, "Edit "+c.DisplayTitle(), flashes),
 		Collection: c,
+		Silenced:   silenced,
 	}
 
 	showUserPage(w, "collection", obj)
@@ -976,17 +992,24 @@ func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error 
 		titleStats = c.DisplayTitle() + " "
 	}
 
+	silenced, err := app.db.IsUserSilenced(u.ID)
+	if err != nil {
+		log.Error("view stats: %v", err)
+		return err
+	}
 	obj := struct {
 		*UserPage
 		VisitsBlog  string
 		Collection  *Collection
 		TopPosts    *[]PublicPost
 		APFollowers int
+		Silenced    bool
 	}{
 		UserPage:   NewUserPage(app, r, u, titleStats+"Stats", flashes),
 		VisitsBlog: alias,
 		Collection: c,
 		TopPosts:   topPosts,
+		Silenced:   silenced,
 	}
 	if app.cfg.App.Federation {
 		folls, err := app.db.GetAPFollowers(c)
@@ -1020,11 +1043,13 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		Email    string
 		HasPass  bool
 		IsLogOut bool
+		Silenced bool
 	}{
 		UserPage: NewUserPage(app, r, u, "Account Settings", flashes),
 		Email:    fullUser.EmailClear(app.keys),
 		HasPass:  passIsSet,
 		IsLogOut: r.FormValue("logout") == "1",
+		Silenced: fullUser.IsSilenced(),
 	}
 
 	showUserPage(w, "settings", obj)
@@ -1067,4 +1092,17 @@ func getTempInfo(app *App, key string, r *http.Request, w http.ResponseWriter) s
 
 	// Return value
 	return s
+}
+
+func prepareUserEmail(input string, emailKey []byte) zero.String {
+	email := zero.NewString("", input != "")
+	if len(input) > 0 {
+		encEmail, err := data.Encrypt(emailKey, input)
+		if err != nil {
+			log.Error("Unable to encrypt email: %s\n", err)
+		} else {
+			email.String = string(encEmail)
+		}
+	}
+	return email
 }

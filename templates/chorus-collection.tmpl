@@ -61,6 +61,9 @@ body#collection header nav.tabs a:first-child {
 	<body id="collection" itemscope itemtype="http://schema.org/WebPage">
 		{{template "user-navigation" .}}
 		
+		{{if .Silenced}}
+			{{template "user-silenced"}}
+		{{end}}
 		<header>
 		<h1 dir="{{.Direction}}" id="blog-title"><a href="/{{if .IsTopLevel}}{{else}}{{.Prefix}}{{.Alias}}/{{end}}" class="h-card p-author u-url" rel="me author">{{.DisplayTitle}}</a></h1>
 		{{if .Description}}<p class="description p-note">{{.Description}}</p>{{end}}
@@ -68,7 +71,7 @@ body#collection header nav.tabs a:first-child {
 			<!--p class="meta-note"><span>Private collection</span>. Only you can see this page.</p-->
 		{{/*end*/}}
 		{{if .PinnedPosts}}<nav class="pinned-posts">
-			{{range .PinnedPosts}}<a class="pinned" href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL .Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}</nav>
+			{{range .PinnedPosts}}<a class="pinned" href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}</nav>
 		{{end}}
 		</header>
 		
@@ -112,6 +115,7 @@ body#collection header nav.tabs a:first-child {
 		{{if .Script}}<script type="text/javascript">{{.ScriptDisplay}}</script>{{end}}
 	{{end}}
 	<script src="/js/h.js"></script>
+	<script src="/js/localdate.js"></script>
 	<script src="/js/postactions.js"></script>
 	<script type="text/javascript">
 var deleting = false;

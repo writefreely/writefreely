@@ -43,6 +43,8 @@ type (
 		PagesParentDir     string `ini:"pages_parent_dir"`
 		KeysParentDir      string `ini:"keys_parent_dir"`
 
+		HashSeed string `ini:"hash_seed"`
+
 		Dev bool `ini:"-"`
 	}
 
@@ -55,6 +57,24 @@ type (
 		Database string `ini:"database"`
 		Host     string `ini:"host"`
 		Port     int    `ini:"port"`
+	}
+
+	WriteAsOauthCfg struct {
+		ClientID         string `ini:"client_id"`
+		ClientSecret     string `ini:"client_secret"`
+		AuthLocation     string `ini:"auth_location"`
+		TokenLocation    string `ini:"token_location"`
+		InspectLocation  string `ini:"inspect_location"`
+		CallbackProxy    string `ini:"callback_proxy"`
+		CallbackProxyAPI string `ini:"callback_proxy_api"`
+	}
+
+	SlackOauthCfg struct {
+		ClientID         string `ini:"client_id"`
+		ClientSecret     string `ini:"client_secret"`
+		TeamID           string `ini:"team_id"`
+		CallbackProxy    string `ini:"callback_proxy"`
+		CallbackProxyAPI string `ini:"callback_proxy_api"`
 	}
 
 	// AppCfg holds values that affect how the application functions
@@ -102,9 +122,11 @@ type (
 
 	// Config holds the complete configuration for running a writefreely instance
 	Config struct {
-		Server   ServerCfg   `ini:"server"`
-		Database DatabaseCfg `ini:"database"`
-		App      AppCfg      `ini:"app"`
+		Server       ServerCfg       `ini:"server"`
+		Database     DatabaseCfg     `ini:"database"`
+		App          AppCfg          `ini:"app"`
+		SlackOauth   SlackOauthCfg   `ini:"oauth.slack"`
+		WriteAsOauth WriteAsOauthCfg `ini:"oauth.writeas"`
 	}
 )
 

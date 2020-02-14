@@ -38,16 +38,6 @@ body footer {
 body#post header {
 	padding: 1em 1rem;
 }
-article time.dt-published {
-	display: block;
-	color: #666;
-}
-body#post article h2#title{
-	margin-bottom: 0.5em;
-}
-article time.dt-published {
-	margin-bottom: 1em;
-}
 	</style>
 
 		{{if .Collection.RenderMathJax}}
@@ -65,7 +55,10 @@ article time.dt-published {
 
 		{{template "user-navigation" .}}
 		
-		<article id="post-body" class="{{.Font}} h-entry">{{if .IsScheduled}}<p class="badge">Scheduled</p>{{end}}{{if .Title.String}}<h2 id="title" class="p-name">{{.FormattedDisplayTitle}}</h2>{{end}}{{/* TODO: check format: if .Collection.Format.ShowDates*/}}<time class="dt-published" datetime="{{.Created}}" pubdate itemprop="datePublished" content="{{.Created}}">{{.DisplayDate}}</time><div class="e-content">{{.HTMLContent}}</div></article>
+		{{if .Silenced}}
+			{{template "user-silenced"}}
+		{{end}}
+		<article id="post-body" class="{{.Font}} h-entry">{{if .IsScheduled}}<p class="badge">Scheduled</p>{{end}}{{if .Title.String}}<h2 id="title" class="p-name{{if $.Collection.Format.ShowDates}} dated{{end}}">{{.FormattedDisplayTitle}}</h2>{{end}}{{if $.Collection.Format.ShowDates}}<time class="dt-published" datetime="{{.Created8601}}" pubdate itemprop="datePublished" content="{{.Created}}">{{.DisplayDate}}</time>{{end}}<div class="e-content">{{.HTMLContent}}</div></article>
 
 		{{ if .Collection.ShowFooterBranding }}
 		<footer dir="ltr">
@@ -77,7 +70,7 @@ article time.dt-published {
 			</p>
 			<nav>
 				{{if .PinnedPosts}}
-				{{range .PinnedPosts}}<a class="pinned{{if eq .Slug.String $.Slug.String}} selected{{end}}" href="{{if not $.SingleUser}}/{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL .Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}
+				{{range .PinnedPosts}}<a class="pinned{{if eq .Slug.String $.Slug.String}} selected{{end}}" href="{{if not $.SingleUser}}/{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}
 				{{end}}
 			</nav>
 			<hr>
@@ -90,6 +83,7 @@ article time.dt-published {
 		{{range .Collection.ExternalScripts}}<script type="text/javascript" src="{{.}}" async></script>{{end}}
 		{{if .Collection.Script}}<script type="text/javascript">{{.Collection.ScriptDisplay}}</script>{{end}}
 	{{end}}
+	<script src="/js/localdate.js"></script>
 	<script type="text/javascript">
 
 var pinning = false;

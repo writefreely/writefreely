@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -37,6 +37,8 @@ import (
 const (
 	// TODO: delete. don't use this!
 	apCustomHandleDefault = "blog"
+
+	apCacheTime = time.Minute
 )
 
 type RemoteUser struct {
@@ -44,6 +46,7 @@ type RemoteUser struct {
 	ActorID     string
 	Inbox       string
 	SharedInbox string
+	Handle      string
 }
 
 func (ru *RemoteUser) AsPerson() *activitystreams.Person {
@@ -59,6 +62,12 @@ func (ru *RemoteUser) AsPerson() *activitystreams.Person {
 		Endpoints: activitystreams.Endpoints{
 			SharedInbox: ru.SharedInbox,
 		},
+	}
+}
+
+func activityPubClient() *http.Client {
+	return &http.Client{
+		Timeout: 15 * time.Second,
 	}
 }
 
@@ -80,10 +89,19 @@ func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return err
 	}
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
+	if err != nil {
+		log.Error("fetch collection activities: %v", err)
+		return ErrInternalGeneral
+	}
+	if silenced {
+		return ErrCollectionNotFound
+	}
 	c.hostName = app.cfg.App.Host
 
 	p := c.PersonObject()
 
+	setCacheControl(w, apCacheTime)
 	return impart.RenderActivityJSON(w, p, http.StatusOK)
 }
 
@@ -104,6 +122,14 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 	}
 	if err != nil {
 		return err
+	}
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
+	if err != nil {
+		log.Error("fetch collection outbox: %v", err)
+		return ErrInternalGeneral
+	}
+	if silenced {
+		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host
 
@@ -132,11 +158,12 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 	posts, err := app.db.GetPosts(app.cfg, c, p, false, true, false)
 	for _, pp := range *posts {
 		pp.Collection = res
-		o := pp.ActivityObject(app.cfg)
+		o := pp.ActivityObject(app)
 		a := activitystreams.NewCreateActivity(o)
 		ocp.OrderedItems = append(ocp.OrderedItems, *a)
 	}
 
+	setCacheControl(w, apCacheTime)
 	return impart.RenderActivityJSON(w, ocp, http.StatusOK)
 }
 
@@ -157,6 +184,14 @@ func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Req
 	}
 	if err != nil {
 		return err
+	}
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
+	if err != nil {
+		log.Error("fetch collection followers: %v", err)
+		return ErrInternalGeneral
+	}
+	if silenced {
+		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host
 
@@ -183,6 +218,7 @@ func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Req
 			ocp.OrderedItems = append(ocp.OrderedItems, f.ActorID)
 		}
 	*/
+	setCacheControl(w, apCacheTime)
 	return impart.RenderActivityJSON(w, ocp, http.StatusOK)
 }
 
@@ -204,6 +240,14 @@ func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return err
 	}
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
+	if err != nil {
+		log.Error("fetch collection following: %v", err)
+		return ErrInternalGeneral
+	}
+	if silenced {
+		return ErrCollectionNotFound
+	}
 	c.hostName = app.cfg.App.Host
 
 	accountRoot := c.FederatedAccount()
@@ -219,6 +263,7 @@ func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Req
 	// Return outbox page
 	ocp := activitystreams.NewOrderedCollectionPage(accountRoot, "following", 0, p)
 	ocp.OrderedItems = []interface{}{}
+	setCacheControl(w, apCacheTime)
 	return impart.RenderActivityJSON(w, ocp, http.StatusOK)
 }
 
@@ -237,6 +282,14 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 	if err != nil {
 		// TODO: return Reject?
 		return err
+	}
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
+	if err != nil {
+		log.Error("fetch collection inbox: %v", err)
+		return ErrInternalGeneral
+	}
+	if silenced {
+		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host
 
@@ -342,6 +395,11 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 	}
 
 	go func() {
+		if to == nil {
+			log.Error("No to! %v", err)
+			return
+		}
+
 		time.Sleep(2 * time.Second)
 		am, err := a.Serialize()
 		if err != nil {
@@ -350,10 +408,6 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		}
 		am["@context"] = []string{activitystreams.Namespace}
 
-		if to == nil {
-			log.Error("No to! %v", err)
-			return
-		}
 		err = makeActivityPost(app.cfg.App.Host, p, fullActor.Inbox, am)
 		if err != nil {
 			log.Error("Unable to make activity POST: %v", err)
@@ -462,7 +516,7 @@ func makeActivityPost(hostName string, p *activitystreams.Person, url string, m 
 		}
 	}
 
-	resp, err := http.DefaultClient.Do(r)
+	resp, err := activityPubClient().Do(r)
 	if err != nil {
 		return err
 	}
@@ -498,7 +552,7 @@ func resolveIRI(hostName, url string) ([]byte, error) {
 		}
 	}
 
-	resp, err := http.DefaultClient.Do(r)
+	resp, err := activityPubClient().Do(r)
 	if err != nil {
 		return nil, err
 	}
@@ -524,7 +578,7 @@ func deleteFederatedPost(app *App, p *PublicPost, collID int64) error {
 	}
 	p.Collection.hostName = app.cfg.App.Host
 	actor := p.Collection.PersonObject(collID)
-	na := p.ActivityObject(app.cfg)
+	na := p.ActivityObject(app)
 
 	// Add followers
 	p.Collection.ID = collID
@@ -570,7 +624,7 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 		}
 	}
 	actor := p.Collection.PersonObject(collID)
-	na := p.ActivityObject(app.cfg)
+	na := p.ActivityObject(app)
 
 	// Add followers
 	p.Collection.ID = collID
@@ -588,18 +642,25 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			inbox = f.Inbox
 		}
 		if _, ok := inboxes[inbox]; ok {
+			// check if we're already sending to this shared inbox
 			inboxes[inbox] = append(inboxes[inbox], f.ActorID)
 		} else {
+			// add the new shared inbox to the list
 			inboxes[inbox] = []string{f.ActorID}
 		}
 	}
 
+	var activity *activitystreams.Activity
+	// for each one of the shared inboxes
 	for si, instFolls := range inboxes {
+		// add all followers from that instance
+		// to the CC field
 		na.CC = []string{}
 		for _, f := range instFolls {
 			na.CC = append(na.CC, f)
 		}
-		var activity *activitystreams.Activity
+		// create a new "Create" activity
+		// with our article as object
 		if isUpdate {
 			activity = activitystreams.NewUpdateActivity(na)
 		} else {
@@ -607,17 +668,42 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			activity.To = na.To
 			activity.CC = na.CC
 		}
+		// and post it to that sharedInbox
 		err = makeActivityPost(app.cfg.App.Host, actor, si, activity)
 		if err != nil {
 			log.Error("Couldn't post! %v", err)
 		}
 	}
+
+	// re-create the object so that the CC list gets reset and has
+	// the mentioned users. This might seem wasteful but the code is
+	// cleaner than adding the mentioned users to CC here instead of
+	// in p.ActivityObject()
+	na = p.ActivityObject(app)
+	for _, tag := range na.Tag {
+		if tag.Type == "Mention" {
+			activity = activitystreams.NewCreateActivity(na)
+			activity.To = na.To
+			activity.CC = na.CC
+			// This here might be redundant in some cases as we might have already
+			// sent this to the sharedInbox of this instance above, but we need too
+			// much logic to catch this at the expense of the odd extra request.
+			// I don't believe we'd ever have too many mentions in a single post that this
+			// could become a burden.
+			remoteUser, err := getRemoteUser(app, tag.HRef)
+			err = makeActivityPost(app.cfg.App.Host, actor, remoteUser.Inbox, activity)
+			if err != nil {
+				log.Error("Couldn't post! %v", err)
+			}
+		}
+	}
+
 	return nil
 }
 
 func getRemoteUser(app *App, actorID string) (*RemoteUser, error) {
 	u := RemoteUser{ActorID: actorID}
-	err := app.db.QueryRow("SELECT id, inbox, shared_inbox FROM remoteusers WHERE actor_id = ?", actorID).Scan(&u.ID, &u.Inbox, &u.SharedInbox)
+	err := app.db.QueryRow("SELECT id, inbox, shared_inbox, handle FROM remoteusers WHERE actor_id = ?", actorID).Scan(&u.ID, &u.Inbox, &u.SharedInbox, &u.Handle)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, impart.HTTPError{http.StatusNotFound, "No remote user with that ID."}
@@ -626,6 +712,21 @@ func getRemoteUser(app *App, actorID string) (*RemoteUser, error) {
 		return nil, err
 	}
 
+	return &u, nil
+}
+
+// getRemoteUserFromHandle retrieves the profile page of a remote user
+// from the @user@server.tld handle
+func getRemoteUserFromHandle(app *App, handle string) (*RemoteUser, error) {
+	u := RemoteUser{Handle: handle}
+	err := app.db.QueryRow("SELECT id, actor_id, inbox, shared_inbox FROM remoteusers WHERE handle = ?", handle).Scan(&u.ID, &u.ActorID, &u.Inbox, &u.SharedInbox)
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, ErrRemoteUserNotFound
+	case err != nil:
+		log.Error("Couldn't get remote user %s: %v", handle, err)
+		return nil, err
+	}
 	return &u, nil
 }
 
@@ -702,4 +803,8 @@ func unmarshalActor(actorResp []byte, actor *activitystreams.Person) error {
 	}(flexActor.Context)
 
 	return nil
+}
+
+func setCacheControl(w http.ResponseWriter, ttl time.Duration) {
+	w.Header().Set("Cache-Control", fmt.Sprintf("public, max-age=%.0f", ttl.Seconds()))
 }

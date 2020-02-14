@@ -13,11 +13,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/gorilla/mux"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely"
-	"os"
-	"strings"
 )
 
 func main() {
@@ -38,6 +39,7 @@ func main() {
 	// Admin actions
 	createAdmin := flag.String("create-admin", "", "Create an admin with the given username:password")
 	createUser := flag.String("create-user", "", "Create a regular user with the given username:password")
+	deleteUsername := flag.String("delete-user", "", "Delete a user with the given username")
 	resetPassUser := flag.String("reset-pass", "", "Reset the given user's password")
 	outputVersion := flag.Bool("v", false, "Output the current version")
 	flag.Parse()
@@ -97,6 +99,13 @@ func main() {
 		os.Exit(0)
 	} else if *resetPassUser != "" {
 		err := writefreely.ResetPassword(app, *resetPassUser)
+		if err != nil {
+			log.Error(err.Error())
+			os.Exit(1)
+		}
+		os.Exit(0)
+	} else if *deleteUsername != "" {
+		err := writefreely.DoDeleteAccount(app, *deleteUsername)
 		if err != nil {
 			log.Error(err.Error())
 			os.Exit(1)

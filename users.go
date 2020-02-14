@@ -19,6 +19,13 @@ import (
 	"github.com/writeas/writefreely/key"
 )
 
+type UserStatus int
+
+const (
+	UserActive = iota
+	UserSilenced
+)
+
 type (
 	userCredentials struct {
 		Alias string `json:"alias" schema:"alias"`
@@ -59,6 +66,7 @@ type (
 		HasPass    bool        `json:"has_pass"`
 		Email      zero.String `json:"email"`
 		Created    time.Time   `json:"created"`
+		Status     UserStatus  `json:"status"`
 
 		clearEmail string `json:"email"`
 	}
@@ -117,4 +125,8 @@ func (u User) Cookie() *User {
 func (u *User) IsAdmin() bool {
 	// TODO: get this from database
 	return u.ID == 1
+}
+
+func (u *User) IsSilenced() bool {
+	return u.Status&UserSilenced != 0
 }
