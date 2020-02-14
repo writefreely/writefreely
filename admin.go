@@ -583,17 +583,17 @@ func handleViewAdminUpdates(app *App, u *User, w http.ResponseWriter, r *http.Re
 
 	p := struct {
 		*UserPage
-		LastChecked      string
-		LatestVersion    string
-		LatestReleaseURL string
-		UpdateAvailable  bool
+		LastChecked           string
+		LatestVersion         string
+		LatestReleaseNotesURL string
+		UpdateAvailable       bool
 	}{
 		UserPage: NewUserPage(app, r, u, "Updates", nil),
 	}
 	if app.cfg.App.UpdateChecks {
 		p.LastChecked = app.updates.lastCheck.Format("January 2, 2006, 3:04 PM")
 		p.LatestVersion = app.updates.LatestVersion()
-		p.LatestReleaseURL = app.updates.ReleaseURL()
+		p.LatestReleaseNotesURL = app.updates.ReleaseNotesURL()
 		p.UpdateAvailable = app.updates.AreAvailable()
 	}
 

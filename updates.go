@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2019-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -63,9 +63,9 @@ func (uc updatesCache) LatestVersion() string {
 	return uc.latestVersion
 }
 
-// ReleaseURL returns the full URL to the blog.writefreely.org release notes
+// ReleaseNotesURL returns the full URL to the blog.writefreely.org release notes
 // for the latest version as stored in the cache.
-func (uc updatesCache) ReleaseURL() string {
+func (uc updatesCache) ReleaseNotesURL() string {
 	ver := strings.TrimPrefix(uc.latestVersion, "v")
 	ver = strings.TrimSuffix(ver, ".0")
 	// hack until go 1.12 in build/travis
