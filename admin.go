@@ -573,3 +573,30 @@ func adminResetPassword(app *App, u *User, newPass string) error {
 	}
 	return nil
 }
+
+func handleViewAdminUpdates(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	check := r.URL.Query().Get("check")
+
+	if check == "now" && app.cfg.App.UpdateChecks {
+		app.updates.CheckNow()
+	}
+
+	p := struct {
+		*UserPage
+		LastChecked      string
+		LatestVersion    string
+		LatestReleaseURL string
+		UpdateAvailable  bool
+	}{
+		UserPage: NewUserPage(app, r, u, "Updates", nil),
+	}
+	if app.cfg.App.UpdateChecks {
+		p.LastChecked = app.updates.lastCheck.Format("January 2, 2006, 3:04 PM")
+		p.LatestVersion = app.updates.LatestVersion()
+		p.LatestReleaseURL = app.updates.ReleaseURL()
+		p.UpdateAvailable = app.updates.AreAvailable()
+	}
+
+	showUserPage(w, "app-updates", p)
+	return nil
+}

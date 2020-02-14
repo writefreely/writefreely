@@ -12,8 +12,9 @@
 package config
 
 import (
-	"gopkg.in/ini.v1"
 	"strings"
+
+	"gopkg.in/ini.v1"
 )
 
 const (
@@ -115,6 +116,9 @@ type (
 
 		// Defaults
 		DefaultVisibility string `ini:"default_visibility"`
+
+		// Check for Updates
+		UpdateChecks bool `ini:"update_checks"`
 	}
 
 	// Config holds the complete configuration for running a writefreely instance
