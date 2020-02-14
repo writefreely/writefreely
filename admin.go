@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -100,6 +100,33 @@ func (c instanceContent) UpdatedFriendly() string {
 }
 
 func handleViewAdminDash(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	p := struct {
+		*UserPage
+		Message string
+
+		UsersCount, CollectionsCount, PostsCount int64
+	}{
+		UserPage: NewUserPage(app, r, u, "Admin", nil),
+		Message:  r.FormValue("m"),
+	}
+
+	// Get user stats
+	p.UsersCount = app.db.GetAllUsersCount()
+	var err error
+	p.CollectionsCount, err = app.db.GetTotalCollections()
+	if err != nil {
+		return err
+	}
+	p.PostsCount, err = app.db.GetTotalPosts()
+	if err != nil {
+		return err
+	}
+
+	showUserPage(w, "admin", p)
+	return nil
+}
+
+func handleViewAdminMonitor(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	updateAppStats()
 	p := struct {
 		*UserPage
@@ -116,7 +143,25 @@ func handleViewAdminDash(app *App, u *User, w http.ResponseWriter, r *http.Reque
 		ConfigMessage: r.FormValue("cm"),
 	}
 
-	showUserPage(w, "admin", p)
+	showUserPage(w, "monitor", p)
+	return nil
+}
+
+func handleViewAdminSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	p := struct {
+		*UserPage
+		Config config.AppCfg
+
+		Message, ConfigMessage string
+	}{
+		UserPage: NewUserPage(app, r, u, "Admin", nil),
+		Config:   app.cfg.App,
+
+		Message:       r.FormValue("m"),
+		ConfigMessage: r.FormValue("cm"),
+	}
+
+	showUserPage(w, "app-settings", p)
 	return nil
 }
 
@@ -475,7 +520,7 @@ func handleAdminUpdateConfig(apper Apper, u *User, w http.ResponseWriter, r *htt
 	if err != nil {
 		m = "?cm=" + err.Error()
 	}
-	return impart.HTTPError{http.StatusFound, "/admin" + m + "#config"}
+	return impart.HTTPError{http.StatusFound, "/admin/settings" + m + "#config"}
 }
 
 func updateAppStats() {

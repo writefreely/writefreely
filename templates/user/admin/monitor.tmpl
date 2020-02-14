@@ -1,0 +1,105 @@
+{{define "monitor"}}
+{{template "header" .}}
+
+<style type="text/css">
+h2 {font-weight: normal;}
+.ui.divider:not(.vertical):not(.horizontal) {
+	border-top: 1px solid rgba(34,36,38,.15);
+	border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.ui.divider {
+	margin: 1rem 0;
+	line-height: 1;
+	height: 0;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: .05em;
+	color: rgba(0,0,0,.85);
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	-webkit-tap-highlight-color: transparent;
+	font-size: 1rem;
+}
+</style>
+
+<div class="content-container snug">
+	{{template "admin-header" .}}
+
+	{{if .Message}}<p>{{.Message}}</p>{{end}}
+
+	<h2><a name="monitor"></a>Application Monitor</h2>
+
+	<div class="ui attached table segment">
+		<dl class="dl-horizontal admin-dl-horizontal">
+			<dt>WriteFreely</dt>
+			<dd>{{.Version}}</dd>
+			<dt>Server Uptime</dt>
+			<dd>{{.SysStatus.Uptime}}</dd>
+			<dt>Current Goroutines</dt>
+			<dd>{{.SysStatus.NumGoroutine}}</dd>
+			<div class="ui divider"></div>
+			<dt>Current memory usage</dt>
+			<dd>{{.SysStatus.MemAllocated}}</dd>
+			<dt>Total mem allocated</dt>
+			<dd>{{.SysStatus.MemTotal}}</dd>
+			<dt>Memory obtained</dt>
+			<dd>{{.SysStatus.MemSys}}</dd>
+			<dt>Pointer lookup times</dt>
+			<dd>{{.SysStatus.Lookups}}</dd>
+			<dt>Memory allocate times</dt>
+			<dd>{{.SysStatus.MemMallocs}}</dd>
+			<dt>Memory free times</dt>
+			<dd>{{.SysStatus.MemFrees}}</dd>
+			<div class="ui divider"></div>
+			<dt>Current heap usage</dt>
+			<dd>{{.SysStatus.HeapAlloc}}</dd>
+			<dt>Heap memory obtained</dt>
+			<dd>{{.SysStatus.HeapSys}}</dd>
+			<dt>Heap memory idle</dt>
+			<dd>{{.SysStatus.HeapIdle}}</dd>
+			<dt>Heap memory in use</dt>
+			<dd>{{.SysStatus.HeapInuse}}</dd>
+			<dt>Heap memory released</dt>
+			<dd>{{.SysStatus.HeapReleased}}</dd>
+			<dt>Heap objects</dt>
+			<dd>{{.SysStatus.HeapObjects}}</dd>
+			<div class="ui divider"></div>
+			<dt>Bootstrap stack usage</dt>
+			<dd>{{.SysStatus.StackInuse}}</dd>
+			<dt>Stack memory obtained</dt>
+			<dd>{{.SysStatus.StackSys}}</dd>
+			<dt>MSpan structures in use</dt>
+			<dd>{{.SysStatus.MSpanInuse}}</dd>
+			<dt>MSpan structures obtained</dt>
+			<dd>{{.SysStatus.HeapSys}}</dd>
+			<dt>MCache structures in use</dt>
+			<dd>{{.SysStatus.MCacheInuse}}</dd>
+			<dt>MCache structures obtained</dt>
+			<dd>{{.SysStatus.MCacheSys}}</dd>
+			<dt>Profiling bucket hash table obtained</dt>
+			<dd>{{.SysStatus.BuckHashSys}}</dd>
+			<dt>GC metadata obtained</dt>
+			<dd>{{.SysStatus.GCSys}}</dd>
+			<dt>Other system allocation obtained</dt>
+			<dd>{{.SysStatus.OtherSys}}</dd>
+			<div class="ui divider"></div>
+			<dt>Next GC recycle</dt>
+			<dd>{{.SysStatus.NextGC}}</dd>
+			<dt>Since last GC</dt>
+			<dd>{{.SysStatus.LastGC}}</dd>
+			<dt>Total GC pause</dt>
+			<dd>{{.SysStatus.PauseTotalNs}}</dd>
+			<dt>Last GC pause</dt>
+			<dd>{{.SysStatus.PauseNs}}</dd>
+			<dt>GC times</dt>
+			<dd>{{.SysStatus.NumGC}}</dd>
+		</dl>
+	</div>
+</div>
+
+{{template "footer" .}}
+
+{{template "body-end" .}}
+{{end}}
