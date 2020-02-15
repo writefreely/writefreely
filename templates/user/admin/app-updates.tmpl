@@ -2,20 +2,24 @@
 {{template "header" .}}
 
 <style type="text/css">
+	p.intro {
+		text-align: left;
+	}
 </style>
 
 <div class="content-container snug">
 	{{template "admin-header" .}}
 
 	{{if not .UpdateAvailable}}
-  <p class="alert info">WriteFreely is up to date.</p>
-  {{else}}
-  <p class="alert info">WriteFreely {{.LatestVersion}} is available.</p>
-  <section class="changelog">
-    For details on features, bug fixes or notes on upgrading, <a href="{{.LatestReleaseNotesURL}}">read the release notes</a>.
-  </section>
-  {{end}}
-	<p>Last checked at: <time class="dt-published" datetime="{{.LastChecked8601}}">{{.LastChecked}}</time>. <a href="/admin/updates?check=now">Check now</a>.</p>
+		<p class="intro"><span class="check">&check;</span> WriteFreely is <strong>up to date</strong>.</p>
+		<p>Installed version: <strong>{{.Version}}</strong> (<a href="{{.LatestReleaseNotesURL}}" target="changelog-wf">release notes</a>).</p>
+    {{else}}
+		<p class="intro">A new version of WriteFreely is available! <a href="{{.LatestReleaseURL}}" target="download-wf" style="font-weight: bold;">Get {{.LatestVersion}}</a></p>
+		<p class="changelog">
+			<a href="{{.LatestReleaseNotesURL}}" target="changelog-wf">Read the release notes</a> for details on features, bug fixes, and notes on upgrading from your current version, <strong>{{.Version}}</strong>.
+		</p>
+	{{end}}
+	<p style="font-size: 0.86em;"><em>Last checked</em>: <time class="dt-published" datetime="{{.LastChecked8601}}">{{.LastChecked}}</time>. <a href="/admin/updates?check=now">Check now</a>.</p>
 
 	<script>
 	// Code modified from /js/localdate.js

@@ -63,6 +63,10 @@ func (uc updatesCache) LatestVersion() string {
 	return uc.latestVersion
 }
 
+func (uc updatesCache) ReleaseURL() string {
+	return "https://writefreely.org/releases/" + uc.latestVersion
+}
+
 // ReleaseNotesURL returns the full URL to the blog.writefreely.org release notes
 // for the latest version as stored in the cache.
 func (uc updatesCache) ReleaseNotesURL() string {
