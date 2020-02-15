@@ -15,7 +15,11 @@
 	{{template "admin-header" .}}
 
 {{ if .UpdateChecks }}
-	{{if not .UpdateAvailable}}
+	{{if .CheckFailed}}
+		<p class="intro"><span class="ex failure">&times;</span> Automated update check failed.</p>
+		<p>Installed version: <strong>{{.Version}}</strong> (<a href="{{.CurReleaseNotesURL}}" target="changelog-wf">release notes</a>).</p>
+		<p>Learn about latest releases on the <a href="https://blog.writefreely.org/tag:release" target="changelog-wf">WriteFreely blog</a> or <a href="https://discuss.write.as/c/writefreely/updates" target="forum-wf">forum</a>.</p>
+	{{else if not .UpdateAvailable}}
 		<p class="intro"><span class="check">&check;</span> WriteFreely is <strong>up to date</strong>.</p>
 		<p>Installed version: <strong>{{.Version}}</strong> (<a href="{{.LatestReleaseNotesURL}}" target="changelog-wf">release notes</a>).</p>
     {{else}}

@@ -612,6 +612,7 @@ func handleViewAdminUpdates(app *App, u *User, w http.ResponseWriter, r *http.Re
 		LatestVersion         string
 		LatestReleaseURL      string
 		LatestReleaseNotesURL string
+		CheckFailed           bool
 	}{
 		UserPage:  NewUserPage(app, r, u, "Updates", nil),
 		AdminPage: NewAdminPage(app),
@@ -624,6 +625,7 @@ func handleViewAdminUpdates(app *App, u *User, w http.ResponseWriter, r *http.Re
 		p.LatestReleaseURL = app.updates.ReleaseURL()
 		p.LatestReleaseNotesURL = app.updates.ReleaseNotesURL()
 		p.UpdateAvailable = app.updates.AreAvailable()
+		p.CheckFailed = app.updates.checkError != nil
 	}
 
 	showUserPage(w, "app-updates", p)

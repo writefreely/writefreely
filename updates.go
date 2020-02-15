@@ -30,6 +30,7 @@ type updatesCache struct {
 	lastCheck      time.Time
 	latestVersion  string
 	currentVersion string
+	checkError     error
 }
 
 // CheckNow asks for the latest released version of writefreely and updates
@@ -38,11 +39,12 @@ type updatesCache struct {
 func (uc *updatesCache) CheckNow() error {
 	uc.mu.Lock()
 	defer uc.mu.Unlock()
+	uc.lastCheck = time.Now()
 	latestRemote, err := newVersionCheck()
 	if err != nil {
+		uc.checkError = err
 		return err
 	}
-	uc.lastCheck = time.Now()
 	if CompareSemver(latestRemote, uc.latestVersion) == 1 {
 		uc.latestVersion = latestRemote
 	}
