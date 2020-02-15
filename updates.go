@@ -11,6 +11,7 @@
 package writefreely
 
 import (
+	"github.com/writeas/web-core/log"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -37,11 +38,15 @@ type updatesCache struct {
 // the cache last checked time. If the version postdates the current 'latest'
 // the version value is replaced.
 func (uc *updatesCache) CheckNow() error {
+	if debugging {
+		log.Info("[update check] Checking for update now.")
+	}
 	uc.mu.Lock()
 	defer uc.mu.Unlock()
 	uc.lastCheck = time.Now()
 	latestRemote, err := newVersionCheck()
 	if err != nil {
+		log.Error("[update check] Failed: %v", err)
 		uc.checkError = err
 		return err
 	}
@@ -109,6 +114,9 @@ func (app *App) InitUpdates() {
 
 func newVersionCheck() (string, error) {
 	res, err := http.Get("https://version.writefreely.org")
+	if debugging {
+		log.Info("[update check] GET https://version.writefreely.org")
+	}
 	if err == nil && res.StatusCode == http.StatusOK {
 		defer res.Body.Close()
 
