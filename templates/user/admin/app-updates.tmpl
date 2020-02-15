@@ -5,11 +5,16 @@
 	p.intro {
 		text-align: left;
 	}
+	p.disabled {
+		font-style: italic;
+		color: #999;
+	}
 </style>
 
 <div class="content-container snug">
 	{{template "admin-header" .}}
 
+{{ if .UpdateChecks }}
 	{{if not .UpdateAvailable}}
 		<p class="intro"><span class="check">&check;</span> WriteFreely is <strong>up to date</strong>.</p>
 		<p>Installed version: <strong>{{.Version}}</strong> (<a href="{{.LatestReleaseNotesURL}}" target="changelog-wf">release notes</a>).</p>
@@ -27,6 +32,11 @@
 	var d = new Date(displayEl.getAttribute("datetime"));
 	displayEl.textContent = d.toLocaleDateString(navigator.language || "en-US", { dateStyle: 'long', timeStyle: 'short' });
 	</script>
+{{ else }}
+	<p class="intro disabled">Automated update checks are disabled.</p>
+	<p>Installed version: <strong>{{.Version}}</strong> (<a href="{{.CurReleaseNotesURL}}" target="changelog-wf">release notes</a>).</p>
+	<p>Learn about latest releases on the <a href="https://blog.writefreely.org/tag:release" target="changelog-wf">WriteFreely blog</a> or <a href="https://discuss.write.as/c/writefreely/updates" target="forum-wf">forum</a>.</p>
+{{ end }}
 
 {{template "footer" .}}
 

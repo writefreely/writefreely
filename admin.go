@@ -583,6 +583,7 @@ func handleViewAdminUpdates(app *App, u *User, w http.ResponseWriter, r *http.Re
 
 	p := struct {
 		*UserPage
+		CurReleaseNotesURL    string
 		LastChecked           string
 		LastChecked8601       string
 		LatestVersion         string
@@ -592,6 +593,7 @@ func handleViewAdminUpdates(app *App, u *User, w http.ResponseWriter, r *http.Re
 	}{
 		UserPage: NewUserPage(app, r, u, "Updates", nil),
 	}
+	p.CurReleaseNotesURL = wfReleaseNotesURL(p.Version)
 	if app.cfg.App.UpdateChecks {
 		p.LastChecked = app.updates.lastCheck.Format("January 2, 2006, 3:04 PM")
 		p.LastChecked8601 = app.updates.lastCheck.Format("2006-01-02T15:04:05Z")

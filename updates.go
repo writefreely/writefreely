@@ -70,7 +70,11 @@ func (uc updatesCache) ReleaseURL() string {
 // ReleaseNotesURL returns the full URL to the blog.writefreely.org release notes
 // for the latest version as stored in the cache.
 func (uc updatesCache) ReleaseNotesURL() string {
-	ver := strings.TrimPrefix(uc.latestVersion, "v")
+	return wfReleaseNotesURL(uc.latestVersion)
+}
+
+func wfReleaseNotesURL(v string) string {
+	ver := strings.TrimPrefix(v, "v")
 	ver = strings.TrimSuffix(ver, ".0")
 	// hack until go 1.12 in build/travis
 	seg := strings.Split(ver, ".")
