@@ -1,5 +1,5 @@
 # Build image
-FROM golang:1.12-alpine as build
+FROM golang:1.13-alpine as build
 
 RUN apk add --update nodejs nodejs-npm make g++ git sqlite-dev
 RUN npm install -g less less-plugin-clean-css
@@ -22,7 +22,7 @@ RUN mkdir /stage && \
       /stage
 
 # Final image
-FROM alpine:3.8
+FROM alpine:3.11
 
 RUN apk add --no-cache openssl ca-certificates
 COPY --from=build --chown=daemon:daemon /stage /go
