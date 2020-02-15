@@ -58,6 +58,12 @@ func (uc updatesCache) AreAvailable() bool {
 	return CompareSemver(uc.latestVersion, uc.currentVersion) == 1
 }
 
+// AreAvailableNoCheck returns if the latest release is newer than the current
+// running version.
+func (uc updatesCache) AreAvailableNoCheck() bool {
+	return CompareSemver(uc.latestVersion, uc.currentVersion) == 1
+}
+
 // LatestVersion returns the latest stored version available.
 func (uc updatesCache) LatestVersion() string {
 	return uc.latestVersion

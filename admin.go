@@ -90,6 +90,16 @@ type instanceContent struct {
 	Updated time.Time
 }
 
+type AdminPage struct {
+	UpdateAvailable bool
+}
+
+func NewAdminPage(app *App) *AdminPage {
+	return &AdminPage{
+		UpdateAvailable: app.updates.AreAvailableNoCheck(),
+	}
+}
+
 func (c instanceContent) UpdatedFriendly() string {
 	/*
 		// TODO: accept a locale in this method and use that for the format
@@ -102,12 +112,14 @@ func (c instanceContent) UpdatedFriendly() string {
 func handleViewAdminDash(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	p := struct {
 		*UserPage
+		*AdminPage
 		Message string
 
 		UsersCount, CollectionsCount, PostsCount int64
 	}{
-		UserPage: NewUserPage(app, r, u, "Admin", nil),
-		Message:  r.FormValue("m"),
+		UserPage:  NewUserPage(app, r, u, "Admin", nil),
+		AdminPage: NewAdminPage(app),
+		Message:   r.FormValue("m"),
 	}
 
 	// Get user stats
@@ -130,12 +142,14 @@ func handleViewAdminMonitor(app *App, u *User, w http.ResponseWriter, r *http.Re
 	updateAppStats()
 	p := struct {
 		*UserPage
+		*AdminPage
 		SysStatus systemStatus
 		Config    config.AppCfg
 
 		Message, ConfigMessage string
 	}{
 		UserPage:  NewUserPage(app, r, u, "Admin", nil),
+		AdminPage: NewAdminPage(app),
 		SysStatus: sysStatus,
 		Config:    app.cfg.App,
 
@@ -150,12 +164,14 @@ func handleViewAdminMonitor(app *App, u *User, w http.ResponseWriter, r *http.Re
 func handleViewAdminSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	p := struct {
 		*UserPage
+		*AdminPage
 		Config config.AppCfg
 
 		Message, ConfigMessage string
 	}{
-		UserPage: NewUserPage(app, r, u, "Admin", nil),
-		Config:   app.cfg.App,
+		UserPage:  NewUserPage(app, r, u, "Admin", nil),
+		AdminPage: NewAdminPage(app),
+		Config:    app.cfg.App,
 
 		Message:       r.FormValue("m"),
 		ConfigMessage: r.FormValue("cm"),
@@ -168,6 +184,7 @@ func handleViewAdminSettings(app *App, u *User, w http.ResponseWriter, r *http.R
 func handleViewAdminUsers(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	p := struct {
 		*UserPage
+		*AdminPage
 		Config  config.AppCfg
 		Message string
 
@@ -176,9 +193,10 @@ func handleViewAdminUsers(app *App, u *User, w http.ResponseWriter, r *http.Requ
 		TotalUsers int64
 		TotalPages []int
 	}{
-		UserPage: NewUserPage(app, r, u, "Users", nil),
-		Config:   app.cfg.App,
-		Message:  r.FormValue("m"),
+		UserPage:  NewUserPage(app, r, u, "Users", nil),
+		AdminPage: NewAdminPage(app),
+		Config:    app.cfg.App,
+		Message:   r.FormValue("m"),
 	}
 
 	p.TotalUsers = app.db.GetAllUsersCount()
@@ -214,6 +232,7 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 
 	p := struct {
 		*UserPage
+		*AdminPage
 		Config  config.AppCfg
 		Message string
 
@@ -349,14 +368,16 @@ func handleAdminResetUserPass(app *App, u *User, w http.ResponseWriter, r *http.
 func handleViewAdminPages(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	p := struct {
 		*UserPage
+		*AdminPage
 		Config  config.AppCfg
 		Message string
 
 		Pages []*instanceContent
 	}{
-		UserPage: NewUserPage(app, r, u, "Pages", nil),
-		Config:   app.cfg.App,
-		Message:  r.FormValue("m"),
+		UserPage:  NewUserPage(app, r, u, "Pages", nil),
+		AdminPage: NewAdminPage(app),
+		Config:    app.cfg.App,
+		Message:   r.FormValue("m"),
 	}
 
 	var err error
@@ -413,6 +434,7 @@ func handleViewAdminPage(app *App, u *User, w http.ResponseWriter, r *http.Reque
 
 	p := struct {
 		*UserPage
+		*AdminPage
 		Config  config.AppCfg
 		Message string
 
@@ -583,15 +605,16 @@ func handleViewAdminUpdates(app *App, u *User, w http.ResponseWriter, r *http.Re
 
 	p := struct {
 		*UserPage
+		*AdminPage
 		CurReleaseNotesURL    string
 		LastChecked           string
 		LastChecked8601       string
 		LatestVersion         string
 		LatestReleaseURL      string
 		LatestReleaseNotesURL string
-		UpdateAvailable       bool
 	}{
-		UserPage: NewUserPage(app, r, u, "Updates", nil),
+		UserPage:  NewUserPage(app, r, u, "Updates", nil),
+		AdminPage: NewAdminPage(app),
 	}
 	p.CurReleaseNotesURL = wfReleaseNotesURL(p.Version)
 	if app.cfg.App.UpdateChecks {
