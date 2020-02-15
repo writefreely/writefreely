@@ -15,7 +15,14 @@
     For details on features, bug fixes or notes on upgrading, <a href="{{.LatestReleaseNotesURL}}">read the release notes</a>.
   </section>
   {{end}}
-  <p>Last checked at: {{.LastChecked}}. <a href="/admin/updates?check=now">Check now</a>.</p>
+	<p>Last checked at: <time class="dt-published" datetime="{{.LastChecked8601}}">{{.LastChecked}}</time>. <a href="/admin/updates?check=now">Check now</a>.</p>
+
+	<script>
+	// Code modified from /js/localdate.js
+	var displayEl = document.querySelector("time");
+	var d = new Date(displayEl.getAttribute("datetime"));
+	displayEl.textContent = d.toLocaleDateString(navigator.language || "en-US", { dateStyle: 'long', timeStyle: 'short' });
+	</script>
 
 {{template "footer" .}}
 

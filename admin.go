@@ -584,6 +584,7 @@ func handleViewAdminUpdates(app *App, u *User, w http.ResponseWriter, r *http.Re
 	p := struct {
 		*UserPage
 		LastChecked           string
+		LastChecked8601       string
 		LatestVersion         string
 		LatestReleaseNotesURL string
 		UpdateAvailable       bool
@@ -592,6 +593,7 @@ func handleViewAdminUpdates(app *App, u *User, w http.ResponseWriter, r *http.Re
 	}
 	if app.cfg.App.UpdateChecks {
 		p.LastChecked = app.updates.lastCheck.Format("January 2, 2006, 3:04 PM")
+		p.LastChecked8601 = app.updates.lastCheck.Format("2006-01-02T15:04:05Z")
 		p.LatestVersion = app.updates.LatestVersion()
 		p.LatestReleaseNotesURL = app.updates.ReleaseNotesURL()
 		p.UpdateAvailable = app.updates.AreAvailable()
