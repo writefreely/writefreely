@@ -62,6 +62,7 @@ type (
 		Description string
 		Author      string
 		Views       int64
+		Images      []string
 		IsPlainText bool
 		IsCode      bool
 		IsLinkable  bool
@@ -381,6 +382,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 		if !isRaw {
 			post.HTMLContent = template.HTML(applyMarkdown([]byte(content), "", app.cfg))
+			post.Images = extractImages(post.Content)
 		}
 	}
 
@@ -1544,7 +1546,11 @@ func (rp *RawPost) Created8601() string {
 var imageURLRegex = regexp.MustCompile(`(?i)^https?:\/\/[^ ]*\.(gif|png|jpg|jpeg|image)$`)
 
 func (p *Post) extractImages() {
-	matches := extract.ExtractUrls(p.Content)
+	p.Images = extractImages(p.Content)
+}
+
+func extractImages(content string) []string {
+	matches := extract.ExtractUrls(content)
 	urls := map[string]bool{}
 	for i := range matches {
 		u := matches[i].Text
@@ -1558,5 +1564,5 @@ func (p *Post) extractImages() {
 	for k := range urls {
 		resURLs = append(resURLs, k)
 	}
-	p.Images = resURLs
+	return resURLs
 }
