@@ -2,6 +2,8 @@ code.as/core/socks v1.0.0 h1:SPQXNp4SbEwjOAP9VzUahLHak8SDqy5n+9cm9tpjZOs=
 code.as/core/socks v1.0.0/go.mod h1:BAXBy5O9s2gmw6UxLqNJcVbWY7C/UPs+801CcSsfWOY=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
+github.com/DATA-DOG/go-sqlmock v1.3.0 h1:ljjRxlddjfChBJdFKJs5LuCwCWPLaC1UZLwAo3PBBMk=
+github.com/DATA-DOG/go-sqlmock v1.3.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/alecthomas/gometalinter v2.0.11+incompatible/go.mod h1:qfIpQGGz3d+NmgyPBqv+LSh50emm1pt72EtcX2vKYQk=
 github.com/alecthomas/gometalinter v3.0.0+incompatible h1:e9Zfvfytsw/e6Kd/PYd75wggK+/kX5Xn8IYDUKyc5fU=
 github.com/alecthomas/gometalinter v3.0.0+incompatible/go.mod h1:qfIpQGGz3d+NmgyPBqv+LSh50emm1pt72EtcX2vKYQk=
@@ -132,6 +134,8 @@ github.com/writeas/activityserve v0.0.0-20191011072627-3a81f7784d5b h1:rd2wX/bTq
 github.com/writeas/activityserve v0.0.0-20191011072627-3a81f7784d5b/go.mod h1:Kz62mzYsCnrFTSTSFLXFj3fGYBQOntmBWTDDq57b46A=
 github.com/writeas/activityserve v0.0.0-20191115095800-dd6d19cc8b89 h1:NJhzq9aTccL3SSSZMrcnYhkD6sObdY9otNZ1X6/ZKNE=
 github.com/writeas/activityserve v0.0.0-20191115095800-dd6d19cc8b89/go.mod h1:Kz62mzYsCnrFTSTSFLXFj3fGYBQOntmBWTDDq57b46A=
+github.com/writeas/go-mysqldump v0.5.2-0.20200224191309-1bf29d35e962 h1:UGcFuq/0VQ6y5uX37AFfCkwYTIg89S8B0d/R94q8DxE=
+github.com/writeas/go-mysqldump v0.5.2-0.20200224191309-1bf29d35e962/go.mod h1:Zuj7/A1hkMz7k0B8arb9bjzMYgfhsfcxCfqE8SyF0Vk=
 github.com/writeas/go-strip-markdown v2.0.1+incompatible h1:IIqxTM5Jr7RzhigcL6FkrCNfXkvbR+Nbu1ls48pXYcw=
 github.com/writeas/go-strip-markdown v2.0.1+incompatible/go.mod h1:Rsyu10ZhbEK9pXdk8V6MVnZmTzRG0alMNLMwa0J01fE=
 github.com/writeas/go-webfinger v0.0.0-20190106002315-85cf805c86d2 h1:DUsp4OhdfI+e6iUqcPQlwx8QYXuUDsToTz/x82D3Zuo=

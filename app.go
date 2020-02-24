@@ -11,6 +11,7 @@
 package writefreely
 
 import (
+	"bytes"
 	"crypto/tls"
 	"database/sql"
 	"fmt"
@@ -30,6 +31,7 @@ import (
 	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
 	"github.com/manifoldco/promptui"
+	"github.com/writeas/go-mysqldump"
 	stripmd "github.com/writeas/go-strip-markdown"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
@@ -640,6 +642,17 @@ func CreateSchema(apper Apper) error {
 	return nil
 }
 
+func Dump(apper Apper) error {
+	apper.LoadConfig()
+	connectToDatabase(apper.App())
+	defer shutdown(apper.App())
+	err := adminDumpDatabase(apper.App())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Migrate runs all necessary database migrations.
 func Migrate(apper Apper) error {
 	apper.LoadConfig()
@@ -879,5 +892,24 @@ func adminInitDatabase(app *App) error {
 	}
 
 	log.Info("Done.")
+	return nil
+}
+
+func adminDumpDatabase(app *App) error {
+	if app.db.driverName != driverMySQL {
+		return fmt.Errorf("database dump only supports %s driver right now", driverMySQL)
+	}
+
+	out := &bytes.Buffer{}
+	dumper, err := mysqldump.Register(app.db.DB, out)
+	if err != nil {
+		fmt.Println("Error registering database:", err)
+		return err
+	}
+	err = dumper.Dump()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s", out)
 	return nil
 }

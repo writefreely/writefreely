@@ -42,12 +42,20 @@ func main() {
 	deleteUsername := flag.String("delete-user", "", "Delete a user with the given username")
 	resetPassUser := flag.String("reset-pass", "", "Reset the given user's password")
 	outputVersion := flag.Bool("v", false, "Output the current version")
+	dump := flag.Bool("dump", false, "Dump all database data (MySQL-only)")
 	flag.Parse()
 
 	app := writefreely.NewApp(*configFile)
 
 	if *outputVersion {
 		writefreely.OutputVersion()
+		os.Exit(0)
+	} else if *dump {
+		err := writefreely.Dump(app)
+		if err != nil {
+			log.Error(err.Error())
+			os.Exit(1)
+		}
 		os.Exit(0)
 	} else if *createConfig {
 		err := writefreely.CreateConfig(app)
