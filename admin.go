@@ -245,9 +245,10 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 		TotalPosts  int64
 		ClearEmail  string
 	}{
-		Config:  app.cfg.App,
-		Message: r.FormValue("m"),
-		Colls:   []inspectedCollection{},
+		AdminPage: NewAdminPage(app),
+		Config:    app.cfg.App,
+		Message:   r.FormValue("m"),
+		Colls:     []inspectedCollection{},
 	}
 
 	var err error
