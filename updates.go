@@ -100,7 +100,7 @@ func newUpdatesCache(expiry time.Duration) *updatesCache {
 		frequency:      expiry,
 		currentVersion: "v" + softwareVer,
 	}
-	cache.CheckNow()
+	go cache.CheckNow()
 	return &cache
 }
 
@@ -117,6 +117,7 @@ func newVersionCheck() (string, error) {
 	if debugging {
 		log.Info("[update check] GET https://version.writefreely.org")
 	}
+	// TODO: return error if statusCode != OK
 	if err == nil && res.StatusCode == http.StatusOK {
 		defer res.Body.Close()
 
