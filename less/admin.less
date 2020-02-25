@@ -55,3 +55,32 @@ nav#admin {
 		font-size: 0.86em;
 	}
 }
+
+.features {
+	margin: 1em 0;
+
+	div {
+		&:first-child {
+			font-weight: bold;
+		}
+		&+div {
+			padding-left: 1em;
+		}
+
+		p {
+			font-weight: normal;
+			margin: 0.5rem 0;
+			font-size: 0.86em;
+			color: #666;
+		}
+	}
+}
+
+@media (max-width: 600px) {
+	div.row.features {
+		align-items: start;
+	}
+	.features div + div {
+		padding-left: 0;
+	}
+}
