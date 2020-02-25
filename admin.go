@@ -443,8 +443,9 @@ func handleViewAdminPage(app *App, u *User, w http.ResponseWriter, r *http.Reque
 		Banner  *instanceContent
 		Content *instanceContent
 	}{
-		Config:  app.cfg.App,
-		Message: r.FormValue("m"),
+		AdminPage: NewAdminPage(app),
+		Config:    app.cfg.App,
+		Message:   r.FormValue("m"),
 	}
 
 	var err error
