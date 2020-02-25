@@ -95,9 +95,11 @@ type AdminPage struct {
 }
 
 func NewAdminPage(app *App) *AdminPage {
-	return &AdminPage{
-		UpdateAvailable: app.updates.AreAvailableNoCheck(),
+	ap := &AdminPage{}
+	if app.updates != nil {
+		ap.UpdateAvailable = app.updates.AreAvailableNoCheck()
 	}
+	return ap
 }
 
 func (c instanceContent) UpdatedFriendly() string {
