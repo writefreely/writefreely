@@ -52,7 +52,7 @@
       // We have blocks to be highlighted, so we load css
       var st = document.createElement('link');
       st.rel = "stylesheet";
-      st.href = "/css/lib/atom-one-light.min.css";
+      st.href = "/css/lib/{{.HighlighterTheme}}.min.css";
       document.head.appendChild(st);
 
       // Construct set of files to load, in order

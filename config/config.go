@@ -63,13 +63,14 @@ type (
 		Host     string `ini:"host"`
 
 		// Site appearance
-		Theme      string `ini:"theme"`
-		Editor     string `ini:"editor"`
-		JSDisabled bool   `ini:"disable_js"`
-		WebFonts   bool   `ini:"webfonts"`
-		Landing    string `ini:"landing"`
-		SimpleNav  bool   `ini:"simple_nav"`
-		WFModesty  bool   `ini:"wf_modesty"`
+		Theme            string `ini:"theme"`
+		HighlighterTheme string `ini:"highlighter_theme"`
+		Editor           string `ini:"editor"`
+		JSDisabled       bool   `ini:"disable_js"`
+		WebFonts         bool   `ini:"webfonts"`
+		Landing          string `ini:"landing"`
+		SimpleNav        bool   `ini:"simple_nav"`
+		WFModesty        bool   `ini:"wf_modesty"`
 
 		// Site functionality
 		Chorus        bool `ini:"chorus"`
@@ -112,14 +113,15 @@ func New() *Config {
 			Bind: "localhost", /* IPV6 support when not using localhost? */
 		},
 		App: AppCfg{
-			Host:           "http://localhost:8080",
-			Theme:          "write",
-			WebFonts:       true,
-			SingleUser:     true,
-			MinUsernameLen: 3,
-			MaxBlogs:       1,
-			Federation:     true,
-			PublicStats:    true,
+			Host:             "http://localhost:8080",
+			Theme:            "write",
+			HighlighterTheme: "atom-one-light",
+			WebFonts:         true,
+			SingleUser:       true,
+			MinUsernameLen:   3,
+			MaxBlogs:         1,
+			Federation:       true,
+			PublicStats:      true,
 		},
 	}
 	c.UseMySQL(true)

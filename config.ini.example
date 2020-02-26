@@ -14,6 +14,7 @@ port     = 3306
 site_name         = WriteFreely Example Blog!
 host              = http://localhost:8080
 theme             = write
+highlighter_theme = atom-one-light
 disable_js        = false
 webfonts          = true
 single_user       = true
