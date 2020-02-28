@@ -94,7 +94,7 @@
 				{{if lt .CurrentPage .TotalPages}}<a style="float:right;" href="{{.NextPageURL .Prefix .CurrentPage .IsTopLevel}}">{{if and .Format.Ascending (lt .CurrentPage .TotalPages)}}Next{{else}}Older{{end}} &#8674;</a>{{end}}
 			{{else}}
 				{{if lt .CurrentPage .TotalPages}}<a href="{{.NextPageURL .Prefix .CurrentPage .IsTopLevel}}">&#8672; Older</a>{{end}}
-				{{if gt .CurrentPage 1}}<a style="float:right;" href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">{{if and .Format.Ascending (le .CurrentPage .TotalPages)}}Previous{{else}}Newer{{end}} &#8674;</a>
+				{{if gt .CurrentPage 1}}<a style="float:right;" href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">{{if and .Format.Ascending (le .CurrentPage .TotalPages)}}Previous{{else}}Newer{{end}} &#8674;</a>{{end}}
 			{{end}}
 		</nav>{{end}}
 
