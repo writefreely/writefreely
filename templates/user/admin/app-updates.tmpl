@@ -2,20 +2,45 @@
 {{template "header" .}}
 
 <style type="text/css">
+	p.intro {
+		text-align: left;
+	}
+	p.disabled {
+		font-style: italic;
+		color: #999;
+	}
 </style>
 
 <div class="content-container snug">
 	{{template "admin-header" .}}
 
-	{{if not .UpdateAvailable}}
-  <p class="alert info">WriteFreely is up to date.</p>
-  {{else}}
-  <p class="alert info">WriteFreely {{.LatestVersion}} is available.</p>
-  <section class="changelog">
-    For details on features, bug fixes or notes on upgrading, <a href="{{.LatestReleaseURL}}">read the release notes</a>.
-  </section>
-  {{end}}
-  <p>Last checked at: {{.LastChecked}}. <a href="/admin/updates?check=now">Check now</a>.</p>
+{{ if .UpdateChecks }}
+	{{if .CheckFailed}}
+		<p class="intro"><span class="ex failure">&times;</span> Automated update check failed.</p>
+		<p>Installed version: <strong>{{.Version}}</strong> (<a href="{{.CurReleaseNotesURL}}" target="changelog-wf">release notes</a>).</p>
+		<p>Learn about latest releases on the <a href="https://blog.writefreely.org/tag:release" target="changelog-wf">WriteFreely blog</a> or <a href="https://discuss.write.as/c/writefreely/updates" target="forum-wf">forum</a>.</p>
+	{{else if not .UpdateAvailable}}
+		<p class="intro"><span class="check">&check;</span> WriteFreely is <strong>up to date</strong>.</p>
+		<p>Installed version: <strong>{{.Version}}</strong> (<a href="{{.LatestReleaseNotesURL}}" target="changelog-wf">release notes</a>).</p>
+    {{else}}
+		<p class="intro">A new version of WriteFreely is available! <a href="{{.LatestReleaseURL}}" target="download-wf" style="font-weight: bold;">Get {{.LatestVersion}}</a></p>
+		<p class="changelog">
+			<a href="{{.LatestReleaseNotesURL}}" target="changelog-wf">Read the release notes</a> for details on features, bug fixes, and notes on upgrading from your current version, <strong>{{.Version}}</strong>.
+		</p>
+	{{end}}
+	<p style="font-size: 0.86em;"><em>Last checked</em>: <time class="dt-published" datetime="{{.LastChecked8601}}">{{.LastChecked}}</time>. <a href="/admin/updates?check=now">Check now</a>.</p>
+
+	<script>
+	// Code modified from /js/localdate.js
+	var displayEl = document.querySelector("time");
+	var d = new Date(displayEl.getAttribute("datetime"));
+	displayEl.textContent = d.toLocaleDateString(navigator.language || "en-US", { dateStyle: 'long', timeStyle: 'short' });
+	</script>
+{{ else }}
+	<p class="intro disabled">Automated update checks are disabled.</p>
+	<p>Installed version: <strong>{{.Version}}</strong> (<a href="{{.CurReleaseNotesURL}}" target="changelog-wf">release notes</a>).</p>
+	<p>Learn about latest releases on the <a href="https://blog.writefreely.org/tag:release" target="changelog-wf">WriteFreely blog</a> or <a href="https://discuss.write.as/c/writefreely/updates" target="forum-wf">forum</a>.</p>
+{{ end }}
 
 {{template "footer" .}}
 

@@ -94,6 +94,7 @@ type (
 
 		// Site functionality
 		Chorus        bool `ini:"chorus"`
+		Forest        bool `ini:"forest"` // The admin cares about the forest, not the trees. Hide unnecessary technical info.
 		DisableDrafts bool `ini:"disable_drafts"`
 
 		// Users

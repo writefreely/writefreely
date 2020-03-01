@@ -865,20 +865,6 @@ input {
 			text-align: center;
 		}
 	}
-	div.features {
-		margin-top: 1.5em;
-		text-align: center;
-		font-size: 0.86em;
-		ul {
-			text-align: left;
-			max-width: 26em;
-			margin-left: auto !important;
-			margin-right: auto !important;
-			li.soon, span.soon {
-				color: lighten(#111, 40%);
-			}
-		}
-	}
 	div.blurbs {
 		>h2 {
 			text-align: center;
@@ -1342,6 +1328,16 @@ div.row {
 	}
 }
 
+.check, .blip {
+	font-size: 1.125em;
+	color: #71D571;
+}
+
+.ex.failure {
+	font-weight: bold;
+	color: @dangerCol;
+}
+
 @media all and (max-width: 450px) {
 	body#post {
 		header {
@@ -1408,7 +1404,7 @@ div.row {
 }
 
 @media all and (max-width: 600px) {
-	div.row {
+	div.row:not(.admin-actions) {
 		flex-direction: column;
 	}
 	.half {

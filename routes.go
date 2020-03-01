@@ -152,6 +152,8 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	write.HandleFunc("/auth/login", handler.Web(webLogin, UserLevelNoneRequired)).Methods("POST")
 
 	write.HandleFunc("/admin", handler.Admin(handleViewAdminDash)).Methods("GET")
+	write.HandleFunc("/admin/monitor", handler.Admin(handleViewAdminMonitor)).Methods("GET")
+	write.HandleFunc("/admin/settings", handler.Admin(handleViewAdminSettings)).Methods("GET")
 	write.HandleFunc("/admin/users", handler.Admin(handleViewAdminUsers)).Methods("GET")
 	write.HandleFunc("/admin/user/{username}", handler.Admin(handleViewAdminUser)).Methods("GET")
 	write.HandleFunc("/admin/user/{username}/status", handler.Admin(handleAdminToggleUserStatus)).Methods("POST")

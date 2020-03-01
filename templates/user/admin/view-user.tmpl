@@ -71,8 +71,7 @@ input.copy-text {
 		</tr>
 		<tr>
 			<form action="/admin/user/{{.User.Username}}/status" method="POST" {{if not .User.IsSilenced}}onsubmit="return confirmSilence()"{{end}}>
-				<a id="status"/>
-				<th>Status</th>
+				<th><a id="status"></a>Status</th>
 				<td class="active-silence">
 				{{if .User.IsSilenced}}
 					<p>Silenced</p>

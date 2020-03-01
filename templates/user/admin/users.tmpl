@@ -4,7 +4,10 @@
 <div class="snug content-container">
 	{{template "admin-header" .}}
 
-	<h2 id="posts-header" style="display: flex; justify-content: space-between;">Users <span style="font-style: italic; font-size: 0.75em;">{{.TotalUsers}} total</strong></h2>
+	<div class="row admin-actions" style="justify-content: space-between;">
+		<span style="font-style: italic; font-size: 1.2em">{{.TotalUsers}} {{pluralize "user" "users" .TotalUsers}}</span>
+		<a class="btn cta" href="/me/invites">+ Invite people</a>
+	</div>
 
 	<table class="classy export" style="width:100%">
 		<tr>

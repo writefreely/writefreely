@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2019-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -11,6 +11,7 @@
 package writefreely
 
 import (
+	"github.com/writeas/web-core/log"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -30,19 +31,25 @@ type updatesCache struct {
 	lastCheck      time.Time
 	latestVersion  string
 	currentVersion string
+	checkError     error
 }
 
 // CheckNow asks for the latest released version of writefreely and updates
 // the cache last checked time. If the version postdates the current 'latest'
 // the version value is replaced.
 func (uc *updatesCache) CheckNow() error {
+	if debugging {
+		log.Info("[update check] Checking for update now.")
+	}
 	uc.mu.Lock()
 	defer uc.mu.Unlock()
+	uc.lastCheck = time.Now()
 	latestRemote, err := newVersionCheck()
 	if err != nil {
+		log.Error("[update check] Failed: %v", err)
+		uc.checkError = err
 		return err
 	}
-	uc.lastCheck = time.Now()
 	if CompareSemver(latestRemote, uc.latestVersion) == 1 {
 		uc.latestVersion = latestRemote
 	}
@@ -58,15 +65,29 @@ func (uc updatesCache) AreAvailable() bool {
 	return CompareSemver(uc.latestVersion, uc.currentVersion) == 1
 }
 
+// AreAvailableNoCheck returns if the latest release is newer than the current
+// running version.
+func (uc updatesCache) AreAvailableNoCheck() bool {
+	return CompareSemver(uc.latestVersion, uc.currentVersion) == 1
+}
+
 // LatestVersion returns the latest stored version available.
 func (uc updatesCache) LatestVersion() string {
 	return uc.latestVersion
 }
 
-// ReleaseURL returns the full URL to the blog.writefreely.org release notes
-// for the latest version as stored in the cache.
 func (uc updatesCache) ReleaseURL() string {
-	ver := strings.TrimPrefix(uc.latestVersion, "v")
+	return "https://writefreely.org/releases/" + uc.latestVersion
+}
+
+// ReleaseNotesURL returns the full URL to the blog.writefreely.org release notes
+// for the latest version as stored in the cache.
+func (uc updatesCache) ReleaseNotesURL() string {
+	return wfReleaseNotesURL(uc.latestVersion)
+}
+
+func wfReleaseNotesURL(v string) string {
+	ver := strings.TrimPrefix(v, "v")
 	ver = strings.TrimSuffix(ver, ".0")
 	// hack until go 1.12 in build/travis
 	seg := strings.Split(ver, ".")
@@ -79,7 +100,7 @@ func newUpdatesCache(expiry time.Duration) *updatesCache {
 		frequency:      expiry,
 		currentVersion: "v" + softwareVer,
 	}
-	cache.CheckNow()
+	go cache.CheckNow()
 	return &cache
 }
 
@@ -93,6 +114,10 @@ func (app *App) InitUpdates() {
 
 func newVersionCheck() (string, error) {
 	res, err := http.Get("https://version.writefreely.org")
+	if debugging {
+		log.Info("[update check] GET https://version.writefreely.org")
+	}
+	// TODO: return error if statusCode != OK
 	if err == nil && res.StatusCode == http.StatusOK {
 		defer res.Body.Close()
 

@@ -24,7 +24,7 @@ func TestUpdatesRoundTrip(t *testing.T) {
 	})
 
 	t.Run("Release URL", func(t *testing.T) {
-		url := cache.ReleaseURL()
+		url := cache.ReleaseNotesURL()
 
 		reg, err := regexp.Compile(`^https:\/\/blog.writefreely.org\/version(-\d+){1,}$`)
 		if err != nil {

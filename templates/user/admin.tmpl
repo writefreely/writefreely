@@ -35,6 +35,14 @@ form dt {
 p.docs {
 	font-size: 0.86em;
 }
+.stats {
+	font-size: 1.2em;
+	margin: 1em 0;
+}
+.num {
+	font-weight: bold;
+	font-size: 1.5em;
+}
 </style>
 
 <div class="content-container snug">
@@ -42,142 +50,12 @@ p.docs {
 
 	{{if .Message}}<p>{{.Message}}</p>{{end}}
 
-	<h2>On this page</h2>
-	<ul class="pagenav">
-		<li><a href="#config">Configuration</a></li>
-		<li><a href="#monitor">Application monitor</a></li>
-	</ul>
-
-	<h2>Resources</h2>
-	<ul class="pagenav">
-		<li><a href="https://writefreely.org/docs/{{.OfficialVersion}}/admin">Admin Guide</a></li>
-	</ul>
-
-	<hr />
-
-	<h2><a name="config"></a>App Configuration</h2>
-	<p class="docs">Read more in the <a href="https://writefreely.org/docs/{{.OfficialVersion}}/admin/config">configuration docs</a>.</p>
-
-	{{if .ConfigMessage}}<p class="success" style="text-align: center">{{.ConfigMessage}}</p>{{end}}
-
-	<form action="/admin/update/config" method="post">
-	<div class="ui attached table segment">
-		<dl class="dl-horizontal admin-dl-horizontal">
-			<dt{{if .Config.SingleUser}} class="invisible"{{end}}>Site Name</dt>
-			<dd{{if .Config.SingleUser}} class="invisible"{{end}}><input type="text" name="site_name" id="site_name" class="inline" value="{{.Config.SiteName}}" style="width: 14em;" /></dd>
-			<dt{{if .Config.SingleUser}} class="invisible"{{end}}>Site Description</dt>
-			<dd{{if .Config.SingleUser}} class="invisible"{{end}}><input type="text" name="site_desc" id="site_desc" class="inline" value="{{.Config.SiteDesc}}" style="width: 14em;" /></dd>
-			<dt>Host</dt>
-			<dd>{{.Config.Host}}</dd>
-			<dt>User Mode</dt>
-			<dd>{{if .Config.SingleUser}}Single user{{else}}Multiple users{{end}}</dd>
-			<dt{{if .Config.SingleUser}} class="invisible"{{end}}>Landing Page</dt>
-			<dd{{if .Config.SingleUser}} class="invisible"{{end}}><input type="text" name="landing" id="landing" class="inline" value="{{.Config.Landing}}" style="width: 14em;" /></dd>
-			<dt{{if .Config.SingleUser}} class="invisible"{{end}}><label for="open_registration">Open Registrations</label></dt>
-			<dd{{if .Config.SingleUser}} class="invisible"{{end}}><input type="checkbox" name="open_registration" id="open_registration" {{if .Config.OpenRegistration}}checked="checked"{{end}} /></dd>
-			<dt><label for="min_username_len">Minimum Username Length</label></dt>
-			<dd><input type="number" name="min_username_len" id="min_username_len" class="inline" min="1" max="100" value="{{.Config.MinUsernameLen}}" /></dd>
-			<dt{{if .Config.SingleUser}} class="invisible"{{end}}><label for="max_blogs">Maximum Blogs per User</label></dt>
-			<dd{{if .Config.SingleUser}} class="invisible"{{end}}><input type="number" name="max_blogs" id="max_blogs" class="inline" min="1" value="{{.Config.MaxBlogs}}" /></dd>
-			<dt><label for="federation">Federation</label></dt>
-			<dd><input type="checkbox" name="federation" id="federation" {{if .Config.Federation}}checked="checked"{{end}} /></dd>
-			<dt><label for="public_stats">Public Stats</label></dt>
-			<dd><input type="checkbox" name="public_stats" id="public_stats" {{if .Config.PublicStats}}checked="checked"{{end}} /></dd>
-			<dt><label for="private">Private Instance</label></dt>
-			<dd><input type="checkbox" name="private" id="private" {{if .Config.Private}}checked="checked"{{end}} /></dd>
-			<dt{{if .Config.SingleUser}} class="invisible"{{end}}><label for="local_timeline">Local Timeline</label></dt>
-			<dd{{if .Config.SingleUser}} class="invisible"{{end}}><input type="checkbox" name="local_timeline" id="local_timeline" {{if .Config.LocalTimeline}}checked="checked"{{end}} /></dd>
-			<dt{{if .Config.SingleUser}} class="invisible"{{end}}><label for="user_invites">Allow sending invitations by</label></dt>
-			<dd{{if .Config.SingleUser}} class="invisible"{{end}}>
-				<select name="user_invites" id="user_invites">
-					<option value="none" {{if eq .Config.UserInvites ""}}selected="selected"{{end}}>No one</option>
-					<option value="user" {{if eq .Config.UserInvites "user"}}selected="selected"{{end}}>Users</option>
-					<option value="admin" {{if eq .Config.UserInvites "admin"}}selected="selected"{{end}}>Admins</option>
-				</select>
-			</dd>
-			<dt{{if .Config.SingleUser}} class="invisible"{{end}}><label for="default_visibility">Default blog visibility</label></dt>
-			<dd{{if .Config.SingleUser}} class="invisible"{{end}}>
-				<select name="default_visibility" id="default_visibility">
-					<option value="unlisted" {{if eq .Config.DefaultVisibility "unlisted"}}selected="selected"{{end}}>Unlisted</option>
-					<option value="public" {{if eq .Config.DefaultVisibility "public"}}selected="selected"{{end}}>Public</option>
-					<option value="private" {{if eq .Config.DefaultVisibility "private"}}selected="selected"{{end}}>Private</option>
-				</select>
-			</dd>
-		</dl>
-		<input type="submit" value="Save Configuration" />
+	<div class="row stats">
+		<div><span class="num">{{largeNumFmt .UsersCount}}</span> {{pluralize "user" "users" .UsersCount}}</div>
+		<div><span class="num">{{largeNumFmt .CollectionsCount}}</span> {{pluralize "blog" "blogs" .CollectionsCount}}</div>
+		<div><span class="num">{{largeNumFmt .PostsCount}}</span> {{pluralize "post" "posts" .PostsCount}}</div>
 	</div>
-	</form>
 
-	<hr />
-
-	<h2><a name="monitor"></a>Application</h2>
-
-	<div class="ui attached table segment">
-		<dl class="dl-horizontal admin-dl-horizontal">
-			<dt>WriteFreely</dt>
-			<dd>{{.Version}}</dd>
-			<dt>Server Uptime</dt>
-			<dd>{{.SysStatus.Uptime}}</dd>
-			<dt>Current Goroutines</dt>
-			<dd>{{.SysStatus.NumGoroutine}}</dd>
-			<div class="ui divider"></div>
-			<dt>Current memory usage</dt>
-			<dd>{{.SysStatus.MemAllocated}}</dd>
-			<dt>Total mem allocated</dt>
-			<dd>{{.SysStatus.MemTotal}}</dd>
-			<dt>Memory obtained</dt>
-			<dd>{{.SysStatus.MemSys}}</dd>
-			<dt>Pointer lookup times</dt>
-			<dd>{{.SysStatus.Lookups}}</dd>
-			<dt>Memory allocate times</dt>
-			<dd>{{.SysStatus.MemMallocs}}</dd>
-			<dt>Memory free times</dt>
-			<dd>{{.SysStatus.MemFrees}}</dd>
-			<div class="ui divider"></div>
-			<dt>Current heap usage</dt>
-			<dd>{{.SysStatus.HeapAlloc}}</dd>
-			<dt>Heap memory obtained</dt>
-			<dd>{{.SysStatus.HeapSys}}</dd>
-			<dt>Heap memory idle</dt>
-			<dd>{{.SysStatus.HeapIdle}}</dd>
-			<dt>Heap memory in use</dt>
-			<dd>{{.SysStatus.HeapInuse}}</dd>
-			<dt>Heap memory released</dt>
-			<dd>{{.SysStatus.HeapReleased}}</dd>
-			<dt>Heap objects</dt>
-			<dd>{{.SysStatus.HeapObjects}}</dd>
-			<div class="ui divider"></div>
-			<dt>Bootstrap stack usage</dt>
-			<dd>{{.SysStatus.StackInuse}}</dd>
-			<dt>Stack memory obtained</dt>
-			<dd>{{.SysStatus.StackSys}}</dd>
-			<dt>MSpan structures in use</dt>
-			<dd>{{.SysStatus.MSpanInuse}}</dd>
-			<dt>MSpan structures obtained</dt>
-			<dd>{{.SysStatus.HeapSys}}</dd>
-			<dt>MCache structures in use</dt>
-			<dd>{{.SysStatus.MCacheInuse}}</dd>
-			<dt>MCache structures obtained</dt>
-			<dd>{{.SysStatus.MCacheSys}}</dd>
-			<dt>Profiling bucket hash table obtained</dt>
-			<dd>{{.SysStatus.BuckHashSys}}</dd>
-			<dt>GC metadata obtained</dt>
-			<dd>{{.SysStatus.GCSys}}</dd>
-			<dt>Other system allocation obtained</dt>
-			<dd>{{.SysStatus.OtherSys}}</dd>
-			<div class="ui divider"></div>
-			<dt>Next GC recycle</dt>
-			<dd>{{.SysStatus.NextGC}}</dd>
-			<dt>Since last GC</dt>
-			<dd>{{.SysStatus.LastGC}}</dd>
-			<dt>Total GC pause</dt>
-			<dd>{{.SysStatus.PauseTotalNs}}</dd>
-			<dt>Last GC pause</dt>
-			<dd>{{.SysStatus.PauseNs}}</dd>
-			<dt>GC times</dt>
-			<dd>{{.SysStatus.NumGC}}</dd>
-		</dl>
-	</div>
 </div>
 
 <script>
