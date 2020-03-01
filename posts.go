@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -62,6 +63,7 @@ type (
 		Description string
 		Author      string
 		Views       int64
+		Images      []string
 		IsPlainText bool
 		IsCode      bool
 		IsLinkable  bool
@@ -381,6 +383,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 		if !isRaw {
 			post.HTMLContent = template.HTML(applyMarkdown([]byte(content), "", app.cfg))
+			post.Images = extractImages(post.Content)
 		}
 	}
 
@@ -1541,22 +1544,32 @@ func (rp *RawPost) Created8601() string {
 	return rp.Created.Format("2006-01-02T15:04:05Z")
 }
 
-var imageURLRegex = regexp.MustCompile(`(?i)^https?:\/\/[^ ]*\.(gif|png|jpg|jpeg|image)$`)
+var imageURLRegex = regexp.MustCompile(`(?i)[^ ]+\.(gif|png|jpg|jpeg|image)$`)
 
 func (p *Post) extractImages() {
-	matches := extract.ExtractUrls(p.Content)
+	p.Images = extractImages(p.Content)
+}
+
+func extractImages(content string) []string {
+	matches := extract.ExtractUrls(content)
 	urls := map[string]bool{}
 	for i := range matches {
-		u := matches[i].Text
-		if !imageURLRegex.MatchString(u) {
+		uRaw := matches[i].Text
+		// Parse the extracted text so we can examine the path
+		u, err := url.Parse(uRaw)
+		if err != nil {
 			continue
 		}
-		urls[u] = true
+		// Ensure the path looks like it leads to an image file
+		if !imageURLRegex.MatchString(u.Path) {
+			continue
+		}
+		urls[uRaw] = true
 	}
 
 	resURLs := make([]string, 0)
 	for k := range urls {
 		resURLs = append(resURLs, k)
 	}
-	p.Images = resURLs
+	return resURLs
 }
