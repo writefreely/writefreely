@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/gorilla/sessions"
+	"github.com/prologic/go-gopher"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/config"
@@ -64,6 +65,7 @@ func UserLevelReader(cfg *config.Config) UserLevel {
 
 type (
 	handlerFunc          func(app *App, w http.ResponseWriter, r *http.Request) error
+	gopherFunc           func(app *App, w gopher.ResponseWriter, r *gopher.Request) error
 	userHandlerFunc      func(app *App, u *User, w http.ResponseWriter, r *http.Request) error
 	userApperHandlerFunc func(apper Apper, u *User, w http.ResponseWriter, r *http.Request) error
 	dataHandlerFunc      func(app *App, w http.ResponseWriter, r *http.Request) ([]byte, string, error)
@@ -888,6 +890,24 @@ func (h *Handler) LogHandlerFunc(f http.HandlerFunc) http.HandlerFunc {
 
 			return nil
 		}())
+	}
+}
+
+func (h *Handler) Gopher(f gopherFunc) gopher.HandlerFunc {
+	return func(w gopher.ResponseWriter, r *gopher.Request) {
+		defer func() {
+			if e := recover(); e != nil {
+				log.Error("%s: %s", e, debug.Stack())
+				w.WriteError("An internal error occurred")
+			}
+			log.Info("gopher: %s", r.Selector)
+		}()
+
+		err := f(h.app.App(), w, r)
+		if err != nil {
+			log.Error("failed: %s", err)
+			w.WriteError("the page failed for some reason (see logs)")
+		}
 	}
 }
 

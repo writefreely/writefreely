@@ -409,6 +409,11 @@ func Serve(app *App, r *mux.Router) {
 		os.Exit(0)
 	}()
 
+	// Start gopher server
+	if app.cfg.Server.GopherPort > 0 {
+		go initGopher(app)
+	}
+
 	// Start web application server
 	var bindAddress = app.cfg.Server.Bind
 	if bindAddress == "" {
