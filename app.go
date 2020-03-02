@@ -221,6 +221,10 @@ func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 			return handleViewPad(app, w, r)
 		}
 
+		if app.cfg.App.Private {
+			return viewLogin(app, w, r)
+		}
+
 		if land := app.cfg.App.LandingPath(); land != "/" {
 			return impart.HTTPError{http.StatusFound, land}
 		}
