@@ -30,25 +30,23 @@ var (
 		Name:    "generate",
 		Aliases: []string{"gen"},
 		Usage:   "Generate a basic configuration",
-		Action: genConfigAction,
+		Action:  genConfigAction,
 	}
 
 	cmdConfigInteractive cli.Command = cli.Command{
-		Name:    "interactive",
-		Aliases: []string{"i"},
-		Usage:   "Interactive configuration process",
+		Name:   "start",
+		Usage:  "Interactive configuration process",
 		Action: interactiveConfigAction,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "sections",
 				Value: "server db app",
-				Usage: "Which sections of the configuration to go through (requires --config)\n" +
-					"valid values are any combination of 'server', 'db' and 'app' \n" +
-					"example: writefreely --config --sections \"db app\"",
+				Usage: "Which sections of the configuration to go through\n" +
+					"valid values of sections flag are any combination of 'server', 'db' and 'app' \n" +
+					"example: writefreely config start --sections \"db app\"",
 			},
 		},
 	}
-
 )
 
 func genConfigAction(c *cli.Context) error {

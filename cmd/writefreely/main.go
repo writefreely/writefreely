@@ -23,6 +23,9 @@ import (
 )
 
 func main() {
+	cli.VersionPrinter = func(c *cli.Context) {
+		fmt.Printf("%s\n", c.App.Version)
+	}
 	app := &cli.App{
 		Name:    "WriteFreely",
 		Usage:   "A beautifully pared-down blogging platform",

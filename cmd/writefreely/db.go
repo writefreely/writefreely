@@ -27,15 +27,15 @@ var (
 	}
 
 	cmdDBInit cli.Command = cli.Command{
-		Name:    "init",
-		Usage:   "Initialize Database",
+		Name:   "init",
+		Usage:  "Initialize Database",
 		Action: initDBAction,
 	}
 
 	cmdDBMigrate cli.Command = cli.Command{
-		Name:    "migrate",
-		Usage:   "Migrate Database",
-		Action:  migrateDBAction,
+		Name:   "migrate",
+		Usage:  "Migrate Database",
+		Action: migrateDBAction,
 	}
 )
 

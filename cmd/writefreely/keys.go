@@ -29,9 +29,8 @@ var (
 		Name:    "generate",
 		Aliases: []string{"gen"},
 		Usage:   "Generate encryption and authentication keys",
-		Action: genKeysAction,
+		Action:  genKeysAction,
 	}
-
 )
 
 func genKeysAction(c *cli.Context) error {

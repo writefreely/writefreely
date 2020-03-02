@@ -29,9 +29,9 @@ var (
 	}
 
 	cmdAddUser cli.Command = cli.Command{
-		Name:    "add",
+		Name:    "create",
 		Usage:   "Add new user",
-		Aliases: []string{"a"},
+		Aliases: []string{"a", "add"},
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "admin",

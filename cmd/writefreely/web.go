@@ -20,10 +20,10 @@ import (
 
 var (
 	cmdServe cli.Command = cli.Command{
-		Name:  "serve",
+		Name:    "serve",
 		Aliases: []string{"web"},
-		Usage: "Run web application",
-		Action: serveAction,
+		Usage:   "Run web application",
+		Action:  serveAction,
 	}
 )
 
