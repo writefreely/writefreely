@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -33,6 +33,8 @@ const (
 	tlAPIPageLimit   = 10
 	tlMaxAuthorPosts = 5
 	tlPostsPerPage   = 16
+	tlMaxPostCache   = 250
+	tlCacheDur       = 10 * time.Minute
 )
 
 type localTimeline struct {
@@ -60,19 +62,25 @@ type readPublication struct {
 func initLocalTimeline(app *App) {
 	app.timeline = &localTimeline{
 		postsPerPage: tlPostsPerPage,
-		m:            memo.New(app.FetchPublicPosts, 10*time.Minute),
+		m:            memo.New(app.FetchPublicPosts, tlCacheDur),
 	}
 }
 
 // satisfies memo.Func
 func (app *App) FetchPublicPosts() (interface{}, error) {
+	// Conditions
+	limit := fmt.Sprintf("LIMIT %d", tlMaxPostCache)
+	// This is better than the hard limit when limiting posts from individual authors
+	// ageCond := `p.created >= ` + app.db.dateSub(3, "month") + ` AND `
+
 	// Finds all public posts and posts in a public collection published during the owner's active subscription period and within the last 3 months
 	rows, err := app.db.Query(`SELECT p.id, alias, c.title, p.slug, p.title, p.content, p.text_appearance, p.language, p.rtl, p.created, p.updated
 	FROM collections c
 	LEFT JOIN posts p ON p.collection_id = c.id
 	LEFT JOIN users u ON u.id = p.owner_id
-	WHERE c.privacy = 1 AND (p.created >= ` + app.db.dateSub(3, "month") + ` AND p.created <= ` + app.db.now() + ` AND pinned_position IS NULL) AND u.status = 0
-	ORDER BY p.created DESC`)
+	WHERE c.privacy = 1 AND (p.created <= ` + app.db.now() + ` AND pinned_position IS NULL) AND u.status = 0
+	ORDER BY p.created DESC
+	` + limit)
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve collection posts." + err.Error()}
