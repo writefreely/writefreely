@@ -11,6 +11,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/writeas/writefreely"
 
 	"github.com/urfave/cli/v2"
@@ -61,6 +63,8 @@ func addUserAction(c *cli.Context) error {
 	credentials := ""
 	if c.NArg() > 0 {
 		credentials = c.Args().Get(0)
+	} else {
+		return fmt.Errorf("No user passed. Example: writefreely user add [USER]:[PASSWORD]")
 	}
 	username, password, err := parseCredentials(credentials)
 	if err != nil {
@@ -74,6 +78,8 @@ func delUserAction(c *cli.Context) error {
 	username := ""
 	if c.NArg() > 0 {
 		username = c.Args().Get(0)
+	} else {
+		return fmt.Errorf("No user passed. Example: writefreely user delete [USER]")
 	}
 	app := writefreely.NewApp(c.String("c"))
 	return writefreely.DoDeleteAccount(app, username)
@@ -83,6 +89,8 @@ func resetPassAction(c *cli.Context) error {
 	username := ""
 	if c.NArg() > 0 {
 		username = c.Args().Get(0)
+	} else {
+		return fmt.Errorf("No user passed. Example: writefreely user reset-pass [USER]")
 	}
 	app := writefreely.NewApp(c.String("c"))
 	return writefreely.ResetPassword(app, username)
