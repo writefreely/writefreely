@@ -65,7 +65,7 @@ hr.short {
 		<input type="submit" id="btn-login" value="Login" />
 	</form>
 
-	{{if and (not .SingleUser) .OpenRegistration}}<p style="text-align:center;font-size:0.9em;margin:3em auto;max-width:26em;">{{if .Message}}{{.Message}}{{else}}<em>No account yet?</em> <a href="/">Sign up</a> to start a blog.{{end}}</p>{{end}}
+	{{if and (not .SingleUser) .OpenRegistration}}<p style="text-align:center;font-size:0.9em;margin:3em auto;max-width:26em;">{{if .Message}}{{.Message}}{{else}}<em>No account yet?</em> <a href="{{.SignupPath}}">Sign up</a> to start a blog.{{end}}</p>{{end}}
 
 <script type="text/javascript">
 function disableSubmit() {
