@@ -1,7 +1,6 @@
 module github.com/writeas/writefreely
 
 require (
-	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/alecthomas/gometalinter v3.0.0+incompatible // indirect
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
 	github.com/captncraig/cors v0.0.0-20180620154129-376d45073b49 // indirect
@@ -38,6 +37,7 @@ require (
 	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
 	github.com/stretchr/testify v1.3.0
+	github.com/urfave/cli/v2 v2.1.1
 	github.com/writeas/activity v0.1.2
 	github.com/writeas/activityserve v0.0.0-20191115095800-dd6d19cc8b89
 	github.com/writeas/go-strip-markdown v2.0.1+incompatible
@@ -57,7 +57,6 @@ require (
 	google.golang.org/appengine v1.4.0 // indirect
 	gopkg.in/alecthomas/kingpin.v3-unstable v3.0.0-20180810215634-df19058c872c // indirect
 	gopkg.in/ini.v1 v1.41.0
-	gopkg.in/yaml.v2 v2.2.2 // indirect
 	src.techknowlogick.com/xgo v0.0.0-20200129005940-d0fae26e014b // indirect
 )
 
