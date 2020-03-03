@@ -139,6 +139,15 @@ func (c *Column) SetDefault(value string) *Column {
 	return c
 }
 
+func (c *Column) SetDefaultCurrentTimestamp() *Column {
+	def := "NOW()"
+	if c.Dialect == DialectSQLite {
+		def = "CURRENT_TIMESTAMP"
+	}
+	c.Default = OptionalString{Set: true, Value: def}
+	return c
+}
+
 func (c *Column) SetType(t ColumnType) *Column {
 	c.Type = t
 	return c

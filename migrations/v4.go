@@ -29,7 +29,7 @@ func oauth(db *datastore) error {
 			SetIfNotExists(true).
 			Column(dialect.Column("state", wf_db.ColumnTypeVarChar, wf_db.OptionalInt{Set: true, Value: 255})).
 			Column(dialect.Column("used", wf_db.ColumnTypeBool, wf_db.UnsetSize)).
-			Column(dialect.Column("created_at", wf_db.ColumnTypeDateTime, wf_db.UnsetSize).SetDefault("NOW()")).
+			Column(dialect.Column("created_at", wf_db.ColumnTypeDateTime, wf_db.UnsetSize).SetDefaultCurrentTimestamp()).
 			UniqueConstraint("state").
 			ToSQL()
 		if err != nil {
