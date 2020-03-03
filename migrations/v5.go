@@ -49,7 +49,7 @@ func oauthSlack(db *datastore) error {
 						"access_token",
 						wf_db.ColumnTypeVarChar,
 						wf_db.OptionalInt{Set: true, Value: 512}).SetDefault("")),
-			dialect.CreateUniqueIndex("oauth_users", "oauth_users", "user_id", "provider", "client_id"),
+			dialect.CreateUniqueIndex("oauth_users_uk", "oauth_users", "user_id", "provider", "client_id"),
 		}
 
 		if dialect != wf_db.DialectSQLite {
