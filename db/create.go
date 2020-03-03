@@ -177,7 +177,11 @@ func (c *Column) String() (string, error) {
 
 	if c.Default.Set {
 		str.WriteString(" DEFAULT ")
-		str.WriteString(c.Default.Value)
+		val := c.Default.Value
+		if val == "" {
+			val = "''"
+		}
+		str.WriteString(val)
 	}
 
 	if c.PrimaryKey {
@@ -250,4 +254,3 @@ func (b *CreateTableSqlBuilder) ToSQL() (string, error) {
 
 	return str.String(), nil
 }
-
