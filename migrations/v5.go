@@ -49,8 +49,6 @@ func oauthSlack(db *datastore) error {
 						"access_token",
 						wf_db.ColumnTypeVarChar,
 						wf_db.OptionalInt{Set: true, Value: 512,})),
-			dialect.DropIndex("remote_user_id", "oauth_users"),
-			dialect.DropIndex("user_id", "oauth_users"),
 			dialect.CreateUniqueIndex("oauth_users", "oauth_users", "user_id", "provider", "client_id"),
 		}
 		for _, builder := range builders {

@@ -18,8 +18,6 @@ func oauth(db *datastore) error {
 			SetIfNotExists(true).
 			Column(dialect.Column("user_id", wf_db.ColumnTypeInteger, wf_db.UnsetSize)).
 			Column(dialect.Column("remote_user_id", wf_db.ColumnTypeInteger, wf_db.UnsetSize)).
-			UniqueConstraint("user_id").
-			UniqueConstraint("remote_user_id").
 			ToSQL()
 		if err != nil {
 			return err
