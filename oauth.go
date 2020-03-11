@@ -149,7 +149,7 @@ func configureWriteAsOauth(parentHandler *Handler, r *mux.Router, app *App) {
 				callbackLocation: app.Config().App.Host + "/oauth/callback/write.as",
 				httpClient:       config.DefaultHTTPClient(),
 			}
-			callbackLocation = app.Config().SlackOauth.CallbackProxy
+			callbackLocation = app.Config().WriteAsOauth.CallbackProxy
 		}
 
 		oauthClient := writeAsOauthClient{
@@ -176,10 +176,10 @@ func configureGitlabOauth(parentHandler *Handler, r *mux.Router, app *App) {
 				callbackLocation: app.Config().App.Host + "/oauth/callback/gitlab",
 				httpClient:       config.DefaultHTTPClient(),
 			}
-			callbackLocation = app.Config().SlackOauth.CallbackProxy
+			callbackLocation = app.Config().GitlabOauth.CallbackProxy
 		}
 
-		oauthClient := writeAsOauthClient{
+		oauthClient := gitlabOauthClient{
 			ClientID:         app.Config().GitlabOauth.ClientID,
 			ClientSecret:     app.Config().GitlabOauth.ClientSecret,
 			ExchangeLocation: config.OrDefaultString(app.Config().GitlabOauth.TokenLocation, writeAsExchangeLocation),

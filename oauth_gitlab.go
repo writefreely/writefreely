@@ -27,7 +27,7 @@ const (
 )
 
 func (c gitlabOauthClient) GetProvider() string {
-	return "Gitlab"
+	return "gitlab"
 }
 
 func (c gitlabOauthClient) GetClientID() string {
