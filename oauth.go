@@ -165,6 +165,33 @@ func configureWriteAsOauth(parentHandler *Handler, r *mux.Router, app *App) {
 	}
 }
 
+func configureGitlabOauth(parentHandler *Handler, r *mux.Router, app *App) {
+	if app.Config().GitlabOauth.ClientID != "" {
+		callbackLocation := app.Config().App.Host + "/oauth/callback/gitlab"
+
+		var callbackProxy *callbackProxyClient = nil
+		if app.Config().GitlabOauth.CallbackProxy != "" {
+			callbackProxy = &callbackProxyClient{
+				server:           app.Config().GitlabOauth.CallbackProxyAPI,
+				callbackLocation: app.Config().App.Host + "/oauth/callback/gitlab",
+				httpClient:       config.DefaultHTTPClient(),
+			}
+			callbackLocation = app.Config().SlackOauth.CallbackProxy
+		}
+
+		oauthClient := writeAsOauthClient{
+			ClientID:         app.Config().GitlabOauth.ClientID,
+			ClientSecret:     app.Config().GitlabOauth.ClientSecret,
+			ExchangeLocation: config.OrDefaultString(app.Config().GitlabOauth.TokenLocation, writeAsExchangeLocation),
+			InspectLocation:  config.OrDefaultString(app.Config().GitlabOauth.InspectLocation, writeAsIdentityLocation),
+			AuthLocation:     config.OrDefaultString(app.Config().GitlabOauth.AuthLocation, writeAsAuthLocation),
+			HttpClient:       config.DefaultHTTPClient(),
+			CallbackLocation: callbackLocation,
+		}
+		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
+	}
+}
+
 func configureOauthRoutes(parentHandler *Handler, r *mux.Router, app *App, oauthClient oauthClient, callbackProxy *callbackProxyClient) {
 	handler := &oauthHandler{
 		Config:        app.Config(),
