@@ -21,7 +21,7 @@
 		<!-- </div> -->
 		<div id="editor" style="margin-bottom: 0"></div>
 
-		<div style="display: none"><textarea id="content">{{if .Post.Content }}{{.Post.Content}}{{end}}</textarea></div>
+		<div style="display: none"><textarea id="content"{{if .Post.Content }} value={{.Post.Content}}>{{.Post.Content}}{{else}}>{{end}}</textarea></div>
 		
 		<header id="tools">
 			<div id="clip">
