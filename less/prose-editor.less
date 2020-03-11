@@ -1,3 +1,36 @@
+body#pad.classic {
+	header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+	#editor {
+		top: 4em;
+	}
+	#title {
+		top: 4.25rem;
+		bottom: unset;
+		height: auto;
+		font-weight: bold;
+		font-size: 2em;
+		padding-top: 0;
+		padding-bottom: 0;
+		border: 0;
+	}
+	#tools {
+		#belt {
+			float: none;
+		}
+	}
+	#target {
+		ul {
+			a {
+				padding: 0 0.5em !important;
+			}
+		}
+	}
+}
+
 .ProseMirror {
 	position: relative;
 	height: calc(~"100% - 1.6em");
@@ -5,13 +38,13 @@
 	box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	font-size: 1.2em;
-}
-
-.ProseMirror {
 	word-wrap: break-word;
 	white-space: pre-wrap;
 	-webkit-font-variant-ligatures: none;
 	font-variant-ligatures: none;
+	padding: 0.5em 0;
+	line-height: 1.5;
+	outline: none;
 }
 
 .ProseMirror pre {
@@ -342,12 +375,6 @@ li.ProseMirror-selectednode:after {
 .ProseMirror h5:first-child,
 .ProseMirror h6:first-child {
 	margin-top: 10px;
-}
-
-.ProseMirror {
-	padding: 4px 8px 4px 14px;
-	line-height: 1.2;
-	outline: none;
 }
 
 .ProseMirror p {

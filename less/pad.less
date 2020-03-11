@@ -256,7 +256,7 @@ body#pad {
 		border: 0;
 		outline: 0;
 	}
-	textarea {
+	textarea, #title {
 		position: fixed !important;
 		top: 3em;
 		right: 0;
@@ -367,6 +367,14 @@ body#pad {
 			top: 2.25em;
 			padding-top: 0.25em;
 		}
+		&.classic {
+			#editor {
+				top: 5.25em;
+			}
+			#title {
+				top: 3.5rem;
+			}
+		}
 		#tools {
 			padding-top: 0.5em;
 			padding-bottom: 0.5em;
@@ -420,40 +428,40 @@ body#pad {
 }
 
 @media all and (min-width: 50em) {
-	body#pad {
-		textarea {
+	body#pad, body#pad.classic {
+		textarea, #title {
 			padding-left: 10%;
 			padding-right: 10%;
 		}
 	}
 }
 @media all and (min-width: 60em) {
-	body#pad {
-		textarea {
+	body#pad, body#pad.classic {
+		textarea, #title {
 			padding-left: 15%;
 			padding-right: 15%;
 		}
 	}
 }
 @media all and (min-width: 70em) {
-	body#pad {
-		textarea {
+	body#pad, body#pad.classic {
+		textarea, #title {
 			padding-left: 20%;
 			padding-right: 20%;
 		}
 	}
 }
 @media all and (min-width: 85em) {
-	body#pad {
-		textarea {
+	body#pad, body#pad.classic {
+		textarea, #title {
 			padding-left: 25%;
 			padding-right: 25%;
 		}
 	}
 }
 @media all and (min-width: 105em) {
-	body#pad {
-		textarea {
+	body#pad, body#pad.classic {
+		textarea, #title {
 			padding-left: 30%;
 			padding-right: 30%;
 		}

@@ -188,18 +188,18 @@ body#pad, body#pad-sub {
 body#pad {
 	.pad-theme-transition;
 
-	textarea {
+	textarea, #title {
 		.pad-theme-transition;
 	}
 
 	&.dark {
-		textarea, #editor {
+		textarea, #title, #editor {
 			background-color: @darkBG;
 			color: @darkTextColor;
 		}
 	}
 	&.light {
-		textarea, #editor {
+		textarea, #title, #editor {
 			background-color: @lightBG;
 			color: @lightTextColor;
 		}

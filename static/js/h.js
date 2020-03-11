@@ -119,11 +119,34 @@ var H = {
 	save: function($el, key) {
 		localStorage.setItem(key, $el.el.value);
 	},
+	saveClassic: function($titleEl, $el, key) {
+		var out = "";
+		var title = $titleEl.el.value;
+		if (title !== "") {
+			out = "# "+title+"\n\n";
+		}
+		out += $el.el.value;
+		localStorage.setItem(key, out);
+	},
 	load: function($el, key, onlyLoadPopulated) {
 		var val = localStorage.getItem(key);
 		if (onlyLoadPopulated && val == null) {
 			// Do nothing
 			return;
+		}
+		$el.el.value = val;
+	},
+	loadClassic: function($titleEl, $el, key, onlyLoadPopulated) {
+		var val = localStorage.getItem(key);
+		if (onlyLoadPopulated && val == null) {
+			// Do nothing
+			return;
+		}
+		if (val.indexOf("# ") === 0) {
+			var eol = val.indexOf("\n");
+			title = val.substring("# ".length, eol);
+			val = val.substring(eol+"\n\n".length);
+			$titleEl.el.value = title;
 		}
 		$el.el.value = val;
 	},

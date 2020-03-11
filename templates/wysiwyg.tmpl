@@ -10,7 +10,7 @@
 
 		<meta name="google" value="notranslate">
 	</head>
-	<body id="pad" class="light">
+	<body id="pad" class="light classic">
 
 		<div id="overlay"></div>
 		
@@ -19,6 +19,7 @@
 		<!-- 		Markdown <input type=radio name=inputformat value=markdown checked>&nbsp;</label> -->
 		<!-- 	<label>&nbsp;<input type=radio name=inputformat value=prosemirror> WYSIWYM</label> -->
 		<!-- </div> -->
+		<input type="text" id="title" name="title" placeholder="Title..." {{if .Post.Title}}value="{{.Post.Title}}"{{end}} autofocus />
 		<div id="editor" style="margin-bottom: 0"></div>
 
 		<div style="display: none"><textarea id="content"{{if .Post.Content }} value={{.Post.Content}}>{{.Post.Content}}{{else}}>{{end}}</textarea></div>
@@ -93,6 +94,7 @@
 		if (H.get('padTheme', 'light') != 'light') {
 			toggleTheme();
 		}
+		var $title = H.getEl('title');
 		var $writer = H.getQEl('div.ProseMirror');
 		var $content = H.getEl('content');
 		var $btnPublish = H.getEl('publish');
@@ -102,6 +104,10 @@
 			var val = $content.el.value.trim();
 			if (val != '') {
 				words = $content.el.value.trim().replace(/\s+/gi, ' ').split(' ').length;
+			}
+			val = $title.el.value.trim();
+			if (val != '') {
+				words += $title.el.value.trim().replace(/\s+/gi, ' ').split(' ').length;
 			}
 			$wc.el.innerText = words + " word" + (words != 1 ? "s" : "");
 		};
@@ -118,7 +124,7 @@
 		};
 		{{if .Post.Id}}var draftDoc = 'draft{{.Post.Id}}';
 		var origDoc = '{{.Post.Content}}';{{else}}var draftDoc = 'lastDoc';{{end}}
-		H.load($content, draftDoc, true);
+		H.loadClassic($title, $writer, draftDoc, true);
 		updateWordCount();
 		
 		var typingTimer;
@@ -140,7 +146,7 @@
 		var publishing = false;
 		var justPublished = false;
 		var silenced = {{.Silenced}};
-		var publish = function(content, font) {
+		var publish = function(title, content, font) {
 			if (silenced === true) {
 				alert("Your account is silenced, so you can't publish or update posts.");
 				return;
@@ -165,7 +171,7 @@
 
 			var params = {
 				body: post.content,
-				title: post.title,
+				title: title,
 				font: font,
 				lang: lang
 			};
@@ -248,6 +254,21 @@
 		};
 
 		setButtonStates();
+		$title.on('keyup input', function() {
+			setButtonStates();
+			clearTimeout(typingTimer);
+			typingTimer = setTimeout(doneTyping, doneTypingInterval);
+		}, false);
+		$title.on('keydown', function(e) {
+			if (e.keyCode == 13) {
+				if (e.metaKey || e.ctrlKey) {
+					$btnPublish.el.click();
+				} else {
+					e.preventDefault();
+					$writer.el.focus();
+				}
+			}
+		});
 		$writer.on('keyup input', function() {
 			setButtonStates();
 			clearTimeout(typingTimer);
@@ -262,8 +283,9 @@
 		$btnPublish.on('click', function(e) {
 			e.preventDefault();
 			if (!publishing && $content.el.value) {
+				var title = $title.el.value;
 				var content = $content.el.value;
-				publish(content, selectedFont);
+				publish(title, content, selectedFont);
 			}
 		});
 
@@ -329,6 +351,7 @@
 				e.preventDefault();
 				selectedFont = this.href.substring(this.href.indexOf('#')+1);
 				// TODO: don't change classes on the editor window
+				//$title.el.className = selectedFont;
 				//$writer.el.className = selectedFont;
 				document.querySelector('nav#font-picker li.selected').classList.remove('selected');
 				this.parentElement.classList.add('selected');
@@ -346,7 +369,7 @@
 
 		var doneTyping = function() {
 			if (draftDoc == 'lastDoc' || $content.el.value != origDoc) {
-				H.save($content, draftDoc);
+				H.saveClassic($title, $content, draftDoc);
 				updateWordCount();
 			}
 		};
