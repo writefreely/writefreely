@@ -127,17 +127,6 @@ var H = {
 		}
 		$el.el.value = val;
 	},
-	saveText: function($el, key) {
-		localStorage.setItem(key, $el.el.innerText);
-	},
-	loadText: function($el, key, onlyLoadPopulated) {
-		var val = localStorage.getItem(key);
-		if (onlyLoadPopulated && val == null) {
-			// Do nothing
-			return;
-		}
-		$el.el.innerText = val;
-	},
 	set: function(key, value) {
 		localStorage.setItem(key, value);
 	},

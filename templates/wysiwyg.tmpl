@@ -99,9 +99,9 @@
 		var $wc = H.getEl("wc");
 		var updateWordCount = function() {
 			var words = 0;
-			var val = $content.el.innerText.trim();
+			var val = $content.el.value.trim();
 			if (val != '') {
-				words = $content.el.innerText.trim().replace(/\s+/gi, ' ').split(' ').length;
+				words = $content.el.value.trim().replace(/\s+/gi, ' ').split(' ').length;
 			}
 			$wc.el.innerText = words + " word" + (words != 1 ? "s" : "");
 		};
@@ -110,7 +110,7 @@
 				$btnPublish.el.className = 'disabled';
 				return;
 			}
-			if ($content.el.innerText.length === 0 || (draftDoc != 'lastDoc' && $content.el.innerText == origDoc)) {
+			if ($content.el.value.length === 0 || (draftDoc != 'lastDoc' && $content.el.value == origDoc)) {
 				$btnPublish.el.className = 'disabled';
 			} else {
 				$btnPublish.el.className = '';
@@ -118,7 +118,7 @@
 		};
 		{{if .Post.Id}}var draftDoc = 'draft{{.Post.Id}}';
 		var origDoc = '{{.Post.Content}}';{{else}}var draftDoc = 'lastDoc';{{end}}
-		H.loadText($content, draftDoc, true);
+		H.load($content, draftDoc, true);
 		updateWordCount();
 		
 		var typingTimer;
@@ -261,8 +261,8 @@
 		});
 		$btnPublish.on('click', function(e) {
 			e.preventDefault();
-			if (!publishing && $content.el.innerText) {
-				var content = $content.el.innerText;
+			if (!publishing && $content.el.value) {
+				var content = $content.el.value;
 				publish(content, selectedFont);
 			}
 		});
@@ -345,13 +345,13 @@
 		}
 
 		var doneTyping = function() {
-			if (draftDoc == 'lastDoc' || $content.el.innerText != origDoc) {
-				H.saveText($content, draftDoc);
+			if (draftDoc == 'lastDoc' || $content.el.value != origDoc) {
+				H.save($content, draftDoc);
 				updateWordCount();
 			}
 		};
 		window.addEventListener('beforeunload', function(e) {
-			if (draftDoc != 'lastDoc' && $content.el.innerText == origDoc) {
+			if (draftDoc != 'lastDoc' && $content.el.value == origDoc) {
 				H.remove(draftDoc);
 			} else if (!justPublished) {
 				doneTyping();

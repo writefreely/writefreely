@@ -10,9 +10,8 @@
 // }
 
 import {EditorView} from "prosemirror-view"
-import {EditorState, Plugin} from "prosemirror-state"
-import {schema, defaultMarkdownParser,
-        defaultMarkdownSerializer} from "prosemirror-markdown"
+import {EditorState} from "prosemirror-state"
+import {schema, defaultMarkdownParser, defaultMarkdownSerializer} from "prosemirror-markdown"
 import {exampleSetup} from "prosemirror-example-setup"
 
 class ProseMirrorView {
@@ -22,7 +21,7 @@ class ProseMirrorView {
         doc: defaultMarkdownParser.parse(content),
         plugins: exampleSetup({schema})
 			}), dispatchTransaction(transaction) {
-				document.querySelector('#content').innerText = defaultMarkdownSerializer.serialize(transaction.doc)
+				document.querySelector('#content').value = defaultMarkdownSerializer.serialize(transaction.doc)
 				let newState = this.state.apply(transaction)
 				this.updateState(newState)
 			}
