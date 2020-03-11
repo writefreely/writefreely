@@ -2512,7 +2512,7 @@ func (db *datastore) GetCollectionLastPostTime(id int64) (*time.Time, error) {
 
 func (db *datastore) GenerateOAuthState(ctx context.Context, provider, clientID string) (string, error) {
 	state := store.Generate62RandomString(24)
-	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_states (state, provider, client_id, used, created_at) VALUES (?, ?, ?, FALSE, NOW())", state, provider, clientID)
+	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_states (state, provider, client_id, used, created_at) VALUES (?, ?, ?, FALSE, " + db.now() + ")", state, provider, clientID)
 	if err != nil {
 		return "", fmt.Errorf("unable to record oauth client state: %w", err)
 	}
