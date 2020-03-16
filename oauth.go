@@ -149,7 +149,7 @@ func configureWriteAsOauth(parentHandler *Handler, r *mux.Router, app *App) {
 				callbackLocation: app.Config().App.Host + "/oauth/callback/write.as",
 				httpClient:       config.DefaultHTTPClient(),
 			}
-			callbackLocation = app.Config().SlackOauth.CallbackProxy
+			callbackLocation = app.Config().WriteAsOauth.CallbackProxy
 		}
 
 		oauthClient := writeAsOauthClient{
@@ -158,6 +158,34 @@ func configureWriteAsOauth(parentHandler *Handler, r *mux.Router, app *App) {
 			ExchangeLocation: config.OrDefaultString(app.Config().WriteAsOauth.TokenLocation, writeAsExchangeLocation),
 			InspectLocation:  config.OrDefaultString(app.Config().WriteAsOauth.InspectLocation, writeAsIdentityLocation),
 			AuthLocation:     config.OrDefaultString(app.Config().WriteAsOauth.AuthLocation, writeAsAuthLocation),
+			HttpClient:       config.DefaultHTTPClient(),
+			CallbackLocation: callbackLocation,
+		}
+		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
+	}
+}
+
+func configureGitlabOauth(parentHandler *Handler, r *mux.Router, app *App) {
+	if app.Config().GitlabOauth.ClientID != "" {
+		callbackLocation := app.Config().App.Host + "/oauth/callback/gitlab"
+
+		var callbackProxy *callbackProxyClient = nil
+		if app.Config().GitlabOauth.CallbackProxy != "" {
+			callbackProxy = &callbackProxyClient{
+				server:           app.Config().GitlabOauth.CallbackProxyAPI,
+				callbackLocation: app.Config().App.Host + "/oauth/callback/gitlab",
+				httpClient:       config.DefaultHTTPClient(),
+			}
+			callbackLocation = app.Config().GitlabOauth.CallbackProxy
+		}
+
+        address := config.OrDefaultString(app.Config().GitlabOauth.Host, gitlabHost)
+		oauthClient := gitlabOauthClient{
+			ClientID:         app.Config().GitlabOauth.ClientID,
+			ClientSecret:     app.Config().GitlabOauth.ClientSecret,
+			ExchangeLocation: address + "/oauth/token",
+			InspectLocation:  address + "/api/v4/user",
+			AuthLocation:     address + "/oauth/authorize",
 			HttpClient:       config.DefaultHTTPClient(),
 			CallbackLocation: callbackLocation,
 		}
