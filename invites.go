@@ -170,6 +170,9 @@ func handleViewInvite(app *App, w http.ResponseWriter, r *http.Request) error {
 		p.Error = "This invite link has expired."
 	}
 
+	// Tell search engines not to index invite links
+	w.Header().Set("X-Robots-Tag", "noindex")
+
 	// Get error messages
 	session, err := app.sessionStore.Get(r, cookieName)
 	if err != nil {
