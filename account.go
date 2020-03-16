@@ -309,6 +309,7 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		OauthSlack    bool
 		OauthWriteAs  bool
 		OauthGitlab   bool
+		GitlabHost    string
 	}{
 		pageForReq(app, r),
 		r.FormValue("to"),
@@ -318,6 +319,7 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		app.Config().SlackOauth.ClientID != "",
 		app.Config().WriteAsOauth.ClientID != "",
 		app.Config().GitlabOauth.ClientID != "",
+		config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
 	}
 
 	if earlyError != "" {

@@ -179,12 +179,13 @@ func configureGitlabOauth(parentHandler *Handler, r *mux.Router, app *App) {
 			callbackLocation = app.Config().GitlabOauth.CallbackProxy
 		}
 
+        address := config.OrDefaultString(app.Config().GitlabOauth.Host, gitlabHost)
 		oauthClient := gitlabOauthClient{
 			ClientID:         app.Config().GitlabOauth.ClientID,
 			ClientSecret:     app.Config().GitlabOauth.ClientSecret,
-			ExchangeLocation: config.OrDefaultString(app.Config().GitlabOauth.TokenLocation, gitlabExchangeLocation),
-			InspectLocation:  config.OrDefaultString(app.Config().GitlabOauth.InspectLocation, gitlabIdentityLocation),
-			AuthLocation:     config.OrDefaultString(app.Config().GitlabOauth.AuthLocation, gitlabAuthLocation),
+			ExchangeLocation: address + "/oauth/token",
+			InspectLocation:  address + "/api/v4/user",
+			AuthLocation:     address + "/oauth/authorize",
 			HttpClient:       config.DefaultHTTPClient(),
 			CallbackLocation: callbackLocation,
 		}

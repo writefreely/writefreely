@@ -21,9 +21,8 @@ type gitlabOauthClient struct {
 var _ oauthClient = gitlabOauthClient{}
 
 const (
-	gitlabAuthLocation     = "https://gitlab.com/oauth/authorize"
-	gitlabExchangeLocation = "https://gitlab.com/oauth/token"
-	gitlabIdentityLocation = "https://gitlab.com/api/v4/user"
+    gitlabHost        = "https://gitlab.com"
+    gitlabDisplayName = "GitLab"
 )
 
 func (c gitlabOauthClient) GetProvider() string {

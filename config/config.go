@@ -72,9 +72,8 @@ type (
 	GitlabOauthCfg struct {
 		ClientID         string `ini:"client_id"`
 		ClientSecret     string `ini:"client_secret"`
-		AuthLocation     string `ini:"auth_location"`
-		TokenLocation    string `ini:"token_location"`
-		InspectLocation  string `ini:"inspect_location"`
+		Host             string `ini:"host"`
+		DisplayName      string `ini:"display_name"`
 		CallbackProxy    string `ini:"callback_proxy"`
 		CallbackProxyAPI string `ini:"callback_proxy_api"`
 	}

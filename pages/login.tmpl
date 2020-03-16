@@ -55,7 +55,7 @@ hr.short {
 			<a class="btn cta loginbtn" id="writeas-login" href="/oauth/write.as">Sign in with <strong>Write.as</strong></a>
 		{{ end }}
 		{{ if .OauthGitlab }}
-			<a class="btn cta loginbtn" id="gitlab-login" href="/oauth/gitlab">Sign in with <strong>GitLab</strong></a>
+			<a class="btn cta loginbtn" id="gitlab-login" href="/oauth/gitlab">Sign in with <strong>{{ .GitlabDisplayName }}</strong></a>
 		{{ end }}
 		</div>
 
