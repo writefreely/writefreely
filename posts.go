@@ -1182,7 +1182,7 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 		actorIRI, err := app.db.GetProfilePageFromHandle(app, handle)
 		if err != nil {
 			log.Info("Can't find this user either in the database nor in the remote instance")
-			return nil
+			continue
 		}
 		mentionedUsers[handle] = actorIRI
 	}
