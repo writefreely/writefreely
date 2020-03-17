@@ -2605,6 +2605,7 @@ func handleFailedPostInsert(err error) error {
 }
 
 func (db *datastore) GetProfilePageFromHandle(app *App, handle string) (string, error) {
+	handle = strings.TrimLeft(handle, "@")
 	actorIRI := ""
 	remoteUser, err := getRemoteUserFromHandle(app, handle)
 	if err != nil {
