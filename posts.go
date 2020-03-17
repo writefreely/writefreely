@@ -1181,7 +1181,7 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 	for _, handle := range mentions {
 		actorIRI, err := app.db.GetProfilePageFromHandle(app, handle)
 		if err != nil {
-			log.Info("Can't find this user either in the database nor in the remote instance")
+			log.Info("Couldn't find this user locally or remotely")
 			continue
 		}
 		mentionedUsers[handle] = actorIRI
