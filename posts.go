@@ -1175,8 +1175,7 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 
 	stripper := bluemonday.StrictPolicy()
 	content := stripper.Sanitize(p.Content)
-	mentionRegex := regexp.MustCompile(`@[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]+\b`)
-	mentions := mentionRegex.FindAllString(content, -1)
+	mentions := mentionReg.FindAllString(content, -1)
 
 	for _, handle := range mentions {
 		actorIRI, err := app.db.GetProfilePageFromHandle(app, handle)
