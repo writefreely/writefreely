@@ -39,6 +39,8 @@ import (
 const (
 	mySQLErrDuplicateKey = 1062
 	mySQLErrCollationMix = 1267
+	mySQLErrTooManyConns = 1040
+	mySQLErrMaxUserConns = 1203
 
 	driverMySQL  = "mysql"
 	driverSQLite = "sqlite3"
@@ -793,6 +795,8 @@ func (db *datastore) GetCollectionBy(condition string, value interface{}) (*Coll
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, impart.HTTPError{http.StatusNotFound, "Collection doesn't exist."}
+	case db.isHighLoadError(err):
+		return nil, ErrUnavailable
 	case err != nil:
 		log.Error("Failed selecting from collections: %v", err)
 		return nil, err

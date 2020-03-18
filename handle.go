@@ -83,6 +83,7 @@ type ErrorPages struct {
 	NotFound            *template.Template
 	Gone                *template.Template
 	InternalServerError *template.Template
+	UnavailableError    *template.Template
 	Blank               *template.Template
 }
 
@@ -94,6 +95,7 @@ func NewHandler(apper Apper) *Handler {
 			NotFound:            template.Must(template.New("").Parse("{{define \"base\"}}<html><head><title>404</title></head><body><p>Not found.</p></body></html>{{end}}")),
 			Gone:                template.Must(template.New("").Parse("{{define \"base\"}}<html><head><title>410</title></head><body><p>Gone.</p></body></html>{{end}}")),
 			InternalServerError: template.Must(template.New("").Parse("{{define \"base\"}}<html><head><title>500</title></head><body><p>Internal server error.</p></body></html>{{end}}")),
+			UnavailableError:    template.Must(template.New("").Parse("{{define \"base\"}}<html><head><title>503</title></head><body><p>Service is temporarily unavailable.</p></body></html>{{end}}")),
 			Blank:               template.Must(template.New("").Parse("{{define \"base\"}}<html><head><title>{{.Title}}</title></head><body><p>{{.Content}}</p></body></html>{{end}}")),
 		},
 		sessionStore: apper.App().SessionStore(),
@@ -111,6 +113,7 @@ func NewWFHandler(apper Apper) *Handler {
 		NotFound:            pages["404-general.tmpl"],
 		Gone:                pages["410.tmpl"],
 		InternalServerError: pages["500.tmpl"],
+		UnavailableError:    pages["503.tmpl"],
 		Blank:               pages["blank.tmpl"],
 	})
 	return h
@@ -762,6 +765,10 @@ func (h *Handler) handleHTTPError(w http.ResponseWriter, r *http.Request, err er
 			w.WriteHeader(err.Status)
 			log.Info("handleHTTPErorr internal error render")
 			h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
+			return
+		} else if err.Status == http.StatusServiceUnavailable {
+			w.WriteHeader(err.Status)
+			h.errors.UnavailableError.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
 			return
 		} else if err.Status == http.StatusAccepted {
 			impart.WriteSuccess(w, "", err.Status)
