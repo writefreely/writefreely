@@ -179,7 +179,7 @@ func configureGitlabOauth(parentHandler *Handler, r *mux.Router, app *App) {
 			callbackLocation = app.Config().GitlabOauth.CallbackProxy
 		}
 
-        address := config.OrDefaultString(app.Config().GitlabOauth.Host, gitlabHost)
+		address := config.OrDefaultString(app.Config().GitlabOauth.Host, gitlabHost)
 		oauthClient := gitlabOauthClient{
 			ClientID:         app.Config().GitlabOauth.ClientID,
 			ClientSecret:     app.Config().GitlabOauth.ClientSecret,
