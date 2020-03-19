@@ -607,7 +607,12 @@ func deleteFederatedPost(app *App, p *PublicPost, collID int64) error {
 			na.CC = append(na.CC, f)
 		}
 
-		err = makeActivityPost(app.cfg.App.Host, actor, si, activitystreams.NewDeleteActivity(na))
+		da := activitystreams.NewDeleteActivity(na)
+		// Make the ID unique to ensure it works in Pleroma
+		// See: https://git.pleroma.social/pleroma/pleroma/issues/1481
+		da.ID += "#Delete"
+
+		err = makeActivityPost(app.cfg.App.Host, actor, si, da)
 		if err != nil {
 			log.Error("Couldn't delete post! %v", err)
 		}

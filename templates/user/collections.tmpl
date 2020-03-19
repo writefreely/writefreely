@@ -10,7 +10,7 @@
 {{if .Silenced}}
 	{{template "user-silenced"}}
 {{end}}
-<h2>blogs</h2>
+<h1>Blogs</h1>
 <ul class="atoms collections">
 	{{range $i, $el := .Collections}}<li class="collection"><h3>
 		<a class="title" href="/{{.Alias}}/">{{if .Title}}{{.Title}}{{else}}{{.Alias}}{{end}}</a>

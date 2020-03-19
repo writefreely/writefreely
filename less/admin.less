@@ -13,13 +13,19 @@ nav#admin {
 	display: block;
 	margin: 0.5em 0;
 	a {
-		color: @primary;
-		&:first-child {
-			margin-left: 0;
-		}
+		margin-left: 0;
+		.rounded(.25em);
+		border: 0;
 		&.selected {
+			background: #dedede;
 			font-weight: bold;
+			.blip {
+				color: black;
+			}
 		}
+	}
+	.blip {
+		font-weight: bold;
 	}
 }
 .pager {
@@ -40,5 +46,41 @@ nav#admin {
 			cursor: default;
 			background: #ccc;
 		}
+	}
+}
+
+.admin-actions {
+	.btn {
+		font-family: @sansFont;
+		font-size: 0.86em;
+	}
+}
+
+.features {
+	margin: 1em 0;
+
+	div {
+		&:first-child {
+			font-weight: bold;
+		}
+		&+div {
+			padding-left: 1em;
+		}
+
+		p {
+			font-weight: normal;
+			margin: 0.5rem 0;
+			font-size: 0.86em;
+			color: #666;
+		}
+	}
+}
+
+@media (max-width: 600px) {
+	div.row.features {
+		align-items: start;
+	}
+	.features div + div {
+		padding-left: 0;
 	}
 }

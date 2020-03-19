@@ -12,8 +12,9 @@
 package config
 
 import (
-	"gopkg.in/ini.v1"
 	"strings"
+
+	"gopkg.in/ini.v1"
 )
 
 const (
@@ -68,6 +69,15 @@ type (
 		CallbackProxyAPI string `ini:"callback_proxy_api"`
 	}
 
+	GitlabOauthCfg struct {
+		ClientID         string `ini:"client_id"`
+		ClientSecret     string `ini:"client_secret"`
+		Host             string `ini:"host"`
+		DisplayName      string `ini:"display_name"`
+		CallbackProxy    string `ini:"callback_proxy"`
+		CallbackProxyAPI string `ini:"callback_proxy_api"`
+	}
+
 	SlackOauthCfg struct {
 		ClientID         string `ini:"client_id"`
 		ClientSecret     string `ini:"client_secret"`
@@ -93,6 +103,7 @@ type (
 
 		// Site functionality
 		Chorus        bool `ini:"chorus"`
+		Forest        bool `ini:"forest"` // The admin cares about the forest, not the trees. Hide unnecessary technical info.
 		DisableDrafts bool `ini:"disable_drafts"`
 
 		// Users
@@ -114,6 +125,9 @@ type (
 
 		// Defaults
 		DefaultVisibility string `ini:"default_visibility"`
+
+		// Check for Updates
+		UpdateChecks bool `ini:"update_checks"`
 	}
 
 	// Config holds the complete configuration for running a writefreely instance
@@ -123,6 +137,7 @@ type (
 		App          AppCfg          `ini:"app"`
 		SlackOauth   SlackOauthCfg   `ini:"oauth.slack"`
 		WriteAsOauth WriteAsOauthCfg `ini:"oauth.writeas"`
+		GitlabOauth  GitlabOauthCfg  `ini:"oauth.gitlab"`
 	}
 )
 

@@ -75,6 +75,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 
 	configureSlackOauth(handler, write, apper.App())
 	configureWriteAsOauth(handler, write, apper.App())
+	configureGitlabOauth(handler, write, apper.App())
 
 	// Set up dyamic page handlers
 	// Handle auth
@@ -153,6 +154,8 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	write.HandleFunc("/auth/login", handler.Web(webLogin, UserLevelNoneRequired)).Methods("POST")
 
 	write.HandleFunc("/admin", handler.Admin(handleViewAdminDash)).Methods("GET")
+	write.HandleFunc("/admin/monitor", handler.Admin(handleViewAdminMonitor)).Methods("GET")
+	write.HandleFunc("/admin/settings", handler.Admin(handleViewAdminSettings)).Methods("GET")
 	write.HandleFunc("/admin/users", handler.Admin(handleViewAdminUsers)).Methods("GET")
 	write.HandleFunc("/admin/user/{username}", handler.Admin(handleViewAdminUser)).Methods("GET")
 	write.HandleFunc("/admin/user/{username}/status", handler.Admin(handleAdminToggleUserStatus)).Methods("POST")
@@ -161,6 +164,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	write.HandleFunc("/admin/page/{slug}", handler.Admin(handleViewAdminPage)).Methods("GET")
 	write.HandleFunc("/admin/update/config", handler.AdminApper(handleAdminUpdateConfig)).Methods("POST")
 	write.HandleFunc("/admin/update/{page}", handler.Admin(handleAdminUpdateSite)).Methods("POST")
+	write.HandleFunc("/admin/updates", handler.Admin(handleViewAdminUpdates)).Methods("GET")
 
 	// Handle special pages first
 	write.HandleFunc("/login", handler.Web(viewLogin, UserLevelNoneRequired))

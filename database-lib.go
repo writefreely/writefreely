@@ -1,7 +1,7 @@
 // +build wflib
 
 /*
- * Copyright © 2019 A Bunch Tell LLC.
+ * Copyright © 2019-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -16,5 +16,9 @@
 package writefreely
 
 func (db *datastore) isDuplicateKeyErr(err error) bool {
+	return false
+}
+
+func (db *datastore) isIgnorableError(err error) bool {
 	return false
 }

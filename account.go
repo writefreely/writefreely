@@ -302,12 +302,14 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p := &struct {
 		page.StaticPage
-		To            string
-		Message       template.HTML
-		Flashes       []template.HTML
-		LoginUsername string
-		OauthSlack    bool
-		OauthWriteAs  bool
+		To                string
+		Message           template.HTML
+		Flashes           []template.HTML
+		LoginUsername     string
+		OauthSlack        bool
+		OauthWriteAs      bool
+		OauthGitlab       bool
+		GitlabDisplayName string
 	}{
 		pageForReq(app, r),
 		r.FormValue("to"),
@@ -316,6 +318,8 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		getTempInfo(app, "login-user", r, w),
 		app.Config().SlackOauth.ClientID != "",
 		app.Config().WriteAsOauth.ClientID != "",
+		app.Config().GitlabOauth.ClientID != "",
+		config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
 	}
 
 	if earlyError != "" {

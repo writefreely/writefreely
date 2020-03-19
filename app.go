@@ -72,6 +72,7 @@ type App struct {
 	keys         *key.Keychain
 	sessionStore sessions.Store
 	formDecoder  *schema.Decoder
+	updates      *updatesCache
 
 	timeline *localTimeline
 }
@@ -371,6 +372,8 @@ func Initialize(apper Apper, debug bool) (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("init keys: %s", err)
 	}
+	apper.App().InitUpdates()
+
 	apper.App().InitSession()
 
 	apper.App().InitDecoder()
