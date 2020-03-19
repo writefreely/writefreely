@@ -302,14 +302,14 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p := &struct {
 		page.StaticPage
-		To            string
-		Message       template.HTML
-		Flashes       []template.HTML
-		LoginUsername string
-		OauthSlack    bool
-		OauthWriteAs  bool
-		OauthGitlab   bool
-		GitlabHost    string
+		To                string
+		Message           template.HTML
+		Flashes           []template.HTML
+		LoginUsername     string
+		OauthSlack        bool
+		OauthWriteAs      bool
+		OauthGitlab       bool
+		GitlabDisplayName string
 	}{
 		pageForReq(app, r),
 		r.FormValue("to"),
