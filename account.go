@@ -27,6 +27,7 @@ import (
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/data"
 	"github.com/writeas/web-core/log"
+
 	"github.com/writeas/writefreely/author"
 	"github.com/writeas/writefreely/config"
 	"github.com/writeas/writefreely/page"
@@ -70,7 +71,7 @@ func canUserInvite(cfg *config.Config, isAdmin bool) bool {
 }
 
 func (up *UserPage) SetMessaging(u *User) {
-	//up.NeedsAuth = app.db.DoesUserNeedAuth(u.ID)
+	// up.NeedsAuth = app.db.DoesUserNeedAuth(u.ID)
 }
 
 const (
@@ -1044,6 +1045,7 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 
 	enableOauthSlack := app.Config().SlackOauth.ClientID != ""
 	enableOauthWriteAs := app.Config().WriteAsOauth.ClientID != ""
+	enableOauthGitLab := app.Config().GitlabOauth.ClientID != ""
 
 	oauthAccounts, err := app.db.GetOauthAccounts(r.Context(), u.ID)
 	if err != nil {
@@ -1056,10 +1058,12 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 			enableOauthSlack = false
 		case "write.as":
 			enableOauthWriteAs = false
+		case "gitlab":
+			enableOauthGitLab = false
 		}
 	}
 
-	displayOauthSection := enableOauthSlack || enableOauthWriteAs || len(oauthAccounts) > 0
+	displayOauthSection := enableOauthSlack || enableOauthWriteAs || enableOauthGitLab || len(oauthAccounts) > 0
 
 	obj := struct {
 		*UserPage
@@ -1071,6 +1075,7 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		OauthAccounts []oauthAccountInfo
 		OauthSlack    bool
 		OauthWriteAs  bool
+		OauthGitLab   bool
 	}{
 		UserPage:      NewUserPage(app, r, u, "Account Settings", flashes),
 		Email:         fullUser.EmailClear(app.keys),
@@ -1081,6 +1086,7 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		OauthAccounts: oauthAccounts,
 		OauthSlack:    enableOauthSlack,
 		OauthWriteAs:  enableOauthWriteAs,
+		OauthGitLab:   enableOauthGitLab,
 	}
 
 	showUserPage(w, "settings", obj)

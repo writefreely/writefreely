@@ -4,17 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
-	"github.com/writeas/impart"
-	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/config"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
+	"github.com/writeas/impart"
+	"github.com/writeas/web-core/log"
+
+	"github.com/writeas/writefreely/config"
 )
 
 // TokenResponse contains data returned when a token is created either
@@ -250,6 +252,13 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 	if err != nil {
 		log.Error("Unable to GetIDForRemoteUser: %s", err)
 		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
+	}
+
+	if localUserID != -1 && attachUserID > 0 {
+		if err = addSessionFlash(app, w, r, "Slack account is already attached to a user.", nil); err != nil {
+			return impart.HTTPError{Status: http.StatusInternalServerError, Message: err.Error()}
+		}
+		return impart.HTTPError{http.StatusFound, "/me/settings"}
 	}
 
 	if localUserID != -1 {
