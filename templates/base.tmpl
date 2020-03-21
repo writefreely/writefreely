@@ -2,12 +2,12 @@
 <html>
 	<head>
 		{{ template "head" . }}
-		<link rel="stylesheet" type="text/css" href="{{.Host}}/css/{{.Theme}}.css" />
-		<link rel="shortcut icon" href="{{.Host}}/favicon.ico" />
+		<link rel="stylesheet" type="text/css" href="/css/{{.Theme}}.css" />
+		<link rel="shortcut icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 		<meta name="application-name" content="{{.SiteName}}">
-		<meta name="application-url" content="{{.Host}}">
+		<meta name="application-url" content="{{.Host}}"><!-- this should be changed to not always be localhost:[port] -->
 		<meta property="og:site_name" content="{{.SiteName}}" />
 	</head>
 	<body {{template "body-attrs" .}}>
