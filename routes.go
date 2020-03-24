@@ -115,6 +115,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	apiMe.HandleFunc("/self", handler.All(updateSettings)).Methods("POST")
 	apiMe.HandleFunc("/invites", handler.User(handleCreateUserInvite)).Methods("POST")
 	apiMe.HandleFunc("/import", handler.User(handleImport)).Methods("POST")
+	apiMe.HandleFunc("/oauth/remove", handler.User(removeOauth)).Methods("POST")
 
 	// Sign up validation
 	write.HandleFunc("/api/alias", handler.All(handleUsernameCheck)).Methods("POST")

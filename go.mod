@@ -21,6 +21,7 @@ require (
 	github.com/guregu/null v3.4.0+incompatible
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/ikeikeikeike/go-sitemap-generator/v2 v2.0.2
+	github.com/jteeuwen/go-bindata v3.0.7+incompatible // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/kylemcc/twitter-text-go v0.0.0-20180726194232-7f582f6736ec
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
@@ -51,6 +52,7 @@ require (
 	github.com/writeas/slug v1.2.0
 	github.com/writeas/web-core v1.2.0
 	github.com/writefreely/go-nodeinfo v1.2.0
+	golang.org/dl v0.0.0-20200319204010-bf12898a6070 // indirect
 	golang.org/x/crypto v0.0.0-20200109152110-61a87790db17
 	golang.org/x/lint v0.0.0-20181217174547-8f45f776aaf1 // indirect
 	golang.org/x/tools v0.0.0-20190208222737-3744606dbb67 // indirect

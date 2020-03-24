@@ -62,6 +62,7 @@ var migrations = []Migration{
 	New("support oauth", oauth),                                     // V3 -> V4
 	New("support slack oauth", oauthSlack),                          // V4 -> v5
 	New("support ActivityPub mentions", supportActivityPubMentions), // V5 -> V6 (v0.12.0)
+	New("support oauth attach", oauthAttach),                        // V6 -> V7
 }
 
 // CurrentVer returns the current migration version the application is on

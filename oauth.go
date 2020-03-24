@@ -4,17 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
-	"github.com/writeas/impart"
-	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/config"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
+	"github.com/writeas/impart"
+	"github.com/writeas/web-core/log"
+
+	"github.com/writeas/writefreely/config"
 )
 
 // TokenResponse contains data returned when a token is created either
@@ -59,8 +61,8 @@ type OAuthDatastoreProvider interface {
 type OAuthDatastore interface {
 	GetIDForRemoteUser(context.Context, string, string, string) (int64, error)
 	RecordRemoteUserID(context.Context, int64, string, string, string, string) error
-	ValidateOAuthState(context.Context, string) (string, string, error)
-	GenerateOAuthState(context.Context, string, string) (string, error)
+	ValidateOAuthState(context.Context, string) (string, string, int64, error)
+	GenerateOAuthState(context.Context, string, string, int64) (string, error)
 
 	CreateUser(*config.Config, *User, string) error
 	GetUserByID(int64) (*User, error)
@@ -96,19 +98,32 @@ type oauthHandler struct {
 
 func (h oauthHandler) viewOauthInit(app *App, w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	state, err := h.DB.GenerateOAuthState(ctx, h.oauthClient.GetProvider(), h.oauthClient.GetClientID())
+
+	var attachUser int64
+	if attach := r.URL.Query().Get("attach"); attach == "t" {
+		user, _ := getUserAndSession(app, r)
+		if user == nil {
+			return impart.HTTPError{http.StatusInternalServerError, "cannot attach auth to user: user not found in session"}
+		}
+		attachUser = user.ID
+	}
+
+	state, err := h.DB.GenerateOAuthState(ctx, h.oauthClient.GetProvider(), h.oauthClient.GetClientID(), attachUser)
 	if err != nil {
+		log.Error("viewOauthInit error: %s", err)
 		return impart.HTTPError{http.StatusInternalServerError, "could not prepare oauth redirect url"}
 	}
 
 	if h.callbackProxy != nil {
 		if err := h.callbackProxy.register(ctx, state); err != nil {
+			log.Error("viewOauthInit error: %s", err)
 			return impart.HTTPError{http.StatusInternalServerError, "could not register state server"}
 		}
 	}
 
 	location, err := h.oauthClient.buildLoginURL(state)
 	if err != nil {
+		log.Error("viewOauthInit error: %s", err)
 		return impart.HTTPError{http.StatusInternalServerError, "could not prepare oauth redirect url"}
 	}
 	return impart.HTTPError{http.StatusTemporaryRedirect, location}
@@ -213,7 +228,7 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 	code := r.FormValue("code")
 	state := r.FormValue("state")
 
-	provider, clientID, err := h.DB.ValidateOAuthState(ctx, state)
+	provider, clientID, attachUserID, err := h.DB.ValidateOAuthState(ctx, state)
 	if err != nil {
 		log.Error("Unable to ValidateOAuthState: %s", err)
 		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
@@ -239,6 +254,13 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 	}
 
+	if localUserID != -1 && attachUserID > 0 {
+		if err = addSessionFlash(app, w, r, "This Slack account is already attached to another user.", nil); err != nil {
+			return impart.HTTPError{Status: http.StatusInternalServerError, Message: err.Error()}
+		}
+		return impart.HTTPError{http.StatusFound, "/me/settings"}
+	}
+
 	if localUserID != -1 {
 		user, err := h.DB.GetUserByID(localUserID)
 		if err != nil {
@@ -250,6 +272,14 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 			return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 		}
 		return nil
+	}
+	if attachUserID > 0 {
+		log.Info("attaching to user %d", attachUserID)
+		err = h.DB.RecordRemoteUserID(r.Context(), attachUserID, tokenInfo.UserID, provider, clientID, tokenResponse.AccessToken)
+		if err != nil {
+			return impart.HTTPError{http.StatusInternalServerError, err.Error()}
+		}
+		return impart.HTTPError{http.StatusFound, "/me/settings"}
 	}
 
 	displayName := tokenInfo.DisplayName
