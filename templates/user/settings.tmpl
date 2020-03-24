@@ -4,7 +4,13 @@
 <style type="text/css">
 .option { margin: 2em 0em; }
 h3 { font-weight: normal; }
-.section > *:not(input) { font-size: 0.86em; }
+.section p, .section label {
+	font-size: 0.86em;
+}
+.oauth-provider img {
+	max-height: 2.75em;
+	vertical-align: middle;
+}
 </style>
 <div class="content-container snug">
 	{{if .Silenced}}
@@ -62,41 +68,63 @@ h3 { font-weight: normal; }
 			</div>
 		</div>
 
-		<div class="option" style="text-align: center; margin-top: 4em;">
+		<div class="option" style="text-align: center;">
 			<input type="submit" value="Save changes" tabindex="4" />
 		</div>
 	</form>
 
     {{ if .OauthSection }}
-        <h1>OAuth Management</h1>
+		<hr />
+
 	    {{ if .OauthAccounts }}
-	        <p>Existing OAuth accounts can be removed from your account.</p>
+		<div class="option">
+			<h2>Linked Accounts</h2>
+			<p>These are your linked external accounts.</p>
 	        {{ range $oauth_account := .OauthAccounts }}
 		        <form method="post" action="/api/me/oauth/remove" autocomplete="false">
 		            <input type="hidden" name="provider" value="{{ $oauth_account.Provider }}" />
 		            <input type="hidden" name="client_id" value="{{ $oauth_account.ClientID }}" />
 		            <input type="hidden" name="remote_user_id" value="{{ $oauth_account.RemoteUserID }}" />
-    		        <div class="option">
-    			        <div class="section">
-        				    <input type="submit" value="Remove {{ $oauth_account.Provider | title }}" style="margin-left: 1em;" />
-    			        </div>
-    		        </div>
+					<div class="section oauth-provider">
+						<img src="/img/mark/{{$oauth_account.Provider}}.png" alt="{{ $oauth_account.Provider | title }}" />
+						<input type="submit" value="Remove {{ $oauth_account.Provider | title }}" />
+					</div>
     	        </form>
             {{ end }}
-	    {{ end }}
-	    {{ if or .OauthSlack .OauthWriteAs }}
-	        <p>
+		</div>
+		{{ end }}
+		{{ if or .OauthSlack .OauthWriteAs .OauthGitLab }}
+		<div class="option">
+			<h2>Link External Accounts</h2>
+			<p>Connect additional accounts to enable logging in with those providers, instead of using your username and password.</p>
+			<div class="row">
+			{{ if .OauthWriteAs }}
+				<div class="section oauth-provider">
+					<img src="/img/mark/writeas.png" alt="Write.as" />
+					<a class="btn cta loginbtn" id="writeas-login" href="/oauth/write.as?attach=t">
+						Link <strong>Write.as</strong>
+					</a>
+				</div>
+			{{ end }}
 	        {{ if .OauthSlack }}
-    	        <a class="loginbtn" href="/oauth/slack?attach=t"><img alt="Sign in with Slack" height="40" width="172" src="/img/sign_in_with_slack.png" srcset="/img/sign_in_with_slack.png 1x, /img/sign_in_with_slack@2x.png 2x" /></a>
-            {{ end }}
-            {{ if .OauthWriteAs }}
-                <a class="btn cta loginbtn" id="writeas-login" href="/oauth/write.as?attach=t">Link your <strong>Write.as</strong> account.</a>
+				<div class="section oauth-provider">
+					<img src="/img/mark/slack.png" alt="Slack" />
+					<a class="btn cta loginbtn" href="/oauth/slack?attach=t">
+						Link <strong>Slack</strong>
+					</a>
+				</div>
             {{ end }}
             {{ if .OauthGitLab }}
-                <a class="btn cta loginbtn" id="gitlab-login" href="/oauth/gitlab?attach=t">Link your <strong>{{.GitLabDisplayName}}</strong> account</a>
+				<div class="section oauth-provider">
+					<img src="/img/mark/gitlab.png" alt="GitLab" />
+					<a class="btn cta loginbtn" id="gitlab-login" href="/oauth/gitlab?attach=t">
+						Link <strong>{{.GitLabDisplayName}}</strong>
+					</a>
+				</div>
             {{ end }}
-            </p>
-        {{ end }}
+			</div>
+		</div>
+		{{ end }}
     {{ end }}
 </div>
 
