@@ -72,7 +72,7 @@ h3 { font-weight: normal; }
 	    {{ if .OauthAccounts }}
 	        <p>Existing OAuth accounts can be removed from your account.</p>
 	        {{ range $oauth_account := .OauthAccounts }}
-		        <form method="post" action="/me/oauth/remove" autocomplete="false">
+		        <form method="post" action="/api/me/oauth/remove" autocomplete="false">
 		            <input type="hidden" name="provider" value="{{ $oauth_account.Provider }}" />
 		            <input type="hidden" name="client_id" value="{{ $oauth_account.ClientID }}" />
 		            <input type="hidden" name="remote_user_id" value="{{ $oauth_account.RemoteUserID }}" />

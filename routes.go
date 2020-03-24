@@ -105,7 +105,6 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	me.HandleFunc("/settings", handler.User(viewSettings)).Methods("GET")
 	me.HandleFunc("/invites", handler.User(handleViewUserInvites)).Methods("GET")
 	me.HandleFunc("/logout", handler.Web(viewLogout, UserLevelNone)).Methods("GET")
-	me.HandleFunc("/oauth/remove", handler.User(removeOauth)).Methods("POST")
 
 	write.HandleFunc("/api/me", handler.All(viewMeAPI)).Methods("GET")
 	apiMe := write.PathPrefix("/api/me/").Subrouter()
@@ -116,6 +115,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	apiMe.HandleFunc("/self", handler.All(updateSettings)).Methods("POST")
 	apiMe.HandleFunc("/invites", handler.User(handleCreateUserInvite)).Methods("POST")
 	apiMe.HandleFunc("/import", handler.User(handleImport)).Methods("POST")
+	apiMe.HandleFunc("/oauth/remove", handler.User(removeOauth)).Methods("POST")
 
 	// Sign up validation
 	write.HandleFunc("/api/alias", handler.All(handleUsernameCheck)).Methods("POST")
