@@ -1067,26 +1067,28 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 
 	obj := struct {
 		*UserPage
-		Email         string
-		HasPass       bool
-		IsLogOut      bool
-		Silenced      bool
-		OauthSection  bool
-		OauthAccounts []oauthAccountInfo
-		OauthSlack    bool
-		OauthWriteAs  bool
-		OauthGitLab   bool
+		Email             string
+		HasPass           bool
+		IsLogOut          bool
+		Silenced          bool
+		OauthSection      bool
+		OauthAccounts     []oauthAccountInfo
+		OauthSlack        bool
+		OauthWriteAs      bool
+		OauthGitLab       bool
+		GitLabDisplayName string
 	}{
-		UserPage:      NewUserPage(app, r, u, "Account Settings", flashes),
-		Email:         fullUser.EmailClear(app.keys),
-		HasPass:       passIsSet,
-		IsLogOut:      r.FormValue("logout") == "1",
-		Silenced:      fullUser.IsSilenced(),
-		OauthSection:  displayOauthSection,
-		OauthAccounts: oauthAccounts,
-		OauthSlack:    enableOauthSlack,
-		OauthWriteAs:  enableOauthWriteAs,
-		OauthGitLab:   enableOauthGitLab,
+		UserPage:          NewUserPage(app, r, u, "Account Settings", flashes),
+		Email:             fullUser.EmailClear(app.keys),
+		HasPass:           passIsSet,
+		IsLogOut:          r.FormValue("logout") == "1",
+		Silenced:          fullUser.IsSilenced(),
+		OauthSection:      displayOauthSection,
+		OauthAccounts:     oauthAccounts,
+		OauthSlack:        enableOauthSlack,
+		OauthWriteAs:      enableOauthWriteAs,
+		OauthGitLab:       enableOauthGitLab,
+		GitLabDisplayName: config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
 	}
 
 	showUserPage(w, "settings", obj)

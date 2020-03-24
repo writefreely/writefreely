@@ -93,7 +93,7 @@ h3 { font-weight: normal; }
                 <a class="btn cta loginbtn" id="writeas-login" href="/oauth/write.as?attach=t">Link your <strong>Write.as</strong> account.</a>
             {{ end }}
             {{ if .OauthGitLab }}
-                <a class="btn cta loginbtn" id="gitlab-login" href="/oauth/gitlab?attach=t">Link your <strong>GitLab</strong> account.</a>
+                <a class="btn cta loginbtn" id="gitlab-login" href="/oauth/gitlab?attach=t">Link your <strong>{{.GitLabDisplayName}}</strong> account</a>
             {{ end }}
             </p>
         {{ end }}
