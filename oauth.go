@@ -255,7 +255,7 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 	}
 
 	if localUserID != -1 && attachUserID > 0 {
-		if err = addSessionFlash(app, w, r, "Slack account is already attached to a user.", nil); err != nil {
+		if err = addSessionFlash(app, w, r, "This Slack account is already attached to another user.", nil); err != nil {
 			return impart.HTTPError{Status: http.StatusInternalServerError, Message: err.Error()}
 		}
 		return impart.HTTPError{http.StatusFound, "/me/settings"}
