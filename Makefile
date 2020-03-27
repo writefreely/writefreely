@@ -86,6 +86,7 @@ release : clean ui assets
 	cp -r templates $(BUILDPATH)
 	cp -r pages $(BUILDPATH)
 	cp -r static $(BUILDPATH)
+	scripts/invalidate-css.sh $(BUILDPATH)
 	mkdir $(BUILDPATH)/keys
 	$(MAKE) build-linux
 	mv build/$(BINARY_NAME)-linux-amd64 $(BUILDPATH)/$(BINARY_NAME)
