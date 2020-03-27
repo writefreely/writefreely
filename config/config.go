@@ -193,6 +193,16 @@ func (ac *AppCfg) LandingPath() string {
 	return ac.Landing
 }
 
+func (ac AppCfg) SignupPath() string {
+	if !ac.OpenRegistration {
+		return ""
+	}
+	if ac.Chorus || ac.Private || (ac.Landing != "" && ac.Landing != "/") {
+		return "/signup"
+	}
+	return "/"
+}
+
 // Load reads the given configuration file, then parses and returns it as a Config.
 func Load(fname string) (*Config, error) {
 	if fname == "" {
