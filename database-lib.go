@@ -22,3 +22,7 @@ func (db *datastore) isDuplicateKeyErr(err error) bool {
 func (db *datastore) isIgnorableError(err error) bool {
 	return false
 }
+
+func (db *datastore) isHighLoadError(err error) bool {
+	return false
+}
