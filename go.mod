@@ -44,7 +44,7 @@ require (
 	github.com/writeas/go-strip-markdown v2.0.1+incompatible
 	github.com/writeas/go-webfinger v0.0.0-20190106002315-85cf805c86d2
 	github.com/writeas/httpsig v1.0.0
-	github.com/writeas/impart v1.1.1-0.20191230230525-d3c45ced010d
+	github.com/writeas/impart v1.1.1
 	github.com/writeas/import v0.2.0
 	github.com/writeas/monday v0.0.0-20181024183321-54a7dd579219
 	github.com/writeas/nerds v1.0.0
