@@ -21,7 +21,7 @@ type genericOauthClient struct {
 var _ oauthClient = genericOauthClient{}
 
 const (
-    genericOauthDisplayName = "oAuth"
+	genericOauthDisplayName = "oAuth"
 )
 
 func (c genericOauthClient) GetProvider() string {

@@ -66,7 +66,7 @@ func NewUserPage(app *App, r *http.Request, u *User, title string, flashes []str
 }
 
 func canUserInvite(cfg *config.Config, isAdmin bool) bool {
-      return cfg.App.UserInvites != "" &&
+	return cfg.App.UserInvites != "" &&
 		(isAdmin || cfg.App.UserInvites != "admin")
 }
 
@@ -306,8 +306,8 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		OauthSlack              bool
 		OauthWriteAs            bool
 		OauthGitlab             bool
-        OauthGeneric            bool
-        OauthGenericDisplayName string
+		OauthGeneric            bool
+		OauthGenericDisplayName string
 		GitlabDisplayName       string
 	}{
 		pageForReq(app, r),
@@ -318,8 +318,8 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		app.Config().SlackOauth.ClientID != "",
 		app.Config().WriteAsOauth.ClientID != "",
 		app.Config().GitlabOauth.ClientID != "",
-        app.Config().GenericOauth.ClientID != "",
-        config.OrDefaultString(app.Config().GenericOauth.DisplayName, genericOauthDisplayName),
+		app.Config().GenericOauth.ClientID != "",
+		config.OrDefaultString(app.Config().GenericOauth.DisplayName, genericOauthDisplayName),
 		config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
 	}
 
