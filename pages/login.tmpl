@@ -3,6 +3,39 @@
 <meta itemprop="description" content="Log in to {{.SiteName}}.">
 <style>
 input{margin-bottom:0.5em;}
+.or {
+ text-align: center;
+ margin-bottom: 3.5em;
+}
+.or p {
+ display: inline-block;
+ background-color: white;
+ padding: 0 1em;
+}
+.or hr {
+ margin-top: -1.6em;
+ margin-bottom: 0;
+}
+hr.short {
+ max-width: 30rem;
+}
+.row.signinbtns {
+ justify-content: space-evenly;
+ font-size: 1em;
+ margin-top: 3em;
+ margin-bottom: 2em;
+}
+.loginbtn {
+ height: 40px;
+}
+#writeas-login {
+ box-sizing: border-box;
+ font-size: 17px;
+}
+#gitlab-login {
+ box-sizing: border-box;
+ font-size: 17px;
+}
 </style>
 {{end}}
 {{define "content"}}
