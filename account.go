@@ -319,7 +319,7 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		app.Config().WriteAsOauth.ClientID != "",
 		app.Config().GitlabOauth.ClientID != "",
         app.Config().GenericOauth.ClientID != "",
-        config.OrDefaultString(app.Config().GenericOauth.DisplayName, oAuthGenericDisplayName),
+        config.OrDefaultString(app.Config().GenericOauth.DisplayName, genericOauthDisplayName),
 		config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
 	}
 
