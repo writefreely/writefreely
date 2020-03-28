@@ -235,6 +235,34 @@ func configureGitlabOauth(parentHandler *Handler, r *mux.Router, app *App) {
 	}
 }
 
+func configureGenericOauth(parentHandler *Handler, r *mux.Router, app *App) {
+    if app.Config().GenericOauth.ClientID != "" {
+        callbackLocation := app.Config().App.Host + "/oauth/callback/generic"
+
+        var callbackProxy *callbackProxyClient = nil
+        if app.Config().GenericOauth.CallbackProxy != "" {
+            callbackProxy = &callbackProxyClient {
+                server:           app.Config().GenericOauth.CallbackProxyAPI,
+                callbackLocation: app.Config().App.Host + "/oauth/callback/generic",
+                httpClient:       config.DefaultHTTPClient(),
+            }
+            callbackLocation = app.Config().GenericOauth.CallbackProxy
+        }
+
+        address := app.Config().GenericOauth.Host
+        oauthClient := genericOauthClient{
+            ClientID:         app.Config().GenericOauth.ClientID,
+            ClientSecret:     app.Config().GenericOauth.ClientSecret,
+            ExchangeLocation: app.Config().GenericOauth.TokenEndpoint,
+            InspectLocation:  app.Config().GenericOauth.InspectEndpoint,
+            AuthLocation:     app.Config().GenericOauth.AuthEndpoint,
+            HttpClient:       config.DefaultHTTPClient(),
+            CallbackLocation: callbackLocation,
+        }
+        configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
+    }
+}
+
 func configureOauthRoutes(parentHandler *Handler, r *mux.Router, app *App, oauthClient oauthClient, callbackProxy *callbackProxyClient) {
 	handler := &oauthHandler{
 		Config:        app.Config(),
