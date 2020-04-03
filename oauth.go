@@ -208,6 +208,34 @@ func configureGitlabOauth(parentHandler *Handler, r *mux.Router, app *App) {
 	}
 }
 
+func configureGiteaOauth(parentHandler *Handler, r *mux.Router, app *App) {
+	if app.Config().GiteaOauth.ClientID != "" {
+		callbackLocation := app.Config().App.Host + "/oauth/callback/gitea"
+
+		var callbackProxy *callbackProxyClient = nil
+		if app.Config().GiteaOauth.CallbackProxy != "" {
+			callbackProxy = &callbackProxyClient{
+				server:           app.Config().GiteaOauth.CallbackProxyAPI,
+				callbackLocation: app.Config().App.Host + "/oauth/callback/gitea",
+				httpClient:       config.DefaultHTTPClient(),
+			}
+			callbackLocation = app.Config().GiteaOauth.CallbackProxy
+		}
+
+		address := config.OrDefaultString(app.Config().GiteaOauth.Host, giteaHost)
+		oauthClient := giteaOauthClient{
+			ClientID:         app.Config().GiteaOauth.ClientID,
+			ClientSecret:     app.Config().GiteaOauth.ClientSecret,
+			ExchangeLocation: address + "/login/oauth/access_token",
+			InspectLocation:  address + "/api/v1/user",
+			AuthLocation:     address + "/login/oauth/authorize",
+			HttpClient:       config.DefaultHTTPClient(),
+			CallbackLocation: callbackLocation,
+		}
+		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
+	}
+}
+
 func configureOauthRoutes(parentHandler *Handler, r *mux.Router, app *App, oauthClient oauthClient, callbackProxy *callbackProxyClient) {
 	handler := &oauthHandler{
 		Config:        app.Config(),

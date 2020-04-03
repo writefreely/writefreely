@@ -311,6 +311,8 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		OauthWriteAs      bool
 		OauthGitlab       bool
 		GitlabDisplayName string
+		OauthGitea       bool
+		GiteaDisplayName string
 	}{
 		pageForReq(app, r),
 		r.FormValue("to"),
@@ -321,6 +323,8 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		app.Config().WriteAsOauth.ClientID != "",
 		app.Config().GitlabOauth.ClientID != "",
 		config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
+		app.Config().GiteaOauth.ClientID != "",
+		config.OrDefaultString(app.Config().GiteaOauth.DisplayName, giteaDisplayName),
 	}
 
 	if earlyError != "" {
@@ -1046,6 +1050,7 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 	enableOauthSlack := app.Config().SlackOauth.ClientID != ""
 	enableOauthWriteAs := app.Config().WriteAsOauth.ClientID != ""
 	enableOauthGitLab := app.Config().GitlabOauth.ClientID != ""
+	enableOauthGitea := app.Config().GiteaOauth.ClientID != ""
 
 	oauthAccounts, err := app.db.GetOauthAccounts(r.Context(), u.ID)
 	if err != nil {
@@ -1060,10 +1065,12 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 			enableOauthWriteAs = false
 		case "gitlab":
 			enableOauthGitLab = false
+		case "gitea":
+			enableOauthGitea = false
 		}
 	}
 
-	displayOauthSection := enableOauthSlack || enableOauthWriteAs || enableOauthGitLab || len(oauthAccounts) > 0
+	displayOauthSection := enableOauthSlack || enableOauthWriteAs || enableOauthGitLab || enableOauthGitea || len(oauthAccounts) > 0
 
 	obj := struct {
 		*UserPage
@@ -1077,6 +1084,8 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		OauthWriteAs      bool
 		OauthGitLab       bool
 		GitLabDisplayName string
+		OauthGitea       bool
+		GiteaDisplayName string
 	}{
 		UserPage:          NewUserPage(app, r, u, "Account Settings", flashes),
 		Email:             fullUser.EmailClear(app.keys),
@@ -1089,6 +1098,8 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		OauthWriteAs:      enableOauthWriteAs,
 		OauthGitLab:       enableOauthGitLab,
 		GitLabDisplayName: config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
+		OauthGitea:       enableOauthGitea,
+		GiteaDisplayName: config.OrDefaultString(app.Config().GiteaOauth.DisplayName, giteaDisplayName),
 	}
 
 	showUserPage(w, "settings", obj)
