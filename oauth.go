@@ -222,7 +222,6 @@ func configureGenericOauth(parentHandler *Handler, r *mux.Router, app *App) {
 			callbackLocation = app.Config().GenericOauth.CallbackProxy
 		}
 
-		address := app.Config().GenericOauth.Host
 		oauthClient := genericOauthClient{
 			ClientID:         app.Config().GenericOauth.ClientID,
 			ClientSecret:     app.Config().GenericOauth.ClientSecret,
