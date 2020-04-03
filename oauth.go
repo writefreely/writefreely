@@ -252,9 +252,9 @@ func configureGenericOauth(parentHandler *Handler, r *mux.Router, app *App) {
 		oauthClient := genericOauthClient{
 			ClientID:         app.Config().GenericOauth.ClientID,
 			ClientSecret:     app.Config().GenericOauth.ClientSecret,
-			ExchangeLocation: app.Config().GenericOauth.TokenEndpoint,
-			InspectLocation:  app.Config().GenericOauth.InspectEndpoint,
-			AuthLocation:     app.Config().GenericOauth.AuthEndpoint,
+			ExchangeLocation: app.Config().GenericOauth.Host + app.Config().GenericOauth.TokenEndpoint,
+			InspectLocation:  app.Config().GenericOauth.Host + app.Config().GenericOauth.InspectEndpoint,
+			AuthLocation:     app.Config().GenericOauth.Host + app.Config().GenericOauth.AuthEndpoint,
 			HttpClient:       config.DefaultHTTPClient(),
 			CallbackLocation: callbackLocation,
 		}
