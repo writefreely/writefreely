@@ -40,7 +40,7 @@ require (
 	github.com/stretchr/testify v1.3.0
 	github.com/urfave/cli/v2 v2.1.1
 	github.com/writeas/activity v0.1.2
-	github.com/writeas/activityserve v0.0.0-20191115095800-dd6d19cc8b89
+	github.com/writeas/activityserve v0.0.0-20200409150223-d7ab3eaa4481
 	github.com/writeas/go-strip-markdown v2.0.1+incompatible
 	github.com/writeas/go-webfinger v0.0.0-20190106002315-85cf805c86d2
 	github.com/writeas/httpsig v1.0.0

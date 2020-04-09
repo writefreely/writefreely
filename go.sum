@@ -136,6 +136,8 @@ github.com/writeas/activity v0.1.2 h1:Y12B5lIrabfqKE7e7HFCWiXrlfXljr9tlkFm2mp7Dg
 github.com/writeas/activity v0.1.2/go.mod h1:mYYgiewmEM+8tlifirK/vl6tmB2EbjYaxwb+ndUw5T0=
 github.com/writeas/activityserve v0.0.0-20191115095800-dd6d19cc8b89 h1:NJhzq9aTccL3SSSZMrcnYhkD6sObdY9otNZ1X6/ZKNE=
 github.com/writeas/activityserve v0.0.0-20191115095800-dd6d19cc8b89/go.mod h1:Kz62mzYsCnrFTSTSFLXFj3fGYBQOntmBWTDDq57b46A=
+github.com/writeas/activityserve v0.0.0-20200409150223-d7ab3eaa4481 h1:BiSivIxLQFcKoUorpNN3rNwwFG5bITPnqUSyIccfdh0=
+github.com/writeas/activityserve v0.0.0-20200409150223-d7ab3eaa4481/go.mod h1:4akDJSl+sSp+QhrQKMqzAqdV1gJ1pPx6XPI77zgMM8o=
 github.com/writeas/go-strip-markdown v2.0.1+incompatible h1:IIqxTM5Jr7RzhigcL6FkrCNfXkvbR+Nbu1ls48pXYcw=
 github.com/writeas/go-strip-markdown v2.0.1+incompatible/go.mod h1:Rsyu10ZhbEK9pXdk8V6MVnZmTzRG0alMNLMwa0J01fE=
 github.com/writeas/go-webfinger v0.0.0-20190106002315-85cf805c86d2 h1:DUsp4OhdfI+e6iUqcPQlwx8QYXuUDsToTz/x82D3Zuo=
