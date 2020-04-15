@@ -54,6 +54,7 @@ type (
 		Database string `ini:"database"`
 		Host     string `ini:"host"`
 		Port     int    `ini:"port"`
+		TLS      bool   `ini:"tls"`
 	}
 
 	// AppCfg holds values that affect how the application functions

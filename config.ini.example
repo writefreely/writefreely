@@ -9,6 +9,7 @@ password = changeme
 database = writefreely
 host     = db
 port     = 3306
+tls      = false
 
 [app]
 site_name         = WriteFreely Example Blog!
