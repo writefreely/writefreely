@@ -21,7 +21,6 @@ type giteaOauthClient struct {
 var _ oauthClient = giteaOauthClient{}
 
 const (
-	giteaHost        = "https://source.gyt.is"
 	giteaDisplayName = "Gitea"
 )
 
