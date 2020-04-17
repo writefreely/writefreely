@@ -222,13 +222,12 @@ func configureGiteaOauth(parentHandler *Handler, r *mux.Router, app *App) {
 			callbackLocation = app.Config().GiteaOauth.CallbackProxy
 		}
 
-		address := config.OrDefaultString(app.Config().GiteaOauth.Host, giteaHost)
 		oauthClient := giteaOauthClient{
 			ClientID:         app.Config().GiteaOauth.ClientID,
 			ClientSecret:     app.Config().GiteaOauth.ClientSecret,
-			ExchangeLocation: address + "/login/oauth/access_token",
-			InspectLocation:  address + "/api/v1/user",
-			AuthLocation:     address + "/login/oauth/authorize",
+			ExchangeLocation: app.Config().GiteaOauth.Host + "/login/oauth/access_token",
+			InspectLocation:  app.Config().GiteaOauth.Host + "/api/v1/user",
+			AuthLocation:     app.Config().GiteaOauth.Host + "/login/oauth/authorize",
 			HttpClient:       config.DefaultHTTPClient(),
 			CallbackLocation: callbackLocation,
 		}
