@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -168,11 +168,7 @@ func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWr
 
 	// Log invite if needed
 	if signup.InviteCode != "" {
-		cu, err := app.db.GetUserForAuth(signup.Alias)
-		if err != nil {
-			return nil, err
-		}
-		err = app.db.CreateInvitedUser(signup.InviteCode, cu.ID)
+		err = app.db.CreateInvitedUser(signup.InviteCode, u.ID)
 		if err != nil {
 			return nil, err
 		}

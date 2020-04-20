@@ -178,6 +178,7 @@ func (db *datastore) dateSub(l int, unit string) string {
 	return fmt.Sprintf("DATE_SUB(NOW(), INTERVAL %d %s)", l, unit)
 }
 
+// CreateUser creates a new user in the database from the given User, UPDATING it in the process with the user's ID.
 func (db *datastore) CreateUser(cfg *config.Config, u *User, collectionTitle string) error {
 	if db.PostIDExists(u.Username) {
 		return impart.HTTPError{http.StatusConflict, "Invalid collection name."}
