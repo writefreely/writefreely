@@ -74,6 +74,7 @@ form dd {
 	        <input type="hidden" name="provider" value="{{ .Provider }}" />
 	        <input type="hidden" name="client_id" value="{{ .ClientID }}" />
 	        <input type="hidden" name="signature" value="{{ .TokenHash }}" />
+	        {{if .InviteCode}}<input type="hidden" name="invite_code" value="{{ .InviteCode }}" />{{end}}
 
             <dl class="billing">
                 <label>

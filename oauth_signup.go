@@ -38,6 +38,7 @@ type viewOauthSignupVars struct {
 	Provider        string
 	ClientID        string
 	TokenHash       string
+	InviteCode      string
 
 	LoginUsername string
 	Alias         string // TODO: rename this to match the data it represents: the collection title
@@ -57,6 +58,7 @@ const (
 	oauthParamAlias             = "alias"
 	oauthParamEmail             = "email"
 	oauthParamPassword          = "password"
+	oauthParamInviteCode        = "invite_code"
 )
 
 type oauthSignupPageParams struct {
@@ -68,6 +70,7 @@ type oauthSignupPageParams struct {
 	ClientID        string
 	Provider        string
 	TokenHash       string
+	InviteCode      string
 }
 
 func (p oauthSignupPageParams) HashTokenParams(key string) string {
@@ -92,6 +95,7 @@ func (h oauthHandler) viewOauthSignup(app *App, w http.ResponseWriter, r *http.R
 		TokenRemoteUser: r.FormValue(oauthParamTokenRemoteUserID),
 		ClientID:        r.FormValue(oauthParamClientID),
 		Provider:        r.FormValue(oauthParamProvider),
+		InviteCode:      r.FormValue(oauthParamInviteCode),
 	}
 	if tp.HashTokenParams(h.Config.Server.HashSeed) != r.FormValue(oauthParamHash) {
 		return impart.HTTPError{Status: http.StatusBadRequest, Message: "Request has been tampered with."}
@@ -126,6 +130,14 @@ func (h oauthHandler) viewOauthSignup(app *App, w http.ResponseWriter, r *http.R
 	err = h.DB.CreateUser(h.Config, newUser, displayName)
 	if err != nil {
 		return h.showOauthSignupPage(app, w, r, tp, err)
+	}
+
+	// Log invite if needed
+	if tp.InviteCode != "" {
+		err = app.db.CreateInvitedUser(tp.InviteCode, newUser.ID)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = h.DB.RecordRemoteUserID(r.Context(), newUser.ID, r.FormValue(oauthParamTokenRemoteUserID), r.FormValue(oauthParamProvider), r.FormValue(oauthParamClientID), r.FormValue(oauthParamAccessToken))
@@ -195,6 +207,7 @@ func (h oauthHandler) showOauthSignupPage(app *App, w http.ResponseWriter, r *ht
 		Provider:        tp.Provider,
 		ClientID:        tp.ClientID,
 		TokenHash:       tp.TokenHash,
+		InviteCode:      tp.InviteCode,
 
 		LoginUsername: username,
 		Alias:         collTitle,
