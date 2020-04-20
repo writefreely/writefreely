@@ -240,7 +240,7 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 	}
 
-	// Now that we have the access token, let's use it real quick to make sur
+	// Now that we have the access token, let's use it real quick to make sure
 	// it really really works.
 	tokenInfo, err := h.oauthClient.inspectOauthAccessToken(ctx, tokenResponse.AccessToken)
 	if err != nil {
@@ -262,6 +262,7 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 	}
 
 	if localUserID != -1 {
+		// Existing user, so log in now
 		user, err := h.DB.GetUserByID(localUserID)
 		if err != nil {
 			log.Error("Unable to GetUserByID %d: %s", localUserID, err)
@@ -280,6 +281,13 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 			return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 		}
 		return impart.HTTPError{http.StatusFound, "/me/settings"}
+	}
+
+	// New user registration below.
+	// First, verify that user is allowed to register
+	if !app.cfg.App.OpenRegistration {
+		addSessionFlash(app, w, r, ErrUserNotFound.Error(), nil)
+		return impart.HTTPError{http.StatusFound, "/login"}
 	}
 
 	displayName := tokenInfo.DisplayName
