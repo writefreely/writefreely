@@ -119,9 +119,7 @@ func (m *MockOAuthDatastore) GetUserByID(userID int64) (*User, error) {
 	if m.DoGetUserByID != nil {
 		return m.DoGetUserByID(userID)
 	}
-	user := &User{
-
-	}
+	user := &User{}
 	return user, nil
 }
 
