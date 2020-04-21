@@ -42,7 +42,7 @@ p.docs {
 		<div class="features row">
 			<div>
 				Host
-				<p>The address where your site lives.</p>
+				<p>The public address where users will access your site, starting with <code>http://</code> or <code>https://</code>.</p>
 			</div>
 			<div>{{.Config.Host}}</div>
 		</div>
@@ -56,24 +56,57 @@ p.docs {
 		<div class="features row">
 			<div{{if .Config.SingleUser}} class="invisible"{{end}}>
 				Landing Page
-				<p>The page that logged-out visitors will see first. This should be a path, e.g. <code>/read</code></p>
+				<p>The page that logged-out visitors will see first. This should be an absolute path like: <code>/read</code></p>
 			</div>
 			<div{{if .Config.SingleUser}} class="invisible"{{end}}><input type="text" name="landing" id="landing" class="inline" value="{{.Config.Landing}}" style="width: 14em;"/></div>
 		</div>
 		<div class="features row">
 			<div{{if .Config.SingleUser}} class="invisible"{{end}}><label for="open_registration">
 					Open Registrations
-					<p>Whether or not registration is open to anyone who visits the site.</p>
+					<p>Allow anyone who visits the site to create an account.</p>
 				</label></div>
 			<div{{if .Config.SingleUser}} class="invisible"{{end}}><input type="checkbox" name="open_registration" id="open_registration" {{if .Config.OpenRegistration}}checked="checked"{{end}} />
 			</div>
 		</div>
 		<div class="features row">
-			<div><label for="min_username_len">
-					Minimum Username Length
-					<p>The minimum number of characters allowed in a username. (Recommended: 2 or more.)</p>
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><label for="user_invites">
+					Allow invitations from...
+					<p>Choose who is allowed to invite new people.</p>
 				</label></div>
-			<div><input type="number" name="min_username_len" id="min_username_len" class="inline" min="1" max="100" value="{{.Config.MinUsernameLen}}"/></div>
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}>
+				<select name="user_invites" id="user_invites">
+					<option value="none" {{if eq .Config.UserInvites ""}}selected="selected"{{end}}>No one</option>
+					<option value="admin" {{if eq .Config.UserInvites "admin"}}selected="selected"{{end}}>Only Admins</option>
+					<option value="user" {{if eq .Config.UserInvites "user"}}selected="selected"{{end}}>All Users</option>
+				</select>
+			</div>
+		</div>
+		<div class="features row">
+			<div><label for="private">
+					Private Instance
+					<p>Limit site access to people with an account.</p>
+				</label></div>
+			<div><input type="checkbox" name="private" id="private" {{if .Config.Private}}checked="checked"{{end}} /></div>
+		</div>
+		<div class="features row">
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><label for="local_timeline">
+					Reader
+					<p>Show a feed of user posts for anyone who chooses to share there.</p>
+				</label></div>
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><input type="checkbox" name="local_timeline" id="local_timeline" {{if .Config.LocalTimeline}}checked="checked"{{end}} /></div>
+		</div>
+		<div class="features row">
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><label for="default_visibility">
+					Default blog visibility
+					<p>The default setting for new accounts and blogs.</p>
+				</label></div>
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}>
+				<select name="default_visibility" id="default_visibility">
+					<option value="unlisted" {{if eq .Config.DefaultVisibility "unlisted"}}selected="selected"{{end}}>Unlisted</option>
+					<option value="public" {{if eq .Config.DefaultVisibility "public"}}selected="selected"{{end}}>Public</option>
+					<option value="private" {{if eq .Config.DefaultVisibility "private"}}selected="selected"{{end}}>Private</option>
+				</select>
+			</div>
 		</div>
 		<div class="features row">
 			<div{{if .Config.SingleUser}} class="invisible"{{end}}><label for="max_blogs">
@@ -97,44 +130,11 @@ p.docs {
 			<div><input type="checkbox" name="public_stats" id="public_stats" {{if .Config.PublicStats}}checked="checked"{{end}} /></div>
 		</div>
 		<div class="features row">
-			<div><label for="private">
-					Private Instance
-					<p>Make this instance accessible only to those with an account.</p>
+			<div><label for="min_username_len">
+					Minimum Username Length
+					<p>The minimum number of characters allowed in a username. (Recommended: 2 or more.)</p>
 				</label></div>
-			<div><input type="checkbox" name="private" id="private" {{if .Config.Private}}checked="checked"{{end}} /></div>
-		</div>
-		<div class="features row">
-			<div{{if .Config.SingleUser}} class="invisible"{{end}}><label for="local_timeline">
-					Reader
-					<p>Show a feed of user posts for anyone who chooses to share there.</p>
-				</label></div>
-			<div{{if .Config.SingleUser}} class="invisible"{{end}}><input type="checkbox" name="local_timeline" id="local_timeline" {{if .Config.LocalTimeline}}checked="checked"{{end}} /></div>
-		</div>
-		<div class="features row">
-			<div{{if .Config.SingleUser}} class="invisible"{{end}}><label for="user_invites">
-					Allow invitations from...
-					<p>Choose who on this instance can invite new people.</p>
-				</label></div>
-			<div{{if .Config.SingleUser}} class="invisible"{{end}}>
-				<select name="user_invites" id="user_invites">
-					<option value="none" {{if eq .Config.UserInvites ""}}selected="selected"{{end}}>No one</option>
-					<option value="admin" {{if eq .Config.UserInvites "admin"}}selected="selected"{{end}}>Only Admins</option>
-					<option value="user" {{if eq .Config.UserInvites "user"}}selected="selected"{{end}}>All Users</option>
-				</select>
-			</div>
-		</div>
-		<div class="features row">
-			<div{{if .Config.SingleUser}} class="invisible"{{end}}><label for="default_visibility">
-					Default blog visibility
-					<p>The default setting for new accounts and blogs.</p>
-				</label></div>
-			<div{{if .Config.SingleUser}} class="invisible"{{end}}>
-				<select name="default_visibility" id="default_visibility">
-					<option value="unlisted" {{if eq .Config.DefaultVisibility "unlisted"}}selected="selected"{{end}}>Unlisted</option>
-					<option value="public" {{if eq .Config.DefaultVisibility "public"}}selected="selected"{{end}}>Public</option>
-					<option value="private" {{if eq .Config.DefaultVisibility "private"}}selected="selected"{{end}}>Private</option>
-				</select>
-			</div>
+			<div><input type="number" name="min_username_len" id="min_username_len" class="inline" min="1" max="100" value="{{.Config.MinUsernameLen}}"/></div>
 		</div>
 		<div class="features row">
 			<input type="submit" value="Save Settings" />
