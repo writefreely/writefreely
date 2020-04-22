@@ -1,6 +1,4 @@
-{{define "head"}}<title>Log in &mdash; {{.SiteName}}</title>
-<meta name="description" content="Log in to {{.SiteName}}.">
-<meta itemprop="description" content="Log in to {{.SiteName}}.">
+{{define "head"}}<title>Finish Creating Account &mdash; {{.SiteName}}</title>
 <style>input{margin-bottom:0.5em;}</style>
 <style type="text/css">
 h2 {
@@ -58,7 +56,7 @@ form dd {
 {{end}}
 {{define "content"}}
 <div id="pricing" class="tight content-container">
-	<h1>Log in to {{.SiteName}}</h1>
+	<h1>Finish creating account</h1>
 
 	{{if .Flashes}}<ul class="errors">
 		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
@@ -97,7 +95,7 @@ form dd {
                     </dd>
                 </label>
                 <dt>
-                    <input type="submit" id="btn-login" value="Login" />
+                    <input type="submit" id="btn-login" value="Next" />
                 </dt>
             </dl>
         </form>
