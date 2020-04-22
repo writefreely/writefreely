@@ -489,6 +489,9 @@ func login(app *App, w http.ResponseWriter, r *http.Request) error {
 				return impart.HTTPError{http.StatusPreconditionFailed, "This user never added a password or email address. Please contact us for help."}
 			}
 		}
+		if len(u.HashedPass) == 0 {
+			return impart.HTTPError{http.StatusUnauthorized, "This user never set a password. Perhaps try logging in via OAuth?"}
+		}
 		if !auth.Authenticated(u.HashedPass, []byte(signin.Pass)) {
 			return impart.HTTPError{http.StatusUnauthorized, "Incorrect password."}
 		}
