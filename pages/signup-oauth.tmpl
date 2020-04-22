@@ -130,7 +130,7 @@ var $aliasSite = document.getElementById('alias-site');
 var aliasOK = true;
 var typingTimer;
 var doneTypingInterval = 750;
-var doneTyping = function() {
+var doneTyping = function(genID) {
     // Check on username
     var alias = $alias.el.value;
     if (alias != "") {
@@ -153,6 +153,11 @@ var doneTyping = function() {
                     $aliasSite.className = $aliasSite.className.replace(/(?:^|\s)error(?!\S)/g, '');
                     $aliasSite.innerHTML = '{{ if .Federation }}@<strong>' + data.data + '</strong>@{{.FriendlyHost}}{{ else }}{{.FriendlyHost}}/<strong>' + data.data + '</strong>/{{ end }}';
                 } else {
+                    if (genID === true) {
+                        $alias.el.value = alias + "-" + randStr(4);
+                        doneTyping();
+                        return;
+                    }
                     aliasOK = false;
                     $alias.setClass('error');
                     $aliasSite.className = 'error';
@@ -170,6 +175,14 @@ $alias.on('keyup input', function() {
     clearTimeout(typingTimer);
     typingTimer = setTimeout(doneTyping, doneTypingInterval);
 });
-doneTyping();
+function randStr(len) {
+    var res = '';
+    var chars = '23456789bcdfghjklmnpqrstvwxyz';
+    for (var i=0; i<len; i++) {
+        res += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return res;
+}
+doneTyping(true);
 </script>
 {{end}}
