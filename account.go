@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -168,11 +168,7 @@ func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWr
 
 	// Log invite if needed
 	if signup.InviteCode != "" {
-		cu, err := app.db.GetUserForAuth(signup.Alias)
-		if err != nil {
-			return nil, err
-		}
-		err = app.db.CreateInvitedUser(signup.InviteCode, cu.ID)
+		err = app.db.CreateInvitedUser(signup.InviteCode, u.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -492,6 +488,9 @@ func login(app *App, w http.ResponseWriter, r *http.Request) error {
 				log.Info("Tried logging in to %s, but no password or email.", signin.Alias)
 				return impart.HTTPError{http.StatusPreconditionFailed, "This user never added a password or email address. Please contact us for help."}
 			}
+		}
+		if len(u.HashedPass) == 0 {
+			return impart.HTTPError{http.StatusUnauthorized, "This user never set a password. Perhaps try logging in via OAuth?"}
 		}
 		if !auth.Authenticated(u.HashedPass, []byte(signin.Pass)) {
 			return impart.HTTPError{http.StatusUnauthorized, "Incorrect password."}

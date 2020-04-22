@@ -1,3 +1,13 @@
+/*
+ * Copyright © 2019-2020 A Bunch Tell LLC.
+ *
+ * This file is part of WriteFreely.
+ *
+ * WriteFreely is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License, included
+ * in the LICENSE file in this source code package.
+ */
+
 package writefreely
 
 import (
@@ -15,9 +25,26 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
-
 	"github.com/writeas/writefreely/config"
 )
+
+// OAuthButtons holds display information for different OAuth providers we support.
+type OAuthButtons struct {
+	SlackEnabled      bool
+	WriteAsEnabled    bool
+	GitLabEnabled     bool
+	GitLabDisplayName string
+}
+
+// NewOAuthButtons creates a new OAuthButtons struct based on our app configuration.
+func NewOAuthButtons(cfg *config.Config) *OAuthButtons {
+	return &OAuthButtons{
+		SlackEnabled:      cfg.SlackOauth.ClientID != "",
+		WriteAsEnabled:    cfg.WriteAsOauth.ClientID != "",
+		GitLabEnabled:     cfg.GitlabOauth.ClientID != "",
+		GitLabDisplayName: config.OrDefaultString(cfg.GitlabOauth.DisplayName, gitlabDisplayName),
+	}
+}
 
 // TokenResponse contains data returned when a token is created either
 // through a code exchange or using a refresh token.
@@ -61,8 +88,8 @@ type OAuthDatastoreProvider interface {
 type OAuthDatastore interface {
 	GetIDForRemoteUser(context.Context, string, string, string) (int64, error)
 	RecordRemoteUserID(context.Context, int64, string, string, string, string) error
-	ValidateOAuthState(context.Context, string) (string, string, int64, error)
-	GenerateOAuthState(context.Context, string, string, int64) (string, error)
+	ValidateOAuthState(context.Context, string) (string, string, int64, string, error)
+	GenerateOAuthState(context.Context, string, string, int64, string) (string, error)
 
 	CreateUser(*config.Config, *User, string) error
 	GetUserByID(int64) (*User, error)
@@ -108,7 +135,7 @@ func (h oauthHandler) viewOauthInit(app *App, w http.ResponseWriter, r *http.Req
 		attachUser = user.ID
 	}
 
-	state, err := h.DB.GenerateOAuthState(ctx, h.oauthClient.GetProvider(), h.oauthClient.GetClientID(), attachUser)
+	state, err := h.DB.GenerateOAuthState(ctx, h.oauthClient.GetProvider(), h.oauthClient.GetClientID(), attachUser, r.FormValue("invite_code"))
 	if err != nil {
 		log.Error("viewOauthInit error: %s", err)
 		return impart.HTTPError{http.StatusInternalServerError, "could not prepare oauth redirect url"}
@@ -228,7 +255,7 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 	code := r.FormValue("code")
 	state := r.FormValue("state")
 
-	provider, clientID, attachUserID, err := h.DB.ValidateOAuthState(ctx, state)
+	provider, clientID, attachUserID, inviteCode, err := h.DB.ValidateOAuthState(ctx, state)
 	if err != nil {
 		log.Error("Unable to ValidateOAuthState: %s", err)
 		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
@@ -240,7 +267,7 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 	}
 
-	// Now that we have the access token, let's use it real quick to make sur
+	// Now that we have the access token, let's use it real quick to make sure
 	// it really really works.
 	tokenInfo, err := h.oauthClient.inspectOauthAccessToken(ctx, tokenResponse.AccessToken)
 	if err != nil {
@@ -262,6 +289,7 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 	}
 
 	if localUserID != -1 {
+		// Existing user, so log in now
 		user, err := h.DB.GetUserByID(localUserID)
 		if err != nil {
 			log.Error("Unable to GetUserByID %d: %s", localUserID, err)
@@ -282,6 +310,22 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 		return impart.HTTPError{http.StatusFound, "/me/settings"}
 	}
 
+	// New user registration below.
+	// First, verify that user is allowed to register
+	if inviteCode != "" {
+		// Verify invite code is valid
+		i, err := app.db.GetUserInvite(inviteCode)
+		if err != nil {
+			return impart.HTTPError{http.StatusInternalServerError, err.Error()}
+		}
+		if !i.Active(app.db) {
+			return impart.HTTPError{http.StatusNotFound, "Invite link has expired."}
+		}
+	} else if !app.cfg.App.OpenRegistration {
+		addSessionFlash(app, w, r, ErrUserNotFound.Error(), nil)
+		return impart.HTTPError{http.StatusFound, "/login"}
+	}
+
 	displayName := tokenInfo.DisplayName
 	if len(displayName) == 0 {
 		displayName = tokenInfo.Username
@@ -295,6 +339,7 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 		TokenRemoteUser: tokenInfo.UserID,
 		Provider:        provider,
 		ClientID:        clientID,
+		InviteCode:      inviteCode,
 	}
 	tp.TokenHash = tp.HashTokenParams(h.Config.Server.HashSeed)
 
