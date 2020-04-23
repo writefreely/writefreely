@@ -160,6 +160,7 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 		pp.Collection = res
 		o := pp.ActivityObject(app)
 		a := activitystreams.NewCreateActivity(o)
+		a.Context = nil
 		ocp.OrderedItems = append(ocp.OrderedItems, *a)
 	}
 

@@ -1,6 +1,4 @@
-{{define "head"}}<title>Log in &mdash; {{.SiteName}}</title>
-<meta name="description" content="Log in to {{.SiteName}}.">
-<meta itemprop="description" content="Log in to {{.SiteName}}.">
+{{define "head"}}<title>Finish Creating Account &mdash; {{.SiteName}}</title>
 <style>input{margin-bottom:0.5em;}</style>
 <style type="text/css">
 h2 {
@@ -58,7 +56,7 @@ form dd {
 {{end}}
 {{define "content"}}
 <div id="pricing" class="tight content-container">
-	<h1>Log in to {{.SiteName}}</h1>
+	<h1>Finish creating account</h1>
 
 	{{if .Flashes}}<ul class="errors">
 		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
@@ -74,6 +72,7 @@ form dd {
 	        <input type="hidden" name="provider" value="{{ .Provider }}" />
 	        <input type="hidden" name="client_id" value="{{ .ClientID }}" />
 	        <input type="hidden" name="signature" value="{{ .TokenHash }}" />
+	        {{if .InviteCode}}<input type="hidden" name="invite_code" value="{{ .InviteCode }}" />{{end}}
 
             <dl class="billing">
                 <label>
@@ -96,7 +95,7 @@ form dd {
                     </dd>
                 </label>
                 <dt>
-                    <input type="submit" id="btn-login" value="Login" />
+                    <input type="submit" id="btn-login" value="Next" />
                 </dt>
             </dl>
         </form>
@@ -129,7 +128,7 @@ var $aliasSite = document.getElementById('alias-site');
 var aliasOK = true;
 var typingTimer;
 var doneTypingInterval = 750;
-var doneTyping = function() {
+var doneTyping = function(genID) {
     // Check on username
     var alias = $alias.el.value;
     if (alias != "") {
@@ -152,6 +151,11 @@ var doneTyping = function() {
                     $aliasSite.className = $aliasSite.className.replace(/(?:^|\s)error(?!\S)/g, '');
                     $aliasSite.innerHTML = '{{ if .Federation }}@<strong>' + data.data + '</strong>@{{.FriendlyHost}}{{ else }}{{.FriendlyHost}}/<strong>' + data.data + '</strong>/{{ end }}';
                 } else {
+                    if (genID === true) {
+                        $alias.el.value = alias + "-" + randStr(4);
+                        doneTyping();
+                        return;
+                    }
                     aliasOK = false;
                     $alias.setClass('error');
                     $aliasSite.className = 'error';
@@ -169,6 +173,14 @@ $alias.on('keyup input', function() {
     clearTimeout(typingTimer);
     typingTimer = setTimeout(doneTyping, doneTypingInterval);
 });
-doneTyping();
+function randStr(len) {
+    var res = '';
+    var chars = '23456789bcdfghjklmnpqrstvwxyz';
+    for (var i=0; i<len; i++) {
+        res += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return res;
+}
+doneTyping(true);
 </script>
 {{end}}
