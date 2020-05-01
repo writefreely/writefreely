@@ -132,8 +132,8 @@ type writestore interface {
 
 	GetIDForRemoteUser(context.Context, string, string, string) (int64, error)
 	RecordRemoteUserID(context.Context, int64, string, string, string, string) error
-	ValidateOAuthState(context.Context, string) (string, string, int64, error)
-	GenerateOAuthState(context.Context, string, string, int64) (string, error)
+	ValidateOAuthState(context.Context, string) (string, string, int64, string, error)
+	GenerateOAuthState(context.Context, string, string, int64, string) (string, error)
 	GetOauthAccounts(ctx context.Context, userID int64) ([]oauthAccountInfo, error)
 	RemoveOauth(ctx context.Context, userID int64, provider string, clientID string, remoteUserID string) error
 
@@ -178,6 +178,7 @@ func (db *datastore) dateSub(l int, unit string) string {
 	return fmt.Sprintf("DATE_SUB(NOW(), INTERVAL %d %s)", l, unit)
 }
 
+// CreateUser creates a new user in the database from the given User, UPDATING it in the process with the user's ID.
 func (db *datastore) CreateUser(cfg *config.Config, u *User, collectionTitle string) error {
 	if db.PostIDExists(u.Username) {
 		return impart.HTTPError{http.StatusConflict, "Invalid collection name."}
@@ -2516,24 +2517,26 @@ func (db *datastore) GetCollectionLastPostTime(id int64) (*time.Time, error) {
 	return &t, nil
 }
 
-func (db *datastore) GenerateOAuthState(ctx context.Context, provider string, clientID string, attachUser int64) (string, error) {
+func (db *datastore) GenerateOAuthState(ctx context.Context, provider string, clientID string, attachUser int64, inviteCode string) (string, error) {
 	state := store.Generate62RandomString(24)
 	attachUserVal := sql.NullInt64{Valid: attachUser > 0, Int64: attachUser}
-	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_states (state, provider, client_id, used, created_at, attach_user_id) VALUES (?, ?, ?, FALSE, "+db.now()+", ?)", state, provider, clientID, attachUserVal)
+	inviteCodeVal := sql.NullString{Valid: inviteCode != "", String: inviteCode}
+	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_states (state, provider, client_id, used, created_at, attach_user_id, invite_code) VALUES (?, ?, ?, FALSE, "+db.now()+", ?, ?)", state, provider, clientID, attachUserVal, inviteCodeVal)
 	if err != nil {
 		return "", fmt.Errorf("unable to record oauth client state: %w", err)
 	}
 	return state, nil
 }
 
-func (db *datastore) ValidateOAuthState(ctx context.Context, state string) (string, string, int64, error) {
+func (db *datastore) ValidateOAuthState(ctx context.Context, state string) (string, string, int64, string, error) {
 	var provider string
 	var clientID string
 	var attachUserID sql.NullInt64
+	var inviteCode sql.NullString
 	err := wf_db.RunTransactionWithOptions(ctx, db.DB, &sql.TxOptions{}, func(ctx context.Context, tx *sql.Tx) error {
 		err := tx.
-			QueryRowContext(ctx, "SELECT provider, client_id, attach_user_id FROM oauth_client_states WHERE state = ? AND used = FALSE", state).
-			Scan(&provider, &clientID, &attachUserID)
+			QueryRowContext(ctx, "SELECT provider, client_id, attach_user_id, invite_code FROM oauth_client_states WHERE state = ? AND used = FALSE", state).
+			Scan(&provider, &clientID, &attachUserID, &inviteCode)
 		if err != nil {
 			return err
 		}
@@ -2552,9 +2555,9 @@ func (db *datastore) ValidateOAuthState(ctx context.Context, state string) (stri
 		return nil
 	})
 	if err != nil {
-		return "", "", 0, nil
+		return "", "", 0, "", nil
 	}
-	return provider, clientID, attachUserID.Int64, nil
+	return provider, clientID, attachUserID.Int64, inviteCode.String, nil
 }
 
 func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID int64, remoteUserID, provider, clientID, accessToken string) error {

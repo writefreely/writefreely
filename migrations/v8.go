@@ -10,20 +10,36 @@
 
 package migrations
 
-func optimizeDrafts(db *datastore) error {
-	t, err := db.Begin()
+import (
+	"context"
+	"database/sql"
 
-	_, err = t.Exec(`ALTER TABLE posts ADD INDEX(owner_id, id)`)
-	if err != nil {
-		t.Rollback()
-		return err
+	wf_db "github.com/writeas/writefreely/db"
+)
+
+func oauthInvites(db *datastore) error {
+	dialect := wf_db.DialectMySQL
+	if db.driverName == driverSQLite {
+		dialect = wf_db.DialectSQLite
 	}
-
-	err = t.Commit()
-	if err != nil {
-		t.Rollback()
-		return err
-	}
-
-	return nil
+	return wf_db.RunTransactionWithOptions(context.Background(), db.DB, &sql.TxOptions{}, func(ctx context.Context, tx *sql.Tx) error {
+		builders := []wf_db.SQLBuilder{
+			dialect.
+				AlterTable("oauth_client_states").
+				AddColumn(dialect.Column("invite_code", wf_db.ColumnTypeChar, wf_db.OptionalInt{
+					Set:   true,
+					Value: 6,
+				}).SetNullable(true)),
+		}
+		for _, builder := range builders {
+			query, err := builder.ToSQL()
+			if err != nil {
+				return err
+			}
+			if _, err := tx.ExecContext(ctx, query); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }

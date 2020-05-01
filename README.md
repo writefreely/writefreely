@@ -7,14 +7,14 @@
 	<a href="https://github.com/writeas/writefreely/releases/">
 		<img src="https://img.shields.io/github/release/writeas/writefreely.svg" alt="Latest release" />
 	</a>
-	<a href="https://goreportcard.com/report/github.com/writeas/writefreely">
-		<img src="https://goreportcard.com/badge/github.com/writeas/writefreely" alt="Go Report Card" />
-	</a>
 	<a href="https://travis-ci.org/writeas/writefreely">
 		<img src="https://travis-ci.org/writeas/writefreely.svg" alt="Build status" />
 	</a>
 	<a href="https://github.com/writeas/writefreely/releases/latest">
 		<img src="https://img.shields.io/github/downloads/writeas/writefreely/total.svg" />
+	</a>
+	<a href="https://goreportcard.com/report/github.com/writeas/writefreely">
+		<img src="https://goreportcard.com/badge/github.com/writeas/writefreely" alt="Go Report Card" />
 	</a>
 	<a href="https://hub.docker.com/r/writeas/writefreely/">
 		<img src="https://img.shields.io/docker/pulls/writeas/writefreely.svg" />
@@ -22,66 +22,61 @@
 </p>
 &nbsp;
 
-WriteFreely is a beautifully pared-down blogging platform that's simple on the surface, yet powerful underneath.
+WriteFreely is free and open source software for building **a writing space** on the web &mdash; whether a publication, internal blog, or writing community in the fediverse.
 
-It's designed to be flexible and share your writing widely, so it's built around plain text and can publish to the _fediverse_ via ActivityPub. It's easy to install and light enough to run on a Raspberry Pi.
+![](https://writefreely.org/img/screens/pencil-reader.png)
 
-[Try the editor](https://write.as/new)
+[Try the writing experience](https://write.as/new)
 
 [Find an instance](https://writefreely.org/instances)
 
 ## Features
 
-* Start a blog for yourself, or host a community of writers
-* Form larger federated networks, and interact over modern protocols like ActivityPub
-* Write on a fast, dead-simple, and distraction-free editor
-* [Format text](https://howto.write.as/getting-started) with Markdown
-* [Organize posts](https://howto.write.as/organization) with hashtags
-* Create [static pages](https://howto.write.as/creating-a-static-page)
-* Publish drafts and let others proofread them by sharing a private link
-* Create multiple lightweight blogs under a single account
-* Export all data in plain text files
-* Read a stream of other posts in your writing community
-* Build more advanced apps and extensions with the [well-documented API](https://developers.write.as/docs/api/)
-* Designed around user privacy and consent
+### Made for writing
 
-## Hosting
+Built on a plain, auto-saving editor, WriteFreely gives you a distraction-free writing environment. Once published, your words are front and center, and easy to read.
 
-We offer two kinds of hosting services that make WriteFreely deployment painless: [Write.as Pro](https://write.as/pro) for individuals, and [Write.as for Teams](https://write.as/for/teams) for businesses. Besides saving you time and effort, both services directly fund WriteFreely development and ensure the long-term sustainability of our open source work.
+### A connected community
 
-### [![Write.as Pro](https://writefreely.org/img/writeas-pro-readme.png)](https://write.as/pro)
+Start writing together, publicly or privately. Connect with other communities, whether running WriteFreely, [Plume](https://joinplu.me/), or other ActivityPub-powered software. And bring members on board from your existing platforms, thanks to our OAuth 2.0 support.
 
-Start a personal blog on [Write.as](https://write.as), our flagship instance. Built to eliminate setup friction and preserve your privacy, Write.as helps you start a blog in seconds. It supports custom domains (with SSL) and multiple blogs / pen names per account. [Read more here](https://write.as/pro).
+### Intuitive organization
 
-### [![Write.as for Teams](https://writefreely.org/img/writeas-for-teams-readme.png)](https://write.as/for/teams)
+Categorize articles [with hashtags](https://writefreely.org/docs/latest/writer/hashtags), and create static pages from normal posts by [_pinning_ them](https://writefreely.org/docs/latest/writer/static) to your blog. Create draft posts and publish to multiple blogs from one account.
 
-[Write.as for Teams](https://write.as/for/teams) gives your organization, business, or [open source project](https://write.as/for/open-source) a clutter-free space to share updates or proposals and build your collective knowledge. We take care of hosting, upgrades, backups, and maintenance so your team can focus on writing.
+### International
+
+Blog elements are localized in 20+ languages, and WriteFreely includes first-class support for non-Latin and right-to-left (RTL) script languages.
+
+### Private by default
+
+WriteFreely collects minimal data, and never publicizes more than a writer consents to. Writers can seamlessly create multiple blogs from a single account for different pen names or purposes without publicly revealing their association.
+
+<h2><a href="https://write.as/writefreely"><img src="https://writefreely.org/img/writeas-readme.png" height="32px" alt="Write.as" /></a></h2>
+
+The quickest way to deploy WriteFreely is with [Write.as](https://write.as/writefreely), a hosted service from the team behind WriteFreely. You'll get fully-managed installation, backup, upgrades, and maintenance — and directly fund our free software work ❤️
+
+[**Learn more on Write.as**](https://write.as/writefreely).
 
 ## Quick start
 
-WriteFreely has minimal requirements to get up and running — you only need to be able to run an executable.
+WriteFreely deploys as a static binary on any platform and architecture that Go supports. Just use our built-in SQLite support, or add a MySQL database, and you'll be up and running!
 
-> **Note** this is currently alpha software. We're quickly moving out of this v0.x stage, but while we're in it, there are no guarantees that this is ready for production use.
+For common platforms, start with our [pre-built binaries](https://github.com/writeas/writefreely/releases/) and head over to our [installation guide](https://writefreely.org/start) to get started.
 
-To get started, head over to our [Getting Started guide](https://writefreely.org/start). For production use, jump to the [Running in Production](https://writefreely.org/start#production) section.
+### Packages
 
-## Packages
-
-WriteFreely is available in these package repositories:
+You can also find WriteFreely in these package repositories, thanks to our wonderful community!
 
 * [Arch User Repository](https://aur.archlinux.org/packages/writefreely/)
 
 ## Documentation
 
-Read our full [documentation on WriteFreely.org](https://writefreely.org/docs). Help us improve by contributing to the [writefreely/documentation](https://github.com/writefreely/documentation) repo.
+Read our full [documentation on WriteFreely.org](https://writefreely.org/docs) &mdash;️ and help us improve by contributing to the [writefreely/documentation](https://github.com/writefreely/documentation) repo.
 
 ## Development
 
-Ready to hack on your site? Get started with our [developer guide](https://writefreely.org/docs/latest/developer/setup).
-
-## Docker
-
-Read about using Docker in the [documentation](https://writefreely.org/docs/latest/admin/docker).
+Start hacking on WriteFreely with our [developer setup guide](https://writefreely.org/docs/latest/developer/setup). For Docker support, see our [Docker guide](https://writefreely.org/docs/latest/admin/docker).
 
 ## Contributing
 
@@ -91,4 +86,4 @@ Before contributing anything, please read our [Contributing Guide](https://githu
 
 ## License
 
-Licensed under the AGPL.
+Copyright © 2018-2020 [A Bunch Tell LLC](https://abunchtell.com) and contributing authors. Licensed under the [AGPL](https://github.com/writeas/writefreely/blob/develop/LICENSE).
