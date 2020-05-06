@@ -17,7 +17,11 @@ func optimizeDrafts(db *datastore) error {
 		return err
 	}
 
-	_, err = t.Exec(`ALTER TABLE posts ADD INDEX(owner_id, id)`)
+	if db.driverName == driverSQLite {
+		_, err = t.Exec(`CREATE INDEX key_owner_post_id ON posts (owner_id, id)`)
+	} else {
+		_, err = t.Exec(`ALTER TABLE posts ADD INDEX(owner_id, id)`)
+	}
 	if err != nil {
 		t.Rollback()
 		return err
