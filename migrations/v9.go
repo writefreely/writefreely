@@ -12,6 +12,10 @@ package migrations
 
 func optimizeDrafts(db *datastore) error {
 	t, err := db.Begin()
+	if err != nil {
+		t.Rollback()
+		return err
+	}
 
 	_, err = t.Exec(`ALTER TABLE posts ADD INDEX(owner_id, id)`)
 	if err != nil {
