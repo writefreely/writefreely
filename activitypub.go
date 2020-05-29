@@ -397,7 +397,9 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 
 	go func() {
 		if to == nil {
-			log.Error("No to! %v", err)
+			if debugging {
+				log.Error("No `to` value!")
+			}
 			return
 		}
 
