@@ -1049,13 +1049,14 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 	enableOauthSlack := app.Config().SlackOauth.ClientID != ""
 	enableOauthWriteAs := app.Config().WriteAsOauth.ClientID != ""
 	enableOauthGitLab := app.Config().GitlabOauth.ClientID != ""
+	enableOauthGeneric := app.Config().GenericOauth.ClientID != ""
 
 	oauthAccounts, err := app.db.GetOauthAccounts(r.Context(), u.ID)
 	if err != nil {
 		log.Error("Unable to get oauth accounts for settings: %s", err)
 		return impart.HTTPError{http.StatusInternalServerError, "Unable to retrieve user data. The humans have been alerted."}
 	}
-	for _, oauthAccount := range oauthAccounts {
+	for idx, oauthAccount := range oauthAccounts {
 		switch oauthAccount.Provider {
 		case "slack":
 			enableOauthSlack = false
@@ -1063,35 +1064,43 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 			enableOauthWriteAs = false
 		case "gitlab":
 			enableOauthGitLab = false
+		case "generic":
+			oauthAccounts[idx].DisplayName = app.Config().GenericOauth.DisplayName
+			oauthAccounts[idx].AllowLogout = app.Config().GenericOauth.AllowLogout
+			enableOauthGeneric = false
 		}
 	}
 
-	displayOauthSection := enableOauthSlack || enableOauthWriteAs || enableOauthGitLab || len(oauthAccounts) > 0
+	displayOauthSection := enableOauthSlack || enableOauthWriteAs || enableOauthGitLab || enableOauthGeneric || len(oauthAccounts) > 0
 
 	obj := struct {
 		*UserPage
-		Email             string
-		HasPass           bool
-		IsLogOut          bool
-		Silenced          bool
-		OauthSection      bool
-		OauthAccounts     []oauthAccountInfo
-		OauthSlack        bool
-		OauthWriteAs      bool
-		OauthGitLab       bool
-		GitLabDisplayName string
+		Email                   string
+		HasPass                 bool
+		IsLogOut                bool
+		Silenced                bool
+		OauthSection            bool
+		OauthAccounts           []oauthAccountInfo
+		OauthSlack              bool
+		OauthWriteAs            bool
+		OauthGitLab             bool
+		GitLabDisplayName       string
+		OauthGeneric            bool
+		OauthGenericDisplayName string
 	}{
-		UserPage:          NewUserPage(app, r, u, "Account Settings", flashes),
-		Email:             fullUser.EmailClear(app.keys),
-		HasPass:           passIsSet,
-		IsLogOut:          r.FormValue("logout") == "1",
-		Silenced:          fullUser.IsSilenced(),
-		OauthSection:      displayOauthSection,
-		OauthAccounts:     oauthAccounts,
-		OauthSlack:        enableOauthSlack,
-		OauthWriteAs:      enableOauthWriteAs,
-		OauthGitLab:       enableOauthGitLab,
-		GitLabDisplayName: config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
+		UserPage:                NewUserPage(app, r, u, "Account Settings", flashes),
+		Email:                   fullUser.EmailClear(app.keys),
+		HasPass:                 passIsSet,
+		IsLogOut:                r.FormValue("logout") == "1",
+		Silenced:                fullUser.IsSilenced(),
+		OauthSection:            displayOauthSection,
+		OauthAccounts:           oauthAccounts,
+		OauthSlack:              enableOauthSlack,
+		OauthWriteAs:            enableOauthWriteAs,
+		OauthGitLab:             enableOauthGitLab,
+		GitLabDisplayName:       config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
+		OauthGeneric:            enableOauthGeneric,
+		OauthGenericDisplayName: config.OrDefaultString(app.Config().GenericOauth.DisplayName, genericOauthDisplayName),
 	}
 
 	showUserPage(w, "settings", obj)

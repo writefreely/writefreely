@@ -86,17 +86,18 @@ type (
 		CallbackProxyAPI string `ini:"callback_proxy_api"`
 	}
 
-    GenericOauthCfg struct {
-        ClientID         string `ini:"client_id"`
-        ClientSecret     string `ini:"client_secret"`
-        Host             string `ini:"host"`
-        DisplayName      string `ini:"display_name"`
-        CallbackProxy    string `ini:"callback_proxy"`
-        CallbackProxyAPI string `ini:"callback_proxy_api"`
-        TokenEndpoint    string `ini:"token_endpoint"`
-        InspectEndpoint  string `ini:"inspect_endpoint"`
-        AuthEndpoint     string `ini:"auth_endpoint"`
-    }
+	GenericOauthCfg struct {
+		ClientID         string `ini:"client_id"`
+		ClientSecret     string `ini:"client_secret"`
+		Host             string `ini:"host"`
+		DisplayName      string `ini:"display_name"`
+		CallbackProxy    string `ini:"callback_proxy"`
+		CallbackProxyAPI string `ini:"callback_proxy_api"`
+		TokenEndpoint    string `ini:"token_endpoint"`
+		InspectEndpoint  string `ini:"inspect_endpoint"`
+		AuthEndpoint     string `ini:"auth_endpoint"`
+		AllowLogout      bool   `ini:"allow_logout"`
+	}
 
 	// AppCfg holds values that affect how the application functions
 	AppCfg struct {
@@ -150,7 +151,7 @@ type (
 		SlackOauth   SlackOauthCfg   `ini:"oauth.slack"`
 		WriteAsOauth WriteAsOauthCfg `ini:"oauth.writeas"`
 		GitlabOauth  GitlabOauthCfg  `ini:"oauth.gitlab"`
-        GenericOauth GenericOauthCfg `ini:"oauth.generic"`
+		GenericOauth GenericOauthCfg `ini:"oauth.generic"`
 	}
 )
 

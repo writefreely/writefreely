@@ -14,10 +14,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	wf_db "github.com/writeas/writefreely/db"
 	"net/http"
 	"strings"
 	"time"
+
+	wf_db "github.com/writeas/writefreely/db"
 
 	"github.com/guregu/null"
 	"github.com/guregu/null/zero"
@@ -2590,6 +2591,8 @@ type oauthAccountInfo struct {
 	Provider     string
 	ClientID     string
 	RemoteUserID string
+	DisplayName  string
+	AllowLogout  bool
 }
 
 func (db *datastore) GetOauthAccounts(ctx context.Context, userID int64) ([]oauthAccountInfo, error) {
