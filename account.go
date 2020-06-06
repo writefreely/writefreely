@@ -1066,7 +1066,7 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 			enableOauthGitLab = false
 		case "generic":
 			oauthAccounts[idx].DisplayName = app.Config().GenericOauth.DisplayName
-			oauthAccounts[idx].AllowLogout = app.Config().GenericOauth.AllowLogout
+			oauthAccounts[idx].AllowDisconnect = app.Config().GenericOauth.AllowDisconnect
 			enableOauthGeneric = false
 		}
 	}

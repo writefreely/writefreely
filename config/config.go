@@ -96,7 +96,7 @@ type (
 		TokenEndpoint    string `ini:"token_endpoint"`
 		InspectEndpoint  string `ini:"inspect_endpoint"`
 		AuthEndpoint     string `ini:"auth_endpoint"`
-		AllowLogout      bool   `ini:"allow_logout"`
+		AllowDisconnect  bool   `ini:"allow_disconnect"`
 	}
 
 	// AppCfg holds values that affect how the application functions

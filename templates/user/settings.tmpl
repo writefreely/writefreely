@@ -87,7 +87,7 @@ h3 { font-weight: normal; }
 		            <input type="hidden" name="remote_user_id" value="{{ $oauth_account.RemoteUserID }}" />
 					<div class="section oauth-provider">
 						{{ if $oauth_account.DisplayName}}
-							{{ if $oauth_account.AllowLogout}}
+							{{ if $oauth_account.AllowDisconnect}}
 							<input type="submit" value="Remove {{.DisplayName}}" />
 							{{else}}
 							<a class="btn cta"><strong>{{.DisplayName}}</strong></a>
