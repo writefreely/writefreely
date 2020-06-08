@@ -2652,6 +2652,17 @@ func handleFailedPostInsert(err error) error {
 func (db *datastore) GetProfilePageFromHandle(app *App, handle string) (string, error) {
 	handle = strings.TrimLeft(handle, "@")
 	actorIRI := ""
+	parts := strings.Split(handle, "@")
+	if len(parts) != 2 {
+		return "", fmt.Errorf("invalid handle format")
+	}
+	domain := parts[1]
+
+	// Check non-AP instances
+	if prefix, ok := fakeAPInstances[domain]; ok {
+		return "https://" + domain + "/" + prefix + parts[0], nil
+	}
+
 	remoteUser, err := getRemoteUserFromHandle(app, handle)
 	if err != nil {
 		// can't find using handle in the table but the table may already have this user without
