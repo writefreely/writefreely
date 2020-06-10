@@ -3,6 +3,9 @@
 	<head>
 		{{ template "head" . }}
 		<link rel="stylesheet" type="text/css" href="{{.Host}}/css/{{.Theme}}.css" />
+	{{ if .WebFonts}}
+		<link href="{{.Host}}/css/fonts.css" rel="preload" type="text/css" />
+	{{ end }}
 		<link rel="shortcut icon" href="{{.Host}}/favicon.ico" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
