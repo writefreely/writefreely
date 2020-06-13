@@ -41,6 +41,7 @@ h3 { font-weight: normal; }
 	</form>
 	{{ end }}
 
+	{{if not .DisablePasswordAuth}}
 	<form method="post" action="/api/me/self" autocomplete="false">
 		<input type="hidden" name="logout" value="{{.IsLogOut}}" />
 		<div class="option">
@@ -72,6 +73,7 @@ h3 { font-weight: normal; }
 			<input type="submit" value="Save changes" tabindex="4" />
 		</div>
 	</form>
+	{{end}}
 
     {{ if .OauthSection }}
 		<hr />

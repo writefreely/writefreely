@@ -86,6 +86,11 @@ func apiSignup(app *App, w http.ResponseWriter, r *http.Request) error {
 }
 
 func signup(app *App, w http.ResponseWriter, r *http.Request) (*AuthUser, error) {
+	if app.cfg.App.DisablePasswordAuth {
+		err := ErrDisabledPasswordAuth
+		return nil, err
+	}
+
 	reqJSON := IsJSON(r)
 
 	// Get params
@@ -394,6 +399,11 @@ func login(app *App, w http.ResponseWriter, r *http.Request) error {
 	var u *User
 	var err error
 	var signin userCredentials
+
+	if app.cfg.App.DisablePasswordAuth {
+		err := ErrDisabledPasswordAuth
+		return err
+	}
 
 	// Log in with one-time token if one is given
 	if oneTimeToken != "" {

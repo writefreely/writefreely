@@ -141,6 +141,9 @@ type (
 
 		// Check for Updates
 		UpdateChecks bool `ini:"update_checks"`
+
+		// Disable password authentication if use only Oauth
+		DisablePasswordAuth bool `ini:"disable_password_auth"`
 	}
 
 	// Config holds the complete configuration for running a writefreely instance
