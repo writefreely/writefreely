@@ -599,6 +599,9 @@ func (h *Handler) AllReader(f handlerFunc) http.HandlerFunc {
 				log.Info(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
+			// Allow any origin, as public endpoints are handled in here
+			w.Header().Set("Access-Control-Allow-Origin", "*");
+
 			if h.app.App().cfg.App.Private {
 				// This instance is private, so ensure it's being accessed by a valid user
 				// Check if authenticated with an access token
