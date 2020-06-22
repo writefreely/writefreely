@@ -172,6 +172,7 @@ func getSanitizationPolicy() *bluemonday.Policy {
 	policy.AllowAttrs("target").OnElements("a")
 	policy.AllowAttrs("title").OnElements("abbr")
 	policy.AllowAttrs("style", "class", "id").Globally()
+	policy.AllowElements("header", "footer")
 	policy.AllowURLSchemes("http", "https", "mailto", "xmpp")
 	return policy
 }
