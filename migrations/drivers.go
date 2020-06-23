@@ -78,3 +78,10 @@ func (db *datastore) engine() string {
 	}
 	return " ENGINE = InnoDB"
 }
+
+func (db *datastore) after(colName string) string {
+	if db.driverName == driverSQLite {
+		return ""
+	}
+	return " AFTER " + colName
+}

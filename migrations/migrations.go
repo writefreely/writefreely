@@ -65,6 +65,7 @@ var migrations = []Migration{
 	New("support oauth attach", oauthAttach),                        // V6 -> V7
 	New("support oauth via invite", oauthInvites),                   // V7 -> V8 (v0.12.0)
 	New("optimize drafts retrieval", optimizeDrafts),                // V8 -> V9
+	New("support post signatures", supportPostSignatures),           // V9 -> V10
 }
 
 // CurrentVer returns the current migration version the application is on

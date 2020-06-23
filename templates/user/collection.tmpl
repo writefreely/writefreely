@@ -5,6 +5,15 @@
 {{define "collection"}}
 {{template "header" .}}
 
+<style>
+textarea.section.norm {
+	font-family: Lora,'Palatino Linotype','Book Antiqua','New York','DejaVu serif',serif !important;
+	min-height: 10em;
+	max-height: 20em;
+	resize: vertical;
+}
+</style>
+
 <div class="content-container snug">
 	<div id="overlay"></div>
 
@@ -126,6 +135,14 @@
 		<div class="section">
 			<textarea id="css-editor" class="section codable" name="style_sheet">{{.StyleSheet}}</textarea>
 			<p class="explain">See our guide on <a href="https://guides.write.as/customizing/#custom-css">customization</a>.</p>
+		</div>
+	</div>
+
+	<div class="option">
+		<h2>Post Signature</h2>
+		<div class="section">
+			<p class="explain">This content will be added to the end of every post on this blog, as if it were part of the post itself. Markdown, HTML, and shortcodes are allowed.</p>
+			<textarea id="signature" class="section norm" name="signature">{{.Signature}}</textarea>
 		</div>
 	</div>
 
