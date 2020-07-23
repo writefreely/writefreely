@@ -2023,7 +2023,7 @@ func (db *datastore) RemoveCollectionRedirect(t *sql.Tx, alias string) error {
 func (db *datastore) GetCollectionRedirect(alias string) (new string) {
 	row := db.QueryRow("SELECT new_alias FROM collectionredirects WHERE prev_alias = ?", alias)
 	err := row.Scan(&new)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != sql.ErrNoRows && !db.isIgnorableError(err) {
 		log.Error("Failed selecting from collectionredirects: %v", err)
 	}
 	return
