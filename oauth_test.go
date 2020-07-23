@@ -22,8 +22,8 @@ type MockOAuthDatastoreProvider struct {
 }
 
 type MockOAuthDatastore struct {
-	DoGenerateOAuthState func(context.Context, string, string) (string, error)
-	DoValidateOAuthState func(context.Context, string) (string, string, error)
+	DoGenerateOAuthState func(context.Context, string, string, int64, string) (string, error)
+	DoValidateOAuthState func(context.Context, string) (string, string, int64, string, error)
 	DoGetIDForRemoteUser func(context.Context, string, string, string) (int64, error)
 	DoCreateUser         func(*config.Config, *User, string) error
 	DoRecordRemoteUserID func(context.Context, int64, string, string, string, string) error
@@ -86,11 +86,11 @@ func (m *MockOAuthDatastoreProvider) Config() *config.Config {
 	return cfg
 }
 
-func (m *MockOAuthDatastore) ValidateOAuthState(ctx context.Context, state string) (string, string, error) {
+func (m *MockOAuthDatastore) ValidateOAuthState(ctx context.Context, state string) (string, string, int64, string, error) {
 	if m.DoValidateOAuthState != nil {
 		return m.DoValidateOAuthState(ctx, state)
 	}
-	return "", "", nil
+	return "", "", 0, "", nil
 }
 
 func (m *MockOAuthDatastore) GetIDForRemoteUser(ctx context.Context, remoteUserID, provider, clientID string) (int64, error) {
@@ -119,15 +119,13 @@ func (m *MockOAuthDatastore) GetUserByID(userID int64) (*User, error) {
 	if m.DoGetUserByID != nil {
 		return m.DoGetUserByID(userID)
 	}
-	user := &User{
-
-	}
+	user := &User{}
 	return user, nil
 }
 
-func (m *MockOAuthDatastore) GenerateOAuthState(ctx context.Context, provider string, clientID string) (string, error) {
+func (m *MockOAuthDatastore) GenerateOAuthState(ctx context.Context, provider string, clientID string, attachUserID int64, inviteCode string) (string, error) {
 	if m.DoGenerateOAuthState != nil {
-		return m.DoGenerateOAuthState(ctx, provider, clientID)
+		return m.DoGenerateOAuthState(ctx, provider, clientID, attachUserID, inviteCode)
 	}
 	return store.Generate62RandomString(14), nil
 }
@@ -173,7 +171,7 @@ func TestViewOauthInit(t *testing.T) {
 		app := &MockOAuthDatastoreProvider{
 			DoDB: func() OAuthDatastore {
 				return &MockOAuthDatastore{
-					DoGenerateOAuthState: func(ctx context.Context, provider, clientID string) (string, error) {
+					DoGenerateOAuthState: func(ctx context.Context, provider, clientID string, attachUserID int64, inviteCode string) (string, error) {
 						return "", fmt.Errorf("pretend unable to write state error")
 					},
 				}

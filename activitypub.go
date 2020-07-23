@@ -160,6 +160,7 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 		pp.Collection = res
 		o := pp.ActivityObject(app)
 		a := activitystreams.NewCreateActivity(o)
+		a.Context = nil
 		ocp.OrderedItems = append(ocp.OrderedItems, *a)
 	}
 
@@ -396,7 +397,9 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 
 	go func() {
 		if to == nil {
-			log.Error("No to! %v", err)
+			if debugging {
+				log.Error("No `to` value!")
+			}
 			return
 		}
 
@@ -708,7 +711,8 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 
 func getRemoteUser(app *App, actorID string) (*RemoteUser, error) {
 	u := RemoteUser{ActorID: actorID}
-	err := app.db.QueryRow("SELECT id, inbox, shared_inbox, handle FROM remoteusers WHERE actor_id = ?", actorID).Scan(&u.ID, &u.Inbox, &u.SharedInbox, &u.Handle)
+	var handle sql.NullString
+	err := app.db.QueryRow("SELECT id, inbox, shared_inbox, handle FROM remoteusers WHERE actor_id = ?", actorID).Scan(&u.ID, &u.Inbox, &u.SharedInbox, &handle)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, impart.HTTPError{http.StatusNotFound, "No remote user with that ID."}
@@ -716,6 +720,8 @@ func getRemoteUser(app *App, actorID string) (*RemoteUser, error) {
 		log.Error("Couldn't get remote user %s: %v", actorID, err)
 		return nil, err
 	}
+
+	u.Handle = handle.String
 
 	return &u, nil
 }

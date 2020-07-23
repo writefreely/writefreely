@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2020 A Bunch Tell LLC.
+ * Copyright © 2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -10,10 +10,18 @@
 
 package migrations
 
-func supportActivityPubMentions(db *datastore) error {
+func optimizeDrafts(db *datastore) error {
 	t, err := db.Begin()
+	if err != nil {
+		t.Rollback()
+		return err
+	}
 
-	_, err = t.Exec(`ALTER TABLE remoteusers ADD COLUMN handle ` + db.typeVarChar(255) + ` NULL`)
+	if db.driverName == driverSQLite {
+		_, err = t.Exec(`CREATE INDEX key_owner_post_id ON posts (owner_id, id)`)
+	} else {
+		_, err = t.Exec(`ALTER TABLE posts ADD INDEX(owner_id, id)`)
+	}
 	if err != nil {
 		t.Rollback()
 		return err

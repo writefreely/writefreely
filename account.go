@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -27,6 +27,7 @@ import (
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/data"
 	"github.com/writeas/web-core/log"
+
 	"github.com/writeas/writefreely/author"
 	"github.com/writeas/writefreely/config"
 	"github.com/writeas/writefreely/page"
@@ -70,7 +71,7 @@ func canUserInvite(cfg *config.Config, isAdmin bool) bool {
 }
 
 func (up *UserPage) SetMessaging(u *User) {
-	//up.NeedsAuth = app.db.DoesUserNeedAuth(u.ID)
+	// up.NeedsAuth = app.db.DoesUserNeedAuth(u.ID)
 }
 
 const (
@@ -167,11 +168,7 @@ func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWr
 
 	// Log invite if needed
 	if signup.InviteCode != "" {
-		cu, err := app.db.GetUserForAuth(signup.Alias)
-		if err != nil {
-			return nil, err
-		}
-		err = app.db.CreateInvitedUser(signup.InviteCode, cu.ID)
+		err = app.db.CreateInvitedUser(signup.InviteCode, u.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -302,12 +299,14 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p := &struct {
 		page.StaticPage
-		To            string
-		Message       template.HTML
-		Flashes       []template.HTML
-		LoginUsername string
-		OauthSlack    bool
-		OauthWriteAs  bool
+		To                string
+		Message           template.HTML
+		Flashes           []template.HTML
+		LoginUsername     string
+		OauthSlack        bool
+		OauthWriteAs      bool
+		OauthGitlab       bool
+		GitlabDisplayName string
 	}{
 		pageForReq(app, r),
 		r.FormValue("to"),
@@ -316,6 +315,8 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		getTempInfo(app, "login-user", r, w),
 		app.Config().SlackOauth.ClientID != "",
 		app.Config().WriteAsOauth.ClientID != "",
+		app.Config().GitlabOauth.ClientID != "",
+		config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
 	}
 
 	if earlyError != "" {
@@ -487,6 +488,9 @@ func login(app *App, w http.ResponseWriter, r *http.Request) error {
 				log.Info("Tried logging in to %s, but no password or email.", signin.Alias)
 				return impart.HTTPError{http.StatusPreconditionFailed, "This user never added a password or email address. Please contact us for help."}
 			}
+		}
+		if len(u.HashedPass) == 0 {
+			return impart.HTTPError{http.StatusUnauthorized, "This user never set a password. Perhaps try logging in via OAuth?"}
 		}
 		if !auth.Authenticated(u.HashedPass, []byte(signin.Pass)) {
 			return impart.HTTPError{http.StatusUnauthorized, "Incorrect password."}
@@ -1038,18 +1042,52 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 
 	flashes, _ := getSessionFlashes(app, w, r, nil)
 
+	enableOauthSlack := app.Config().SlackOauth.ClientID != ""
+	enableOauthWriteAs := app.Config().WriteAsOauth.ClientID != ""
+	enableOauthGitLab := app.Config().GitlabOauth.ClientID != ""
+
+	oauthAccounts, err := app.db.GetOauthAccounts(r.Context(), u.ID)
+	if err != nil {
+		log.Error("Unable to get oauth accounts for settings: %s", err)
+		return impart.HTTPError{http.StatusInternalServerError, "Unable to retrieve user data. The humans have been alerted."}
+	}
+	for _, oauthAccount := range oauthAccounts {
+		switch oauthAccount.Provider {
+		case "slack":
+			enableOauthSlack = false
+		case "write.as":
+			enableOauthWriteAs = false
+		case "gitlab":
+			enableOauthGitLab = false
+		}
+	}
+
+	displayOauthSection := enableOauthSlack || enableOauthWriteAs || enableOauthGitLab || len(oauthAccounts) > 0
+
 	obj := struct {
 		*UserPage
-		Email    string
-		HasPass  bool
-		IsLogOut bool
-		Silenced bool
+		Email             string
+		HasPass           bool
+		IsLogOut          bool
+		Silenced          bool
+		OauthSection      bool
+		OauthAccounts     []oauthAccountInfo
+		OauthSlack        bool
+		OauthWriteAs      bool
+		OauthGitLab       bool
+		GitLabDisplayName string
 	}{
-		UserPage: NewUserPage(app, r, u, "Account Settings", flashes),
-		Email:    fullUser.EmailClear(app.keys),
-		HasPass:  passIsSet,
-		IsLogOut: r.FormValue("logout") == "1",
-		Silenced: fullUser.IsSilenced(),
+		UserPage:          NewUserPage(app, r, u, "Account Settings", flashes),
+		Email:             fullUser.EmailClear(app.keys),
+		HasPass:           passIsSet,
+		IsLogOut:          r.FormValue("logout") == "1",
+		Silenced:          fullUser.IsSilenced(),
+		OauthSection:      displayOauthSection,
+		OauthAccounts:     oauthAccounts,
+		OauthSlack:        enableOauthSlack,
+		OauthWriteAs:      enableOauthWriteAs,
+		OauthGitLab:       enableOauthGitLab,
+		GitLabDisplayName: config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
 	}
 
 	showUserPage(w, "settings", obj)
@@ -1092,6 +1130,19 @@ func getTempInfo(app *App, key string, r *http.Request, w http.ResponseWriter) s
 
 	// Return value
 	return s
+}
+
+func removeOauth(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	provider := r.FormValue("provider")
+	clientID := r.FormValue("client_id")
+	remoteUserID := r.FormValue("remote_user_id")
+
+	err := app.db.RemoveOauth(r.Context(), u.ID, provider, clientID, remoteUserID)
+	if err != nil {
+		return impart.HTTPError{Status: http.StatusInternalServerError, Message: err.Error()}
+	}
+
+	return impart.HTTPError{Status: http.StatusFound, Message: "/me/settings"}
 }
 
 func prepareUserEmail(input string, emailKey []byte) zero.String {

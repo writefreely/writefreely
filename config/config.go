@@ -59,6 +59,7 @@ type (
 		Database string `ini:"database"`
 		Host     string `ini:"host"`
 		Port     int    `ini:"port"`
+		TLS      bool   `ini:"tls"`
 	}
 
 	WriteAsOauthCfg struct {
@@ -67,6 +68,15 @@ type (
 		AuthLocation     string `ini:"auth_location"`
 		TokenLocation    string `ini:"token_location"`
 		InspectLocation  string `ini:"inspect_location"`
+		CallbackProxy    string `ini:"callback_proxy"`
+		CallbackProxyAPI string `ini:"callback_proxy_api"`
+	}
+
+	GitlabOauthCfg struct {
+		ClientID         string `ini:"client_id"`
+		ClientSecret     string `ini:"client_secret"`
+		Host             string `ini:"host"`
+		DisplayName      string `ini:"display_name"`
 		CallbackProxy    string `ini:"callback_proxy"`
 		CallbackProxyAPI string `ini:"callback_proxy_api"`
 	}
@@ -130,6 +140,7 @@ type (
 		App          AppCfg          `ini:"app"`
 		SlackOauth   SlackOauthCfg   `ini:"oauth.slack"`
 		WriteAsOauth WriteAsOauthCfg `ini:"oauth.writeas"`
+		GitlabOauth  GitlabOauthCfg  `ini:"oauth.gitlab"`
 	}
 )
 
@@ -183,6 +194,16 @@ func (ac *AppCfg) LandingPath() string {
 		return "/" + ac.Landing
 	}
 	return ac.Landing
+}
+
+func (ac AppCfg) SignupPath() string {
+	if !ac.OpenRegistration {
+		return ""
+	}
+	if ac.Chorus || ac.Private || (ac.Landing != "" && ac.Landing != "/") {
+		return "/signup"
+	}
+	return "/"
 }
 
 // Load reads the given configuration file, then parses and returns it as a Config.

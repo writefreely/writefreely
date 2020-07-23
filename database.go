@@ -39,6 +39,8 @@ import (
 const (
 	mySQLErrDuplicateKey = 1062
 	mySQLErrCollationMix = 1267
+	mySQLErrTooManyConns = 1040
+	mySQLErrMaxUserConns = 1203
 
 	driverMySQL  = "mysql"
 	driverSQLite = "sqlite3"
@@ -130,8 +132,10 @@ type writestore interface {
 
 	GetIDForRemoteUser(context.Context, string, string, string) (int64, error)
 	RecordRemoteUserID(context.Context, int64, string, string, string, string) error
-	ValidateOAuthState(context.Context, string) (string, string, error)
-	GenerateOAuthState(context.Context, string, string) (string, error)
+	ValidateOAuthState(context.Context, string) (string, string, int64, string, error)
+	GenerateOAuthState(context.Context, string, string, int64, string) (string, error)
+	GetOauthAccounts(ctx context.Context, userID int64) ([]oauthAccountInfo, error)
+	RemoveOauth(ctx context.Context, userID int64, provider string, clientID string, remoteUserID string) error
 
 	DatabaseInitialized() bool
 }
@@ -174,6 +178,7 @@ func (db *datastore) dateSub(l int, unit string) string {
 	return fmt.Sprintf("DATE_SUB(NOW(), INTERVAL %d %s)", l, unit)
 }
 
+// CreateUser creates a new user in the database from the given User, UPDATING it in the process with the user's ID.
 func (db *datastore) CreateUser(cfg *config.Config, u *User, collectionTitle string) error {
 	if db.PostIDExists(u.Username) {
 		return impart.HTTPError{http.StatusConflict, "Invalid collection name."}
@@ -793,6 +798,8 @@ func (db *datastore) GetCollectionBy(condition string, value interface{}) (*Coll
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, impart.HTTPError{http.StatusNotFound, "Collection doesn't exist."}
+	case db.isHighLoadError(err):
+		return nil, ErrUnavailable
 	case err != nil:
 		log.Error("Failed selecting from collections: %v", err)
 		return nil, err
@@ -2050,7 +2057,7 @@ func (db *datastore) RemoveCollectionRedirect(t *sql.Tx, alias string) error {
 func (db *datastore) GetCollectionRedirect(alias string) (new string) {
 	row := db.QueryRow("SELECT new_alias FROM collectionredirects WHERE prev_alias = ?", alias)
 	err := row.Scan(&new)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != sql.ErrNoRows && !db.isIgnorableError(err) {
 		log.Error("Failed selecting from collectionredirects: %v", err)
 	}
 	return
@@ -2544,20 +2551,26 @@ func (db *datastore) GetCollectionLastPostTime(id int64) (*time.Time, error) {
 	return &t, nil
 }
 
-func (db *datastore) GenerateOAuthState(ctx context.Context, provider, clientID string) (string, error) {
+func (db *datastore) GenerateOAuthState(ctx context.Context, provider string, clientID string, attachUser int64, inviteCode string) (string, error) {
 	state := store.Generate62RandomString(24)
-	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_states (state, provider, client_id, used, created_at) VALUES (?, ?, ?, FALSE, NOW())", state, provider, clientID)
+	attachUserVal := sql.NullInt64{Valid: attachUser > 0, Int64: attachUser}
+	inviteCodeVal := sql.NullString{Valid: inviteCode != "", String: inviteCode}
+	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_states (state, provider, client_id, used, created_at, attach_user_id, invite_code) VALUES (?, ?, ?, FALSE, "+db.now()+", ?, ?)", state, provider, clientID, attachUserVal, inviteCodeVal)
 	if err != nil {
 		return "", fmt.Errorf("unable to record oauth client state: %w", err)
 	}
 	return state, nil
 }
 
-func (db *datastore) ValidateOAuthState(ctx context.Context, state string) (string, string, error) {
+func (db *datastore) ValidateOAuthState(ctx context.Context, state string) (string, string, int64, string, error) {
 	var provider string
 	var clientID string
+	var attachUserID sql.NullInt64
+	var inviteCode sql.NullString
 	err := wf_db.RunTransactionWithOptions(ctx, db.DB, &sql.TxOptions{}, func(ctx context.Context, tx *sql.Tx) error {
-		err := tx.QueryRow("SELECT provider, client_id FROM oauth_client_states WHERE state = ? AND used = FALSE", state).Scan(&provider, &clientID)
+		err := tx.
+			QueryRowContext(ctx, "SELECT provider, client_id, attach_user_id, invite_code FROM oauth_client_states WHERE state = ? AND used = FALSE", state).
+			Scan(&provider, &clientID, &attachUserID, &inviteCode)
 		if err != nil {
 			return err
 		}
@@ -2576,9 +2589,9 @@ func (db *datastore) ValidateOAuthState(ctx context.Context, state string) (stri
 		return nil
 	})
 	if err != nil {
-		return "", "", nil
+		return "", "", 0, "", nil
 	}
-	return provider, clientID, nil
+	return provider, clientID, attachUserID.Int64, inviteCode.String, nil
 }
 
 func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID int64, remoteUserID, provider, clientID, accessToken string) error {
@@ -2607,6 +2620,33 @@ func (db *datastore) GetIDForRemoteUser(ctx context.Context, remoteUserID, provi
 	return userID, nil
 }
 
+type oauthAccountInfo struct {
+	Provider     string
+	ClientID     string
+	RemoteUserID string
+}
+
+func (db *datastore) GetOauthAccounts(ctx context.Context, userID int64) ([]oauthAccountInfo, error) {
+	rows, err := db.QueryContext(ctx, "SELECT provider, client_id, remote_user_id FROM oauth_users WHERE user_id = ? ", userID)
+	if err != nil {
+		log.Error("Failed selecting from oauth_users: %v", err)
+		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve user oauth accounts."}
+	}
+	defer rows.Close()
+
+	var records []oauthAccountInfo
+	for rows.Next() {
+		info := oauthAccountInfo{}
+		err = rows.Scan(&info.Provider, &info.ClientID, &info.RemoteUserID)
+		if err != nil {
+			log.Error("Failed scanning GetAllUsers() row: %v", err)
+			break
+		}
+		records = append(records, info)
+	}
+	return records, nil
+}
+
 // DatabaseInitialized returns whether or not the current datastore has been
 // initialized with the correct schema.
 // Currently, it checks to see if the `users` table exists.
@@ -2629,6 +2669,11 @@ func (db *datastore) DatabaseInitialized() bool {
 	return true
 }
 
+func (db *datastore) RemoveOauth(ctx context.Context, userID int64, provider string, clientID string, remoteUserID string) error {
+	_, err := db.ExecContext(ctx, `DELETE FROM oauth_users WHERE user_id = ? AND provider = ? AND client_id = ? AND remote_user_id = ?`, userID, provider, clientID, remoteUserID)
+	return err
+}
+
 func stringLogln(log *string, s string, v ...interface{}) {
 	*log += fmt.Sprintf(s+"\n", v...)
 }
@@ -2639,6 +2684,7 @@ func handleFailedPostInsert(err error) error {
 }
 
 func (db *datastore) GetProfilePageFromHandle(app *App, handle string) (string, error) {
+	handle = strings.TrimLeft(handle, "@")
 	actorIRI := ""
 	remoteUser, err := getRemoteUserFromHandle(app, handle)
 	if err != nil {
@@ -2651,21 +2697,21 @@ func (db *datastore) GetProfilePageFromHandle(app *App, handle string) (string, 
 		if errRemoteUser == nil {
 			_, err := app.db.Exec("UPDATE remoteusers SET handle = ? WHERE actor_id = ?", handle, actorIRI)
 			if err != nil {
-				log.Error("Can't update handle (" + handle + ") in database for user " + actorIRI)
+				log.Error("Couldn't update handle '%s' for user %s", handle, actorIRI)
 			}
 		} else {
 			// this probably means we don't have the user in the table so let's try to insert it
 			// here we need to ask the server for the inboxes
 			remoteActor, err := activityserve.NewRemoteActor(actorIRI)
 			if err != nil {
-				log.Error("Couldn't fetch remote actor", err)
+				log.Error("Couldn't fetch remote actor: %v", err)
 			}
 			if debugging {
 				log.Info("%s %s %s %s", actorIRI, remoteActor.GetInbox(), remoteActor.GetSharedInbox(), handle)
 			}
 			_, err = app.db.Exec("INSERT INTO remoteusers (actor_id, inbox, shared_inbox, handle) VALUES(?, ?, ?, ?)", actorIRI, remoteActor.GetInbox(), remoteActor.GetSharedInbox(), handle)
 			if err != nil {
-				log.Error("Can't insert remote user in database", err)
+				log.Error("Couldn't insert remote user: %v", err)
 				return "", err
 			}
 		}

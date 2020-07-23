@@ -101,20 +101,20 @@ func RemoteLookup(handle string) string {
 	parts := strings.Split(handle, "@")
 	resp, err := http.Get("https://" + parts[1] + "/.well-known/webfinger?resource=acct:" + handle)
 	if err != nil {
-		log.Error("Error performing webfinger request", err)
+		log.Error("Error on webfinger request: %v", err)
 		return ""
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Error("Error reading webfinger response", err)
+		log.Error("Error on webfinger response: %v", err)
 		return ""
 	}
 
 	var result webfinger.Resource
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		log.Error("Unsupported webfinger response received: %v", err)
+		log.Error("Unable to parse webfinger response: %v", err)
 		return ""
 	}
 

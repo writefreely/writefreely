@@ -37,6 +37,7 @@ var (
 		"localstr":    localStr,
 		"localhtml":   localHTML,
 		"tolower":     strings.ToLower,
+		"title":       strings.Title,
 	}
 )
 

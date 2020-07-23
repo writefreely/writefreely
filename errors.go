@@ -37,6 +37,8 @@ var (
 	ErrInternalGeneral       = impart.HTTPError{http.StatusInternalServerError, "The humans messed something up. They've been notified."}
 	ErrInternalCookieSession = impart.HTTPError{http.StatusInternalServerError, "Could not get cookie session."}
 
+	ErrUnavailable = impart.HTTPError{http.StatusServiceUnavailable, "Service temporarily unavailable due to high load."}
+
 	ErrCollectionNotFound     = impart.HTTPError{http.StatusNotFound, "Collection doesn't exist."}
 	ErrCollectionGone         = impart.HTTPError{http.StatusGone, "This blog was unpublished."}
 	ErrCollectionPageNotFound = impart.HTTPError{http.StatusNotFound, "Collection page doesn't exist."}

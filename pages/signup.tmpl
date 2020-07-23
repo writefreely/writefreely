@@ -70,6 +70,25 @@ form dd {
 		</ul>{{end}}
 
 		<div id="billing">
+			{{ if or .OAuth.SlackEnabled .OAuth.WriteAsEnabled .OAuth.GitLabEnabled }}
+				<div class="row content-container signinbtns">
+					{{ if .OAuth.SlackEnabled }}
+						<a class="loginbtn" href="/oauth/slack{{if .Invite}}?invite_code={{.Invite}}{{end}}"><img alt="Sign in with Slack" height="40" width="172" src="/img/sign_in_with_slack.png" srcset="/img/sign_in_with_slack.png 1x, /img/sign_in_with_slack@2x.png 2x" /></a>
+					{{ end }}
+					{{ if .OAuth.WriteAsEnabled }}
+						<a class="btn cta loginbtn" id="writeas-login" href="/oauth/write.as{{if .Invite}}?invite_code={{.Invite}}{{end}}">Sign in with <strong>Write.as</strong></a>
+					{{ end }}
+					{{ if .OAuth.GitLabEnabled }}
+						<a class="btn cta loginbtn" id="gitlab-login" href="/oauth/gitlab{{if .Invite}}?invite_code={{.Invite}}{{end}}">Sign in with <strong>{{.OAuth.GitLabDisplayName}}</strong></a>
+					{{ end }}
+				</div>
+
+				<div class="or">
+					<p>or</p>
+					<hr class="short" />
+				</div>
+			{{ end }}
+
 			<form action="/auth/signup" method="POST" id="signup-form" onsubmit="return signup()">
 				<input type="hidden" name="invite_code" value="{{.Invite}}" />
 				<dl class="billing">
