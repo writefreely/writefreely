@@ -45,6 +45,8 @@ type (
 
 		HashSeed string `ini:"hash_seed"`
 
+		GopherPort int `ini:"gopher_port"`
+
 		Dev bool `ini:"-"`
 	}
 

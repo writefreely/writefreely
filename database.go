@@ -1640,6 +1640,40 @@ func (db *datastore) GetPublishableCollections(u *User, hostName string) (*[]Col
 	return c, nil
 }
 
+func (db *datastore) GetPublicCollections(hostName string) (*[]Collection, error) {
+	rows, err := db.Query(`SELECT c.id, alias, title, description, privacy, view_count
+	FROM collections c
+	LEFT JOIN users u ON u.id = c.owner_id
+	WHERE c.privacy = 1 AND u.status = 0
+	ORDER BY id ASC`)
+	if err != nil {
+		log.Error("Failed selecting public collections: %v", err)
+		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve public collections."}
+	}
+	defer rows.Close()
+
+	colls := []Collection{}
+	for rows.Next() {
+		c := Collection{}
+		err = rows.Scan(&c.ID, &c.Alias, &c.Title, &c.Description, &c.Visibility, &c.Views)
+		if err != nil {
+			log.Error("Failed scanning row: %v", err)
+			break
+		}
+		c.hostName = hostName
+		c.URL = c.CanonicalURL()
+		c.Public = c.IsPublic()
+
+		colls = append(colls, c)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Error("Error after Next() on rows: %v", err)
+	}
+
+	return &colls, nil
+}
+
 func (db *datastore) GetMeStats(u *User) userMeStats {
 	s := userMeStats{}
 
