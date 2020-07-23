@@ -34,11 +34,11 @@ require (
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/pelletier/go-toml v1.2.0 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
-	github.com/prologic/go-gopher v0.0.0-20191226035442-664dbdb49f44
+	github.com/prologic/go-gopher v0.0.0-20200721020712-3e11dcff0469
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
 	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.6.0
 	github.com/writeas/activity v0.1.2
 	github.com/writeas/activityserve v0.0.0-20191115095800-dd6d19cc8b89
 	github.com/writeas/go-strip-markdown v2.0.1+incompatible
@@ -52,8 +52,9 @@ require (
 	github.com/writeas/slug v1.2.0
 	github.com/writeas/web-core v1.2.0
 	github.com/writefreely/go-nodeinfo v1.2.0
-	golang.org/x/crypto v0.0.0-20200109152110-61a87790db17
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/lint v0.0.0-20181217174547-8f45f776aaf1 // indirect
+	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/tools v0.0.0-20190208222737-3744606dbb67 // indirect
 	google.golang.org/appengine v1.4.0 // indirect
 	gopkg.in/alecthomas/kingpin.v3-unstable v3.0.0-20180810215634-df19058c872c // indirect
