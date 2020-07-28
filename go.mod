@@ -15,7 +15,7 @@ require (
 	github.com/gorilla/schema v1.0.2
 	github.com/gorilla/sessions v1.2.0
 	github.com/guregu/null v3.4.0+incompatible
-	github.com/hashicorp/go-multierror v1.0.0
+	github.com/hashicorp/go-multierror v1.1.0
 	github.com/ikeikeikeike/go-sitemap-generator/v2 v2.0.2
 	github.com/jteeuwen/go-bindata v3.0.7+incompatible // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
