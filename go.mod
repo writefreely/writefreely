@@ -55,7 +55,7 @@ require (
 	golang.org/x/tools v0.0.0-20190208222737-3744606dbb67 // indirect
 	google.golang.org/appengine v1.4.0 // indirect
 	gopkg.in/alecthomas/kingpin.v3-unstable v3.0.0-20180810215634-df19058c872c // indirect
-	gopkg.in/ini.v1 v1.55.0
+	gopkg.in/ini.v1 v1.57.0
 	src.techknowlogick.com/xgo v0.0.0-20200129005940-d0fae26e014b // indirect
 )
 
