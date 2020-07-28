@@ -5,7 +5,7 @@ require (
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
 	github.com/clbanning/mxj v1.8.4 // indirect
 	github.com/dustin/go-humanize v1.0.0
-	github.com/fatih/color v1.7.0
+	github.com/fatih/color v1.9.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/go-test/deep v1.0.1 // indirect
 	github.com/golang/lint v0.0.0-20181217174547-8f45f776aaf1 // indirect
