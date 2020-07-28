@@ -21,7 +21,8 @@ require (
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/kylemcc/twitter-text-go v0.0.0-20180726194232-7f582f6736ec
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
-	github.com/manifoldco/promptui v0.3.2
+	github.com/manifoldco/promptui v0.7.0
+	github.com/mattn/go-colorable v0.1.0 // indirect
 	github.com/mattn/go-sqlite3 v1.14.0
 	github.com/microcosm-cc/bluemonday v1.0.3
 	github.com/mitchellh/go-wordwrap v1.0.0
