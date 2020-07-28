@@ -10,7 +10,7 @@ require (
 	github.com/go-test/deep v1.0.1 // indirect
 	github.com/golang/lint v0.0.0-20181217174547-8f45f776aaf1 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
-	github.com/gorilla/feeds v1.1.0
+	github.com/gorilla/feeds v1.1.1
 	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/schema v1.0.2
 	github.com/gorilla/sessions v1.2.0
