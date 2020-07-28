@@ -35,7 +35,7 @@ require (
 	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
 	github.com/stretchr/testify v1.6.1
-	github.com/urfave/cli/v2 v2.1.1
+	github.com/urfave/cli/v2 v2.2.0
 	github.com/writeas/activity v0.1.2
 	github.com/writeas/activityserve v0.0.0-20200409150223-d7ab3eaa4481
 	github.com/writeas/go-strip-markdown v2.0.1+incompatible
