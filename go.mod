@@ -24,7 +24,7 @@ require (
 	github.com/manifoldco/promptui v0.3.2
 	github.com/mattn/go-colorable v0.1.0 // indirect
 	github.com/mattn/go-sqlite3 v1.10.0
-	github.com/microcosm-cc/bluemonday v1.0.2
+	github.com/microcosm-cc/bluemonday v1.0.3
 	github.com/mitchellh/go-wordwrap v1.0.0
 	github.com/nicksnyder/go-i18n v1.10.0 // indirect
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
