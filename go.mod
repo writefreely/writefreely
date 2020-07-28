@@ -14,7 +14,7 @@ require (
 	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/schema v1.1.0
 	github.com/gorilla/sessions v1.2.0
-	github.com/guregu/null v3.4.0+incompatible
+	github.com/guregu/null v3.5.0+incompatible
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/ikeikeikeike/go-sitemap-generator/v2 v2.0.2
 	github.com/jteeuwen/go-bindata v3.0.7+incompatible // indirect
