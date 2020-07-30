@@ -731,7 +731,7 @@ func viewMyCollectionsAPI(app *App, u *User, w http.ResponseWriter, r *http.Requ
 }
 
 func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
-	p, err := app.db.GetAnonymousPosts(u)
+	p, err := app.db.GetAnonymousPosts(u, 1)
 	if err != nil {
 		log.Error("unable to fetch anon posts: %v", err)
 	}

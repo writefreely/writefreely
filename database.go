@@ -77,7 +77,7 @@ type writestore interface {
 	GetTotalCollections() (int64, error)
 	GetTotalPosts() (int64, error)
 	GetTopPosts(u *User, alias string) (*[]PublicPost, error)
-	GetAnonymousPosts(u *User) (*[]PublicPost, error)
+	GetAnonymousPosts(u *User, page int) (*[]PublicPost, error)
 	GetUserPosts(u *User) (*[]PublicPost, error)
 
 	CreateOwnedPost(post *SubmittedPost, accessToken, collAlias, hostName string) (*PublicPost, error)
@@ -1774,8 +1774,19 @@ func (db *datastore) GetTopPosts(u *User, alias string) (*[]PublicPost, error) {
 	return &posts, nil
 }
 
-func (db *datastore) GetAnonymousPosts(u *User) (*[]PublicPost, error) {
-	rows, err := db.Query("SELECT id, view_count, title, created, updated, content FROM posts WHERE owner_id = ? AND collection_id IS NULL ORDER BY created DESC", u.ID)
+func (db *datastore) GetAnonymousPosts(u *User, page int) (*[]PublicPost, error) {
+	pagePosts := 10
+	start := page*pagePosts - pagePosts
+	if page == 0 {
+		start = 0
+		pagePosts = 1000
+	}
+
+	limitStr := ""
+	if page > 0 {
+		limitStr = fmt.Sprintf(" LIMIT %d, %d", start, pagePosts)
+	}
+	rows, err := db.Query("SELECT id, view_count, title, created, updated, content FROM posts WHERE owner_id = ? AND collection_id IS NULL ORDER BY created DESC"+limitStr, u.ID)
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve user anonymous posts."}
