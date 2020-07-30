@@ -58,6 +58,17 @@ func (p *PublicPost) formatContent(cfg *config.Config, isOwner bool) {
 	p.Post.formatContent(cfg, &p.Collection.Collection, isOwner)
 }
 
+func (p *Post) augmentContent(c *Collection) {
+	// Add post signatures
+	if c.Signature != "" {
+		p.Content += "\n\n" + c.Signature
+	}
+}
+
+func (p *PublicPost) augmentContent() {
+	p.Post.augmentContent(&p.Collection.Collection)
+}
+
 func applyMarkdown(data []byte, baseURL string, cfg *config.Config) string {
 	return applyMarkdownSpecial(data, false, baseURL, cfg)
 }

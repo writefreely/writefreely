@@ -1141,6 +1141,7 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 		p.Collection.FederatedAccount() + "/followers",
 	}
 	o.Name = p.DisplayTitle()
+	p.augmentContent()
 	if p.HTMLContent == template.HTML("") {
 		p.formatContent(cfg, false)
 	}
@@ -1431,6 +1432,8 @@ Are you sure it was ever here?`,
 	if p.Content == "" && p.Title.String == "" {
 		return impart.HTTPError{http.StatusGone, "Post was unpublished."}
 	}
+
+	p.augmentContent()
 
 	// Serve collection post
 	if isRaw {
