@@ -1,17 +1,25 @@
 # Build image
 FROM golang:1.14-alpine as build
 
-RUN apk add --update nodejs nodejs-npm make g++ git sqlite-dev
+RUN apk add --update nodejs nodejs-npm make g++ git
 RUN npm install -g less less-plugin-clean-css
-RUN go get -u github.com/jteeuwen/go-bindata/...
+RUN go get -u github.com/go-bindata/go-bindata/...
 
 RUN mkdir -p /go/src/github.com/writeas/writefreely
 WORKDIR /go/src/github.com/writeas/writefreely
 COPY . .
 
 ENV GO111MODULE=on
-RUN make build \
- && make ui
+#Build
+RUN go-bindata -pkg writefreely -ignore=\\.gitignore schema.sql sqlite.sql
+RUN go get -d -v ./...
+RUN go build -ldflags="-X 'github.com/writeas/writefreely.softwareVer=$(GITREV)'" -v ./cmd/writefreely/
+
+# UI
+RUN lessc ./less/app.less --clean-css="--s1 --advanced" ../static/css/write.css
+RUN lessc ./less/fonts.less --clean-css="--s1 --advanced" ../static/css/fonts.css
+RUN lessc ./less/icons.less --clean-css="--s1 --advanced" ../static/css/icons.css
+
 RUN mkdir /stage && \
     cp -R /go/bin \
       /go/src/github.com/writeas/writefreely/templates \
