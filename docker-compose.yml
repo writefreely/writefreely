@@ -6,7 +6,7 @@ services:
     entrypoint: ls -lA
     volumes:
       - ./web-data/:/go/src/app
-      - ./config.ini.example:/go/cmd/writefreely/config.ini
+      - ./config.ini.docker:/go/cmd/writefreely/config.ini
     ports:
       - "8080:8080"
     networks:
