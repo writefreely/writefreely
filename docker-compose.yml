@@ -3,11 +3,12 @@ services:
 
   web:
     build: .
+    entrypoint: ls -lA
     volumes:
       - ./web-data/:/go/src/app
-      - ./config.ini.docker:/go/cmd/writefreely/config.ini
+      - ./config.ini.example:/go/cmd/writefreely/config.ini
     ports:
-      - "8080:8080"
+      - "9000:9000"
     networks:
       - external_writefreely
       - internal_writefreely
@@ -22,6 +23,7 @@ services:
       - MYSQL_DATABASE=writefreely
       - MYSQL_ROOT_PASSWORD=writefreely
     volumes:
+      - ./schema.sql:/tmp/schema.sql
       - ./Mariadb/:/var/lib/mysql
     networks:
       - internal_writefreely
