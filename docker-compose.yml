@@ -7,7 +7,7 @@ services:
       - ./web-data/:/go/src/app
       - ./config.ini.docker:/go/cmd/writefreely/config.ini
     ports:
-      - "9000:9000"
+      - "8080:8080"
     networks:
       - external_writefreely
       - internal_writefreely
