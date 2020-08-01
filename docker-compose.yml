@@ -1,32 +1,30 @@
 version: "3"
 services:
+
   web:
     build: .
     volumes:
-      - "web-data:/go/src/app"
-      - "./config.ini.example:/go/src/app/config.ini"
+      - ./web-data/:/go/src/app
+      - ./config.ini:/go/cmd/writefreely/config.ini
     ports:
-      - "8080:8080"
+      - "9000:9000"
     networks:
-      - writefreely
+      - external_writefreely
+      - internal_writefreely
     depends_on:
       - db
     restart: unless-stopped
+
   db:
-    image: "mariadb:latest"
+    image: mariadb:10.4
+    command: mysqld --character-set-server=latin1 --collation-server=latin1_swedish_ci
     volumes:
-      - "./schema.sql:/tmp/schema.sql"
-      - db-data:/var/lib/mysql/data
+      - ./Mariadb/:/var/lib/mysql
     networks:
-      - writefreely
-    environment:
-      - MYSQL_DATABASE=writefreely
-      - MYSQL_ROOT_PASSWORD=changeme
+      - internal_writefreely
     restart: unless-stopped
 
-volumes:
-  web-data:
-  db-data:
-
 networks:
-  writefreely:
+  external_writefreely:
+  internal_writefreely:
+    internal: true
