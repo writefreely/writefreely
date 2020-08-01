@@ -5,7 +5,7 @@ services:
     build: .
     volumes:
       - ./web-data/:/go/src/app
-      - ./config.ini:/go/cmd/writefreely/config.ini
+      - ./config.ini.docker:/go/cmd/writefreely/config.ini
     ports:
       - "9000:9000"
     networks:
