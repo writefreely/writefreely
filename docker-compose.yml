@@ -16,7 +16,7 @@ services:
     restart: unless-stopped
 
   db:
-    image: mariadb:10.4
+    image: mariadb:10
     command: mysqld --character-set-server=latin1 --collation-server=latin1_swedish_ci
     environment:
       - MYSQL_DATABASE=writefreely
