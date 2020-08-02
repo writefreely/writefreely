@@ -9,12 +9,9 @@ RUN mkdir -p /go/src/github.com/writeas/writefreely
 WORKDIR /go/src/github.com/writeas/writefreely
 COPY . .
 
+# Build
 ENV GO111MODULE=on
-ENV softwareVer=docker
-#Build
-RUN go-bindata -pkg writefreely -ignore=\\.gitignore schema.sql sqlite.sql
-RUN go get -d -v ./...
-RUN go build -ldflags="-X github.com/writeas/writefreely.softwareVer=${softwareVer}" -v ./cmd/writefreely/
+RUN make build
 
 # UI
 RUN lessc ./less/app.less --clean-css="--s1 --advanced" ../static/css/write.css
