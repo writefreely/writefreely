@@ -2339,10 +2339,10 @@ func (db *datastore) SilenceAccount(userID int64) error {
 	}
 
 	// Update user state
-	_, err = t.Exec("UPDATE users SET state=1 WHERE id=?", userID)
+	_, err = t.Exec("UPDATE users SET status=1 WHERE id=?", userID)
         if err != nil {
 		t.Rollback()
-		return fmt.Errorf("Unable to update user state: %s", err)
+		return fmt.Errorf("Unable to update user status: %s", err)
 	}
 
 	// Commit all changes to the database
