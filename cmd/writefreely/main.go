@@ -86,6 +86,11 @@ func main() {
 				Hidden: true,
 			},
 			&cli.StringFlag{
+				Name:   "silence-user",
+				Usage:  "Silence a user with the given username",
+				Hidden: true,
+			},
+			&cli.StringFlag{
 				Name:   "reset-pass",
 				Usage:  "Reset the given user's password",
 				Hidden: true,
@@ -152,6 +157,8 @@ func legacyActions(c *cli.Context) error {
 		return writefreely.CreateUser(app, username, password, false)
 	case c.IsSet("delete-user"):
 		return writefreely.DoDeleteAccount(app, c.String("delete-user"))
+	case c.IsSet("silence-user"):
+		return writefreely.DoSilenceAccount(app, c.String("silence-user"))
 	case c.IsSet("reset-pass"):
 		return writefreely.ResetPassword(app, c.String("reset-pass"))
 	}
