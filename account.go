@@ -307,8 +307,8 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		OauthWriteAs      bool
 		OauthGitlab       bool
 		GitlabDisplayName string
-		OauthGitea       bool
-		GiteaDisplayName string
+		OauthGitea        bool
+		GiteaDisplayName  string
 	}{
 		pageForReq(app, r),
 		r.FormValue("to"),
@@ -1083,8 +1083,8 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		OauthWriteAs      bool
 		OauthGitLab       bool
 		GitLabDisplayName string
-		OauthGitea       bool
-		GiteaDisplayName string
+		OauthGitea        bool
+		GiteaDisplayName  string
 	}{
 		UserPage:          NewUserPage(app, r, u, "Account Settings", flashes),
 		Email:             fullUser.EmailClear(app.keys),
@@ -1097,8 +1097,8 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		OauthWriteAs:      enableOauthWriteAs,
 		OauthGitLab:       enableOauthGitLab,
 		GitLabDisplayName: config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
-		OauthGitea:       enableOauthGitea,
-		GiteaDisplayName: config.OrDefaultString(app.Config().GiteaOauth.DisplayName, giteaDisplayName),
+		OauthGitea:        enableOauthGitea,
+		GiteaDisplayName:  config.OrDefaultString(app.Config().GiteaOauth.DisplayName, giteaDisplayName),
 	}
 
 	showUserPage(w, "settings", obj)
