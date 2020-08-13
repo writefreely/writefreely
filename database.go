@@ -14,6 +14,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/writeas/web-core/silobridge"
 	wf_db "github.com/writeas/writefreely/db"
 	"net/http"
 	"strings"
@@ -2659,8 +2660,8 @@ func (db *datastore) GetProfilePageFromHandle(app *App, handle string) (string, 
 	domain := parts[1]
 
 	// Check non-AP instances
-	if prefix, ok := fakeAPInstances[domain]; ok {
-		return "https://" + domain + "/" + prefix + parts[0], nil
+	if siloProfileURL := silobridge.Profile(parts[0], domain); siloProfileURL != "" {
+		return siloProfileURL, nil
 	}
 
 	remoteUser, err := getRemoteUserFromHandle(app, handle)
