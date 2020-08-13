@@ -89,6 +89,15 @@ type (
 		CallbackProxyAPI string `ini:"callback_proxy_api"`
 	}
 
+	GiteaOauthCfg struct {
+		ClientID         string `ini:"client_id"`
+		ClientSecret     string `ini:"client_secret"`
+		Host             string `ini:"host"`
+		DisplayName      string `ini:"display_name"`
+		CallbackProxy    string `ini:"callback_proxy"`
+		CallbackProxyAPI string `ini:"callback_proxy_api"`
+	}
+
 	// AppCfg holds values that affect how the application functions
 	AppCfg struct {
 		SiteName string `ini:"site_name"`
@@ -141,6 +150,7 @@ type (
 		SlackOauth   SlackOauthCfg   `ini:"oauth.slack"`
 		WriteAsOauth WriteAsOauthCfg `ini:"oauth.writeas"`
 		GitlabOauth  GitlabOauthCfg  `ini:"oauth.gitlab"`
+		GiteaOauth   GiteaOauthCfg   `ini:"oauth.gitea"`
 	}
 )
 

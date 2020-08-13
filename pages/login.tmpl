@@ -13,7 +13,7 @@ input{margin-bottom:0.5em;}
 		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 	</ul>{{end}}
 
-	{{ if or .OauthSlack .OauthWriteAs .OauthGitlab }}
+	{{ if or .OauthSlack .OauthWriteAs .OauthGitlab .OauthGitea }}
 		<div class="row content-container signinbtns">
 		{{ if .OauthSlack }}
 			<a class="loginbtn" href="/oauth/slack"><img alt="Sign in with Slack" height="40" width="172" src="/img/sign_in_with_slack.png" srcset="/img/sign_in_with_slack.png 1x, /img/sign_in_with_slack@2x.png 2x" /></a>
@@ -23,6 +23,9 @@ input{margin-bottom:0.5em;}
 		{{ end }}
 		{{ if .OauthGitlab }}
 			<a class="btn cta loginbtn" id="gitlab-login" href="/oauth/gitlab">Sign in with <strong>{{.GitlabDisplayName}}</strong></a>
+		{{ end }}
+		{{ if .OauthGitea }}
+			<a class="btn cta loginbtn" id="gitea-login" href="/oauth/gitea">Sign in with <strong>{{.GiteaDisplayName}}</strong></a>
 		{{ end }}
 		</div>
 
