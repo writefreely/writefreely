@@ -699,6 +699,10 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			// I don't believe we'd ever have too many mentions in a single post that this
 			// could become a burden.
 			remoteUser, err := getRemoteUser(app, tag.HRef)
+			if err != nil {
+				log.Error("Unable to find remote user %s. Skipping: %v", tag.HRef, err)
+				continue
+			}
 			err = makeActivityPost(app.cfg.App.Host, actor, remoteUser.Inbox, activity)
 			if err != nil {
 				log.Error("Couldn't post! %v", err)

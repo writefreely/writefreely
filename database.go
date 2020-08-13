@@ -14,6 +14,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/writeas/web-core/silobridge"
 	wf_db "github.com/writeas/writefreely/db"
 	"net/http"
 	"strings"
@@ -2691,6 +2692,17 @@ func handleFailedPostInsert(err error) error {
 func (db *datastore) GetProfilePageFromHandle(app *App, handle string) (string, error) {
 	handle = strings.TrimLeft(handle, "@")
 	actorIRI := ""
+	parts := strings.Split(handle, "@")
+	if len(parts) != 2 {
+		return "", fmt.Errorf("invalid handle format")
+	}
+	domain := parts[1]
+
+	// Check non-AP instances
+	if siloProfileURL := silobridge.Profile(parts[0], domain); siloProfileURL != "" {
+		return siloProfileURL, nil
+	}
+
 	remoteUser, err := getRemoteUserFromHandle(app, handle)
 	if err != nil {
 		// can't find using handle in the table but the table may already have this user without
