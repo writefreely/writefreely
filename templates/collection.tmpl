@@ -40,7 +40,7 @@
 	</head>
 	<body id="collection" itemscope itemtype="http://schema.org/WebPage">
 		{{if or .IsOwner .SingleUser}}<nav id="manage"><ul>
-			<li><a onclick="void(0)">&#9776; Menu</a>
+			<li class="has-submenu"><a onclick="void(0)">&#9776; Menu</a>
 				<ul>
 					{{ if .IsOwner }}
 					{{if .SingleUser}}
@@ -117,6 +117,7 @@
 	<script src="/js/h.js"></script>
 	<script src="/js/postactions.js"></script>
 	<script src="/js/localdate.js"></script>
+	<script type="text/javascript" src="/js/menu.js"></script>
 	<script type="text/javascript">
 var deleting = false;
 function delPost(e, id, owned) {

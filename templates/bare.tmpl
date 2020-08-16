@@ -16,6 +16,8 @@
 		<textarea id="writer" placeholder="Write..." class="{{.Post.Font}}" autofocus>{{if .Post.Title}}# {{.Post.Title}}
 
 {{end}}{{.Post.Content}}</textarea>
+
+		<div class="alert success hidden" id="edited-elsewhere">This post has been updated elsewhere since you last published! <a href="#" id="erase-edit">Delete draft and reload</a>.</div>
 		
 		<header id="tools">
 			<div id="clip">
@@ -36,6 +38,7 @@
 		<script>
 		var $writer = H.getEl('writer');
 		var $btnPublish = H.getEl('publish');
+		var $btnEraseEdit = H.getEl('edited-elsewhere');
 		var $wc = H.getEl("wc");
 		var updateWordCount = function() {
 			var words = 0;
@@ -58,7 +61,17 @@
 		};
 		{{if .Post.Id}}var draftDoc = 'draft{{.Post.Id}}';
 		var origDoc = '{{.Post.Content}}';{{else}}var draftDoc = 'lastDoc';{{end}}
-		H.load($writer, draftDoc, true);
+		var updatedStr = '{{.Post.Updated8601}}';
+		var updated = null;
+		if (updatedStr != '') {
+			updated = new Date(updatedStr);
+		}
+		var ok = H.load($writer, draftDoc, true, updated);
+		if (!ok) {
+			// Show "edited elsewhere" warning
+			$btnEraseEdit.el.classList.remove('hidden');
+		}
+		var defaultTimeSet = false;
 		updateWordCount();
 		
 		var typingTimer;
@@ -130,6 +143,7 @@
 						data = JSON.parse(http.responseText);
 						id = data.data.id;
 						nextURL = '{{if .SingleUser}}/d{{end}}/'+id;
+						localStorage.setItem('draft'+id+'-published', new Date().toISOString());
 
 						{{ if not .Post.Id }}
 							// Post created
@@ -198,6 +212,13 @@
 				publish(content, selectedFont);
 			}
 		});
+		H.getEl('erase-edit').on('click', function(e) {
+			e.preventDefault();
+			H.remove(draftDoc);
+			H.remove(draftDoc+'-published');
+			justPublished = true; // Block auto-save
+			location.reload();
+		});
 
 		WebFontConfig = {
 			custom: { families: [ 'Lora:400,700:latin' ], urls: [ '/css/fonts.css' ] }
@@ -207,12 +228,20 @@
 		var doneTyping = function() {
 			if (draftDoc == 'lastDoc' || $writer.el.value != origDoc) {
 				H.save($writer, draftDoc);
+				if (!defaultTimeSet) {
+					var lastLocalPublishStr = localStorage.getItem(draftDoc+'-published');
+					if (lastLocalPublishStr == null || lastLocalPublishStr == '') {
+						localStorage.setItem(draftDoc+'-published', updatedStr);
+					}
+					defaultTimeSet = true;
+				}
 				updateWordCount();
 			}
 		};
 		window.addEventListener('beforeunload', function(e) {
 			if (draftDoc != 'lastDoc' && $writer.el.value == origDoc) {
 				H.remove(draftDoc);
+				H.remove(draftDoc+'-published');
 			} else if (!justPublished) {
 				doneTyping();
 			}

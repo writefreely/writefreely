@@ -311,9 +311,11 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		OauthSlack              bool
 		OauthWriteAs            bool
 		OauthGitlab             bool
+		GitlabDisplayName       string
 		OauthGeneric            bool
 		OauthGenericDisplayName string
-		GitlabDisplayName       string
+		OauthGitea              bool
+		GiteaDisplayName        string
 	}{
 		pageForReq(app, r),
 		r.FormValue("to"),
@@ -326,6 +328,8 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		app.Config().GenericOauth.ClientID != "",
 		config.OrDefaultString(app.Config().GenericOauth.DisplayName, genericOauthDisplayName),
 		config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
+		app.Config().GiteaOauth.ClientID != "",
+		config.OrDefaultString(app.Config().GiteaOauth.DisplayName, giteaDisplayName),
 	}
 
 	if earlyError != "" {
@@ -1060,6 +1064,7 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 	enableOauthWriteAs := app.Config().WriteAsOauth.ClientID != ""
 	enableOauthGitLab := app.Config().GitlabOauth.ClientID != ""
 	enableOauthGeneric := app.Config().GenericOauth.ClientID != ""
+	enableOauthGitea := app.Config().GiteaOauth.ClientID != ""
 
 	oauthAccounts, err := app.db.GetOauthAccounts(r.Context(), u.ID)
 	if err != nil {
@@ -1078,10 +1083,12 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 			oauthAccounts[idx].DisplayName = app.Config().GenericOauth.DisplayName
 			oauthAccounts[idx].AllowDisconnect = app.Config().GenericOauth.AllowDisconnect
 			enableOauthGeneric = false
+		case "gitea":
+			enableOauthGitea = false
 		}
 	}
 
-	displayOauthSection := enableOauthSlack || enableOauthWriteAs || enableOauthGitLab || enableOauthGeneric || len(oauthAccounts) > 0
+  displayOauthSection := enableOauthSlack || enableOauthWriteAs || enableOauthGitLab || enableOauthGeneric || enableOauthGitea || len(oauthAccounts) > 0
 
 	obj := struct {
 		*UserPage
@@ -1097,6 +1104,8 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		GitLabDisplayName       string
 		OauthGeneric            bool
 		OauthGenericDisplayName string
+		OauthGitea        bool
+		GiteaDisplayName  string
 	}{
 		UserPage:                NewUserPage(app, r, u, "Account Settings", flashes),
 		Email:                   fullUser.EmailClear(app.keys),
@@ -1111,6 +1120,8 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		GitLabDisplayName:       config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
 		OauthGeneric:            enableOauthGeneric,
 		OauthGenericDisplayName: config.OrDefaultString(app.Config().GenericOauth.DisplayName, genericOauthDisplayName),
+		OauthGitea:        enableOauthGitea,
+		GiteaDisplayName:  config.OrDefaultString(app.Config().GiteaOauth.DisplayName, giteaDisplayName),
 	}
 
 	showUserPage(w, "settings", obj)

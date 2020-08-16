@@ -262,6 +262,33 @@ func configureGenericOauth(parentHandler *Handler, r *mux.Router, app *App) {
 	}
 }
 
+func configureGiteaOauth(parentHandler *Handler, r *mux.Router, app *App) {
+	if app.Config().GiteaOauth.ClientID != "" {
+		callbackLocation := app.Config().App.Host + "/oauth/callback/gitea"
+
+		var callbackProxy *callbackProxyClient = nil
+		if app.Config().GiteaOauth.CallbackProxy != "" {
+			callbackProxy = &callbackProxyClient{
+				server:           app.Config().GiteaOauth.CallbackProxyAPI,
+				callbackLocation: app.Config().App.Host + "/oauth/callback/gitea",
+				httpClient:       config.DefaultHTTPClient(),
+			}
+			callbackLocation = app.Config().GiteaOauth.CallbackProxy
+		}
+
+		oauthClient := giteaOauthClient{
+			ClientID:         app.Config().GiteaOauth.ClientID,
+			ClientSecret:     app.Config().GiteaOauth.ClientSecret,
+			ExchangeLocation: app.Config().GiteaOauth.Host + "/login/oauth/access_token",
+			InspectLocation:  app.Config().GiteaOauth.Host + "/api/v1/user",
+			AuthLocation:     app.Config().GiteaOauth.Host + "/login/oauth/authorize",
+			HttpClient:       config.DefaultHTTPClient(),
+			CallbackLocation: callbackLocation,
+		}
+		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
+	}
+}
+
 func configureOauthRoutes(parentHandler *Handler, r *mux.Router, app *App, oauthClient oauthClient, callbackProxy *callbackProxyClient) {
 	handler := &oauthHandler{
 		Config:        app.Config(),

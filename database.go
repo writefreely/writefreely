@@ -14,6 +14,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/writeas/web-core/silobridge"
+	wf_db "github.com/writeas/writefreely/db"
 	"net/http"
 	"strings"
 	"time"
@@ -792,10 +794,10 @@ func (db *datastore) GetCollectionBy(condition string, value interface{}) (*Coll
 	c := &Collection{}
 
 	// FIXME: change Collection to reflect database values. Add helper functions to get actual values
-	var styleSheet, script, format zero.String
-	row := db.QueryRow("SELECT id, alias, title, description, style_sheet, script, format, owner_id, privacy, view_count FROM collections WHERE "+condition, value)
+	var styleSheet, script, signature, format zero.String
+	row := db.QueryRow("SELECT id, alias, title, description, style_sheet, script, post_signature, format, owner_id, privacy, view_count FROM collections WHERE "+condition, value)
 
-	err := row.Scan(&c.ID, &c.Alias, &c.Title, &c.Description, &styleSheet, &script, &format, &c.OwnerID, &c.Visibility, &c.Views)
+	err := row.Scan(&c.ID, &c.Alias, &c.Title, &c.Description, &styleSheet, &script, &signature, &format, &c.OwnerID, &c.Visibility, &c.Views)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, impart.HTTPError{http.StatusNotFound, "Collection doesn't exist."}
@@ -807,6 +809,7 @@ func (db *datastore) GetCollectionBy(condition string, value interface{}) (*Coll
 	}
 	c.StyleSheet = styleSheet.String
 	c.Script = script.String
+	c.Signature = signature.String
 	c.Format = format.String
 	c.Public = c.IsPublic()
 
@@ -850,7 +853,8 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 		SetStringPtr(c.Title, "title").
 		SetStringPtr(c.Description, "description").
 		SetNullString(c.StyleSheet, "style_sheet").
-		SetNullString(c.Script, "script")
+		SetNullString(c.Script, "script").
+		SetNullString(c.Signature, "post_signature")
 
 	if c.Format != nil {
 		cf := &CollectionFormat{Format: c.Format.String}
@@ -1151,6 +1155,7 @@ func (db *datastore) GetPosts(cfg *config.Config, c *Collection, page int, inclu
 			break
 		}
 		p.extractData()
+		p.augmentContent(c)
 		p.formatContent(cfg, c, includeFuture)
 
 		posts = append(posts, p.processPost())
@@ -1215,6 +1220,7 @@ func (db *datastore) GetPostsTagged(cfg *config.Config, c *Collection, tag strin
 			break
 		}
 		p.extractData()
+		p.augmentContent(c)
 		p.formatContent(cfg, c, includeFuture)
 
 		posts = append(posts, p.processPost())
@@ -1591,6 +1597,7 @@ func (db *datastore) GetPinnedPosts(coll *CollectionObj, includeFuture bool) (*[
 			break
 		}
 		p.extractData()
+		p.augmentContent(&coll.Collection)
 
 		pp := p.processPost()
 		pp.Collection = coll
@@ -1639,6 +1646,40 @@ func (db *datastore) GetPublishableCollections(u *User, hostName string) (*[]Col
 		return nil, impart.HTTPError{http.StatusInternalServerError, "You don't seem to have any blogs; they might've moved to another account. Try logging out and logging into your other account."}
 	}
 	return c, nil
+}
+
+func (db *datastore) GetPublicCollections(hostName string) (*[]Collection, error) {
+	rows, err := db.Query(`SELECT c.id, alias, title, description, privacy, view_count
+	FROM collections c
+	LEFT JOIN users u ON u.id = c.owner_id
+	WHERE c.privacy = 1 AND u.status = 0
+	ORDER BY id ASC`)
+	if err != nil {
+		log.Error("Failed selecting public collections: %v", err)
+		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve public collections."}
+	}
+	defer rows.Close()
+
+	colls := []Collection{}
+	for rows.Next() {
+		c := Collection{}
+		err = rows.Scan(&c.ID, &c.Alias, &c.Title, &c.Description, &c.Visibility, &c.Views)
+		if err != nil {
+			log.Error("Failed scanning row: %v", err)
+			break
+		}
+		c.hostName = hostName
+		c.URL = c.CanonicalURL()
+		c.Public = c.IsPublic()
+
+		colls = append(colls, c)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Error("Error after Next() on rows: %v", err)
+	}
+
+	return &colls, nil
 }
 
 func (db *datastore) GetMeStats(u *User) userMeStats {
@@ -2024,7 +2065,7 @@ func (db *datastore) RemoveCollectionRedirect(t *sql.Tx, alias string) error {
 func (db *datastore) GetCollectionRedirect(alias string) (new string) {
 	row := db.QueryRow("SELECT new_alias FROM collectionredirects WHERE prev_alias = ?", alias)
 	err := row.Scan(&new)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != sql.ErrNoRows && !db.isIgnorableError(err) {
 		log.Error("Failed selecting from collectionredirects: %v", err)
 	}
 	return
@@ -2655,6 +2696,17 @@ func handleFailedPostInsert(err error) error {
 func (db *datastore) GetProfilePageFromHandle(app *App, handle string) (string, error) {
 	handle = strings.TrimLeft(handle, "@")
 	actorIRI := ""
+	parts := strings.Split(handle, "@")
+	if len(parts) != 2 {
+		return "", fmt.Errorf("invalid handle format")
+	}
+	domain := parts[1]
+
+	// Check non-AP instances
+	if siloProfileURL := silobridge.Profile(parts[0], domain); siloProfileURL != "" {
+		return siloProfileURL, nil
+	}
+
 	remoteUser, err := getRemoteUserFromHandle(app, handle)
 	if err != nil {
 		// can't find using handle in the table but the table may already have this user without

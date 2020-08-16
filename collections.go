@@ -47,6 +47,7 @@ type (
 		Language    string         `schema:"lang" json:"lang,omitempty"`
 		StyleSheet  string         `datastore:"style_sheet" schema:"style_sheet" json:"style_sheet"`
 		Script      string         `datastore:"script" schema:"script" json:"script,omitempty"`
+		Signature   string         `datastore:"post_signature" schema:"signature" json:"-"`
 		Public      bool           `datastore:"public" json:"public"`
 		Visibility  collVisibility `datastore:"private" json:"-"`
 		Format      string         `datastore:"format" json:"format,omitempty"`
@@ -91,6 +92,7 @@ type (
 		Description *string         `schema:"description" json:"description"`
 		StyleSheet  *sql.NullString `schema:"style_sheet" json:"style_sheet"`
 		Script      *sql.NullString `schema:"script" json:"script"`
+		Signature   *sql.NullString `schema:"signature" json:"signature"`
 		Visibility  *int            `schema:"visibility" json:"public"`
 		Format      *sql.NullString `schema:"format" json:"format"`
 	}

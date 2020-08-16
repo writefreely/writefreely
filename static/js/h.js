@@ -116,13 +116,27 @@ var H = {
 	save: function($el, key) {
 		localStorage.setItem(key, $el.el.value);
 	},
-	load: function($el, key, onlyLoadPopulated) {
+	load: function($el, key, onlyLoadPopulated, postUpdated) {
 		var val = localStorage.getItem(key);
 		if (onlyLoadPopulated && val == null) {
 			// Do nothing
-			return;
+			return true;
 		}
 		$el.el.value = val;
+		if (postUpdated != null) {
+			var lastLocalPublishStr = localStorage.getItem(key+'-published');
+			if (lastLocalPublishStr != null && lastLocalPublishStr != '') {
+				try {
+					var lastLocalPublish = new Date(lastLocalPublishStr);
+					if (postUpdated > lastLocalPublish) {
+						return false;
+					}
+				} catch (e) {
+					console.error("unable to parse draft updated time");
+				}
+			}
+		}
+		return true;
 	},
 	set: function(key, value) {
 		localStorage.setItem(key, value);

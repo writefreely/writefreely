@@ -45,6 +45,8 @@ type (
 
 		HashSeed string `ini:"hash_seed"`
 
+		GopherPort int `ini:"gopher_port"`
+
 		Dev bool `ini:"-"`
 	}
 
@@ -57,6 +59,7 @@ type (
 		Database string `ini:"database"`
 		Host     string `ini:"host"`
 		Port     int    `ini:"port"`
+		TLS      bool   `ini:"tls"`
 	}
 
 	WriteAsOauthCfg struct {
@@ -97,6 +100,14 @@ type (
 		InspectEndpoint  string `ini:"inspect_endpoint"`
 		AuthEndpoint     string `ini:"auth_endpoint"`
 		AllowDisconnect  bool   `ini:"allow_disconnect"`
+	}
+	GiteaOauthCfg struct {
+		ClientID         string `ini:"client_id"`
+		ClientSecret     string `ini:"client_secret"`
+		Host             string `ini:"host"`
+		DisplayName      string `ini:"display_name"`
+		CallbackProxy    string `ini:"callback_proxy"`
+		CallbackProxyAPI string `ini:"callback_proxy_api"`
 	}
 
 	// AppCfg holds values that affect how the application functions
@@ -155,6 +166,7 @@ type (
 		WriteAsOauth WriteAsOauthCfg `ini:"oauth.writeas"`
 		GitlabOauth  GitlabOauthCfg  `ini:"oauth.gitlab"`
 		GenericOauth GenericOauthCfg `ini:"oauth.generic"`
+		GiteaOauth   GiteaOauthCfg   `ini:"oauth.gitea"`
 	}
 )
 

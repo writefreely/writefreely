@@ -77,6 +77,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	configureWriteAsOauth(handler, write, apper.App())
 	configureGitlabOauth(handler, write, apper.App())
 	configureGenericOauth(handler, write, apper.App())
+	configureGiteaOauth(handler, write, apper.App())
 
 	// Set up dyamic page handlers
 	// Handle auth
