@@ -325,8 +325,8 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		app.Config().SlackOauth.ClientID != "",
 		app.Config().WriteAsOauth.ClientID != "",
 		app.Config().GitlabOauth.ClientID != "",
-		app.Config().GenericOauth.ClientID != "",
 		config.OrDefaultString(app.Config().GenericOauth.DisplayName, genericOauthDisplayName),
+		app.Config().GenericOauth.ClientID != "",
 		config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
 		app.Config().GiteaOauth.ClientID != "",
 		config.OrDefaultString(app.Config().GiteaOauth.DisplayName, giteaDisplayName),
@@ -1088,7 +1088,7 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		}
 	}
 
-  displayOauthSection := enableOauthSlack || enableOauthWriteAs || enableOauthGitLab || enableOauthGeneric || enableOauthGitea || len(oauthAccounts) > 0
+	displayOauthSection := enableOauthSlack || enableOauthWriteAs || enableOauthGitLab || enableOauthGeneric || enableOauthGitea || len(oauthAccounts) > 0
 
 	obj := struct {
 		*UserPage
@@ -1104,8 +1104,8 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		GitLabDisplayName       string
 		OauthGeneric            bool
 		OauthGenericDisplayName string
-		OauthGitea        bool
-		GiteaDisplayName  string
+		OauthGitea              bool
+		GiteaDisplayName        string
 	}{
 		UserPage:                NewUserPage(app, r, u, "Account Settings", flashes),
 		Email:                   fullUser.EmailClear(app.keys),
@@ -1120,8 +1120,8 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		GitLabDisplayName:       config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
 		OauthGeneric:            enableOauthGeneric,
 		OauthGenericDisplayName: config.OrDefaultString(app.Config().GenericOauth.DisplayName, genericOauthDisplayName),
-		OauthGitea:        enableOauthGitea,
-		GiteaDisplayName:  config.OrDefaultString(app.Config().GiteaOauth.DisplayName, giteaDisplayName),
+		OauthGitea:              enableOauthGitea,
+		GiteaDisplayName:        config.OrDefaultString(app.Config().GiteaOauth.DisplayName, giteaDisplayName),
 	}
 
 	showUserPage(w, "settings", obj)

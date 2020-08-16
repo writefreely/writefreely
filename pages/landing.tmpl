@@ -78,7 +78,6 @@ form dd {
 
 	<div{{if not .OpenRegistration}} style="padding: 2em 0;"{{end}}>
 		{{ if .OpenRegistration }}
-		{{if .DisablePasswordAuth}}
 			{{ if or .OauthSlack .OauthWriteAs .OauthGitlab .OauthGeneric }}
 				{{ if .OauthSlack }}
 					<div class="row content-container signinbtns signinoauthbtns"><a class="loginbtn" href="/oauth/slack"><img alt="Sign in with Slack" height="40" width="172" src="/img/sign_in_with_slack.png" srcset="/img/sign_in_with_slack.png 1x, /img/sign_in_with_slack@2x.png 2x" /></a></div>
@@ -93,7 +92,7 @@ form dd {
 					<div class="row content-container signinbtns signinoauthbtns"><a class="btn cta loginbtn" id="generic-oauth-login" href="/oauth/generic">Sign in with <strong>{{ .OauthGenericDisplayName }}</strong></a></div>
 				{{ end }}
 			{{ end }}
-		{{ else }}
+		{{if not .DisablePasswordAuth}}
 		{{if .Flashes}}<ul class="errors">
 			{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 		</ul>{{end}}

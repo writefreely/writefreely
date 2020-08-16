@@ -20,8 +20,6 @@ import (
 	"strings"
 	"time"
 
-	wf_db "github.com/writeas/writefreely/db"
-
 	"github.com/guregu/null"
 	"github.com/guregu/null/zero"
 	uuid "github.com/nu7hatch/gouuid"
