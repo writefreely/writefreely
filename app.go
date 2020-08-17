@@ -243,9 +243,22 @@ func handleViewLanding(app *App, w http.ResponseWriter, r *http.Request) error {
 		Content template.HTML
 
 		ForcedLanding bool
+
+		OauthSlack              bool
+		OauthWriteAs            bool
+		OauthGitlab             bool
+		OauthGeneric            bool
+		OauthGenericDisplayName string
+		GitlabDisplayName       string
 	}{
-		StaticPage:    pageForReq(app, r),
-		ForcedLanding: forceLanding,
+		StaticPage:              pageForReq(app, r),
+		ForcedLanding:           forceLanding,
+		OauthSlack:              app.Config().SlackOauth.ClientID != "",
+		OauthWriteAs:            app.Config().WriteAsOauth.ClientID != "",
+		OauthGitlab:             app.Config().GitlabOauth.ClientID != "",
+		OauthGeneric:            app.Config().GenericOauth.ClientID != "",
+		OauthGenericDisplayName: config.OrDefaultString(app.Config().GenericOauth.DisplayName, genericOauthDisplayName),
+		GitlabDisplayName:       config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
 	}
 
 	banner, err := getLandingBanner(app)

@@ -3,6 +3,10 @@
 <meta itemprop="description" content="Log in to {{.SiteName}}.">
 <style>
 input{margin-bottom:0.5em;}
+#generic-oauth-login {
+    box-sizing: border-box;
+    font-size: 17px;
+}
 </style>
 {{end}}
 {{define "content"}}
@@ -13,7 +17,7 @@ input{margin-bottom:0.5em;}
 		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 	</ul>{{end}}
 
-	{{ if or .OauthSlack .OauthWriteAs .OauthGitlab .OauthGitea }}
+	{{ if or .OauthSlack .OauthWriteAs .OauthGitlab .OauthGeneric .OauthGitea }}
 		<div class="row content-container signinbtns">
 		{{ if .OauthSlack }}
 			<a class="loginbtn" href="/oauth/slack"><img alt="Sign in with Slack" height="40" width="172" src="/img/sign_in_with_slack.png" srcset="/img/sign_in_with_slack.png 1x, /img/sign_in_with_slack@2x.png 2x" /></a>
@@ -24,17 +28,23 @@ input{margin-bottom:0.5em;}
 		{{ if .OauthGitlab }}
 			<a class="btn cta loginbtn" id="gitlab-login" href="/oauth/gitlab">Sign in with <strong>{{.GitlabDisplayName}}</strong></a>
 		{{ end }}
+    {{ if .OauthGeneric }}
+      <a class="btn cta loginbtn" id="generic-oauth-login" href="/oauth/generic">Sign in with <strong>{{ .OauthGenericDisplayName }}</strong></a>
+    {{ end }}
 		{{ if .OauthGitea }}
 			<a class="btn cta loginbtn" id="gitea-login" href="/oauth/gitea">Sign in with <strong>{{.GiteaDisplayName}}</strong></a>
 		{{ end }}
 		</div>
 
-		<div class="or">
-			<p>or</p>
-			<hr class="short" />
-		</div>
+		{{if not .DisablePasswordAuth}}
+			<div class="or">
+				<p>or</p>
+				<hr class="short" />
+			</div>
+		{{end}}
 	{{ end }}
 
+{{if not .DisablePasswordAuth}}
 	<form action="/auth/login" method="post" style="text-align: center;margin-top:1em;" onsubmit="disableSubmit()">
 		<input type="text" name="alias" placeholder="Username" value="{{.LoginUsername}}" {{if not .LoginUsername}}autofocus{{end}} /><br />
 		<input type="password" name="pass" placeholder="Password" {{if .LoginUsername}}autofocus{{end}} /><br />
@@ -44,11 +54,12 @@ input{margin-bottom:0.5em;}
 
 	{{if and (not .SingleUser) .OpenRegistration}}<p style="text-align:center;font-size:0.9em;margin:3em auto;max-width:26em;">{{if .Message}}{{.Message}}{{else}}<em>No account yet?</em> <a href="{{.SignupPath}}">Sign up</a> to start a blog.{{end}}</p>{{end}}
 
-<script type="text/javascript">
-function disableSubmit() {
-	var $btn = document.getElementById("btn-login");
-	$btn.value = "Logging in...";
-	$btn.disabled = true;
-}
-</script>
+	<script type="text/javascript">
+	function disableSubmit() {
+		var $btn = document.getElementById("btn-login");
+		$btn.value = "Logging in...";
+		$btn.disabled = true;
+	}
+	</script>
+	{{end}}
 {{end}}

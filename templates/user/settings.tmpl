@@ -41,6 +41,7 @@ h3 { font-weight: normal; }
 	</form>
 	{{ end }}
 
+	{{if not .DisablePasswordAuth}}
 	<form method="post" action="/api/me/self" autocomplete="false">
 		<input type="hidden" name="logout" value="{{.IsLogOut}}" />
 		<div class="option">
@@ -72,6 +73,7 @@ h3 { font-weight: normal; }
 			<input type="submit" value="Save changes" tabindex="4" />
 		</div>
 	</form>
+	{{end}}
 
     {{ if .OauthSection }}
 		<hr />
@@ -86,14 +88,22 @@ h3 { font-weight: normal; }
 		            <input type="hidden" name="client_id" value="{{ $oauth_account.ClientID }}" />
 		            <input type="hidden" name="remote_user_id" value="{{ $oauth_account.RemoteUserID }}" />
 					<div class="section oauth-provider">
-						<img src="/img/mark/{{$oauth_account.Provider}}.png" alt="{{ $oauth_account.Provider | title }}" />
-						<input type="submit" value="Remove {{ $oauth_account.Provider | title }}" />
+						{{ if $oauth_account.DisplayName}}
+							{{ if $oauth_account.AllowDisconnect}}
+							<input type="submit" value="Remove {{.DisplayName}}" />
+							{{else}}
+							<a class="btn cta"><strong>{{.DisplayName}}</strong></a>
+							{{end}}
+						{{else}}
+							<img src="/img/mark/{{$oauth_account.Provider}}.png" alt="{{ $oauth_account.Provider | title }}" />
+							<input type="submit" value="Remove {{ $oauth_account.Provider | title }}" />
+						{{end}}
 					</div>
     	        </form>
             {{ end }}
 		</div>
 		{{ end }}
-		{{ if or .OauthSlack .OauthWriteAs .OauthGitLab .OauthGitea }}
+		{{ if or .OauthSlack .OauthWriteAs .OauthGitLab .OauthGeneric .OauthGitea }}
 		<div class="option">
 			<h2>Link External Accounts</h2>
 			<p>Connect additional accounts to enable logging in with those providers, instead of using your username and password.</p>
@@ -131,6 +141,13 @@ h3 { font-weight: normal; }
 				</div>
 						{{ end }}
 			</div>
+				{{ if .OauthGeneric }}
+				<div class="row">
+					<div class="section oauth-provider">
+            <p><a class="btn cta loginbtn" id="generic-oauth-login" href="/oauth/generic?attach=t">Link <strong>{{ .OauthGenericDisplayName }}</strong></a></p>
+        	</div>
+				</div>
+				{{ end }}
 		</div>
 		{{ end }}
     {{ end }}

@@ -2627,9 +2627,11 @@ func (db *datastore) GetIDForRemoteUser(ctx context.Context, remoteUserID, provi
 }
 
 type oauthAccountInfo struct {
-	Provider     string
-	ClientID     string
-	RemoteUserID string
+	Provider         string
+	ClientID         string
+	RemoteUserID     string
+	DisplayName      string
+	AllowDisconnect  bool
 }
 
 func (db *datastore) GetOauthAccounts(ctx context.Context, userID int64) ([]oauthAccountInfo, error) {
