@@ -408,7 +408,7 @@ func (r *callbackProxyClient) register(ctx context.Context, state string) error 
 	if err != nil {
 		return err
 	}
-	req.Header.Set("User-Agent", "writefreely")
+	req.Header.Set("User-Agent", ServerUserAgent(""))
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
