@@ -19,7 +19,7 @@
 					<a class="title" href="/{{.Alias}}/" >{{if .Title}}{{.Title}}{{else}}{{.Alias}}{{end}}</a>
 					<span class="electron" {{if .IsPrivate}}style="font-style: italic"{{end}}>{{if .IsPrivate}}private{{else}}{{.DisplayCanonicalURL}}{{end}}</span>
 				</h3>
-				{{template "collection-nav" (dict "Alias" .Alias "Path" $.Path "SingleUser" $.SingleUser)}}
+				{{template "collection-nav" (dict "Alias" .Alias "Path" $.Path "SingleUser" $.SingleUser "CanPost" true	)}}
 				{{if .Description}}<p class="description">{{.Description}}</p>{{end}}
 			</div>
 		</div>
