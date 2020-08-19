@@ -317,19 +317,19 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		OauthGitea              bool
 		GiteaDisplayName        string
 	}{
-		pageForReq(app, r),
-		r.FormValue("to"),
-		template.HTML(""),
-		[]template.HTML{},
-		getTempInfo(app, "login-user", r, w),
-		app.Config().SlackOauth.ClientID != "",
-		app.Config().WriteAsOauth.ClientID != "",
-		app.Config().GitlabOauth.ClientID != "",
-		config.OrDefaultString(app.Config().GenericOauth.DisplayName, genericOauthDisplayName),
-		app.Config().GenericOauth.ClientID != "",
-		config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
-		app.Config().GiteaOauth.ClientID != "",
-		config.OrDefaultString(app.Config().GiteaOauth.DisplayName, giteaDisplayName),
+		StaticPage:              pageForReq(app, r),
+		To:                      r.FormValue("to"),
+		Message:                 template.HTML(""),
+		Flashes:                 []template.HTML{},
+		LoginUsername:           getTempInfo(app, "login-user", r, w),
+		OauthSlack:              app.Config().SlackOauth.ClientID != "",
+		OauthWriteAs:            app.Config().WriteAsOauth.ClientID != "",
+		OauthGitlab:             app.Config().GitlabOauth.ClientID != "",
+		GitlabDisplayName:       config.OrDefaultString(app.Config().GenericOauth.DisplayName, genericOauthDisplayName),
+		OauthGeneric:            app.Config().GenericOauth.ClientID != "",
+		OauthGenericDisplayName: config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
+		OauthGitea:              app.Config().GiteaOauth.ClientID != "",
+		GiteaDisplayName:        config.OrDefaultString(app.Config().GiteaOauth.DisplayName, giteaDisplayName),
 	}
 
 	if earlyError != "" {
