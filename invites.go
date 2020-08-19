@@ -170,14 +170,14 @@ func handleViewInvite(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p := struct {
 		page.StaticPage
+		*OAuthButtons
 		Error   string
 		Flashes []template.HTML
 		Invite  string
-		OAuth   *OAuthButtons
 	}{
-		StaticPage: pageForReq(app, r),
-		Invite:     inviteCode,
-		OAuth:      NewOAuthButtons(app.cfg),
+		StaticPage:   pageForReq(app, r),
+		OAuthButtons: NewOAuthButtons(app.cfg),
+		Invite:       inviteCode,
 	}
 
 	if expired {
