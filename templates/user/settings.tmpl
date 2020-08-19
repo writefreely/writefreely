@@ -107,47 +107,47 @@ h3 { font-weight: normal; }
 		<div class="option">
 			<h2>Link External Accounts</h2>
 			<p>Connect additional accounts to enable logging in with those providers, instead of using your username and password.</p>
-			<div class="row">
+			<div class="row signinbtns">
 			{{ if .OauthWriteAs }}
 				<div class="section oauth-provider">
-					<img src="/img/mark/writeas.png" alt="Write.as" />
 					<a class="btn cta loginbtn" id="writeas-login" href="/oauth/write.as?attach=t">
+						<img src="/img/mark/writeas-white.png" alt="Write.as" />
 						Link <strong>Write.as</strong>
 					</a>
 				</div>
 			{{ end }}
 			{{ if .OauthSlack }}
 				<div class="section oauth-provider">
-					<img src="/img/mark/slack.png" alt="Slack" />
-					<a class="btn cta loginbtn" href="/oauth/slack?attach=t">
+					<a class="btn cta loginbtn" id="slack-login" href="/oauth/slack?attach=t">
+						<img src="/img/mark/slack.png" alt="Slack" />
 						Link <strong>Slack</strong>
 					</a>
 				</div>
 			{{ end }}
 			{{ if .OauthGitLab }}
 				<div class="section oauth-provider">
-					<img src="/img/mark/gitlab.png" alt="GitLab" />
 					<a class="btn cta loginbtn" id="gitlab-login" href="/oauth/gitlab?attach=t">
+						<img src="/img/mark/gitlab.png" alt="GitLab" />
 						Link <strong>{{.GitLabDisplayName}}</strong>
 					</a>
 				</div>
 			{{ end }}
 			{{ if .OauthGitea }}
 				<div class="section oauth-provider">
-					<img src="/img/mark/gitea.png" alt="Gitea" />
 					<a class="btn cta loginbtn" id="gitea-login" href="/oauth/gitea?attach=t">
+						<img src="/img/mark/gitea.png" alt="Gitea" />
 						Link <strong>{{.GiteaDisplayName}}</strong>
 					</a>
 				</div>
 			{{ end }}
-			</div>
 			{{ if .OauthGeneric }}
-				<div class="row">
-					<div class="section oauth-provider">
-						<p><a class="btn cta loginbtn" id="generic-oauth-login" href="/oauth/generic?attach=t">Link <strong>{{ .OauthGenericDisplayName }}</strong></a></p>
-					</div>
+				<div class="section oauth-provider">
+					<a class="btn cta loginbtn" id="generic-oauth-login" href="/oauth/generic?attach=t">
+						Link <strong>{{ .OauthGenericDisplayName }}</strong>
+					</a>
 				</div>
 			{{ end }}
+			</div>
 		</div>
 		{{ end }}
 	{{ end }}

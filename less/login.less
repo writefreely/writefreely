@@ -9,17 +9,63 @@
  */
 
 .row.signinbtns {
-	justify-content: space-evenly;
+	justify-content: center;
 	font-size: 1em;
 	margin-top: 2em;
 	margin-bottom: 1em;
+	flex-wrap: wrap;
 
 	.loginbtn {
 		height: 40px;
+		margin: 0.5em;
 
-		&.btn.cta {
+		&.btn {
 			box-sizing: border-box;
 			font-size: 17px;
+			white-space: nowrap;
+
+			img {
+				height: 1.5em;
+				vertical-align: middle;
+			}
+		}
+
+		&#writeas-login, &#slack-login {
+			img {
+				margin-top: -0.2em;
+			}
+		}
+
+		&#gitlab-login {
+			background-color: #fc6d26;
+			border-color: #fc6d26;
+			&:hover {
+				background-color: darken(#fc6d26, 5%);
+				border-color: darken(#fc6d26, 5%);
+			}
+		}
+
+		&#gitea-login {
+			background-color: #2ecc71;
+			border-color: #2ecc71;
+			&:hover {
+				background-color: #2cc26b;
+				border-color: #2cc26b;
+			}
+		}
+
+		&#slack-login, &#gitlab-login, &#gitea-login, &#generic-oauth-login {
+			font-size: 0.86em;
+			font-family: @sansFont;
+		}
+
+		&#slack-login, &#generic-oauth-login {
+			color: @lightTextColor;
+			background-color: @lightNavBG;
+			border-color: @lightNavBorder;
+			&:hover {
+				background-color: @lightNavHoverBG;
+			}
 		}
 	}
 }
