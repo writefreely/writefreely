@@ -1,0 +1,28 @@
+{{define "oauth-buttons"}}
+    {{ if or .SlackEnabled .WriteAsEnabled .GitLabEnabled .GiteaEnabled .GenericEnabled }}
+        <div class="row content-container signinbtns">
+            {{ if .SlackEnabled }}
+                <a class="loginbtn" href="/oauth/slack"><img alt="Sign in with Slack" height="40" width="172" src="/img/sign_in_with_slack.png" srcset="/img/sign_in_with_slack.png 1x, /img/sign_in_with_slack@2x.png 2x" /></a>
+            {{ end }}
+            {{ if .WriteAsEnabled }}
+                <a class="btn cta loginbtn" id="writeas-login" href="/oauth/write.as">Sign in with <strong>Write.as</strong></a>
+            {{ end }}
+            {{ if .GitLabEnabled }}
+                <a class="btn cta loginbtn" id="gitlab-login" href="/oauth/gitlab">Sign in with <strong>{{.GitLabDisplayName}}</strong></a>
+            {{ end }}
+            {{ if .GiteaEnabled }}
+                <a class="btn cta loginbtn" id="gitea-login" href="/oauth/gitea">Sign in with <strong>{{.GiteaDisplayName}}</strong></a>
+            {{ end }}
+            {{ if .GenericEnabled }}
+                <a class="btn cta loginbtn" id="generic-oauth-login" href="/oauth/generic">Sign in with <strong>{{.GenericDisplayName}}</strong></a>
+            {{ end }}
+        </div>
+
+        {{if not .DisablePasswordAuth}}
+            <div class="or">
+                <p>or</p>
+                <hr class="short" />
+            </div>
+        {{end}}
+    {{ end }}
+{{end}}

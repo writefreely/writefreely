@@ -304,32 +304,18 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p := &struct {
 		page.StaticPage
-		To                      string
-		Message                 template.HTML
-		Flashes                 []template.HTML
-		LoginUsername           string
-		OauthSlack              bool
-		OauthWriteAs            bool
-		OauthGitlab             bool
-		GitlabDisplayName       string
-		OauthGeneric            bool
-		OauthGenericDisplayName string
-		OauthGitea              bool
-		GiteaDisplayName        string
+		*OAuthButtons
+		To            string
+		Message       template.HTML
+		Flashes       []template.HTML
+		LoginUsername string
 	}{
-		StaticPage:              pageForReq(app, r),
-		To:                      r.FormValue("to"),
-		Message:                 template.HTML(""),
-		Flashes:                 []template.HTML{},
-		LoginUsername:           getTempInfo(app, "login-user", r, w),
-		OauthSlack:              app.Config().SlackOauth.ClientID != "",
-		OauthWriteAs:            app.Config().WriteAsOauth.ClientID != "",
-		OauthGitlab:             app.Config().GitlabOauth.ClientID != "",
-		GitlabDisplayName:       config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
-		OauthGeneric:            app.Config().GenericOauth.ClientID != "",
-		OauthGenericDisplayName: config.OrDefaultString(app.Config().GenericOauth.DisplayName, genericOauthDisplayName),
-		OauthGitea:              app.Config().GiteaOauth.ClientID != "",
-		GiteaDisplayName:        config.OrDefaultString(app.Config().GiteaOauth.DisplayName, giteaDisplayName),
+		StaticPage:    pageForReq(app, r),
+		OAuthButtons:  NewOAuthButtons(app.Config()),
+		To:            r.FormValue("to"),
+		Message:       template.HTML(""),
+		Flashes:       []template.HTML{},
+		LoginUsername: getTempInfo(app, "login-user", r, w),
 	}
 
 	if earlyError != "" {

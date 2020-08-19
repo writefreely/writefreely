@@ -85,12 +85,18 @@ func initPage(parentDir, path, key string) {
 		log.Info("  [%s] %s", key, path)
 	}
 
-	pages[key] = template.Must(template.New("").Funcs(funcMap).ParseFiles(
+	files := []string{
 		path,
 		filepath.Join(parentDir, templatesDir, "include", "footer.tmpl"),
 		filepath.Join(parentDir, templatesDir, "base.tmpl"),
 		filepath.Join(parentDir, templatesDir, "user", "include", "silenced.tmpl"),
-	))
+	}
+
+	if key == "login.tmpl" || key == "landing.tmpl" {
+		files = append(files, filepath.Join(parentDir, templatesDir, "include", "oauth.tmpl"))
+	}
+
+	pages[key] = template.Must(template.New("").Funcs(funcMap).ParseFiles(files...))
 }
 
 func initUserPage(parentDir, path, key string) {

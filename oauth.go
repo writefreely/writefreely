@@ -30,19 +30,27 @@ import (
 
 // OAuthButtons holds display information for different OAuth providers we support.
 type OAuthButtons struct {
-	SlackEnabled      bool
-	WriteAsEnabled    bool
-	GitLabEnabled     bool
-	GitLabDisplayName string
+	SlackEnabled       bool
+	WriteAsEnabled     bool
+	GitLabEnabled      bool
+	GitLabDisplayName  string
+	GiteaEnabled       bool
+	GiteaDisplayName   string
+	GenericEnabled     bool
+	GenericDisplayName string
 }
 
 // NewOAuthButtons creates a new OAuthButtons struct based on our app configuration.
 func NewOAuthButtons(cfg *config.Config) *OAuthButtons {
 	return &OAuthButtons{
-		SlackEnabled:      cfg.SlackOauth.ClientID != "",
-		WriteAsEnabled:    cfg.WriteAsOauth.ClientID != "",
-		GitLabEnabled:     cfg.GitlabOauth.ClientID != "",
-		GitLabDisplayName: config.OrDefaultString(cfg.GitlabOauth.DisplayName, gitlabDisplayName),
+		SlackEnabled:       cfg.SlackOauth.ClientID != "",
+		WriteAsEnabled:     cfg.WriteAsOauth.ClientID != "",
+		GitLabEnabled:      cfg.GitlabOauth.ClientID != "",
+		GitLabDisplayName:  config.OrDefaultString(cfg.GitlabOauth.DisplayName, gitlabDisplayName),
+		GiteaEnabled:       cfg.GiteaOauth.ClientID != "",
+		GiteaDisplayName:   config.OrDefaultString(cfg.GiteaOauth.DisplayName, giteaDisplayName),
+		GenericEnabled:     cfg.GenericOauth.ClientID != "",
+		GenericDisplayName: config.OrDefaultString(cfg.GenericOauth.DisplayName, genericOauthDisplayName),
 	}
 }
 
