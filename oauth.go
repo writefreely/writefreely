@@ -326,6 +326,12 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 	tokenResponse, err := h.oauthClient.exchangeOauthCode(ctx, code)
 	if err != nil {
 		log.Error("Unable to exchangeOauthCode: %s", err)
+		// TODO: show user friendly message if needed
+		// TODO: show NO message for cases like user pressing "Cancel" on authorize step
+		addSessionFlash(app, w, r, err.Error(), nil)
+		if attachUserID > 0 {
+			return impart.HTTPError{http.StatusFound, "/me/settings"}
+		}
 		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 	}
 
