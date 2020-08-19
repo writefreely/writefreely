@@ -325,9 +325,9 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		OauthSlack:              app.Config().SlackOauth.ClientID != "",
 		OauthWriteAs:            app.Config().WriteAsOauth.ClientID != "",
 		OauthGitlab:             app.Config().GitlabOauth.ClientID != "",
-		GitlabDisplayName:       config.OrDefaultString(app.Config().GenericOauth.DisplayName, genericOauthDisplayName),
+		GitlabDisplayName:       config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
 		OauthGeneric:            app.Config().GenericOauth.ClientID != "",
-		OauthGenericDisplayName: config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
+		OauthGenericDisplayName: config.OrDefaultString(app.Config().GenericOauth.DisplayName, genericOauthDisplayName),
 		OauthGitea:              app.Config().GiteaOauth.ClientID != "",
 		GiteaDisplayName:        config.OrDefaultString(app.Config().GiteaOauth.DisplayName, giteaDisplayName),
 	}
