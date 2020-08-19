@@ -20,7 +20,10 @@ td.none {
 	{{if .Silenced}}
 		{{template "user-silenced"}}
 	{{end}}
-	<h1 id="posts-header">{{if .Collection}}{{.Collection.DisplayTitle}} {{end}}Stats</h1>
+
+	{{template "collection-breadcrumbs" .}}
+
+	<h1 id="posts-header">Stats</h1>
 
 	{{if .Collection}}
 		{{template "collection-nav" (dict "Alias" .Collection.Alias "Path" .Path "SingleUser" .SingleUser)}}

@@ -1,3 +1,7 @@
+{{define "collection-breadcrumbs"}}
+    {{if and .Collection (not .SingleUser)}}<nav id="org-nav"><a href="/me/c/">Blogs</a> / <a class="coll-name" href="/{{.Collection.Alias}}/">{{.Collection.DisplayTitle}}</a></nav>{{end}}
+{{end}}
+
 {{define "collection-nav"}}
     <header class="admin">
         <nav class="pager">

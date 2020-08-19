@@ -20,7 +20,10 @@ textarea.section.norm {
 	{{if .Silenced}}
 		{{template "user-silenced"}}
 	{{end}}
-	<h1>Customize {{.DisplayTitle}}</h1>
+
+	{{template "collection-breadcrumbs" .}}
+
+	<h1>Customize</h1>
 
 	{{template "collection-nav" (dict "Alias" .Alias "Path" .Path "SingleUser" .SingleUser)}}
 
