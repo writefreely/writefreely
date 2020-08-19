@@ -430,6 +430,15 @@ nav#full-nav a.simple-btn, .tool button {
 	text-decoration: none;
 }
 
+#user-nav {
+	a:link, a:visited, a:hover {
+		color: @primary;
+	}
+	>a:hover {
+		text-decoration: underline !important;
+	}
+}
+
 .post-title {
 	a {
 		&:link {
@@ -743,6 +752,18 @@ input, button, select.inputform, textarea.inputform, a.btn {
 	}
 }
 
+.btn.pager {
+	border: 1px solid @lightNavBorder;
+	font-size: .86em;
+	padding: .5em 1em;
+	white-space: nowrap;
+	font-family: @sansFont;
+	&:hover {
+		text-decoration: none;
+		background: @lightNavBorder;
+	}
+}
+
 div.flat-select {
 	display: inline-block;
 	position: relative;
@@ -965,7 +986,12 @@ footer.contain-me {
 	}
 	ul {
 		&.collections {
+			padding-left: 0;
 			margin-left: 0;
+			h3 {
+				margin-top: 0;
+				font-weight: normal;
+			}
 			li {
 				&.collection {
 					a.title {
@@ -1095,7 +1121,8 @@ body#pad-sub #posts, .atoms {
 		}
 		.electron {
 			font-weight: normal;
-			margin-left: 0.5em;
+			font-size: 0.86em;
+			margin-left: 0.75rem;
 		}
 	}
 	h3, h4 {

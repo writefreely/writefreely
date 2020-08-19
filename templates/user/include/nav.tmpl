@@ -1,0 +1,10 @@
+{{define "collection-nav"}}
+    <header class="admin">
+        <nav class="pager">
+            <a href="{{if .SingleUser}}/me/new{{else}}/#{{.Alias}}{{end}}" class="btn gentlecta">New Post</a>
+            <a href="/me/c/{{.Alias}}" {{if and (hasPrefix .Path "/me/c/") (hasSuffix .Path .Alias)}}class="selected"{{end}}>Customize</a>
+            <a href="/me/c/{{.Alias}}/stats" {{if hasSuffix .Path "/stats"}}class="selected"{{end}}>Stats</a>
+            <a href="{{if .SingleUser}}/{{else}}/{{.Alias}}/{{end}}">View Blog &rarr;</a>
+        </nav>
+    </header>
+{{end}}

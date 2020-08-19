@@ -20,7 +20,11 @@ td.none {
 	{{if .Silenced}}
 		{{template "user-silenced"}}
 	{{end}}
-	<h2 id="posts-header">{{if .Collection}}{{.Collection.DisplayTitle}} {{end}}Stats</h2>
+	<h1 id="posts-header">{{if .Collection}}{{.Collection.DisplayTitle}} {{end}}Stats</h1>
+
+	{{if .Collection}}
+		{{template "collection-nav" (dict "Alias" .Collection.Alias "Path" .Path "SingleUser" .SingleUser)}}
+	{{end}}
 
 	<p>Stats for all time.</p>
 	
