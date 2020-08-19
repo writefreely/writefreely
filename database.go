@@ -2162,6 +2162,28 @@ func (db *datastore) CollectionHasAttribute(id int64, attr string) bool {
 	return true
 }
 
+func (db *datastore) GetCollectionAttribute(id int64, attr string) string {
+	var v string
+	err := db.QueryRow("SELECT value FROM collectionattributes WHERE collection_id = ? AND attribute = ?", id, attr).Scan(&v)
+	switch {
+	case err == sql.ErrNoRows:
+		return ""
+	case err != nil:
+		log.Error("Couldn't SELECT value in getCollectionAttribute for attribute '%s': %v", attr, err)
+		return ""
+	}
+	return v
+}
+
+func (db *datastore) SetCollectionAttribute(id int64, attr, v string) error {
+	_, err := db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?)", id, attr, v)
+	if err != nil {
+		log.Error("Unable to INSERT into collectionattributes: %v", err)
+		return err
+	}
+	return nil
+}
+
 // DeleteAccount will delete the entire account for userID
 func (db *datastore) DeleteAccount(userID int64) error {
 	// Get all collections

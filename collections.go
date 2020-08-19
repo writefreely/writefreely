@@ -552,6 +552,7 @@ type CollectionPage struct {
 	IsOwner        bool
 	CanPin         bool
 	Username       string
+	Monetization   string
 	Collections    *[]Collection
 	PinnedPosts    *[]PublicPost
 	IsAdmin        bool
@@ -829,6 +830,7 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 	// Add more data
 	// TODO: fix this mess of collections inside collections
 	displayPage.PinnedPosts, _ = app.db.GetPinnedPosts(coll.CollectionObj, isOwner)
+	displayPage.Monetization = app.db.GetCollectionAttribute(coll.ID, "monetization_pointer")
 
 	collTmpl := "collection"
 	if app.cfg.App.Chorus {
@@ -947,6 +949,7 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 	// Add more data
 	// TODO: fix this mess of collections inside collections
 	displayPage.PinnedPosts, _ = app.db.GetPinnedPosts(coll.CollectionObj, isOwner)
+	displayPage.Monetization = app.db.GetCollectionAttribute(coll.ID, "monetization_pointer")
 
 	err = templates["collection-tags"].ExecuteTemplate(w, "collection-tags", displayPage)
 	if err != nil {

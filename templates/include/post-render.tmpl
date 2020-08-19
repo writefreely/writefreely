@@ -1,4 +1,10 @@
 <!-- Miscelaneous render related template parts we use multiple times -->
+{{define "collection-meta"}}
+	{{if .Monetization -}}
+		<meta name="monetization" content="{{.Monetization}}" />
+	{{- end}}
+{{end}}
+
 {{define "highlighting"}}
 <script>
   // TODO: this feels more like a mutation observer
