@@ -494,7 +494,7 @@ func makeActivityPost(hostName string, p *activitystreams.Person, url string, m 
 
 	r, _ := http.NewRequest("POST", url, bytes.NewBuffer(b))
 	r.Header.Add("Content-Type", "application/activity+json")
-	r.Header.Set("User-Agent", "Go ("+serverSoftware+"/"+softwareVer+"; +"+hostName+")")
+	r.Header.Set("User-Agent", ServerUserAgent(hostName))
 	h := sha256.New()
 	h.Write(b)
 	r.Header.Add("Digest", "SHA-256="+base64.StdEncoding.EncodeToString(h.Sum(nil)))
@@ -544,7 +544,7 @@ func resolveIRI(hostName, url string) ([]byte, error) {
 
 	r, _ := http.NewRequest("GET", url, nil)
 	r.Header.Add("Accept", "application/activity+json")
-	r.Header.Set("User-Agent", "Go ("+serverSoftware+"/"+softwareVer+"; +"+hostName+")")
+	r.Header.Set("User-Agent", ServerUserAgent(hostName))
 
 	if debugging {
 		dump, err := httputil.DumpRequestOut(r, true)

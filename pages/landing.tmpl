@@ -60,10 +60,8 @@ form dd {
 	margin-top: 0;
 	max-width: 8em;
 }
-#generic-oauth-login {
-    box-sizing: border-box;
-    font-size: 17px;
-		white-space:nowrap;
+.or {
+	margin-bottom: 2.5em !important;
 }
 </style>
 {{end}}
@@ -78,20 +76,7 @@ form dd {
 
 	<div{{if not .OpenRegistration}} style="padding: 2em 0;"{{end}}>
 		{{ if .OpenRegistration }}
-			{{ if or .OauthSlack .OauthWriteAs .OauthGitlab .OauthGeneric }}
-				{{ if .OauthSlack }}
-					<div class="row content-container signinbtns signinoauthbtns"><a class="loginbtn" href="/oauth/slack"><img alt="Sign in with Slack" height="40" width="172" src="/img/sign_in_with_slack.png" srcset="/img/sign_in_with_slack.png 1x, /img/sign_in_with_slack@2x.png 2x" /></a></div>
-				{{ end }}
-				{{ if .OauthWriteAs }}
-					<div class="row content-container signinbtns signinoauthbtns"><a class="btn cta loginbtn" id="writeas-login" href="/oauth/write.as">Sign in with <strong>Write.as</strong></a></div>
-				{{ end }}
-				{{ if .OauthGitlab }}
-					<div class="row content-container signinbtns signinoauthbtns"><a class="btn cta loginbtn" id="gitlab-login" href="/oauth/gitlab">Sign in with <strong>{{.GitlabDisplayName}}</strong></a></div>
-				{{ end }}
-				{{ if .OauthGeneric }}
-					<div class="row content-container signinbtns signinoauthbtns"><a class="btn cta loginbtn" id="generic-oauth-login" href="/oauth/generic">Sign in with <strong>{{ .OauthGenericDisplayName }}</strong></a></div>
-				{{ end }}
-			{{ end }}
+			{{template "oauth-buttons" .}}
 		{{if not .DisablePasswordAuth}}
 		{{if .Flashes}}<ul class="errors">
 			{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}

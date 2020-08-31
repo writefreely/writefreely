@@ -62,7 +62,7 @@ func (c giteaOauthClient) exchangeOauthCode(ctx context.Context, code string) (*
 		return nil, err
 	}
 	req.WithContext(ctx)
-	req.Header.Set("User-Agent", "writefreely")
+	req.Header.Set("User-Agent", ServerUserAgent(""))
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.SetBasicAuth(c.ClientID, c.ClientSecret)
@@ -91,7 +91,7 @@ func (c giteaOauthClient) inspectOauthAccessToken(ctx context.Context, accessTok
 		return nil, err
 	}
 	req.WithContext(ctx)
-	req.Header.Set("User-Agent", "writefreely")
+	req.Header.Set("User-Agent", ServerUserAgent(""))
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 

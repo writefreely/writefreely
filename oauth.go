@@ -30,19 +30,27 @@ import (
 
 // OAuthButtons holds display information for different OAuth providers we support.
 type OAuthButtons struct {
-	SlackEnabled      bool
-	WriteAsEnabled    bool
-	GitLabEnabled     bool
-	GitLabDisplayName string
+	SlackEnabled       bool
+	WriteAsEnabled     bool
+	GitLabEnabled      bool
+	GitLabDisplayName  string
+	GiteaEnabled       bool
+	GiteaDisplayName   string
+	GenericEnabled     bool
+	GenericDisplayName string
 }
 
 // NewOAuthButtons creates a new OAuthButtons struct based on our app configuration.
 func NewOAuthButtons(cfg *config.Config) *OAuthButtons {
 	return &OAuthButtons{
-		SlackEnabled:      cfg.SlackOauth.ClientID != "",
-		WriteAsEnabled:    cfg.WriteAsOauth.ClientID != "",
-		GitLabEnabled:     cfg.GitlabOauth.ClientID != "",
-		GitLabDisplayName: config.OrDefaultString(cfg.GitlabOauth.DisplayName, gitlabDisplayName),
+		SlackEnabled:       cfg.SlackOauth.ClientID != "",
+		WriteAsEnabled:     cfg.WriteAsOauth.ClientID != "",
+		GitLabEnabled:      cfg.GitlabOauth.ClientID != "",
+		GitLabDisplayName:  config.OrDefaultString(cfg.GitlabOauth.DisplayName, gitlabDisplayName),
+		GiteaEnabled:       cfg.GiteaOauth.ClientID != "",
+		GiteaDisplayName:   config.OrDefaultString(cfg.GiteaOauth.DisplayName, giteaDisplayName),
+		GenericEnabled:     cfg.GenericOauth.ClientID != "",
+		GenericDisplayName: config.OrDefaultString(cfg.GenericOauth.DisplayName, genericOauthDisplayName),
 	}
 }
 
@@ -318,6 +326,12 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 	tokenResponse, err := h.oauthClient.exchangeOauthCode(ctx, code)
 	if err != nil {
 		log.Error("Unable to exchangeOauthCode: %s", err)
+		// TODO: show user friendly message if needed
+		// TODO: show NO message for cases like user pressing "Cancel" on authorize step
+		addSessionFlash(app, w, r, err.Error(), nil)
+		if attachUserID > 0 {
+			return impart.HTTPError{http.StatusFound, "/me/settings"}
+		}
 		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 	}
 
@@ -408,7 +422,7 @@ func (r *callbackProxyClient) register(ctx context.Context, state string) error 
 	if err != nil {
 		return err
 	}
-	req.Header.Set("User-Agent", "writefreely")
+	req.Header.Set("User-Agent", ServerUserAgent(""))
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
