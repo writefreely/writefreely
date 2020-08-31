@@ -1,76 +1,78 @@
 {{define "user-navigation"}}
 	<header class="{{if .SingleUser}}singleuser{{else}}multiuser{{end}}">
-		{{if .SingleUser}}
-		<nav id="user-nav">
-			<nav class="dropdown-nav">
-				<ul><li><a href="/" title="View blog" class="title">{{.SiteName}}</a> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" />
-					<ul>
-						<li><a href="/me/c/{{.Username}}">Customize</a></li>
-						<li><a href="/me/c/{{.Username}}/stats">Stats</a></li>
-						<li class="separator"><hr /></li>
-						{{if .IsAdmin}}<li><a href="/admin">Admin</a></li>{{end}}
-						<li><a href="/me/settings">Settings</a></li>
-						<li><a href="/me/import">Import posts</a></li>
-						<li><a href="/me/export">Export</a></li>
-						<li class="separator"><hr /></li>
-						<li><a href="/me/logout">Log out</a></li>
-					</ul></li>
-				</ul>
-			</nav>
-			<nav class="tabs">
-				<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>
-				<a href="/me/new">New Post</a>
-			</nav>
-		</nav>
-		{{else}}
 		<nav id="full-nav">
+		{{if .SingleUser}}
+			<nav id="user-nav">
+				<nav class="dropdown-nav">
+					<ul><li><a href="/" title="View blog" class="title">{{.SiteName}}</a> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" />
+						<ul>
+							{{if .IsAdmin}}<li><a href="/admin">Admin dashboard</a></li>{{end}}
+							<li><a href="/me/settings">Account settings</a></li>
+							<li><a href="/me/import">Import posts</a></li>
+							<li><a href="/me/export">Export</a></li>
+							<li class="separator"><hr /></li>
+							<li><a href="/me/logout">Log out</a></li>
+						</ul></li>
+					</ul>
+				</nav>
+				<nav class="tabs">
+					<a href="/me/c/{{.Username}}" {{if and (hasPrefix .Path "/me/c/") (hasSuffix .Path .Username)}}class="selected"{{end}}>Customize</a>
+					<a href="/me/c/{{.Username}}/stats" {{if hasSuffix .Path "/stats"}}class="selected"{{end}}>Stats</a>
+					<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>
+				</nav>
+			</nav>
+			<div class="right-side">
+				<a class="simple-btn" href="/me/new">New Post</a>
+			</div>
+		{{else}}
 			<div class="left-side">
 				<h1><a href="/" title="Return to editor">{{.SiteName}}</a></h1>
 			</div>
-		<nav id="user-nav">
-			{{if .Username}}
-			<nav class="dropdown-nav">
-				<ul><li class="has-submenu"><a>{{.Username}}</a> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /><ul>
-						{{if .IsAdmin}}<li><a href="/admin">Admin dashboard</a></li>{{end}}
-						<li><a href="/me/settings">Account settings</a></li>
-						<li><a href="/me/import">Import posts</a></li>
-						<li><a href="/me/export">Export</a></li>
-						{{if .CanInvite}}<li><a href="/me/invites">Invite people</a></li>{{end}}
-						<li class="separator"><hr /></li>
-						<li><a href="/me/logout">Log out</a></li>
-					</ul></li>
-				</ul>
-			</nav>
-			{{end}}
-			<nav class="tabs">
-				{{if .SimpleNav}}
-					{{ if not .SingleUser }}
-					{{if and (and .LocalTimeline .CanViewReader) .Chorus}}<a href="/"{{if eq .Path "/"}} class="selected"{{end}}>Home</a>{{end}}
-					{{ end }}
-					<a href="/about">About</a>
-					{{ if not .SingleUser }}
-						{{ if .Username }}
-					{{if gt .MaxBlogs 1}}<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>{{end}}
-					{{if and .Chorus (eq .MaxBlogs 1)}}<a href="/{{.Username}}/"{{if eq .Path (printf "/%s/" .Username)}} class="selected"{{end}}>My Posts</a>{{end}}
-					{{if not .DisableDrafts}}<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>{{end}}
-						{{ end }}
-					{{if and (and .LocalTimeline .CanViewReader) (not .Chorus)}}<a href="/read">Reader</a>{{end}}
-					{{if and (and (and .Chorus .OpenRegistration) (not .Username)) (or (not .Private) (ne .Landing ""))}}<a href="/signup"{{if eq .Path "/signup"}} class="selected"{{end}}>Sign up</a>{{end}}
-					{{if .Username}}<a href="/me/logout">Log out</a>{{else}}<a href="/login">Log in</a>{{end}}
-					{{ end }}
-				{{else}}
-					<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>
-					{{if not .DisableDrafts}}<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>{{end}}
-					{{if and (and .LocalTimeline .CanViewReader) (not .Chorus)}}<a href="/read">Reader</a>{{end}}
+			<nav id="user-nav">
+				{{if .Username}}
+				<nav class="dropdown-nav">
+					<ul><li class="has-submenu"><a>{{.Username}}</a> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /><ul>
+							{{if .IsAdmin}}<li><a href="/admin">Admin dashboard</a></li>{{end}}
+							<li><a href="/me/settings">Account settings</a></li>
+							<li><a href="/me/import">Import posts</a></li>
+							<li><a href="/me/export">Export</a></li>
+							{{if .CanInvite}}<li><a href="/me/invites">Invite people</a></li>{{end}}
+							<li class="separator"><hr /></li>
+							<li><a href="/me/logout">Log out</a></li>
+						</ul></li>
+					</ul>
+				</nav>
 				{{end}}
+				<nav class="tabs">
+					{{if .SimpleNav}}
+						{{ if not .SingleUser }}
+						{{if and (and .LocalTimeline .CanViewReader) .Chorus}}<a href="/"{{if eq .Path "/"}} class="selected"{{end}}>Home</a>{{end}}
+						{{ end }}
+						<a href="/about">About</a>
+						{{ if not .SingleUser }}
+							{{ if .Username }}
+						{{if gt .MaxBlogs 1}}<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>{{end}}
+						{{if and .Chorus (eq .MaxBlogs 1)}}<a href="/{{.Username}}/"{{if eq .Path (printf "/%s/" .Username)}} class="selected"{{end}}>My Posts</a>{{end}}
+						{{if not .DisableDrafts}}<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>{{end}}
+							{{ end }}
+						{{if and (and .LocalTimeline .CanViewReader) (not .Chorus)}}<a href="/read">Reader</a>{{end}}
+						{{if and (and (and .Chorus .OpenRegistration) (not .Username)) (or (not .Private) (ne .Landing ""))}}<a href="/signup"{{if eq .Path "/signup"}} class="selected"{{end}}>Sign up</a>{{end}}
+						{{if .Username}}<a href="/me/logout">Log out</a>{{else}}<a href="/login">Log in</a>{{end}}
+						{{ end }}
+					{{else}}
+						<a href="/me/c/"{{if eq .Path "/me/c/"}} class="selected"{{end}}>Blogs</a>
+						{{if not .DisableDrafts}}<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>{{end}}
+						{{if and (and .LocalTimeline .CanViewReader) (not .Chorus)}}<a href="/read">Reader</a>{{end}}
+					{{end}}
+				</nav>
 			</nav>
+			{{if .Username}}
+				<div class="right-side">
+					<a class="simple-btn" href="/{{if .CollAlias}}#{{.CollAlias}}{{end}}">New Post</a>
+				</div>
+			{{end}}
+		{{end}}
 		</nav>
-		{{if .Chorus}}{{if .Username}}<div class="right-side">
-					<a class="simple-btn" href="/new">New Post</a>
-				</div>{{end}}
-			</nav>
-		{{end}}
-		{{end}}
 	</header>
 {{end}}
 {{define "header"}}<!DOCTYPE HTML>

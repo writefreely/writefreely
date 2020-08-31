@@ -49,6 +49,7 @@ type (
 		Separator template.HTML
 		IsAdmin   bool
 		CanInvite bool
+		CollAlias string
 	}
 )
 
@@ -840,6 +841,7 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 		Collection: c,
 		Silenced:   silenced,
 	}
+	obj.UserPage.CollAlias = c.Alias
 
 	showUserPage(w, "collection", obj)
 	return nil
@@ -1019,6 +1021,7 @@ func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error 
 		TopPosts:   topPosts,
 		Silenced:   silenced,
 	}
+	obj.UserPage.CollAlias = c.Alias
 	if app.cfg.App.Federation {
 		folls, err := app.db.GetAPFollowers(c)
 		if err != nil {

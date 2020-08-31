@@ -16,7 +16,7 @@ h3 { font-weight: normal; }
 	{{if .Silenced}}
 		{{template "user-silenced"}}
 	{{end}}
-	<h1>{{if .IsLogOut}}Before you go...{{else}}Account Settings {{if .IsAdmin}}<a href="/admin">admin settings</a>{{end}}{{end}}</h1>
+	<h1>{{if .IsLogOut}}Before you go...{{else}}Account Settings{{end}}</h1>
 	{{if .Flashes}}<ul class="errors">
 		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 	</ul>{{end}}

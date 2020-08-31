@@ -11,6 +11,7 @@
 package writefreely
 
 import (
+	"errors"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -38,6 +39,9 @@ var (
 		"localhtml":   localHTML,
 		"tolower":     strings.ToLower,
 		"title":       strings.Title,
+		"hasPrefix":   strings.HasPrefix,
+		"hasSuffix":   strings.HasSuffix,
+		"dict":        dict,
 	}
 )
 
@@ -109,6 +113,7 @@ func initUserPage(parentDir, path, key string) {
 		filepath.Join(parentDir, templatesDir, "user", "include", "header.tmpl"),
 		filepath.Join(parentDir, templatesDir, "user", "include", "footer.tmpl"),
 		filepath.Join(parentDir, templatesDir, "user", "include", "silenced.tmpl"),
+		filepath.Join(parentDir, templatesDir, "user", "include", "nav.tmpl"),
 	))
 }
 
@@ -205,4 +210,20 @@ func localHTML(term, lang string) template.HTML {
 	}
 	s = strings.Replace(s, "write.as", "<a href=\"https://writefreely.org\">writefreely</a>", 1)
 	return template.HTML(s)
+}
+
+// from: https://stackoverflow.com/a/18276968/1549194
+func dict(values ...interface{}) (map[string]interface{}, error) {
+	if len(values)%2 != 0 {
+		return nil, errors.New("dict: invalid number of parameters")
+	}
+	dict := make(map[string]interface{}, len(values)/2)
+	for i := 0; i < len(values); i += 2 {
+		key, ok := values[i].(string)
+		if !ok {
+			return nil, errors.New("dict: keys must be strings")
+		}
+		dict[key] = values[i+1]
+	}
+	return dict, nil
 }
