@@ -12,7 +12,7 @@ require (
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/gorilla/feeds v1.1.1
 	github.com/gorilla/mux v1.7.4
-	github.com/gorilla/schema v1.1.0
+	github.com/gorilla/schema v1.2.0
 	github.com/gorilla/sessions v1.2.0
 	github.com/guregu/null v3.5.0+incompatible
 	github.com/hashicorp/go-multierror v1.1.0
@@ -22,7 +22,6 @@ require (
 	github.com/kylemcc/twitter-text-go v0.0.0-20180726194232-7f582f6736ec
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.7.0
-	github.com/mattn/go-colorable v0.1.0 // indirect
 	github.com/mattn/go-sqlite3 v1.14.0
 	github.com/microcosm-cc/bluemonday v1.0.3
 	github.com/mitchellh/go-wordwrap v1.0.0
