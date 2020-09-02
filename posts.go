@@ -1133,7 +1133,7 @@ func (p *PublicPost) CanonicalURL(hostName string) string {
 func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 	cfg := app.cfg
 	var o *activitystreams.Object
-	if strings.Index(p.Content, "\n\n") == -1 {
+	if cfg.App.NotesOnly || strings.Index(p.Content, "\n\n") == -1 {
 		o = activitystreams.NewNoteObject()
 	} else {
 		o = activitystreams.NewArticleObject()

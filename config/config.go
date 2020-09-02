@@ -140,6 +140,7 @@ type (
 		// Federation
 		Federation  bool `ini:"federation"`
 		PublicStats bool `ini:"public_stats"`
+		NotesOnly   bool `ini:"notes_only"`
 
 		// Access
 		Private bool `ini:"private"`
