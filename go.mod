@@ -23,7 +23,7 @@ require (
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.7.0
 	github.com/mattn/go-sqlite3 v1.14.2
-	github.com/microcosm-cc/bluemonday v1.0.3
+	github.com/microcosm-cc/bluemonday v1.0.4
 	github.com/mitchellh/go-wordwrap v1.0.0
 	github.com/nicksnyder/go-i18n v1.10.0 // indirect
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
