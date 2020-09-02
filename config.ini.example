@@ -9,6 +9,7 @@ password = changeme
 database = writefreely
 host     = db
 port     = 3306
+tls      = false
 
 [app]
 site_name         = WriteFreely Example Blog!
@@ -23,4 +24,5 @@ max_blogs         = 1
 federation        = true
 public_stats      = true
 private           = false
+update_checks     = true
 

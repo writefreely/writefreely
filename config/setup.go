@@ -356,7 +356,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 		if data.Config.App.Federation {
 			selPrompt = promptui.Select{
 				Templates: selTmpls,
-				Label:     "Federation usage stats",
+				Label:     "Usage stats (active users, posts)",
 				Items:     []string{"Public", "Private"},
 			}
 			_, fedStatsType, err := selPrompt.Run()

@@ -12,8 +12,9 @@
 package config
 
 import (
-	"gopkg.in/ini.v1"
 	"strings"
+
+	"gopkg.in/ini.v1"
 )
 
 const (
@@ -42,6 +43,10 @@ type (
 		PagesParentDir     string `ini:"pages_parent_dir"`
 		KeysParentDir      string `ini:"keys_parent_dir"`
 
+		HashSeed string `ini:"hash_seed"`
+
+		GopherPort int `ini:"gopher_port"`
+
 		Dev bool `ini:"-"`
 	}
 
@@ -54,6 +59,56 @@ type (
 		Database string `ini:"database"`
 		Host     string `ini:"host"`
 		Port     int    `ini:"port"`
+		TLS      bool   `ini:"tls"`
+	}
+
+	WriteAsOauthCfg struct {
+		ClientID         string `ini:"client_id"`
+		ClientSecret     string `ini:"client_secret"`
+		AuthLocation     string `ini:"auth_location"`
+		TokenLocation    string `ini:"token_location"`
+		InspectLocation  string `ini:"inspect_location"`
+		CallbackProxy    string `ini:"callback_proxy"`
+		CallbackProxyAPI string `ini:"callback_proxy_api"`
+	}
+
+	GitlabOauthCfg struct {
+		ClientID         string `ini:"client_id"`
+		ClientSecret     string `ini:"client_secret"`
+		Host             string `ini:"host"`
+		DisplayName      string `ini:"display_name"`
+		CallbackProxy    string `ini:"callback_proxy"`
+		CallbackProxyAPI string `ini:"callback_proxy_api"`
+	}
+
+	GiteaOauthCfg struct {
+		ClientID         string `ini:"client_id"`
+		ClientSecret     string `ini:"client_secret"`
+		Host             string `ini:"host"`
+		DisplayName      string `ini:"display_name"`
+		CallbackProxy    string `ini:"callback_proxy"`
+		CallbackProxyAPI string `ini:"callback_proxy_api"`
+	}
+
+	SlackOauthCfg struct {
+		ClientID         string `ini:"client_id"`
+		ClientSecret     string `ini:"client_secret"`
+		TeamID           string `ini:"team_id"`
+		CallbackProxy    string `ini:"callback_proxy"`
+		CallbackProxyAPI string `ini:"callback_proxy_api"`
+	}
+
+	GenericOauthCfg struct {
+		ClientID         string `ini:"client_id"`
+		ClientSecret     string `ini:"client_secret"`
+		Host             string `ini:"host"`
+		DisplayName      string `ini:"display_name"`
+		CallbackProxy    string `ini:"callback_proxy"`
+		CallbackProxyAPI string `ini:"callback_proxy_api"`
+		TokenEndpoint    string `ini:"token_endpoint"`
+		InspectEndpoint  string `ini:"inspect_endpoint"`
+		AuthEndpoint     string `ini:"auth_endpoint"`
+		AllowDisconnect  bool   `ini:"allow_disconnect"`
 	}
 
 	// AppCfg holds values that affect how the application functions
@@ -73,6 +128,7 @@ type (
 
 		// Site functionality
 		Chorus        bool `ini:"chorus"`
+		Forest        bool `ini:"forest"` // The admin cares about the forest, not the trees. Hide unnecessary technical info.
 		DisableDrafts bool `ini:"disable_drafts"`
 
 		// Users
@@ -94,13 +150,24 @@ type (
 
 		// Defaults
 		DefaultVisibility string `ini:"default_visibility"`
+
+		// Check for Updates
+		UpdateChecks bool `ini:"update_checks"`
+
+		// Disable password authentication if use only Oauth
+		DisablePasswordAuth bool `ini:"disable_password_auth"`
 	}
 
 	// Config holds the complete configuration for running a writefreely instance
 	Config struct {
-		Server   ServerCfg   `ini:"server"`
-		Database DatabaseCfg `ini:"database"`
-		App      AppCfg      `ini:"app"`
+		Server       ServerCfg       `ini:"server"`
+		Database     DatabaseCfg     `ini:"database"`
+		App          AppCfg          `ini:"app"`
+		SlackOauth   SlackOauthCfg   `ini:"oauth.slack"`
+		WriteAsOauth WriteAsOauthCfg `ini:"oauth.writeas"`
+		GitlabOauth  GitlabOauthCfg  `ini:"oauth.gitlab"`
+		GiteaOauth   GiteaOauthCfg   `ini:"oauth.gitea"`
+		GenericOauth GenericOauthCfg `ini:"oauth.generic"`
 	}
 )
 
@@ -154,6 +221,16 @@ func (ac *AppCfg) LandingPath() string {
 		return "/" + ac.Landing
 	}
 	return ac.Landing
+}
+
+func (ac AppCfg) SignupPath() string {
+	if !ac.OpenRegistration {
+		return ""
+	}
+	if ac.Chorus || ac.Private || (ac.Landing != "" && ac.Landing != "/") {
+		return "/signup"
+	}
+	return "/"
 }
 
 // Load reads the given configuration file, then parses and returns it as a Config.

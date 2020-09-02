@@ -7,21 +7,21 @@ table.classy th {
 h3 {
 	font-weight: normal;
 }
-td.active-suspend {
+td.active-silence {
 	display: flex;
 	align-items: center;
 }
 
-td.active-suspend > input[type="submit"] {
+td.active-silence > input[type="submit"] {
 	margin-left: auto;
 	margin-right: 5%;
 }
 
 @media only screen and (max-width: 500px) {
-	td.active-suspend {
+	td.active-silence {
 		flex-wrap: wrap;
 	}
-	td.active-suspend > input[type="submit"] {
+	td.active-silence > input[type="submit"] {
 		margin: auto;
 	}
 }
@@ -71,9 +71,8 @@ input.copy-text {
 		</tr>
 		<tr>
 			<form action="/admin/user/{{.User.Username}}/status" method="POST" {{if not .User.IsSilenced}}onsubmit="return confirmSilence()"{{end}}>
-				<a id="status"/>
-				<th>Status</th>
-				<td class="active-suspend">
+				<th><a id="status"></a>Status</th>
+				<td class="active-silence">
 				{{if .User.IsSilenced}}
 					<p>Silenced</p>
 					<input type="submit" value="Unsilence"/>
