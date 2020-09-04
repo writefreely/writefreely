@@ -11,7 +11,6 @@
 package writefreely
 
 import (
-	"net/http"
 	"sync"
 	"time"
 )
@@ -67,11 +66,4 @@ func GetPostsCache(userID int64) *[]PublicPost {
 		return nil
 	}
 	return pci.Posts
-}
-
-func cacheControl(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Cache-Control", "public, max-age=604800, immutable")
-		next.ServeHTTP(w, r)
-	})
 }
