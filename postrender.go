@@ -140,9 +140,7 @@ func applyBasicMarkdown(data []byte) string {
 func postTitle(content, friendlyId string) string {
 	const maxTitleLen = 80
 
-	// Strip HTML tags with bluemonday's StrictPolicy, then unescape the HTML
-	// entities added in by sanitizing the content.
-	content = html.UnescapeString(bluemonday.StrictPolicy().Sanitize(content))
+	content = stripHTMLWithoutEscaping(content)
 
 	content = strings.TrimLeftFunc(stripmd.Strip(content), unicode.IsSpace)
 	eol := strings.IndexRune(content, '\n')
@@ -160,9 +158,7 @@ func postTitle(content, friendlyId string) string {
 func friendlyPostTitle(content, friendlyId string) string {
 	const maxTitleLen = 80
 
-	// Strip HTML tags with bluemonday's StrictPolicy, then unescape the HTML
-	// entities added in by sanitizing the content.
-	content = html.UnescapeString(bluemonday.StrictPolicy().Sanitize(content))
+	content = stripHTMLWithoutEscaping(content)
 
 	content = strings.TrimLeftFunc(stripmd.Strip(content), unicode.IsSpace)
 	eol := strings.IndexRune(content, '\n')
@@ -177,6 +173,12 @@ func friendlyPostTitle(content, friendlyId string) string {
 		title += "..."
 	}
 	return title
+}
+
+// Strip HTML tags with bluemonday's StrictPolicy, then unescape the HTML
+// entities added in by sanitizing the content.
+func stripHTMLWithoutEscaping(content string) string {
+	return html.UnescapeString(bluemonday.StrictPolicy().Sanitize(content))
 }
 
 func getSanitizationPolicy() *bluemonday.Policy {
