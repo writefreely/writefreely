@@ -26,6 +26,7 @@ import (
 func (app *App) InitStaticRoutes(r *mux.Router) {
 	// Handle static files
 	fs := http.FileServer(http.Dir(filepath.Join(app.cfg.Server.StaticParentDir, staticDir)))
+	fs = cacheControl(fs)
 	app.shttp = http.NewServeMux()
 	app.shttp.Handle("/", fs)
 	r.PathPrefix("/").Handler(fs)
