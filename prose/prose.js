@@ -15,24 +15,25 @@ import {schema, defaultMarkdownParser, defaultMarkdownSerializer} from "prosemir
 import {exampleSetup} from "prosemirror-example-setup"
 
 class ProseMirrorView {
-  constructor(target, content) {
-    this.view = new EditorView(target, {
-      state: EditorState.create({
-        doc: defaultMarkdownParser.parse(content),
-        plugins: exampleSetup({schema})
-			}), dispatchTransaction(transaction) {
-				document.querySelector('#content').value = defaultMarkdownSerializer.serialize(transaction.doc)
-				let newState = this.state.apply(transaction)
-				this.updateState(newState)
-			}
-    })
-  }
+    constructor(target, content) {
+        this.view = new EditorView(target, {
+            state: EditorState.create({
+                doc: defaultMarkdownParser.parse(content),
+                plugins: exampleSetup({schema})
+            }),
+            dispatchTransaction(transaction) {
+                document.querySelector('#content').value = defaultMarkdownSerializer.serialize(transaction.doc)
+                let newState = this.state.apply(transaction)
+                this.updateState(newState)
+            }
+        })
+    }
 
-  get content() {
-    return defaultMarkdownSerializer.serialize(this.view.state.doc)
-  }
-	focus() { this.view.focus() }
-  destroy() { this.view.destroy() }
+    get content() {
+        return defaultMarkdownSerializer.serialize(this.view.state.doc)
+    }
+    focus() { this.view.focus() }
+    destroy() { this.view.destroy() }
 }
 
 let place = document.querySelector("#editor")
