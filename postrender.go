@@ -78,7 +78,7 @@ func disableYoutubeAutoplay(outHTML string) string {
 	for _, match := range youtubeReg.FindAllString(outHTML, -1) {
 		u, err := url.Parse(match)
 		if err != nil {
-			log.Error("Couldn't parse youtube url: %v", err)
+			continue
 		}
 		u.RawQuery = html.UnescapeString(u.RawQuery)
 		q := u.Query()
