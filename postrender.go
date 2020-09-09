@@ -87,8 +87,8 @@ func disableYoutubeAutoplay(outHTML string) string {
 			q.Set("autoplay", "0")
 		}
 		u.RawQuery = q.Encode()
-		clean_url := u.String()
-		outHTML = strings.Replace(outHTML, match, clean_url, 1)
+		cleanURL := u.String()
+		outHTML = strings.Replace(outHTML, match, cleanURL, 1)
 	}
 	return outHTML
 }
