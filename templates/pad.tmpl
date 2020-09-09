@@ -24,7 +24,7 @@
 				{{if not .SingleUser}}<h1><a href="/me/c/" title="View blogs"><img class="ic-24dp" src="/img/ic_blogs_dark@2x.png" /></a></h1>{{end}}
 				<nav id="target" {{if .SingleUser}}style="margin-left:0"{{end}}><ul>
 						{{if .Editing}}<li>{{if .EditCollection}}<a href="{{.EditCollection.CanonicalURL}}">{{.EditCollection.Title}}</a>{{else}}<a>Draft</a>{{end}}</li>
-						{{else}}<li><a id="publish-to"><span id="target-name">Draft</span> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
+						{{else}}<li class="has-submenu"><a id="publish-to"><span id="target-name">Draft</span> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
 						<ul>
 							<li class="menu-heading">Publish to...</li>
 							{{if .Blogs}}{{range $idx, $el := .Blogs}}
@@ -45,7 +45,7 @@
 					</li>{{end}}
 				</ul></nav>
 				<nav id="font-picker" class="if-room room-3 hidden" style="margin-left:-1em"><ul>
-						<li><a href="#" id="" onclick="return false"><img class="ic-24dp" src="/img/ic_font_dark@2x.png" /> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
+						<li class="has-submenu"><a href="#" id="" onclick="return false"><img class="ic-24dp" src="/img/ic_font_dark@2x.png" /> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
 						<ul style="text-align: center">
 							<li class="menu-heading">Font</li>
 							<li class="selected"><a class="font norm" href="#norm">Serif</a></li>
@@ -66,28 +66,50 @@
 		</header>
 
 		<script src="/js/h.js"></script>
+		<script type="text/javascript" src="/js/menu.js"></script>
 		<script>
 		function toggleTheme() {
-			var btns = Array.prototype.slice.call(document.getElementById('tools').querySelectorAll('a img'));
-			var newTheme = '';
 			if (document.body.classList.contains('light')) {
-				newTheme = 'dark';
-				document.body.className = document.body.className.replace(/(?:^|\s)light(?!\S)/g, newTheme);
-				for (var i=0; i<btns.length; i++) {
-					btns[i].src = btns[i].src.replace('_dark@2x.png', '@2x.png');
+				setTheme('dark');
+			} else {
+				setTheme('light');
+			}
+			H.set('padTheme', newTheme);
+		}
+
+		function setTheme(newTheme) {
+			document.body.classList.remove('light');
+			document.body.classList.remove('dark');
+			document.body.classList.add(newTheme);
+			var btns = Array.prototype.slice.call(document.getElementById('tools').querySelectorAll('a img'));
+			if (newTheme == 'light') {
+				// check if current theme is dark otherwise we'll get `_dark_dark@2x.png`
+				if (H.get('padTheme', 'auto') == 'dark'){
+					for (var i=0; i<btns.length; i++) {
+						btns[i].src = btns[i].src.replace('@2x.png', '_dark@2x.png');
+					}
 				}
 			} else {
-				newTheme = 'light';
-				document.body.className = document.body.className.replace(/(?:^|\s)dark(?!\S)/g, newTheme);
 				for (var i=0; i<btns.length; i++) {
-					btns[i].src = btns[i].src.replace('@2x.png', '_dark@2x.png');
+					btns[i].src = btns[i].src.replace('_dark@2x.png', '@2x.png');
 				}
 			}
 			H.set('padTheme', newTheme);
 		}
-		if (H.get('padTheme', 'light') != 'light') {
-			toggleTheme();
+
+		if (H.get('padTheme', 'auto') == 'light') {
+			setTheme('light');
+		} else if (H.get('padTheme', 'auto') == 'dark') {
+			setTheme('dark');
+		} else {
+			const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches
+			if (isDarkMode) {
+				setTheme('dark');
+			} else {
+				setTheme('light');
+			}
 		}
+
 		var $writer = H.getEl('writer');
 		var $btnPublish = H.getEl('publish');
 		var $btnEraseEdit = H.getEl('edited-elsewhere');

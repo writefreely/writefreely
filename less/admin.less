@@ -32,6 +32,19 @@ nav#admin {
 	display: flex;
 	justify-content: center;
 
+	&:not(.pages) {
+		display: block;
+		margin: 0.5em 0;
+		a {
+			margin-left: 0;
+			.rounded(.25em);
+
+			&+a {
+				margin-left: 0.5em;
+			}
+		}
+	}
+
 	a {
 		color: #333;
 		font-family: @sansFont;

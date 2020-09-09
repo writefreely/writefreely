@@ -494,7 +494,7 @@ func makeActivityPost(hostName string, p *activitystreams.Person, url string, m 
 
 	r, _ := http.NewRequest("POST", url, bytes.NewBuffer(b))
 	r.Header.Add("Content-Type", "application/activity+json")
-	r.Header.Set("User-Agent", "Go ("+serverSoftware+"/"+softwareVer+"; +"+hostName+")")
+	r.Header.Set("User-Agent", ServerUserAgent(hostName))
 	h := sha256.New()
 	h.Write(b)
 	r.Header.Add("Digest", "SHA-256="+base64.StdEncoding.EncodeToString(h.Sum(nil)))
@@ -544,7 +544,7 @@ func resolveIRI(hostName, url string) ([]byte, error) {
 
 	r, _ := http.NewRequest("GET", url, nil)
 	r.Header.Add("Accept", "application/activity+json")
-	r.Header.Set("User-Agent", "Go ("+serverSoftware+"/"+softwareVer+"; +"+hostName+")")
+	r.Header.Set("User-Agent", ServerUserAgent(hostName))
 
 	if debugging {
 		dump, err := httputil.DumpRequestOut(r, true)
@@ -699,6 +699,10 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			// I don't believe we'd ever have too many mentions in a single post that this
 			// could become a burden.
 			remoteUser, err := getRemoteUser(app, tag.HRef)
+			if err != nil {
+				log.Error("Unable to find remote user %s. Skipping: %v", tag.HRef, err)
+				continue
+			}
 			err = makeActivityPost(app.cfg.App.Host, actor, remoteUser.Inbox, activity)
 			if err != nil {
 				log.Error("Couldn't post! %v", err)

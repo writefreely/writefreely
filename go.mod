@@ -12,7 +12,7 @@ require (
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/gorilla/feeds v1.1.1
 	github.com/gorilla/mux v1.7.4
-	github.com/gorilla/schema v1.1.0
+	github.com/gorilla/schema v1.2.0
 	github.com/gorilla/sessions v1.2.0
 	github.com/guregu/null v3.5.0+incompatible
 	github.com/hashicorp/go-multierror v1.1.0
@@ -22,9 +22,8 @@ require (
 	github.com/kylemcc/twitter-text-go v0.0.0-20180726194232-7f582f6736ec
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.7.0
-	github.com/mattn/go-colorable v0.1.0 // indirect
-	github.com/mattn/go-sqlite3 v1.14.0
-	github.com/microcosm-cc/bluemonday v1.0.3
+	github.com/mattn/go-sqlite3 v1.14.2
+	github.com/microcosm-cc/bluemonday v1.0.4
 	github.com/mitchellh/go-wordwrap v1.0.0
 	github.com/nicksnyder/go-i18n v1.10.0 // indirect
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
@@ -47,7 +46,7 @@ require (
 	github.com/writeas/nerds v1.0.0
 	github.com/writeas/saturday v1.7.2-0.20200427193424-392b95a03320
 	github.com/writeas/slug v1.2.0
-	github.com/writeas/web-core v1.2.0
+	github.com/writeas/web-core v1.2.1-0.20200813161734-68a680d1b03c
 	github.com/writefreely/go-nodeinfo v1.2.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/lint v0.0.0-20181217174547-8f45f776aaf1 // indirect

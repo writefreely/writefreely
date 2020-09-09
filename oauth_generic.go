@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-type gitlabOauthClient struct {
+type genericOauthClient struct {
 	ClientID         string
 	ClientSecret     string
 	AuthLocation     string
@@ -18,26 +18,25 @@ type gitlabOauthClient struct {
 	HttpClient       HttpClient
 }
 
-var _ oauthClient = gitlabOauthClient{}
+var _ oauthClient = genericOauthClient{}
 
 const (
-	gitlabHost        = "https://gitlab.com"
-	gitlabDisplayName = "GitLab"
+	genericOauthDisplayName = "OAuth"
 )
 
-func (c gitlabOauthClient) GetProvider() string {
-	return "gitlab"
+func (c genericOauthClient) GetProvider() string {
+	return "generic"
 }
 
-func (c gitlabOauthClient) GetClientID() string {
+func (c genericOauthClient) GetClientID() string {
 	return c.ClientID
 }
 
-func (c gitlabOauthClient) GetCallbackLocation() string {
+func (c genericOauthClient) GetCallbackLocation() string {
 	return c.CallbackLocation
 }
 
-func (c gitlabOauthClient) buildLoginURL(state string) (string, error) {
+func (c genericOauthClient) buildLoginURL(state string) (string, error) {
 	u, err := url.Parse(c.AuthLocation)
 	if err != nil {
 		return "", err
@@ -52,7 +51,7 @@ func (c gitlabOauthClient) buildLoginURL(state string) (string, error) {
 	return u.String(), nil
 }
 
-func (c gitlabOauthClient) exchangeOauthCode(ctx context.Context, code string) (*TokenResponse, error) {
+func (c genericOauthClient) exchangeOauthCode(ctx context.Context, code string) (*TokenResponse, error) {
 	form := url.Values{}
 	form.Add("grant_type", "authorization_code")
 	form.Add("redirect_uri", c.CallbackLocation)
@@ -86,7 +85,7 @@ func (c gitlabOauthClient) exchangeOauthCode(ctx context.Context, code string) (
 	return &tokenResponse, nil
 }
 
-func (c gitlabOauthClient) inspectOauthAccessToken(ctx context.Context, accessToken string) (*InspectResponse, error) {
+func (c genericOauthClient) inspectOauthAccessToken(ctx context.Context, accessToken string) (*InspectResponse, error) {
 	req, err := http.NewRequest("GET", c.InspectLocation, nil)
 	if err != nil {
 		return nil, err

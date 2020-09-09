@@ -238,6 +238,7 @@ func handleViewLanding(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p := struct {
 		page.StaticPage
+		*OAuthButtons
 		Flashes []template.HTML
 		Banner  template.HTML
 		Content template.HTML
@@ -245,6 +246,7 @@ func handleViewLanding(app *App, w http.ResponseWriter, r *http.Request) error {
 		ForcedLanding bool
 	}{
 		StaticPage:    pageForReq(app, r),
+		OAuthButtons:  NewOAuthButtons(app.Config()),
 		ForcedLanding: forceLanding,
 	}
 
@@ -889,4 +891,14 @@ func adminInitDatabase(app *App) error {
 
 	log.Info("Done.")
 	return nil
+}
+
+// ServerUserAgent returns a User-Agent string to use in external requests. The
+// hostName parameter may be left empty.
+func ServerUserAgent(hostName string) string {
+	hostUAStr := ""
+	if hostName != "" {
+		hostUAStr = "; +" + hostName
+	}
+	return "Go (" + serverSoftware + "/" + softwareVer + hostUAStr + ")"
 }

@@ -10,6 +10,8 @@
 @proSelectedCol: #71D571;
 @textLinkColor: rgb(0, 0, 238);
 
+@accent: #767676;
+
 body {
 	font-family: @serifFont;
 	font-size-adjust: 0.5;
@@ -81,7 +83,7 @@ body {
 				font-size: 1.5em;
 			}
 			h2 {
-				font-size: 1.17em;
+				font-size: 1.4em;
 			}
 		}
 
@@ -743,6 +745,18 @@ input, button, select.inputform, textarea.inputform, a.btn {
 	}
 }
 
+.btn.pager {
+	border: 1px solid @lightNavBorder;
+	font-size: .86em;
+	padding: .5em 1em;
+	white-space: nowrap;
+	font-family: @sansFont;
+	&:hover {
+		text-decoration: none;
+		background: @lightNavBorder;
+	}
+}
+
 div.flat-select {
 	display: inline-block;
 	position: relative;
@@ -965,7 +979,12 @@ footer.contain-me {
 	}
 	ul {
 		&.collections {
+			padding-left: 0;
 			margin-left: 0;
+			h3 {
+				margin-top: 0;
+				font-weight: normal;
+			}
 			li {
 				&.collection {
 					a.title {
@@ -1095,7 +1114,8 @@ body#pad-sub #posts, .atoms {
 		}
 		.electron {
 			font-weight: normal;
-			margin-left: 0.5em;
+			font-size: 0.86em;
+			margin-left: 0.75rem;
 		}
 	}
 	h3, h4 {
@@ -1245,13 +1265,16 @@ header {
 		}
 	}
 	&.singleuser {
-		margin: 0.5em 0.25em;
+		margin: 0.5em 1em 0.5em 0.25em;
 		nav#user-nav {
 			nav > ul > li:first-child {
 				img {
 					top: -0.75em;
 				}
 			}
+		}
+		.right-side {
+			padding-top: 0.5em;
 		}
 	}
 	.dash-nav {
@@ -1546,4 +1569,27 @@ div.row {
 }
 pre.code-block {
 	overflow-x: auto;
+}
+
+#org-nav {
+	font-family: @sansFont;
+	font-size: 1.1em;
+	color: #888;
+
+	em, strong {
+		color: #000;
+	}
+	&+h1 {
+		margin-top: 0.5em;
+	}
+	a:link, a:visited, a:hover {
+		color: @accent;
+	}
+	a:first-child {
+		margin-right: 0.25em;
+	}
+	a.coll-name {
+		font-weight: bold;
+		margin-left: 0.25em;
+	}
 }

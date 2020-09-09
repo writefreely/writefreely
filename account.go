@@ -49,6 +49,7 @@ type (
 		Separator template.HTML
 		IsAdmin   bool
 		CanInvite bool
+		CollAlias string
 	}
 )
 
@@ -86,6 +87,11 @@ func apiSignup(app *App, w http.ResponseWriter, r *http.Request) error {
 }
 
 func signup(app *App, w http.ResponseWriter, r *http.Request) (*AuthUser, error) {
+	if app.cfg.App.DisablePasswordAuth {
+		err := ErrDisabledPasswordAuth
+		return nil, err
+	}
+
 	reqJSON := IsJSON(r)
 
 	// Get params
@@ -299,24 +305,18 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p := &struct {
 		page.StaticPage
-		To                string
-		Message           template.HTML
-		Flashes           []template.HTML
-		LoginUsername     string
-		OauthSlack        bool
-		OauthWriteAs      bool
-		OauthGitlab       bool
-		GitlabDisplayName string
+		*OAuthButtons
+		To            string
+		Message       template.HTML
+		Flashes       []template.HTML
+		LoginUsername string
 	}{
-		pageForReq(app, r),
-		r.FormValue("to"),
-		template.HTML(""),
-		[]template.HTML{},
-		getTempInfo(app, "login-user", r, w),
-		app.Config().SlackOauth.ClientID != "",
-		app.Config().WriteAsOauth.ClientID != "",
-		app.Config().GitlabOauth.ClientID != "",
-		config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
+		StaticPage:    pageForReq(app, r),
+		OAuthButtons:  NewOAuthButtons(app.Config()),
+		To:            r.FormValue("to"),
+		Message:       template.HTML(""),
+		Flashes:       []template.HTML{},
+		LoginUsername: getTempInfo(app, "login-user", r, w),
 	}
 
 	if earlyError != "" {
@@ -390,6 +390,11 @@ func login(app *App, w http.ResponseWriter, r *http.Request) error {
 	var u *User
 	var err error
 	var signin userCredentials
+
+	if app.cfg.App.DisablePasswordAuth {
+		err := ErrDisabledPasswordAuth
+		return err
+	}
 
 	// Log in with one-time token if one is given
 	if oneTimeToken != "" {
@@ -836,6 +841,7 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 		Collection: c,
 		Silenced:   silenced,
 	}
+	obj.UserPage.CollAlias = c.Alias
 
 	showUserPage(w, "collection", obj)
 	return nil
@@ -1015,6 +1021,7 @@ func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error 
 		TopPosts:   topPosts,
 		Silenced:   silenced,
 	}
+	obj.UserPage.CollAlias = c.Alias
 	if app.cfg.App.Federation {
 		folls, err := app.db.GetAPFollowers(c)
 		if err != nil {
@@ -1045,13 +1052,15 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 	enableOauthSlack := app.Config().SlackOauth.ClientID != ""
 	enableOauthWriteAs := app.Config().WriteAsOauth.ClientID != ""
 	enableOauthGitLab := app.Config().GitlabOauth.ClientID != ""
+	enableOauthGeneric := app.Config().GenericOauth.ClientID != ""
+	enableOauthGitea := app.Config().GiteaOauth.ClientID != ""
 
 	oauthAccounts, err := app.db.GetOauthAccounts(r.Context(), u.ID)
 	if err != nil {
 		log.Error("Unable to get oauth accounts for settings: %s", err)
 		return impart.HTTPError{http.StatusInternalServerError, "Unable to retrieve user data. The humans have been alerted."}
 	}
-	for _, oauthAccount := range oauthAccounts {
+	for idx, oauthAccount := range oauthAccounts {
 		switch oauthAccount.Provider {
 		case "slack":
 			enableOauthSlack = false
@@ -1059,35 +1068,49 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 			enableOauthWriteAs = false
 		case "gitlab":
 			enableOauthGitLab = false
+		case "generic":
+			oauthAccounts[idx].DisplayName = app.Config().GenericOauth.DisplayName
+			oauthAccounts[idx].AllowDisconnect = app.Config().GenericOauth.AllowDisconnect
+			enableOauthGeneric = false
+		case "gitea":
+			enableOauthGitea = false
 		}
 	}
 
-	displayOauthSection := enableOauthSlack || enableOauthWriteAs || enableOauthGitLab || len(oauthAccounts) > 0
+	displayOauthSection := enableOauthSlack || enableOauthWriteAs || enableOauthGitLab || enableOauthGeneric || enableOauthGitea || len(oauthAccounts) > 0
 
 	obj := struct {
 		*UserPage
-		Email             string
-		HasPass           bool
-		IsLogOut          bool
-		Silenced          bool
-		OauthSection      bool
-		OauthAccounts     []oauthAccountInfo
-		OauthSlack        bool
-		OauthWriteAs      bool
-		OauthGitLab       bool
-		GitLabDisplayName string
+		Email                   string
+		HasPass                 bool
+		IsLogOut                bool
+		Silenced                bool
+		OauthSection            bool
+		OauthAccounts           []oauthAccountInfo
+		OauthSlack              bool
+		OauthWriteAs            bool
+		OauthGitLab             bool
+		GitLabDisplayName       string
+		OauthGeneric            bool
+		OauthGenericDisplayName string
+		OauthGitea              bool
+		GiteaDisplayName        string
 	}{
-		UserPage:          NewUserPage(app, r, u, "Account Settings", flashes),
-		Email:             fullUser.EmailClear(app.keys),
-		HasPass:           passIsSet,
-		IsLogOut:          r.FormValue("logout") == "1",
-		Silenced:          fullUser.IsSilenced(),
-		OauthSection:      displayOauthSection,
-		OauthAccounts:     oauthAccounts,
-		OauthSlack:        enableOauthSlack,
-		OauthWriteAs:      enableOauthWriteAs,
-		OauthGitLab:       enableOauthGitLab,
-		GitLabDisplayName: config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
+		UserPage:                NewUserPage(app, r, u, "Account Settings", flashes),
+		Email:                   fullUser.EmailClear(app.keys),
+		HasPass:                 passIsSet,
+		IsLogOut:                r.FormValue("logout") == "1",
+		Silenced:                fullUser.IsSilenced(),
+		OauthSection:            displayOauthSection,
+		OauthAccounts:           oauthAccounts,
+		OauthSlack:              enableOauthSlack,
+		OauthWriteAs:            enableOauthWriteAs,
+		OauthGitLab:             enableOauthGitLab,
+		GitLabDisplayName:       config.OrDefaultString(app.Config().GitlabOauth.DisplayName, gitlabDisplayName),
+		OauthGeneric:            enableOauthGeneric,
+		OauthGenericDisplayName: config.OrDefaultString(app.Config().GenericOauth.DisplayName, genericOauthDisplayName),
+		OauthGitea:              enableOauthGitea,
+		GiteaDisplayName:        config.OrDefaultString(app.Config().GiteaOauth.DisplayName, giteaDisplayName),
 	}
 
 	showUserPage(w, "settings", obj)

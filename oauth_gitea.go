@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-type gitlabOauthClient struct {
+type giteaOauthClient struct {
 	ClientID         string
 	ClientSecret     string
 	AuthLocation     string
@@ -18,26 +18,25 @@ type gitlabOauthClient struct {
 	HttpClient       HttpClient
 }
 
-var _ oauthClient = gitlabOauthClient{}
+var _ oauthClient = giteaOauthClient{}
 
 const (
-	gitlabHost        = "https://gitlab.com"
-	gitlabDisplayName = "GitLab"
+	giteaDisplayName = "Gitea"
 )
 
-func (c gitlabOauthClient) GetProvider() string {
-	return "gitlab"
+func (c giteaOauthClient) GetProvider() string {
+	return "gitea"
 }
 
-func (c gitlabOauthClient) GetClientID() string {
+func (c giteaOauthClient) GetClientID() string {
 	return c.ClientID
 }
 
-func (c gitlabOauthClient) GetCallbackLocation() string {
+func (c giteaOauthClient) GetCallbackLocation() string {
 	return c.CallbackLocation
 }
 
-func (c gitlabOauthClient) buildLoginURL(state string) (string, error) {
+func (c giteaOauthClient) buildLoginURL(state string) (string, error) {
 	u, err := url.Parse(c.AuthLocation)
 	if err != nil {
 		return "", err
@@ -47,16 +46,16 @@ func (c gitlabOauthClient) buildLoginURL(state string) (string, error) {
 	q.Set("redirect_uri", c.CallbackLocation)
 	q.Set("response_type", "code")
 	q.Set("state", state)
-	q.Set("scope", "read_user")
+	// q.Set("scope", "read_user")
 	u.RawQuery = q.Encode()
 	return u.String(), nil
 }
 
-func (c gitlabOauthClient) exchangeOauthCode(ctx context.Context, code string) (*TokenResponse, error) {
+func (c giteaOauthClient) exchangeOauthCode(ctx context.Context, code string) (*TokenResponse, error) {
 	form := url.Values{}
 	form.Add("grant_type", "authorization_code")
 	form.Add("redirect_uri", c.CallbackLocation)
-	form.Add("scope", "read_user")
+	// form.Add("scope", "read_user")
 	form.Add("code", code)
 	req, err := http.NewRequest("POST", c.ExchangeLocation, strings.NewReader(form.Encode()))
 	if err != nil {
@@ -86,7 +85,7 @@ func (c gitlabOauthClient) exchangeOauthCode(ctx context.Context, code string) (
 	return &tokenResponse, nil
 }
 
-func (c gitlabOauthClient) inspectOauthAccessToken(ctx context.Context, accessToken string) (*InspectResponse, error) {
+func (c giteaOauthClient) inspectOauthAccessToken(ctx context.Context, accessToken string) (*InspectResponse, error) {
 	req, err := http.NewRequest("GET", c.InspectLocation, nil)
 	if err != nil {
 		return nil, err

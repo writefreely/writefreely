@@ -52,6 +52,8 @@ var (
 	ErrUserNotFoundEmail  = impart.HTTPError{http.StatusNotFound, "Please enter your username instead of your email address."}
 
 	ErrUserSilenced = impart.HTTPError{http.StatusForbidden, "Account is silenced."}
+
+	ErrDisabledPasswordAuth = impart.HTTPError{http.StatusForbidden, "Password authentication is disabled."}
 )
 
 // Post operation errors
