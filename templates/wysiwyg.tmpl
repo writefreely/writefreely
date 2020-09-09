@@ -70,7 +70,6 @@
 			</div>
 		</header>
 
-		<script src="/js/prose.bundle.js"></script>
 		<script src="/js/h.js"></script>
 		<script>
 		function toggleTheme() {
@@ -124,7 +123,11 @@
 		};
 		{{if .Post.Id}}var draftDoc = 'draft{{.Post.Id}}';
 		var origDoc = '{{.Post.Content}}';{{else}}var draftDoc = 'lastDoc';{{end}}
-		H.loadClassic($title, $writer, draftDoc, true);
+
+		// ProseMirror editor
+		window.draftKey = draftDoc;
+
+		// H.loadClassic($title, $writer, draftDoc, true);
 		updateWordCount();
 		
 		var typingTimer;
@@ -254,11 +257,6 @@
 		};
 
 		setButtonStates();
-		$title.on('keyup input', function() {
-			setButtonStates();
-			clearTimeout(typingTimer);
-			typingTimer = setTimeout(doneTyping, doneTypingInterval);
-		}, false);
 		$title.on('keydown', function(e) {
 			if (e.keyCode == 13) {
 				if (e.metaKey || e.ctrlKey) {
@@ -269,6 +267,7 @@
 				}
 			}
 		});
+		/*
 		$writer.on('keyup input', function() {
 			setButtonStates();
 			clearTimeout(typingTimer);
@@ -280,6 +279,7 @@
 				$btnPublish.el.click();
 			}
 		});
+		*/
 		$btnPublish.on('click', function(e) {
 			e.preventDefault();
 			if (!publishing && $content.el.value) {
@@ -394,6 +394,7 @@
 		  // whatevs
 		}
 		</script>
+		<script src="/js/prose.bundle.js"></script>
 		<link href="/css/icons.css" rel="stylesheet">
 	</body>
 </html>{{end}}
