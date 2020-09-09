@@ -6,7 +6,7 @@ module.exports = {
 	},
 	output: {
 		filename: 'prose.bundle.js',
-		path: path.resolve(__dirname, 'dist')
+		path: path.resolve('..', 'static', 'js'),
 	},
 	module: {
 		rules: [
