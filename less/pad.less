@@ -60,7 +60,7 @@
 			&:hover {
 				background: @lightNavHoverBG;
 			}
-			&:hover > ul {
+			&:hover > ul, &.open > ul {
 				display: block;
 			}
 			&.selected {
@@ -361,6 +361,24 @@ body#pad {
     z-index: 10;
 }
 
+body#pad .alert {
+	position: fixed;
+	bottom: 0.25em;
+	left: 2em;
+	right: 2em;
+	font-size: 1.1em;
+
+	&#edited-elsewhere {
+		&.hidden {
+			display: none;
+		}
+
+		a {
+			font-weight: bold;
+		}
+	}
+}
+
 @media all and (max-height: 500px) {
 	body#pad {
 		textarea {
@@ -433,6 +451,10 @@ body#pad {
 			padding-left: 10%;
 			padding-right: 10%;
 		}
+		.alert {
+			left: 10%;
+			right: 10%;
+		}
 	}
 }
 @media all and (min-width: 60em) {
@@ -440,6 +462,10 @@ body#pad {
 		textarea, #title {
 			padding-left: 15%;
 			padding-right: 15%;
+		}
+		.alert {
+			left: 15%;
+			right: 15%;
 		}
 	}
 }
@@ -449,6 +475,10 @@ body#pad {
 			padding-left: 20%;
 			padding-right: 20%;
 		}
+		.alert {
+			left: 20%;
+			right: 20%;
+		}
 	}
 }
 @media all and (min-width: 85em) {
@@ -457,6 +487,10 @@ body#pad {
 			padding-left: 25%;
 			padding-right: 25%;
 		}
+		.alert {
+			left: 25%;
+			right: 25%;
+		}
 	}
 }
 @media all and (min-width: 105em) {
@@ -464,6 +498,10 @@ body#pad {
 		textarea, #title {
 			padding-left: 30%;
 			padding-right: 30%;
+		}
+		.alert {
+			left: 30%;
+			right: 30%;
 		}
 	}
 }

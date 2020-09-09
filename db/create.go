@@ -1,3 +1,13 @@
+/*
+ * Copyright © 2019-2020 A Bunch Tell LLC.
+ *
+ * This file is part of WriteFreely.
+ *
+ * WriteFreely is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License, included
+ * in the LICENSE file in this source code package.
+ */
+
 package db
 
 import (
@@ -139,6 +149,15 @@ func (c *Column) SetDefault(value string) *Column {
 	return c
 }
 
+func (c *Column) SetDefaultCurrentTimestamp() *Column {
+	def := "NOW()"
+	if c.Dialect == DialectSQLite {
+		def = "CURRENT_TIMESTAMP"
+	}
+	c.Default = OptionalString{Set: true, Value: def}
+	return c
+}
+
 func (c *Column) SetType(t ColumnType) *Column {
 	c.Type = t
 	return c
@@ -168,7 +187,11 @@ func (c *Column) String() (string, error) {
 
 	if c.Default.Set {
 		str.WriteString(" DEFAULT ")
-		str.WriteString(c.Default.Value)
+		val := c.Default.Value
+		if val == "" {
+			val = "''"
+		}
+		str.WriteString(val)
 	}
 
 	if c.PrimaryKey {
@@ -241,4 +264,3 @@ func (b *CreateTableSqlBuilder) ToSQL() (string, error) {
 
 	return str.String(), nil
 }
-

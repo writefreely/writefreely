@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 A Bunch Tell LLC.
+ * Copyright © 2019-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -40,6 +40,18 @@ func (i Invite) Uses() int64 {
 
 func (i Invite) Expired() bool {
 	return i.Expires != nil && i.Expires.Before(time.Now())
+}
+
+func (i Invite) Active(db *datastore) bool {
+	if i.Expired() {
+		return false
+	}
+	if i.MaxUses.Valid && i.MaxUses.Int64 > 0 {
+		if c := db.GetUsersInvitedCount(i.ID); c >= i.MaxUses.Int64 {
+			return false
+		}
+	}
+	return true
 }
 
 func (i Invite) ExpiresFriendly() string {
@@ -158,17 +170,22 @@ func handleViewInvite(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p := struct {
 		page.StaticPage
+		*OAuthButtons
 		Error   string
 		Flashes []template.HTML
 		Invite  string
 	}{
-		StaticPage: pageForReq(app, r),
-		Invite:     inviteCode,
+		StaticPage:   pageForReq(app, r),
+		OAuthButtons: NewOAuthButtons(app.cfg),
+		Invite:       inviteCode,
 	}
 
 	if expired {
 		p.Error = "This invite link has expired."
 	}
+
+	// Tell search engines not to index invite links
+	w.Header().Set("X-Robots-Tag", "noindex")
 
 	// Get error messages
 	session, err := app.sessionStore.Get(r, cookieName)

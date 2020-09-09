@@ -6,7 +6,7 @@
 				<a class="home" href="/">{{.SiteName}}</a>
 				{{if not .SingleUser}}
 					<a href="/about">about</a>
-					{{if .LocalTimeline}}<a href="/read">reader</a>{{end}}
+					{{if and .LocalTimeline .CanViewReader}}<a href="/read">reader</a>{{end}}
 					{{if .Username}}<a href="https://writefreely.org/guide/{{.OfficialVersion}}" target="guide">writer's guide</a>{{end}}
 					<a href="/privacy">privacy</a>
 					<p style="font-size: 0.9em">powered by <a href="https://writefreely.org">writefreely</a></p>

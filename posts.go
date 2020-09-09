@@ -135,6 +135,7 @@ type (
 		Views        int64
 		Font         string
 		Created      time.Time
+		Updated      time.Time
 		IsRTL        sql.NullBool
 		Language     sql.NullString
 		OwnerID      int64
@@ -1140,6 +1141,7 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 		p.Collection.FederatedAccount() + "/followers",
 	}
 	o.Name = p.DisplayTitle()
+	p.augmentContent()
 	if p.HTMLContent == template.HTML("") {
 		p.formatContent(cfg, false)
 	}
@@ -1175,14 +1177,13 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 
 	stripper := bluemonday.StrictPolicy()
 	content := stripper.Sanitize(p.Content)
-	mentionRegex := regexp.MustCompile(`@[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]+\b`)
-	mentions := mentionRegex.FindAllString(content, -1)
+	mentions := mentionReg.FindAllString(content, -1)
 
 	for _, handle := range mentions {
 		actorIRI, err := app.db.GetProfilePageFromHandle(app, handle)
 		if err != nil {
-			log.Info("Can't find this user either in the database nor in the remote instance")
-			return nil
+			log.Info("Couldn't find user '%s' locally or remotely", handle)
+			continue
 		}
 		mentionedUsers[handle] = actorIRI
 	}
@@ -1241,9 +1242,9 @@ func getRawPost(app *App, friendlyID string) *RawPost {
 	var isRTL sql.NullBool
 	var lang sql.NullString
 	var ownerID sql.NullInt64
-	var created time.Time
+	var created, updated time.Time
 
-	err := app.db.QueryRow("SELECT title, content, text_appearance, language, rtl, created, owner_id FROM posts WHERE id = ?", friendlyID).Scan(&title, &content, &font, &lang, &isRTL, &created, &ownerID)
+	err := app.db.QueryRow("SELECT title, content, text_appearance, language, rtl, created, updated, owner_id FROM posts WHERE id = ?", friendlyID).Scan(&title, &content, &font, &lang, &isRTL, &created, &updated, &ownerID)
 	switch {
 	case err == sql.ErrNoRows:
 		return &RawPost{Content: "", Found: false, Gone: false}
@@ -1251,7 +1252,7 @@ func getRawPost(app *App, friendlyID string) *RawPost {
 		return &RawPost{Content: "", Found: true, Gone: false}
 	}
 
-	return &RawPost{Title: title, Content: content, Font: font, Created: created, IsRTL: isRTL, Language: lang, OwnerID: ownerID.Int64, Found: true, Gone: content == ""}
+	return &RawPost{Title: title, Content: content, Font: font, Created: created, Updated: updated, IsRTL: isRTL, Language: lang, OwnerID: ownerID.Int64, Found: true, Gone: content == ""}
 
 }
 
@@ -1260,15 +1261,15 @@ func getRawCollectionPost(app *App, slug, collAlias string) *RawPost {
 	var id, title, content, font string
 	var isRTL sql.NullBool
 	var lang sql.NullString
-	var created time.Time
+	var created, updated time.Time
 	var ownerID null.Int
 	var views int64
 	var err error
 
 	if app.cfg.App.SingleUser {
-		err = app.db.QueryRow("SELECT id, title, content, text_appearance, language, rtl, view_count, created, owner_id FROM posts WHERE slug = ? AND collection_id = 1", slug).Scan(&id, &title, &content, &font, &lang, &isRTL, &views, &created, &ownerID)
+		err = app.db.QueryRow("SELECT id, title, content, text_appearance, language, rtl, view_count, created, updated, owner_id FROM posts WHERE slug = ? AND collection_id = 1", slug).Scan(&id, &title, &content, &font, &lang, &isRTL, &views, &created, &updated, &ownerID)
 	} else {
-		err = app.db.QueryRow("SELECT id, title, content, text_appearance, language, rtl, view_count, created, owner_id FROM posts WHERE slug = ? AND collection_id = (SELECT id FROM collections WHERE alias = ?)", slug, collAlias).Scan(&id, &title, &content, &font, &lang, &isRTL, &views, &created, &ownerID)
+		err = app.db.QueryRow("SELECT id, title, content, text_appearance, language, rtl, view_count, created, updated, owner_id FROM posts WHERE slug = ? AND collection_id = (SELECT id FROM collections WHERE alias = ?)", slug, collAlias).Scan(&id, &title, &content, &font, &lang, &isRTL, &views, &created, &updated, &ownerID)
 	}
 	switch {
 	case err == sql.ErrNoRows:
@@ -1284,6 +1285,7 @@ func getRawCollectionPost(app *App, slug, collAlias string) *RawPost {
 		Content:  content,
 		Font:     font,
 		Created:  created,
+		Updated:  updated,
 		IsRTL:    isRTL,
 		Language: lang,
 		OwnerID:  ownerID.Int64,
@@ -1431,6 +1433,8 @@ Are you sure it was ever here?`,
 		return impart.HTTPError{http.StatusGone, "Post was unpublished."}
 	}
 
+	p.augmentContent()
+
 	// Serve collection post
 	if isRaw {
 		contentType := "text/plain"
@@ -1542,6 +1546,13 @@ func (rp *RawPost) UserFacingCreated() string {
 
 func (rp *RawPost) Created8601() string {
 	return rp.Created.Format("2006-01-02T15:04:05Z")
+}
+
+func (rp *RawPost) Updated8601() string {
+	if rp.Updated.IsZero() {
+		return ""
+	}
+	return rp.Updated.Format("2006-01-02T15:04:05Z")
 }
 
 var imageURLRegex = regexp.MustCompile(`(?i)[^ ]+\.(gif|png|jpg|jpeg|image)$`)

@@ -1,21 +1,58 @@
+/*
+ * Copyright © 2019-2020 A Bunch Tell LLC.
+ *
+ * This file is part of WriteFreely.
+ *
+ * WriteFreely is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License, included
+ * in the LICENSE file in this source code package.
+ */
+
 package writefreely
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
-	"github.com/writeas/impart"
-	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/config"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
+	"github.com/writeas/impart"
+	"github.com/writeas/web-core/log"
+	"github.com/writeas/writefreely/config"
 )
+
+// OAuthButtons holds display information for different OAuth providers we support.
+type OAuthButtons struct {
+	SlackEnabled       bool
+	WriteAsEnabled     bool
+	GitLabEnabled      bool
+	GitLabDisplayName  string
+	GiteaEnabled       bool
+	GiteaDisplayName   string
+	GenericEnabled     bool
+	GenericDisplayName string
+}
+
+// NewOAuthButtons creates a new OAuthButtons struct based on our app configuration.
+func NewOAuthButtons(cfg *config.Config) *OAuthButtons {
+	return &OAuthButtons{
+		SlackEnabled:       cfg.SlackOauth.ClientID != "",
+		WriteAsEnabled:     cfg.WriteAsOauth.ClientID != "",
+		GitLabEnabled:      cfg.GitlabOauth.ClientID != "",
+		GitLabDisplayName:  config.OrDefaultString(cfg.GitlabOauth.DisplayName, gitlabDisplayName),
+		GiteaEnabled:       cfg.GiteaOauth.ClientID != "",
+		GiteaDisplayName:   config.OrDefaultString(cfg.GiteaOauth.DisplayName, giteaDisplayName),
+		GenericEnabled:     cfg.GenericOauth.ClientID != "",
+		GenericDisplayName: config.OrDefaultString(cfg.GenericOauth.DisplayName, genericOauthDisplayName),
+	}
+}
 
 // TokenResponse contains data returned when a token is created either
 // through a code exchange or using a refresh token.
@@ -59,8 +96,8 @@ type OAuthDatastoreProvider interface {
 type OAuthDatastore interface {
 	GetIDForRemoteUser(context.Context, string, string, string) (int64, error)
 	RecordRemoteUserID(context.Context, int64, string, string, string, string) error
-	ValidateOAuthState(context.Context, string) (string, string, error)
-	GenerateOAuthState(context.Context, string, string) (string, error)
+	ValidateOAuthState(context.Context, string) (string, string, int64, string, error)
+	GenerateOAuthState(context.Context, string, string, int64, string) (string, error)
 
 	CreateUser(*config.Config, *User, string) error
 	GetUserByID(int64) (*User, error)
@@ -96,19 +133,32 @@ type oauthHandler struct {
 
 func (h oauthHandler) viewOauthInit(app *App, w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	state, err := h.DB.GenerateOAuthState(ctx, h.oauthClient.GetProvider(), h.oauthClient.GetClientID())
+
+	var attachUser int64
+	if attach := r.URL.Query().Get("attach"); attach == "t" {
+		user, _ := getUserAndSession(app, r)
+		if user == nil {
+			return impart.HTTPError{http.StatusInternalServerError, "cannot attach auth to user: user not found in session"}
+		}
+		attachUser = user.ID
+	}
+
+	state, err := h.DB.GenerateOAuthState(ctx, h.oauthClient.GetProvider(), h.oauthClient.GetClientID(), attachUser, r.FormValue("invite_code"))
 	if err != nil {
+		log.Error("viewOauthInit error: %s", err)
 		return impart.HTTPError{http.StatusInternalServerError, "could not prepare oauth redirect url"}
 	}
 
 	if h.callbackProxy != nil {
 		if err := h.callbackProxy.register(ctx, state); err != nil {
+			log.Error("viewOauthInit error: %s", err)
 			return impart.HTTPError{http.StatusInternalServerError, "could not register state server"}
 		}
 	}
 
 	location, err := h.oauthClient.buildLoginURL(state)
 	if err != nil {
+		log.Error("viewOauthInit error: %s", err)
 		return impart.HTTPError{http.StatusInternalServerError, "could not prepare oauth redirect url"}
 	}
 	return impart.HTTPError{http.StatusTemporaryRedirect, location}
@@ -149,7 +199,7 @@ func configureWriteAsOauth(parentHandler *Handler, r *mux.Router, app *App) {
 				callbackLocation: app.Config().App.Host + "/oauth/callback/write.as",
 				httpClient:       config.DefaultHTTPClient(),
 			}
-			callbackLocation = app.Config().SlackOauth.CallbackProxy
+			callbackLocation = app.Config().WriteAsOauth.CallbackProxy
 		}
 
 		oauthClient := writeAsOauthClient{
@@ -158,6 +208,88 @@ func configureWriteAsOauth(parentHandler *Handler, r *mux.Router, app *App) {
 			ExchangeLocation: config.OrDefaultString(app.Config().WriteAsOauth.TokenLocation, writeAsExchangeLocation),
 			InspectLocation:  config.OrDefaultString(app.Config().WriteAsOauth.InspectLocation, writeAsIdentityLocation),
 			AuthLocation:     config.OrDefaultString(app.Config().WriteAsOauth.AuthLocation, writeAsAuthLocation),
+			HttpClient:       config.DefaultHTTPClient(),
+			CallbackLocation: callbackLocation,
+		}
+		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
+	}
+}
+
+func configureGitlabOauth(parentHandler *Handler, r *mux.Router, app *App) {
+	if app.Config().GitlabOauth.ClientID != "" {
+		callbackLocation := app.Config().App.Host + "/oauth/callback/gitlab"
+
+		var callbackProxy *callbackProxyClient = nil
+		if app.Config().GitlabOauth.CallbackProxy != "" {
+			callbackProxy = &callbackProxyClient{
+				server:           app.Config().GitlabOauth.CallbackProxyAPI,
+				callbackLocation: app.Config().App.Host + "/oauth/callback/gitlab",
+				httpClient:       config.DefaultHTTPClient(),
+			}
+			callbackLocation = app.Config().GitlabOauth.CallbackProxy
+		}
+
+		address := config.OrDefaultString(app.Config().GitlabOauth.Host, gitlabHost)
+		oauthClient := gitlabOauthClient{
+			ClientID:         app.Config().GitlabOauth.ClientID,
+			ClientSecret:     app.Config().GitlabOauth.ClientSecret,
+			ExchangeLocation: address + "/oauth/token",
+			InspectLocation:  address + "/api/v4/user",
+			AuthLocation:     address + "/oauth/authorize",
+			HttpClient:       config.DefaultHTTPClient(),
+			CallbackLocation: callbackLocation,
+		}
+		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
+	}
+}
+
+func configureGenericOauth(parentHandler *Handler, r *mux.Router, app *App) {
+	if app.Config().GenericOauth.ClientID != "" {
+		callbackLocation := app.Config().App.Host + "/oauth/callback/generic"
+
+		var callbackProxy *callbackProxyClient = nil
+		if app.Config().GenericOauth.CallbackProxy != "" {
+			callbackProxy = &callbackProxyClient{
+				server:           app.Config().GenericOauth.CallbackProxyAPI,
+				callbackLocation: app.Config().App.Host + "/oauth/callback/generic",
+				httpClient:       config.DefaultHTTPClient(),
+			}
+			callbackLocation = app.Config().GenericOauth.CallbackProxy
+		}
+
+		oauthClient := genericOauthClient{
+			ClientID:         app.Config().GenericOauth.ClientID,
+			ClientSecret:     app.Config().GenericOauth.ClientSecret,
+			ExchangeLocation: app.Config().GenericOauth.Host + app.Config().GenericOauth.TokenEndpoint,
+			InspectLocation:  app.Config().GenericOauth.Host + app.Config().GenericOauth.InspectEndpoint,
+			AuthLocation:     app.Config().GenericOauth.Host + app.Config().GenericOauth.AuthEndpoint,
+			HttpClient:       config.DefaultHTTPClient(),
+			CallbackLocation: callbackLocation,
+		}
+		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
+	}
+}
+
+func configureGiteaOauth(parentHandler *Handler, r *mux.Router, app *App) {
+	if app.Config().GiteaOauth.ClientID != "" {
+		callbackLocation := app.Config().App.Host + "/oauth/callback/gitea"
+
+		var callbackProxy *callbackProxyClient = nil
+		if app.Config().GiteaOauth.CallbackProxy != "" {
+			callbackProxy = &callbackProxyClient{
+				server:           app.Config().GiteaOauth.CallbackProxyAPI,
+				callbackLocation: app.Config().App.Host + "/oauth/callback/gitea",
+				httpClient:       config.DefaultHTTPClient(),
+			}
+			callbackLocation = app.Config().GiteaOauth.CallbackProxy
+		}
+
+		oauthClient := giteaOauthClient{
+			ClientID:         app.Config().GiteaOauth.ClientID,
+			ClientSecret:     app.Config().GiteaOauth.ClientSecret,
+			ExchangeLocation: app.Config().GiteaOauth.Host + "/login/oauth/access_token",
+			InspectLocation:  app.Config().GiteaOauth.Host + "/api/v1/user",
+			AuthLocation:     app.Config().GiteaOauth.Host + "/login/oauth/authorize",
 			HttpClient:       config.DefaultHTTPClient(),
 			CallbackLocation: callbackLocation,
 		}
@@ -185,7 +317,7 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 	code := r.FormValue("code")
 	state := r.FormValue("state")
 
-	provider, clientID, err := h.DB.ValidateOAuthState(ctx, state)
+	provider, clientID, attachUserID, inviteCode, err := h.DB.ValidateOAuthState(ctx, state)
 	if err != nil {
 		log.Error("Unable to ValidateOAuthState: %s", err)
 		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
@@ -194,10 +326,16 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 	tokenResponse, err := h.oauthClient.exchangeOauthCode(ctx, code)
 	if err != nil {
 		log.Error("Unable to exchangeOauthCode: %s", err)
+		// TODO: show user friendly message if needed
+		// TODO: show NO message for cases like user pressing "Cancel" on authorize step
+		addSessionFlash(app, w, r, err.Error(), nil)
+		if attachUserID > 0 {
+			return impart.HTTPError{http.StatusFound, "/me/settings"}
+		}
 		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 	}
 
-	// Now that we have the access token, let's use it real quick to make sur
+	// Now that we have the access token, let's use it real quick to make sure
 	// it really really works.
 	tokenInfo, err := h.oauthClient.inspectOauthAccessToken(ctx, tokenResponse.AccessToken)
 	if err != nil {
@@ -211,7 +349,15 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 	}
 
+	if localUserID != -1 && attachUserID > 0 {
+		if err = addSessionFlash(app, w, r, "This Slack account is already attached to another user.", nil); err != nil {
+			return impart.HTTPError{Status: http.StatusInternalServerError, Message: err.Error()}
+		}
+		return impart.HTTPError{http.StatusFound, "/me/settings"}
+	}
+
 	if localUserID != -1 {
+		// Existing user, so log in now
 		user, err := h.DB.GetUserByID(localUserID)
 		if err != nil {
 			log.Error("Unable to GetUserByID %d: %s", localUserID, err)
@@ -222,6 +368,30 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 			return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 		}
 		return nil
+	}
+	if attachUserID > 0 {
+		log.Info("attaching to user %d", attachUserID)
+		err = h.DB.RecordRemoteUserID(r.Context(), attachUserID, tokenInfo.UserID, provider, clientID, tokenResponse.AccessToken)
+		if err != nil {
+			return impart.HTTPError{http.StatusInternalServerError, err.Error()}
+		}
+		return impart.HTTPError{http.StatusFound, "/me/settings"}
+	}
+
+	// New user registration below.
+	// First, verify that user is allowed to register
+	if inviteCode != "" {
+		// Verify invite code is valid
+		i, err := app.db.GetUserInvite(inviteCode)
+		if err != nil {
+			return impart.HTTPError{http.StatusInternalServerError, err.Error()}
+		}
+		if !i.Active(app.db) {
+			return impart.HTTPError{http.StatusNotFound, "Invite link has expired."}
+		}
+	} else if !app.cfg.App.OpenRegistration {
+		addSessionFlash(app, w, r, ErrUserNotFound.Error(), nil)
+		return impart.HTTPError{http.StatusFound, "/login"}
 	}
 
 	displayName := tokenInfo.DisplayName
@@ -237,6 +407,7 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 		TokenRemoteUser: tokenInfo.UserID,
 		Provider:        provider,
 		ClientID:        clientID,
+		InviteCode:      inviteCode,
 	}
 	tp.TokenHash = tp.HashTokenParams(h.Config.Server.HashSeed)
 
@@ -251,7 +422,7 @@ func (r *callbackProxyClient) register(ctx context.Context, state string) error 
 	if err != nil {
 		return err
 	}
-	req.Header.Set("User-Agent", "writefreely")
+	req.Header.Set("User-Agent", ServerUserAgent(""))
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 

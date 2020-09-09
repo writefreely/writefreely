@@ -40,7 +40,7 @@
 	</head>
 	<body id="collection" itemscope itemtype="http://schema.org/WebPage">
 		{{if or .IsOwner .SingleUser}}<nav id="manage"><ul>
-			<li><a onclick="void(0)">&#9776; Menu</a>
+			<li class="has-submenu"><a onclick="void(0)">&#9776; Menu</a>
 				<ul>
 					{{ if .IsOwner }}
 					{{if .SingleUser}}
@@ -89,8 +89,8 @@
 			{{template "posts" .}}
 
 		{{if gt .TotalPages 1}}<nav id="paging" class="content-container clearfix">
-			{{if or (and .Format.Ascending (lt .CurrentPage .TotalPages)) (isRTL .Direction)}}
-				{{if gt .CurrentPage 1}}<a href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">&#8672; {{if and .Format.Ascending (lt .CurrentPage .TotalPages)}}Previous{{else}}Newer{{end}}</a>{{end}}
+			{{if or (and .Format.Ascending (le .CurrentPage .TotalPages)) (isRTL .Direction)}}
+				{{if gt .CurrentPage 1}}<a href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">&#8672; {{if and .Format.Ascending (le .CurrentPage .TotalPages)}}Previous{{else}}Newer{{end}}</a>{{end}}
 				{{if lt .CurrentPage .TotalPages}}<a style="float:right;" href="{{.NextPageURL .Prefix .CurrentPage .IsTopLevel}}">{{if and .Format.Ascending (lt .CurrentPage .TotalPages)}}Next{{else}}Older{{end}} &#8674;</a>{{end}}
 			{{else}}
 				{{if lt .CurrentPage .TotalPages}}<a href="{{.NextPageURL .Prefix .CurrentPage .IsTopLevel}}">&#8672; Older</a>{{end}}
@@ -117,6 +117,7 @@
 	<script src="/js/h.js"></script>
 	<script src="/js/postactions.js"></script>
 	<script src="/js/localdate.js"></script>
+	<script type="text/javascript" src="/js/menu.js"></script>
 	<script type="text/javascript">
 var deleting = false;
 function delPost(e, id, owned) {

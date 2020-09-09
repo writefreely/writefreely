@@ -56,7 +56,7 @@ var (
 	debugging bool
 
 	// Software version can be set from git env using -ldflags
-	softwareVer = "0.11.2"
+	softwareVer = "0.12.0"
 
 	// DEPRECATED VARS
 	isSingleUser bool
@@ -221,6 +221,10 @@ func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 			return handleViewPad(app, w, r)
 		}
 
+		if app.cfg.App.Private {
+			return viewLogin(app, w, r)
+		}
+
 		if land := app.cfg.App.LandingPath(); land != "/" {
 			return impart.HTTPError{http.StatusFound, land}
 		}
@@ -234,6 +238,7 @@ func handleViewLanding(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p := struct {
 		page.StaticPage
+		*OAuthButtons
 		Flashes []template.HTML
 		Banner  template.HTML
 		Content template.HTML
@@ -241,6 +246,7 @@ func handleViewLanding(app *App, w http.ResponseWriter, r *http.Request) error {
 		ForcedLanding bool
 	}{
 		StaticPage:    pageForReq(app, r),
+		OAuthButtons:  NewOAuthButtons(app.Config()),
 		ForcedLanding: forceLanding,
 	}
 
@@ -408,6 +414,11 @@ func Serve(app *App, r *mux.Router) {
 		log.Info("Done.")
 		os.Exit(0)
 	}()
+
+	// Start gopher server
+	if app.cfg.Server.GopherPort > 0 && !app.cfg.App.Private {
+		go initGopher(app)
+	}
 
 	// Start web application server
 	var bindAddress = app.cfg.Server.Bind
@@ -744,7 +755,7 @@ func connectToDatabase(app *App) {
 	var db *sql.DB
 	var err error
 	if app.cfg.Database.Type == driverMySQL {
-		db, err = sql.Open(app.cfg.Database.Type, fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String())))
+		db, err = sql.Open(app.cfg.Database.Type, fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s&tls=%t", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String()), app.cfg.Database.TLS))
 		db.SetMaxOpenConns(50)
 	} else if app.cfg.Database.Type == driverSQLite {
 		if !SQLiteEnabled {
@@ -880,4 +891,14 @@ func adminInitDatabase(app *App) error {
 
 	log.Info("Done.")
 	return nil
+}
+
+// ServerUserAgent returns a User-Agent string to use in external requests. The
+// hostName parameter may be left empty.
+func ServerUserAgent(hostName string) string {
+	hostUAStr := ""
+	if hostName != "" {
+		hostUAStr = "; +" + hostName
+	}
+	return "Go (" + serverSoftware + "/" + softwareVer + hostUAStr + ")"
 }

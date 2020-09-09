@@ -79,17 +79,20 @@
 
 <!-- Include mathjax configuration -->
 {{define "mathjax"}}
-<script type="text/x-mathjax-config">
-  MathJax.Hub.Config({
-    extensions: ["tex2jax.js"],
-    jax: ["input/TeX", "output/HTML-CSS"],
-    tex2jax: {
-      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
-      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
-      processEscapes: true
-    },
-    "HTML-CSS": { fonts: ["TeX"] }
-  });
+<script>
+  MathJax = {
+      tex: {
+        inlineMath: [
+          ["\\(", "\\)"],
+          ['$', '$'],
+        ],
+        displayMath: [
+          ['$$', '$$'],
+          ['\\[', '\\]'],
+        ],
+      },
+    };
 </script>
-<script type="text/javascript" src="/js/mathjax/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script type="text/javascript" id="MathJax-script" src="/js/mathjax/tex-svg-full.js" async>
+</script>
 {{end}}

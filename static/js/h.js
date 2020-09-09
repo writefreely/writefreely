@@ -128,13 +128,27 @@ var H = {
 		out += $el.el.value;
 		localStorage.setItem(key, out);
 	},
-	load: function($el, key, onlyLoadPopulated) {
+	load: function($el, key, onlyLoadPopulated, postUpdated) {
 		var val = localStorage.getItem(key);
 		if (onlyLoadPopulated && val == null) {
 			// Do nothing
-			return;
+			return true;
 		}
 		$el.el.value = val;
+		if (postUpdated != null) {
+			var lastLocalPublishStr = localStorage.getItem(key+'-published');
+			if (lastLocalPublishStr != null && lastLocalPublishStr != '') {
+				try {
+					var lastLocalPublish = new Date(lastLocalPublishStr);
+					if (postUpdated > lastLocalPublish) {
+						return false;
+					}
+				} catch (e) {
+					console.error("unable to parse draft updated time");
+				}
+			}
+		}
+		return true;
 	},
 	loadClassic: function($titleEl, $el, key, onlyLoadPopulated) {
 		var val = localStorage.getItem(key);

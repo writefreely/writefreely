@@ -160,6 +160,7 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 		pp.Collection = res
 		o := pp.ActivityObject(app)
 		a := activitystreams.NewCreateActivity(o)
+		a.Context = nil
 		ocp.OrderedItems = append(ocp.OrderedItems, *a)
 	}
 
@@ -396,7 +397,9 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 
 	go func() {
 		if to == nil {
-			log.Error("No to! %v", err)
+			if debugging {
+				log.Error("No `to` value!")
+			}
 			return
 		}
 
@@ -491,7 +494,7 @@ func makeActivityPost(hostName string, p *activitystreams.Person, url string, m 
 
 	r, _ := http.NewRequest("POST", url, bytes.NewBuffer(b))
 	r.Header.Add("Content-Type", "application/activity+json")
-	r.Header.Set("User-Agent", "Go ("+serverSoftware+"/"+softwareVer+"; +"+hostName+")")
+	r.Header.Set("User-Agent", ServerUserAgent(hostName))
 	h := sha256.New()
 	h.Write(b)
 	r.Header.Add("Digest", "SHA-256="+base64.StdEncoding.EncodeToString(h.Sum(nil)))
@@ -541,7 +544,7 @@ func resolveIRI(hostName, url string) ([]byte, error) {
 
 	r, _ := http.NewRequest("GET", url, nil)
 	r.Header.Add("Accept", "application/activity+json")
-	r.Header.Set("User-Agent", "Go ("+serverSoftware+"/"+softwareVer+"; +"+hostName+")")
+	r.Header.Set("User-Agent", ServerUserAgent(hostName))
 
 	if debugging {
 		dump, err := httputil.DumpRequestOut(r, true)
@@ -696,6 +699,10 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			// I don't believe we'd ever have too many mentions in a single post that this
 			// could become a burden.
 			remoteUser, err := getRemoteUser(app, tag.HRef)
+			if err != nil {
+				log.Error("Unable to find remote user %s. Skipping: %v", tag.HRef, err)
+				continue
+			}
 			err = makeActivityPost(app.cfg.App.Host, actor, remoteUser.Inbox, activity)
 			if err != nil {
 				log.Error("Couldn't post! %v", err)
@@ -708,7 +715,8 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 
 func getRemoteUser(app *App, actorID string) (*RemoteUser, error) {
 	u := RemoteUser{ActorID: actorID}
-	err := app.db.QueryRow("SELECT id, inbox, shared_inbox, handle FROM remoteusers WHERE actor_id = ?", actorID).Scan(&u.ID, &u.Inbox, &u.SharedInbox, &u.Handle)
+	var handle sql.NullString
+	err := app.db.QueryRow("SELECT id, inbox, shared_inbox, handle FROM remoteusers WHERE actor_id = ?", actorID).Scan(&u.ID, &u.Inbox, &u.SharedInbox, &handle)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, impart.HTTPError{http.StatusNotFound, "No remote user with that ID."}
@@ -716,6 +724,8 @@ func getRemoteUser(app *App, actorID string) (*RemoteUser, error) {
 		log.Error("Couldn't get remote user %s: %v", actorID, err)
 		return nil, err
 	}
+
+	u.Handle = handle.String
 
 	return &u, nil
 }
