@@ -1421,13 +1421,17 @@ Are you sure it was ever here?`,
 			return err
 		}
 	}
-	p.IsOwner = owner != nil && p.OwnerID.Valid && owner.ID == p.OwnerID.Int64
+
+	// Check if the authenticated user is the post owner
+	p.IsOwner = u != nil && u.ID == p.OwnerID.Int64
 	p.Collection = coll
 	p.IsTopLevel = app.cfg.App.SingleUser
 
-	if !p.IsOwner && silenced {
+	// Only allow a post owner or admin to view a post for silenced collections
+	if silenced && !p.IsOwner && (u == nil || !u.IsAdmin()) {
 		return ErrPostNotFound
 	}
+
 	// Check if post has been unpublished
 	if p.Content == "" && p.Title.String == "" {
 		return impart.HTTPError{http.StatusGone, "Post was unpublished."}
