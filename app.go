@@ -902,3 +902,13 @@ func ServerUserAgent(hostName string) string {
 	}
 	return "Go (" + serverSoftware + "/" + softwareVer + hostUAStr + ")"
 }
+
+// GetCollection returns the collection associated with the alias. If the application is in
+// single user mode then the collection associated with ID 1 (admin) is returned.
+func GetCollection(app *App, alias string) (*Collection, error) {
+	if app.cfg.App.SingleUser {
+		return app.db.GetCollectionByID(1)
+	}
+
+	return app.db.GetCollection(alias)
+}
