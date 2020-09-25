@@ -422,8 +422,10 @@ func (db *datastore) GetUserNameFromToken(accessToken string) (string, error) {
 		return "", ErrNoAccessToken
 	}
 
-	var oneTime bool
-	var username string
+	var (
+		username string
+		oneTime  bool
+	)
 	err := db.QueryRow("SELECT username, one_time FROM accesstokens LEFT JOIN users ON user_id = id WHERE token LIKE ? AND (expires IS NULL OR expires > "+db.now()+")", t).Scan(&username, &oneTime)
 	switch {
 	case err == sql.ErrNoRows:
@@ -446,9 +448,11 @@ func (db *datastore) GetUserDataFromToken(accessToken string) (int64, string, er
 		return 0, "", ErrNoAccessToken
 	}
 
-	var userID int64
-	var oneTime bool
-	var username string
+	var (
+		userID   int64
+		username string
+		oneTime  bool
+	)
 	err := db.QueryRow("SELECT user_id, username, one_time FROM accesstokens LEFT JOIN users ON user_id = id WHERE token LIKE ? AND (expires IS NULL OR expires > "+db.now()+")", t).Scan(&userID, &username, &oneTime)
 	switch {
 	case err == sql.ErrNoRows:
@@ -578,9 +582,11 @@ func (db *datastore) GetTemporaryOneTimeAccessToken(userID int64, validSecs int,
 }
 
 func (db *datastore) CreateOwnedPost(post *SubmittedPost, accessToken, collAlias, hostName string) (*PublicPost, error) {
-	var userID, collID int64 = -1, -1
-	var coll *Collection
-	var err error
+	var (
+		userID, collID int64 = -1, -1
+		coll           *Collection
+		err            error
+	)
 	if accessToken != "" {
 		userID = db.GetUserID(accessToken)
 		if userID == -1 {
@@ -621,7 +627,6 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 		appearance = "norm"
 	}
 
-	var err error
 	ownerID := sql.NullInt64{
 		Valid: false,
 	}
@@ -658,7 +663,9 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 		// SQLite stores datetimes in UTC, so convert time.Now() to it here
 		created = created.UTC()
 	}
+
 	if post.Created != nil {
+		var err error
 		created, err = time.Parse("2006-01-02T15:04:05Z", *post.Created)
 		if err != nil {
 			log.Error("Unable to parse Created time '%s': %v", *post.Created, err)
@@ -877,10 +884,12 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 	}
 
 	// Find any current domain
-	var collID int64
-	var rowsAffected int64
-	var changed bool
-	var res sql.Result
+	var (
+		collID       int64
+		rowsAffected int64
+		changed      bool
+		res          sql.Result
+	)
 	err := db.QueryRow("SELECT id FROM collections WHERE alias = ?", alias).Scan(&collID)
 	if err != nil {
 		log.Error("Failed selecting from collections: %v. Some things won't work.", err)
@@ -992,11 +1001,13 @@ func (db *datastore) PostIDExists(id string) bool {
 //   - GetPost(id string)
 //   - GetCollectionPost(slug string, collectionID int64)
 func (db *datastore) GetPost(id string, collectionID int64) (*PublicPost, error) {
-	var ownerName sql.NullString
-	p := &Post{}
+	var (
+		ownerName sql.NullString
+		row       *sql.Row
+		where     string
+	)
 
-	var row *sql.Row
-	var where string
+	p := &Post{}
 	params := []interface{}{id}
 	if collectionID > 0 {
 		where = "slug = ? AND collection_id = ?"
@@ -1064,8 +1075,10 @@ func (db *datastore) GetPostProperty(id string, collectionID int64, property str
 		return nil, impart.HTTPError{http.StatusBadRequest, fmt.Sprintf("Invalid property: %s.", property)}
 	}
 
-	var res interface{}
-	var row *sql.Row
+	var (
+		res interface{}
+		row *sql.Row
+	)
 	if collectionID != 0 {
 		row = db.QueryRow("SELECT "+selectQuery+" FROM posts WHERE slug = ? AND collection_id = ? LIMIT 1", id, collectionID)
 	} else {
@@ -1195,8 +1208,10 @@ func (db *datastore) GetPostsTagged(cfg *config.Config, c *Collection, tag strin
 		timeCondition = "AND created <= " + db.now()
 	}
 
-	var rows *sql.Rows
-	var err error
+	var (
+		rows *sql.Rows
+		err  error
+	)
 	if db.driverName == driverSQLite {
 		rows, err = db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND LOWER(content) regexp ? "+timeCondition+" ORDER BY created "+order+limitStr, collID, `.*#`+strings.ToLower(tag)+`\b.*`)
 	} else {
@@ -1254,8 +1269,10 @@ func (db *datastore) GetAPFollowers(c *Collection) (*[]RemoteUser, error) {
 // collection. This has the SIDE EFFECT of also generating a slug for the post.
 // FIXME: make this side effect more explicit (or extract it)
 func (db *datastore) CanCollect(cpr *ClaimPostRequest, userID int64) bool {
-	var title, content string
-	var lang sql.NullString
+	var (
+		title, content string
+		lang           sql.NullString
+	)
 	err := db.QueryRow("SELECT title, content, language FROM posts WHERE id = ? AND owner_id = ?", cpr.ID, userID).Scan(&title, &content, &lang)
 	switch {
 	case err == sql.ErrNoRows:
@@ -1311,9 +1328,11 @@ func (db *datastore) DispersePosts(userID int64, postIDs []string) (*[]ClaimPost
 		}
 		postClaimReqs[postID] = true
 
-		var err error
 		// Get full post information to return
-		var fullPost *PublicPost
+		var (
+			fullPost *PublicPost
+			err      error
+		)
 		fullPost, err = db.GetPost(postID, 0)
 		if err != nil {
 			if err, ok := err.(impart.HTTPError); ok {
@@ -1334,9 +1353,11 @@ func (db *datastore) DispersePosts(userID int64, postIDs []string) (*[]ClaimPost
 			continue
 		}
 
-		var qRes sql.Result
-		var query string
-		var params []interface{}
+		var (
+			qRes   sql.Result
+			query  string
+			params []interface{}
+		)
 		// Do AND owner_id = ? for sanity.
 		// This should've been caught and returned with a good error message
 		// just above.
@@ -1406,12 +1427,14 @@ func (db *datastore) ClaimPosts(cfg *config.Config, userID int64, collAlias stri
 			continue
 		}
 
-		var err error
-		var qRes sql.Result
-		var query string
-		var params []interface{}
-		var slugIdx int = -1
-		var coll *Collection
+		var (
+			coll    *Collection
+			qRes    sql.Result
+			query   string
+			params  []interface{}
+			slugIdx int = -1
+			err     error
+		)
 		if collAlias == "" {
 			// Posts are being claimed at /posts/claim, not
 			// /collections/{alias}/collect, so use given individual collection
@@ -1746,8 +1769,10 @@ func (db *datastore) GetTopPosts(u *User, alias string) (*[]PublicPost, error) {
 	for rows.Next() {
 		p := Post{}
 		c := Collection{}
-		var alias, title, description sql.NullString
-		var views sql.NullInt64
+		var (
+			alias, title, description sql.NullString
+			views                     sql.NullInt64
+		)
 		err = rows.Scan(&p.ID, &p.Slug, &p.ViewCount, &p.Title, &alias, &title, &description, &views)
 		if err != nil {
 			log.Error("Failed scanning User.getPosts() row: %v", err)
@@ -1821,8 +1846,10 @@ func (db *datastore) GetUserPosts(u *User) (*[]PublicPost, error) {
 	for rows.Next() {
 		p := Post{}
 		c := Collection{}
-		var alias, title, description sql.NullString
-		var views sql.NullInt64
+		var (
+			alias, title, description sql.NullString
+			views                     sql.NullInt64
+		)
 		err = rows.Scan(&p.ID, &p.Slug, &p.ViewCount, &p.Title, &p.Created, &p.Updated, &p.Content, &p.Font, &p.Language, &p.RTL, &alias, &title, &description, &views)
 		if err != nil {
 			log.Error("Failed scanning User.getPosts() row: %v", err)
@@ -2569,10 +2596,12 @@ func (db *datastore) GenerateOAuthState(ctx context.Context, provider string, cl
 }
 
 func (db *datastore) ValidateOAuthState(ctx context.Context, state string) (string, string, int64, string, error) {
-	var provider string
-	var clientID string
-	var attachUserID sql.NullInt64
-	var inviteCode sql.NullString
+	var (
+		provider     string
+		clientID     string
+		attachUserID sql.NullInt64
+		inviteCode   sql.NullString
+	)
 	err := wf_db.RunTransactionWithOptions(ctx, db.DB, &sql.TxOptions{}, func(ctx context.Context, tx *sql.Tx) error {
 		err := tx.
 			QueryRowContext(ctx, "SELECT provider, client_id, attach_user_id, invite_code FROM oauth_client_states WHERE state = ? AND used = FALSE", state).
@@ -2659,8 +2688,10 @@ func (db *datastore) GetOauthAccounts(ctx context.Context, userID int64) ([]oaut
 // initialized with the correct schema.
 // Currently, it checks to see if the `users` table exists.
 func (db *datastore) DatabaseInitialized() bool {
-	var dummy string
-	var err error
+	var (
+		dummy string
+		err   error
+	)
 	if db.driverName == driverSQLite {
 		err = db.QueryRow("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'users'").Scan(&dummy)
 	} else {
