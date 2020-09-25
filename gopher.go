@@ -60,10 +60,12 @@ func handleGopher(app *App, w gopher.ResponseWriter, r *gopher.Request) error {
 }
 
 func handleGopherCollection(app *App, w gopher.ResponseWriter, r *gopher.Request) error {
-	var collAlias, slug string
-	var c *Collection
-	var err error
-	var baseSel = "/"
+	var (
+		c               *Collection
+		collAlias, slug string
+		baseSel         = "/"
+		err             error
+	)
 
 	parts := strings.Split(r.Selector, "/")
 	if app.cfg.App.SingleUser {
@@ -108,9 +110,11 @@ func handleGopherCollection(app *App, w gopher.ResponseWriter, r *gopher.Request
 }
 
 func handleGopherCollectionPost(app *App, w gopher.ResponseWriter, r *gopher.Request) error {
-	var collAlias, slug string
-	var c *Collection
-	var err error
+	var (
+		c               *Collection
+		collAlias, slug string
+		err             error
+	)
 
 	parts := strings.Split(r.Selector, "/")
 	if app.cfg.App.SingleUser {
