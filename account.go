@@ -239,9 +239,8 @@ func viewLogout(app *App, w http.ResponseWriter, r *http.Request) error {
 	// Ensure user has an email or password set before they go, so they don't
 	// lose access to their account.
 	val := session.Values[cookieUserVal]
-	var u = &User{}
-	var ok bool
-	if u, ok = val.(*User); !ok {
+	u, ok := val.(*User)
+	if !ok {
 		log.Error("Error casting user object on logout. Vals: %+v Resetting cookie.", session.Values)
 
 		err = session.Save(r, w)
@@ -387,9 +386,11 @@ func login(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	var u *User
-	var err error
-	var signin userCredentials
+	var (
+		u      *User
+		signin userCredentials
+		err    error
+	)
 
 	if app.cfg.App.DisablePasswordAuth {
 		err := ErrDisabledPasswordAuth
@@ -583,8 +584,12 @@ func viewExportOptions(app *App, u *User, w http.ResponseWriter, r *http.Request
 }
 
 func viewExportPosts(app *App, w http.ResponseWriter, r *http.Request) ([]byte, string, error) {
-	var filename string
-	var u = &User{}
+	var (
+		filename string
+		u        = &User{}
+		err      error
+	)
+
 	reqJSON := IsJSON(r)
 	if reqJSON {
 		// Use given Authorization header
@@ -598,7 +603,6 @@ func viewExportPosts(app *App, w http.ResponseWriter, r *http.Request) ([]byte, 
 			return nil, filename, ErrBadAccessToken
 		}
 
-		var err error
 		u, err = app.db.GetUserByID(userID)
 		if err != nil {
 			return nil, filename, impart.HTTPError{http.StatusInternalServerError, "Unable to retrieve requested user."}
@@ -621,12 +625,12 @@ func viewExportPosts(app *App, w http.ResponseWriter, r *http.Request) ([]byte, 
 	filename = u.Username + "-posts-" + time.Now().Truncate(time.Second).UTC().Format("200601021504")
 
 	// Fetch data we're exporting
-	var err error
-	var data []byte
 	posts, err := app.db.GetUserPosts(u)
 	if err != nil {
-		return data, filename, err
+		return nil, filename, err
 	}
+
+	var data []byte
 
 	// Export as CSV
 	if strings.HasSuffix(r.URL.Path, ".csv") {
@@ -647,7 +651,11 @@ func viewExportPosts(app *App, w http.ResponseWriter, r *http.Request) ([]byte, 
 }
 
 func viewExportFull(app *App, w http.ResponseWriter, r *http.Request) ([]byte, string, error) {
-	var err error
+	var (
+		data []byte
+		err  error
+	)
+
 	filename := ""
 	u := getUserSession(app, r)
 	if u == nil {
@@ -657,7 +665,6 @@ func viewExportFull(app *App, w http.ResponseWriter, r *http.Request) ([]byte, s
 
 	exportUser := compileFullExport(app, u)
 
-	var data []byte
 	if r.FormValue("pretty") == "1" {
 		data, err = json.MarshalIndent(exportUser, "", "\t")
 	} else {
@@ -850,10 +857,12 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 func updateSettings(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r)
 
-	var s userSettings
-	var u *User
-	var sess *sessions.Session
-	var err error
+	var (
+		s    userSettings
+		u    *User
+		sess *sessions.Session
+		err  error
+	)
 	if reqJSON {
 		accessToken := r.Header.Get("Authorization")
 		if accessToken == "" {
@@ -976,8 +985,10 @@ func updatePassphrase(app *App, w http.ResponseWriter, r *http.Request) error {
 }
 
 func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
-	var c *Collection
-	var err error
+	var (
+		c   *Collection
+		err error
+	)
 	vars := mux.Vars(r)
 	alias := vars["collection"]
 	if alias != "" {
@@ -1138,20 +1149,17 @@ func getTempInfo(app *App, key string, r *http.Request, w http.ResponseWriter) s
 	}
 
 	// Get the information
-	var s = ""
-	var ok bool
-	if s, ok = session.Values[key].(string); !ok {
+	s, ok := session.Values[key].(string)
+	if !ok {
 		return ""
 	}
 
 	// Delete cookie
 	session.Options.MaxAge = -1
-	err = session.Save(r, w)
-	if err != nil {
+	if err = session.Save(r, w); err != nil {
 		log.Error("Couldn't erase temp data for key %s: %v", key, err)
 	}
 
-	// Return value
 	return s
 }
 
