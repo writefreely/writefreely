@@ -79,8 +79,10 @@ func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Re
 
 	// TODO: enforce visibility
 	// Get base Collection data
-	var c *Collection
-	var err error
+	var (
+		c   *Collection
+		err error
+	)
 	if app.cfg.App.SingleUser {
 		c, err = app.db.GetCollectionByID(1)
 	} else {
@@ -113,8 +115,10 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 
 	// TODO: enforce visibility
 	// Get base Collection data
-	var c *Collection
-	var err error
+	var (
+		c   *Collection
+		err error
+	)
 	if app.cfg.App.SingleUser {
 		c, err = app.db.GetCollectionByID(1)
 	} else {
@@ -176,8 +180,10 @@ func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Req
 
 	// TODO: enforce visibility
 	// Get base Collection data
-	var c *Collection
-	var err error
+	var (
+		c   *Collection
+		err error
+	)
 	if app.cfg.App.SingleUser {
 		c, err = app.db.GetCollectionByID(1)
 	} else {
@@ -231,8 +237,10 @@ func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Req
 
 	// TODO: enforce visibility
 	// Get base Collection data
-	var c *Collection
-	var err error
+	var (
+		c   *Collection
+		err error
+	)
 	if app.cfg.App.SingleUser {
 		c, err = app.db.GetCollectionByID(1)
 	} else {
@@ -273,8 +281,10 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 
 	vars := mux.Vars(r)
 	alias := vars["alias"]
-	var c *Collection
-	var err error
+	var (
+		c   *Collection
+		err error
+	)
 	if app.cfg.App.SingleUser {
 		c, err = app.db.GetCollectionByID(1)
 	} else {
@@ -310,10 +320,12 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 
 	a := streams.NewAccept()
 	p := c.PersonObject()
-	var to *url.URL
-	var isFollow, isUnfollow bool
-	fullActor := &activitystreams.Person{}
-	var remoteUser *RemoteUser
+	var (
+		to                   *url.URL
+		isFollow, isUnfollow bool
+		fullActor            = &activitystreams.Person{}
+		remoteUser           *RemoteUser
+	)
 
 	res := &streams.Resolver{
 		FollowCallback: func(f *streams.Follow) error {
