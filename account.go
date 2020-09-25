@@ -151,8 +151,6 @@ func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWr
 	}
 
 	// Handle empty optional params
-	// TODO: remove this var
-	createdWithPass := true
 	hashedPass, err := auth.HashPass([]byte(signup.Pass))
 	if err != nil {
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Could not create password hash."}
@@ -162,7 +160,7 @@ func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWr
 	u := &User{
 		Username:   signup.Alias,
 		HashedPass: hashedPass,
-		HasPass:    createdWithPass,
+		HasPass:    true,
 		Email:      prepareUserEmail(signup.Email, app.keys.EmailKey),
 		Created:    time.Now().Truncate(time.Second).UTC(),
 	}
@@ -187,9 +185,6 @@ func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWr
 
 	resUser := &AuthUser{
 		User: u,
-	}
-	if !createdWithPass {
-		resUser.Password = signup.Pass
 	}
 	title := signup.Alias
 	if signup.Normalize {
