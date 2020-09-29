@@ -723,14 +723,14 @@ func newDisplayCollection(c *Collection, cr *collectionReq, page int) *DisplayCo
 	return coll
 }
 
+// getCollectionPage returns the collection page as an int. If the parsed page value is not
+// greater than 0 then the default value of 1 is returned.
 func getCollectionPage(vars map[string]string) int {
-	page := 1
-	var p int
-	p, _ = strconv.Atoi(vars["page"])
-	if p > 0 {
-		page = p
+	if p, _ := strconv.Atoi(vars["page"]); p > 0 {
+		return p
 	}
-	return page
+
+	return 1
 }
 
 // handleViewCollection displays the requested Collection
