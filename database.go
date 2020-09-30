@@ -907,10 +907,24 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 
 	// Update Monetization value
 	if c.Monetization != nil {
-		_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?", collID, "monetization_pointer", *c.Monetization, *c.Monetization)
-		if err != nil {
-			log.Error("Unable to insert monetization_pointer value: %v", err)
-			return err
+		skipUpdate := false
+		if *c.Monetization != "" {
+			// Strip away any excess spaces
+			trimmed := strings.TrimSpace(*c.Monetization)
+			// Only update value when it starts with "$", per spec: https://paymentpointers.org
+			if strings.HasPrefix(trimmed, "$") {
+				c.Monetization = &trimmed
+			} else {
+				// Value appears invalid, so don't update
+				skipUpdate = true
+			}
+		}
+		if !skipUpdate {
+			_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?", collID, "monetization_pointer", *c.Monetization, *c.Monetization)
+			if err != nil {
+				log.Error("Unable to insert monetization_pointer value: %v", err)
+				return err
+			}
 		}
 	}
 
