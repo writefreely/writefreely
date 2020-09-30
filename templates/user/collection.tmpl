@@ -146,6 +146,14 @@ textarea.section.norm {
 		</div>
 	</div>
 
+	<div class="option">
+		<h2>Web Monetization</h2>
+		<div class="section">
+			<p class="explain">Web Monetization enables you to receive micropayments from readers that have a <a href="https://coil.com">Coil membership</a>. Add your payment pointer to enable Web Monetization on your blog.</p>
+			<input type="text" name="monetization_pointer" style="width:100%" value="{{.Monetization}}" placeholder="$wallet.example.com/alice" />
+		</div>
+	</div>
+
 	<div class="option" style="text-align: center; margin-top: 4em;">
 		<input type="submit" id="save-changes" value="Save changes" />
 		<p><a href="{{if .SingleUser}}/{{else}}/{{.Alias}}/{{end}}">View Blog</a></p>

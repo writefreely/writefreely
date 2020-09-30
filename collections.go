@@ -56,6 +56,8 @@ type (
 		PublicOwner bool           `datastore:"public_owner" json:"-"`
 		URL         string         `json:"url,omitempty"`
 
+		Monetization string `json:"monetization_pointer,omitempty"`
+
 		db       *datastore
 		hostName string
 	}
@@ -87,14 +89,15 @@ type (
 		Handle    string `schema:"handle" json:"handle"`
 
 		// Actual collection values updated in the DB
-		Alias       *string         `schema:"alias" json:"alias"`
-		Title       *string         `schema:"title" json:"title"`
-		Description *string         `schema:"description" json:"description"`
-		StyleSheet  *sql.NullString `schema:"style_sheet" json:"style_sheet"`
-		Script      *sql.NullString `schema:"script" json:"script"`
-		Signature   *sql.NullString `schema:"signature" json:"signature"`
-		Visibility  *int            `schema:"visibility" json:"public"`
-		Format      *sql.NullString `schema:"format" json:"format"`
+		Alias        *string         `schema:"alias" json:"alias"`
+		Title        *string         `schema:"title" json:"title"`
+		Description  *string         `schema:"description" json:"description"`
+		StyleSheet   *sql.NullString `schema:"style_sheet" json:"style_sheet"`
+		Script       *sql.NullString `schema:"script" json:"script"`
+		Signature    *sql.NullString `schema:"signature" json:"signature"`
+		Monetization *string         `schema:"monetization_pointer" json:"monetization_pointer"`
+		Visibility   *int            `schema:"visibility" json:"public"`
+		Format       *sql.NullString `schema:"format" json:"format"`
 	}
 	CollectionFormat struct {
 		Format string

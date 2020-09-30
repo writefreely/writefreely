@@ -905,6 +905,15 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 		}
 	}
 
+	// Update Monetization value
+	if c.Monetization != nil {
+		_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?", collID, "monetization_pointer", *c.Monetization, *c.Monetization)
+		if err != nil {
+			log.Error("Unable to insert monetization_pointer value: %v", err)
+			return err
+		}
+	}
+
 	// Update rest of the collection data
 	res, err = db.Exec("UPDATE collections SET "+q.Updates+" WHERE "+q.Conditions, q.Params...)
 	if err != nil {
@@ -2649,11 +2658,11 @@ func (db *datastore) GetIDForRemoteUser(ctx context.Context, remoteUserID, provi
 }
 
 type oauthAccountInfo struct {
-	Provider         string
-	ClientID         string
-	RemoteUserID     string
-	DisplayName      string
-	AllowDisconnect  bool
+	Provider        string
+	ClientID        string
+	RemoteUserID    string
+	DisplayName     string
+	AllowDisconnect bool
 }
 
 func (db *datastore) GetOauthAccounts(ctx context.Context, userID int64) ([]oauthAccountInfo, error) {
