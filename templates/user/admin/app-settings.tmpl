@@ -137,6 +137,13 @@ select {
 			<div><input type="checkbox" name="public_stats" id="public_stats" {{if .Config.PublicStats}}checked="checked"{{end}} /></div>
 		</div>
 		<div class="features row">
+			<div><label for="monetization">
+					Monetization
+					<p>Enable blogs on this site to receive micro&shy;pay&shy;ments from readers via <a target="wm" href="https://webmonetization.org/">Web Monetization</a>.</p>
+				</label></div>
+			<div><input type="checkbox" name="monetization" id="monetization" {{if .Config.Monetization}}checked="checked"{{end}} /></div>
+		</div>
+		<div class="features row">
 			<div><label for="min_username_len">
 					Minimum Username Length
 					<p>The minimum number of characters allowed in a username. (Recommended: 2 or more.)</p>

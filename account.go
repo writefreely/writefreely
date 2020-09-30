@@ -840,7 +840,7 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 	}
 
 	// Add collection properties
-	c.Monetization = app.db.GetCollectionAttribute(c.ID, "monetization_pointer")
+	c.MonetizationPointer = app.db.GetCollectionAttribute(c.ID, "monetization_pointer")
 
 	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
