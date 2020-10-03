@@ -22,7 +22,7 @@ require (
 	github.com/kylemcc/twitter-text-go v0.0.0-20180726194232-7f582f6736ec
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.8.0
-	github.com/mattn/go-sqlite3 v1.14.2
+	github.com/mattn/go-sqlite3 v1.14.4
 	github.com/microcosm-cc/bluemonday v1.0.4
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/nicksnyder/go-i18n v1.10.0 // indirect
