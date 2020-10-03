@@ -135,6 +135,8 @@ github.com/mattn/go-sqlite3 v1.14.0 h1:mLyGNKR8+Vv9CAU7PphKa2hkEqxxhn8i32J6FPj1/
 github.com/mattn/go-sqlite3 v1.14.0/go.mod h1:JIl7NbARA7phWnGvh0LKTyg7S9BA+6gx71ShQilpsus=
 github.com/mattn/go-sqlite3 v1.14.2 h1:A2EQLwjYf/hfYaM20FVjs1UewCTTFR7RmjEHkLjldIA=
 github.com/mattn/go-sqlite3 v1.14.2/go.mod h1:JIl7NbARA7phWnGvh0LKTyg7S9BA+6gx71ShQilpsus=
+github.com/mattn/go-sqlite3 v1.14.4 h1:4rQjbDxdu9fSgI/r3KN72G3c2goxknAqHHgPWWs8UlI=
+github.com/mattn/go-sqlite3 v1.14.4/go.mod h1:WVKg1VTActs4Qso6iwGbiFih2UIHo0ENGwNd0Lj+XmI=
 github.com/microcosm-cc/bluemonday v1.0.2 h1:5lPfLTTAvAbtS0VqT+94yOtFnGfUWYyx0+iToC3Os3s=
 github.com/microcosm-cc/bluemonday v1.0.2/go.mod h1:iVP4YcDBq+n/5fb23BhYFvIMq/leAFZyRl6bYmGDlGc=
 github.com/microcosm-cc/bluemonday v1.0.3 h1:EjVH7OqbU219kdm8acbveoclh2zZFqPJTJw6VUlTLAQ=
