@@ -1476,6 +1476,7 @@ Are you sure it was ever here?`,
 			IsOwner        bool
 			IsPinned       bool
 			IsCustomDomain bool
+			Monetization   string
 			PinnedPosts    *[]PublicPost
 			IsFound        bool
 			IsAdmin        bool
@@ -1493,6 +1494,7 @@ Are you sure it was ever here?`,
 		tp.CanInvite = canUserInvite(app.cfg, tp.IsAdmin)
 		tp.PinnedPosts, _ = app.db.GetPinnedPosts(coll, p.IsOwner)
 		tp.IsPinned = len(*tp.PinnedPosts) > 0 && PostsContains(tp.PinnedPosts, p)
+		tp.Monetization = app.db.GetCollectionAttribute(coll.ID, "monetization_pointer")
 
 		if !postFound {
 			w.WriteHeader(http.StatusNotFound)
