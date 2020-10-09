@@ -826,6 +826,9 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 		return ErrCollectionNotFound
 	}
 
+	// Add collection properties
+	c.MonetizationPointer = app.db.GetCollectionAttribute(c.ID, "monetization_pointer")
+
 	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
 		log.Error("view edit collection %v", err)

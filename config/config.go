@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -137,9 +137,11 @@ type (
 		MinUsernameLen   int  `ini:"min_username_len"`
 		MaxBlogs         int  `ini:"max_blogs"`
 
+		// Options for public instances
 		// Federation
-		Federation  bool `ini:"federation"`
-		PublicStats bool `ini:"public_stats"`
+		Federation   bool `ini:"federation"`
+		PublicStats  bool `ini:"public_stats"`
+		Monetization bool `ini:"monetization"`
 
 		// Access
 		Private bool `ini:"private"`
