@@ -457,12 +457,8 @@ func fetchCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 		return handleFetchCollectionActivities(app, w, r)
 	}
 
-	vars := mux.Vars(r)
-	alias := vars["alias"]
-
-	// TODO: move this logic into a common getCollection function
 	// Get base Collection data
-	c, err := app.db.GetCollection(alias)
+	c, err := GetCollectionFromAliasReqVar(app, r)
 	if err != nil {
 		return err
 	}
@@ -503,10 +499,7 @@ func fetchCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 // fetchCollectionPosts handles an API endpoint for retrieving a collection's
 // posts.
 func fetchCollectionPosts(app *App, w http.ResponseWriter, r *http.Request) error {
-	vars := mux.Vars(r)
-	alias := vars["alias"]
-
-	c, err := app.db.GetCollection(alias)
+	c, err := GetCollectionFromAliasReqVar(app, r)
 	if err != nil {
 		return err
 	}
@@ -611,7 +604,7 @@ func processCollectionRequest(cr *collectionReq, vars map[string]string, w http.
 // values should ALWAYS be checked to determine whether or not to continue.
 func processCollectionPermissions(app *App, cr *collectionReq, u *User, w http.ResponseWriter, r *http.Request) (*Collection, error) {
 	// Display collection if this is a collection
-	c, err := GetCollection(app, cr.alias)
+	c, err := app.db.GetCollection(cr.alias)
 
 	// TODO: verify we don't reveal the existence of a private collection with redirection
 	if err != nil {

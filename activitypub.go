@@ -74,10 +74,9 @@ func activityPubClient() *http.Client {
 func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Server", serverSoftware)
 
-	vars := mux.Vars(r)
-	alias := vars["alias"]
-
-	c, err := GetCollection(app, alias)
+	// TODO: enforce visibility
+	// Get base Collection data
+	c, err := GetCollectionFromAliasReqVar(app, r)
 	if err != nil {
 		return err
 	}
@@ -104,7 +103,9 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 	vars := mux.Vars(r)
 	alias := vars["alias"]
 
-	c, err := GetCollection(app, alias)
+	// TODO: enforce visibility
+	// Get base Collection data using the alias set in the http request
+	c, err := app.db.GetCollection(alias)
 	if err != nil {
 		return err
 	}
@@ -118,12 +119,6 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host
-
-	if app.cfg.App.SingleUser {
-		if alias != c.Alias {
-			return ErrCollectionNotFound
-		}
-	}
 
 	res := &CollectionObj{Collection: *c}
 	app.db.GetPostsCount(res, false)
@@ -157,10 +152,9 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Server", serverSoftware)
 
-	vars := mux.Vars(r)
-	alias := vars["alias"]
-
-	c, err := GetCollection(app, alias)
+	// TODO: enforce visibility
+	// Get base Collection data
+	c, err := GetCollectionFromAliasReqVar(app, r)
 	if err != nil {
 		return err
 	}
@@ -205,10 +199,9 @@ func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Req
 func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Server", serverSoftware)
 
-	vars := mux.Vars(r)
-	alias := vars["alias"]
-
-	c, err := GetCollection(app, alias)
+	// TODO: enforce visibility
+	// Get base Collection data
+	c, err := GetCollectionFromAliasReqVar(app, r)
 	if err != nil {
 		return err
 	}
@@ -243,10 +236,7 @@ func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Req
 func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Server", serverSoftware)
 
-	vars := mux.Vars(r)
-	alias := vars["alias"]
-
-	c, err := GetCollection(app, alias)
+	c, err := GetCollectionFromAliasReqVar(app, r)
 	if err != nil {
 		// TODO: return Reject?
 		return err

@@ -24,8 +24,17 @@ import (
 func ViewFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 	alias := collectionAliasFromReq(req)
 
+	var (
+		c   *Collection
+		err error
+	)
+
 	// Display collection if this is a collection
-	c, err := GetCollection(app, alias)
+	if app.cfg.App.SingleUser {
+		c, err = app.db.GetCollectionByID(1)
+	} else {
+		c, err = app.db.GetCollection(alias)
+	}
 	if err != nil {
 		return nil
 	}
