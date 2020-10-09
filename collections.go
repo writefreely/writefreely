@@ -603,8 +603,17 @@ func processCollectionRequest(cr *collectionReq, vars map[string]string, w http.
 // requires a password. In either case, this will return nil, nil -- thus both
 // values should ALWAYS be checked to determine whether or not to continue.
 func processCollectionPermissions(app *App, cr *collectionReq, u *User, w http.ResponseWriter, r *http.Request) (*Collection, error) {
+	var (
+		c   *Collection
+		err error
+	)
+
 	// Display collection if this is a collection
-	c, err := app.db.GetCollection(cr.alias)
+	if app.cfg.App.SingleUser {
+		c, err = app.db.GetCollectionByID(1)
+	} else {
+		c, err = app.db.GetCollection(cr.alias)
+	}
 
 	// TODO: verify we don't reveal the existence of a private collection with redirection
 	if err != nil {
