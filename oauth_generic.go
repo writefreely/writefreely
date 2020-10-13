@@ -15,6 +15,7 @@ type genericOauthClient struct {
 	ExchangeLocation string
 	InspectLocation  string
 	CallbackLocation string
+	Scope            string
 	HttpClient       HttpClient
 }
 
@@ -46,7 +47,7 @@ func (c genericOauthClient) buildLoginURL(state string) (string, error) {
 	q.Set("redirect_uri", c.CallbackLocation)
 	q.Set("response_type", "code")
 	q.Set("state", state)
-	q.Set("scope", "read_user")
+	q.Set("scope", c.Scope)
 	u.RawQuery = q.Encode()
 	return u.String(), nil
 }
@@ -55,7 +56,7 @@ func (c genericOauthClient) exchangeOauthCode(ctx context.Context, code string) 
 	form := url.Values{}
 	form.Add("grant_type", "authorization_code")
 	form.Add("redirect_uri", c.CallbackLocation)
-	form.Add("scope", "read_user")
+	form.Add("scope", c.Scope)
 	form.Add("code", code)
 	req, err := http.NewRequest("POST", c.ExchangeLocation, strings.NewReader(form.Encode()))
 	if err != nil {
@@ -110,5 +111,6 @@ func (c genericOauthClient) inspectOauthAccessToken(ctx context.Context, accessT
 	if inspectResponse.Error != "" {
 		return nil, errors.New(inspectResponse.Error)
 	}
+
 	return &inspectResponse, nil
 }
