@@ -211,8 +211,7 @@ func (p Post) Summary() string {
 	if p.Content == "" {
 		return ""
 	}
-	// Strip out HTML
-	p.Content = bluemonday.StrictPolicy().Sanitize(p.Content)
+	p.Content = stripHTMLWithoutEscaping(p.Content)
 	// and Markdown
 	p.Content = stripmd.Strip(p.Content)
 
