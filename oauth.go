@@ -265,6 +265,7 @@ func configureGenericOauth(parentHandler *Handler, r *mux.Router, app *App) {
 			AuthLocation:     app.Config().GenericOauth.Host + app.Config().GenericOauth.AuthEndpoint,
 			HttpClient:       config.DefaultHTTPClient(),
 			CallbackLocation: callbackLocation,
+			Scope:            config.OrDefaultString(app.Config().GenericOauth.Scope, "read_user"),
 		}
 		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
 	}
