@@ -266,6 +266,10 @@ func configureGenericOauth(parentHandler *Handler, r *mux.Router, app *App) {
 			HttpClient:       config.DefaultHTTPClient(),
 			CallbackLocation: callbackLocation,
 			Scope:            config.OrDefaultString(app.Config().GenericOauth.Scope, "read_user"),
+			MapUserID:        config.OrDefaultString(app.Config().GenericOauth.MapUserID, "user_id"),
+			MapUsername:      config.OrDefaultString(app.Config().GenericOauth.MapUsername, "username"),
+			MapDisplayName:   config.OrDefaultString(app.Config().GenericOauth.MapDisplayName, "-"),
+			MapEmail:         config.OrDefaultString(app.Config().GenericOauth.MapEmail, "email"),
 		}
 		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
 	}

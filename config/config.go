@@ -110,6 +110,10 @@ type (
 		AuthEndpoint     string `ini:"auth_endpoint"`
 		Scope            string `ini:"scope"`
 		AllowDisconnect  bool   `ini:"allow_disconnect"`
+		MapUserID        string `ini:"map_user_id"`
+		MapUsername      string `ini:"map_username"`
+		MapDisplayName   string `ini:"map_display_name"`
+		MapEmail         string `ini:"map_email"`
 	}
 
 	// AppCfg holds values that affect how the application functions

@@ -16,6 +16,10 @@ type genericOauthClient struct {
 	InspectLocation  string
 	CallbackLocation string
 	Scope            string
+  MapUserID        string
+  MapUsername      string
+  MapDisplayName   string
+  MapEmail         string
 	HttpClient       HttpClient
 }
 
@@ -104,12 +108,28 @@ func (c genericOauthClient) inspectOauthAccessToken(ctx context.Context, accessT
 		return nil, errors.New("unable to inspect access token")
 	}
 
-	var inspectResponse InspectResponse
-	if err := limitedJsonUnmarshal(resp.Body, infoRequestMaxLen, &inspectResponse); err != nil {
+	// since we don't know what the JSON from the server will look like, we create a
+	// generic interface and then map manually to values set in the config
+	var genericInterface interface{}
+	if err := limitedJsonUnmarshal(resp.Body, infoRequestMaxLen, &genericInterface); err != nil {
 		return nil, err
 	}
-	if inspectResponse.Error != "" {
-		return nil, errors.New(inspectResponse.Error)
+
+	m := genericInterface.(map[string]interface{})
+
+	// map each relevant field in inspectResponse to the mapped field from the config
+	var inspectResponse InspectResponse
+	if (m[c.MapUserID] != nil) {
+	  inspectResponse.UserID = m[c.MapUserID].(string)
+	}
+	if (m[c.MapUsername] != nil) {
+	  inspectResponse.Username = m[c.MapUsername].(string)
+	}
+	if (m[c.MapDisplayName] != nil) {
+	  inspectResponse.DisplayName = m[c.MapDisplayName].(string)
+	}
+	if (m[c.MapEmail] != nil) {
+	  inspectResponse.Email = m[c.MapEmail].(string)
 	}
 
 	return &inspectResponse, nil
