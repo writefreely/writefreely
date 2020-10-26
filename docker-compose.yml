@@ -12,7 +12,7 @@ networks:
 services:
   writefreely-web:
     container_name: "writefreely-web"
-    image: "conor-f:writefreely"
+    image: "writefreely:latest"
 
     volumes:
       - "web-keys:/go/keys"
