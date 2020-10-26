@@ -1,32 +1,47 @@
 version: "3"
-services:
-  web:
-    build: .
-    volumes:
-      - "web-data:/go/src/app"
-      - "./config.ini.example:/go/src/app/config.ini"
-    ports:
-      - "8080:8080"
-    networks:
-      - writefreely
-    depends_on:
-      - db
-    restart: unless-stopped
-  db:
-    image: "mariadb:latest"
-    volumes:
-      - "./schema.sql:/tmp/schema.sql"
-      - db-data:/var/lib/mysql/data
-    networks:
-      - writefreely
-    environment:
-      - MYSQL_DATABASE=writefreely
-      - MYSQL_ROOT_PASSWORD=changeme
-    restart: unless-stopped
 
 volumes:
-  web-data:
+  web-keys:
   db-data:
 
 networks:
-  writefreely:
+  external_writefreely:
+  internal_writefreely:
+    internal: true
+
+services:
+  writefreely-web:
+    container_name: "writefreely-web"
+    image: "conor-f:writefreely"
+
+    volumes:
+      - "web-keys:/go/keys"
+      - "./config.ini:/go/config.ini"
+
+    networks:
+      - "internal_writefreely"
+      - "external_writefreely"
+
+    ports:
+      - "8080:8080"
+
+    depends_on:
+      - "writefreely-db"
+
+    restart: unless-stopped
+
+  writefreely-db:
+    container_name: "writefreely-db"
+    image: "mariadb:latest"
+
+    volumes:
+      - "db-data:/var/lib/mysql/data"
+
+    networks:
+      - "internal_writefreely"
+
+    environment:
+      - MYSQL_DATABASE=writefreely
+      - MYSQL_ROOT_PASSWORD=changeme
+
+    restart: unless-stopped
