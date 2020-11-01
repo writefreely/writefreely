@@ -1,14 +1,11 @@
 module github.com/writeas/writefreely
 
 require (
-	github.com/alecthomas/gometalinter v3.0.0+incompatible // indirect
-	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
 	github.com/clbanning/mxj v1.8.4 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.9.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/go-test/deep v1.0.1 // indirect
-	github.com/golang/lint v0.0.0-20181217174547-8f45f776aaf1 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/gorilla/feeds v1.1.1
 	github.com/gorilla/mux v1.8.0
@@ -17,7 +14,6 @@ require (
 	github.com/guregu/null v3.5.0+incompatible
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/ikeikeikeike/go-sitemap-generator/v2 v2.0.2
-	github.com/jteeuwen/go-bindata v3.0.7+incompatible // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/kylemcc/twitter-text-go v0.0.0-20180726194232-7f582f6736ec
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
@@ -25,9 +21,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.4
 	github.com/microcosm-cc/bluemonday v1.0.4
 	github.com/mitchellh/go-wordwrap v1.0.1
-	github.com/nicksnyder/go-i18n v1.10.0 // indirect
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
-	github.com/pelletier/go-toml v1.2.0 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/prologic/go-gopher v0.0.0-20200721020712-3e11dcff0469
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
@@ -49,13 +43,8 @@ require (
 	github.com/writeas/web-core v1.2.1-0.20200813161734-68a680d1b03c
 	github.com/writefreely/go-nodeinfo v1.2.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/lint v0.0.0-20181217174547-8f45f776aaf1 // indirect
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
-	golang.org/x/tools v0.0.0-20190208222737-3744606dbb67 // indirect
-	google.golang.org/appengine v1.4.0 // indirect
-	gopkg.in/alecthomas/kingpin.v3-unstable v3.0.0-20180810215634-df19058c872c // indirect
-	gopkg.in/ini.v1 v1.61.0
-	src.techknowlogick.com/xgo v0.0.0-20200129005940-d0fae26e014b // indirect
+	gopkg.in/ini.v1 v1.62.0
 )
 
 go 1.13
