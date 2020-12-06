@@ -328,6 +328,9 @@ func handleAdminToggleUserStatus(app *App, u *User, w http.ResponseWriter, r *ht
 		err = app.db.SetUserStatus(user.ID, UserActive)
 	} else {
 		err = app.db.SetUserStatus(user.ID, UserSilenced)
+
+		// reset the cache to removed silence user posts
+		updateTimelineCache(app.timeline, true)
 	}
 	if err != nil {
 		log.Error("toggle user silenced: %v", err)
