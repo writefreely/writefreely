@@ -171,11 +171,12 @@ func updateTimelineCache(tl *localTimeline, reset bool) {
 		postsInterfaces, err := tl.m.Get()
 		if err != nil {
 			log.Error("[READ] Unable to cache posts: %v", err)
+		} else {
+			castPosts := postsInterfaces.([]PublicPost)
+			tl.posts = &castPosts
 		}
-
-		castPosts := postsInterfaces.([]PublicPost)
-		tl.posts = &castPosts
 	}
+
 }
 
 func showLocalTimeline(app *App, w http.ResponseWriter, r *http.Request, page int, author, tag string) error {
