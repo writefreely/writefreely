@@ -6,7 +6,9 @@
   "dependencies": {
     "babel-core": "^6.26.3",
     "babel-preset-es2015": "^6.24.1",
+    "markdown-it": "^12.0.4",
     "prosemirror-example-setup": "^1.1.2",
+    "prosemirror-keymap": "^1.1.4",
     "prosemirror-markdown": "^1.4.4",
     "prosemirror-model": "^1.9.1",
     "prosemirror-state": "^1.3.2",

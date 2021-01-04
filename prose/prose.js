@@ -9,10 +9,15 @@
 //   destroy() { this.textarea.remove() }
 // }
 
-import {EditorView} from "prosemirror-view"
-import {EditorState} from "prosemirror-state"
-import {schema, defaultMarkdownParser, defaultMarkdownSerializer} from "prosemirror-markdown"
-import {exampleSetup} from "prosemirror-example-setup"
+import { EditorView } from "prosemirror-view"
+import { EditorState } from "prosemirror-state"
+import { exampleSetup } from "prosemirror-example-setup"
+import { keymap } from "prosemirror-keymap";
+
+import { writeAsMarkdownParser } from "./markdownParser"
+import { writeAsMarkdownSerializer } from "./markdownSerializer"
+import { writeFreelySchema } from "./schema"
+import { getMenu } from "./menu"
 
 let $title = document.querySelector('#title')
 let $content = document.querySelector('#content')
@@ -21,7 +26,7 @@ class ProseMirrorView {
     constructor(target, content) {
         this.view = new EditorView(target, {
             state: EditorState.create({
-                doc: function(content) {
+                doc: function (content) {
                     // console.log('loading '+window.draftKey)
                     let localDraft = localStorage.getItem(window.draftKey);
                     if (localDraft != null) {
@@ -30,20 +35,35 @@ class ProseMirrorView {
                     if (content.indexOf("# ") === 0) {
                         let eol = content.indexOf("\n");
                         let title = content.substring("# ".length, eol);
-                        content = content.substring(eol+"\n\n".length);
+                        content = content.substring(eol + "\n\n".length);
                         $title.value = title;
                     }
-                    return defaultMarkdownParser.parse(content)
+                    return writeAsMarkdownParser.parse(content)
                 }(content),
-                plugins: exampleSetup({schema})
+                plugins: [
+                    keymap({
+                        "Mod-Enter": () => {
+                            document.getElementById("publish").click();
+                            return true;
+                        },
+                        "Mod-k": ()=> {
+                            console.log("TODO-link");
+                            return true;
+                        }
+                    }),
+                    ...exampleSetup({ schema: writeFreelySchema, menuContent: getMenu() }),
+
+                ]
             }),
             dispatchTransaction(transaction) {
                 // console.log('saving to '+window.draftKey)
-                $content.value = defaultMarkdownSerializer.serialize(transaction.doc)
-                localStorage.setItem(window.draftKey, function() {
+                const newContent = writeAsMarkdownSerializer.serialize(transaction.doc)
+                $content.value = newContent
+                console.log({ newContent })
+                localStorage.setItem(window.draftKey, function () {
                     let draft = "";
                     if ($title.value != null && $title.value !== "") {
-                        draft = "# "+$title.value+"\n\n"
+                        draft = "# " + $title.value + "\n\n"
                     }
                     draft += $content.value
                     return draft
