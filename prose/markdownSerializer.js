@@ -29,7 +29,7 @@ function isPlainURL(link, parent, index, side) {
 export const writeAsMarkdownSerializer = new MarkdownSerializer(
   {
     readmore(state, node) {
-      state.write("<!--more-->");
+      state.write("<!--more-->\n");
       state.closeBlock(node);
     },
     // blockquote(state, node) {
@@ -78,13 +78,13 @@ export const writeAsMarkdownSerializer = new MarkdownSerializer(
         })`,
       );
     },
-    // hard_break(state, node, parent, index) {
-    //   for (let i = index + 1; i < parent.childCount; i += 1)
-    //     if (parent.child(i).type !== node.type) {
-    //       state.write("\\\n");
-    //       return;
-    //     }
-    // },
+    hard_break(state, node, parent, index) {
+      for (let i = index + 1; i < parent.childCount; i += 1)
+        if (parent.child(i).type !== node.type) {
+          state.write("\n");
+          return;
+        }
+    },
     text(state, node) {
       state.text(node.text || "");
     },

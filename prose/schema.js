@@ -4,7 +4,6 @@ import { Schema } from "prosemirror-model";
 export const writeFreelySchema = new Schema({
     nodes: schema.spec.nodes.remove("blockquote")
         .remove("horizontal_rule")
-        .remove("hard_break")
         .addToEnd("readmore", {
             inline: false,
             content: "",
@@ -15,5 +14,3 @@ export const writeFreelySchema = new Schema({
         }),
     marks: schema.spec.marks,
 });
-
-console.log({ writeFreelySchema })

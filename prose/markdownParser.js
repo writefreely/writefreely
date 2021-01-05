@@ -34,7 +34,7 @@ export const writeAsMarkdownParser = new MarkdownParser(
                 alt: tok.children?.[0].content || null,
             }),
         },
-        // hardbreak: { node: "hard_break" },
+        hardbreak: { node: "hard_break" },
 
         em: { mark: "em" },
         strong: { mark: "strong" },
@@ -49,7 +49,6 @@ export const writeAsMarkdownParser = new MarkdownParser(
         html_block: {
             node: "readmore",
             getAttrs(token) {
-                console.log({ token });
                 // TODO: Give different attributes depending on the token content
                 return {};
             },

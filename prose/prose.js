@@ -58,8 +58,8 @@ class ProseMirrorView {
             dispatchTransaction(transaction) {
                 // console.log('saving to '+window.draftKey)
                 const newContent = writeAsMarkdownSerializer.serialize(transaction.doc)
+                console.log({newContent})
                 $content.value = newContent
-                console.log({ newContent })
                 localStorage.setItem(window.draftKey, function () {
                     let draft = "";
                     if ($title.value != null && $title.value !== "") {
