@@ -47,10 +47,6 @@ export const writeAsMarkdownSerializer = new MarkdownSerializer(
       state.renderInline(node);
       state.closeBlock(node);
     },
-    // horizontal_rule(state, node) {
-    //   state.write(node.attrs.markup || "---");
-    //   state.closeBlock(node);
-    // },
     bullet_list(state, node) {
       state.renderList(node, "  ", () => `${node.attrs.bullet || "*"} `);
     },
@@ -75,13 +71,13 @@ export const writeAsMarkdownSerializer = new MarkdownSerializer(
       state.write(
         `![${state.esc(node.attrs.alt || "")}](${state.esc(node.attrs.src)}${
           node.attrs.title ? ` ${state.quote(node.attrs.title)}` : ""
-        })`,
+        })`
       );
     },
     hard_break(state, node, parent, index) {
       for (let i = index + 1; i < parent.childCount; i += 1)
         if (parent.child(i).type !== node.type) {
-          state.write("\n");
+          state.write("\\\n");
           return;
         }
     },
@@ -123,5 +119,5 @@ export const writeAsMarkdownSerializer = new MarkdownSerializer(
       },
       escape: false,
     },
-  },
+  }
 );
