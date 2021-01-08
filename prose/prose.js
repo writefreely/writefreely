@@ -28,6 +28,7 @@ let $content = document.querySelector("#content");
 
 class ProseMirrorView {
   constructor(target, content) {
+    let typingTimer;
     let localDraft = localStorage.getItem(window.draftKey);
     if (localDraft != null) {
       content = localDraft;
@@ -66,8 +67,9 @@ class ProseMirrorView {
         ],
       }),
       dispatchTransaction(transaction) {
+        let newState = this.state.apply(transaction);
         const newContent = writeAsMarkdownSerializer
-          .serialize(transaction.doc)
+          .serialize(newState.doc)
           // Replace all \\\ns ( not followed by a \n ) with \n
           .replaceAll(/\\\n(?!\n)/g, "\n");
         $content.value = newContent;
@@ -76,8 +78,8 @@ class ProseMirrorView {
           draft = "# " + $title.value + "\n\n";
         }
         draft += newContent;
-        localStorage.setItem(window.draftKey, draft);
-        let newState = this.state.apply(transaction);
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(doneTyping, doneTypingInterval);        
         this.updateState(newState);
       },
     });
