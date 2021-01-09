@@ -75,7 +75,7 @@ body {
 				margin-bottom: -0.5rem;
 			}
 			h2#title {
-				.article-title;
+			    .article-title() {};
 			}
 			h1 {
 				font-size: 1.5em;
@@ -106,7 +106,7 @@ body {
 
 	&#post, &#collection, &#subpage {
 		code {
-			.article-code;
+		    .article-code() {};
 		}
 		img, video, audio {
 			max-width: 100%;
@@ -116,7 +116,7 @@ body {
 			white-space: initial;
 		}
 		pre {
-			.code-block;
+		    .code-block() {};
 
 			code {
 				background: transparent;
@@ -131,7 +131,7 @@ body {
 			}
 		}
 		blockquote {
-			.article-blockquote;
+		    .article-blockquote() {};
 		}
 		article {
 			hr {
@@ -514,7 +514,7 @@ abbr {
 }
 
 body#collection article p, body#subpage article p {
-	.article-p;
+    .article-p() {};
 }
 pre, body#post article, #post .alert, #subpage .alert, body#collection article, body#subpage article, body#subpage #wrapper h1 {
 	max-width: 40rem;

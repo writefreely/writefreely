@@ -49,13 +49,13 @@ body#pad-sub #posts, .atoms {
 }
 
 body#pad, body#pad-sub {
-	.pad-theme-transition;
+    .pad-theme-transition() {};
 
 	&.light {
 		background-color: @lightBG;
 		color: @lightTextColor;
 		#tools {
-			.pad-theme-transition;
+			.pad-theme-transition() {};
 			background-color: transparent;
 			h1 {
 				a {
@@ -92,7 +92,7 @@ body#pad, body#pad-sub {
 		background-color: @darkBG;
 		color: @darkTextColor;
 		#tools {
-			.pad-theme-transition;
+			.pad-theme-transition() {};
 			background-color: #262626;
 			h1 {
 				a {
@@ -186,10 +186,10 @@ body#pad, body#pad-sub {
 }
 
 body#pad {
-	.pad-theme-transition;
+	.pad-theme-transition() {};
 
 	textarea {
-		.pad-theme-transition;
+		.pad-theme-transition() {};
 	}
 
 	&.dark {
