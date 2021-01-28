@@ -631,6 +631,17 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			log.Info("Federating new post!")
 		}
 	}
+
+	// If app is private, do not federate
+	if app.cfg.App.Private {
+		return nil
+	}
+
+	// Do not federate posts from private or protected blogs
+	if p.Collection.Visibility == CollPrivate || p.Collection.Visibility == CollProtected {
+		return nil
+	}
+
 	actor := p.Collection.PersonObject(collID)
 	na := p.ActivityObject(app)
 
