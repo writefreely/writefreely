@@ -638,13 +638,17 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 			ownerCollID.Int64 = collID
 			ownerCollID.Valid = true
 			var slugVal string
-			if post.Title != nil && *post.Title != "" {
-				slugVal = getSlug(*post.Title, post.Language.String)
-				if slugVal == "" {
+			if post.Slug != nil && *post.Slug != "" {
+				slugVal = *post.Slug
+			} else {
+				if post.Title != nil && *post.Title != "" {
+					slugVal = getSlug(*post.Title, post.Language.String)
+					if slugVal == "" {
+						slugVal = getSlug(*post.Content, post.Language.String)
+					}
+				} else {
 					slugVal = getSlug(*post.Content, post.Language.String)
 				}
-			} else {
-				slugVal = getSlug(*post.Content, post.Language.String)
 			}
 			if slugVal == "" {
 				slugVal = friendlyID
