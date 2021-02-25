@@ -901,6 +901,15 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 
 	coll := newDisplayCollection(c, cr, page)
 
+	coll.TotalPages = int(math.Ceil(float64(coll.TotalPosts) / float64(coll.Format.PostsPerPage())))
+	if coll.TotalPages > 0 && page > coll.TotalPages {
+		redirURL := fmt.Sprintf("/page/%d", coll.TotalPages)
+		if !app.cfg.App.SingleUser {
+			redirURL = fmt.Sprintf("/%s%s%s", cr.prefix, coll.Alias, redirURL)
+		}
+		return impart.HTTPError{http.StatusFound, redirURL}
+	}
+
 	coll.Posts, _ = app.db.GetPostsTagged(app.cfg, c, tag, page, cr.isCollOwner)
 	if coll.Posts != nil && len(*coll.Posts) == 0 {
 		return ErrCollectionPageNotFound

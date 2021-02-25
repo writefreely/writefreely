@@ -206,6 +206,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 func RouteCollections(handler *Handler, r *mux.Router) {
 	r.HandleFunc("/page/{page:[0-9]+}", handler.Web(handleViewCollection, UserLevelReader))
 	r.HandleFunc("/tag:{tag}", handler.Web(handleViewCollectionTag, UserLevelReader))
+	r.HandleFunc("/tag:{tag}/page/{page:[0-9]+}", handler.Web(handleViewCollectionTag, UserLevelReader))
 	r.HandleFunc("/tag:{tag}/feed/", handler.Web(ViewFeed, UserLevelReader))
 	r.HandleFunc("/sitemap.xml", handler.AllReader(handleViewSitemap))
 	r.HandleFunc("/feed/", handler.AllReader(ViewFeed))
