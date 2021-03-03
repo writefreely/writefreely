@@ -106,6 +106,9 @@ li.ProseMirror-selectednode:after {
 .ProseMirror-menuitem {
 	margin-right: 3px;
 	display: inline-block;
+	div {
+		cursor: pointer;
+	}
 }
 
 .ProseMirror-menuseparator {
@@ -402,6 +405,13 @@ textarea {
 .ProseMirror-menubar-wrapper, #markdown textarea {
 	display: block;
 	margin-bottom: 4px;
+}
+
+.editorreadmore {
+	color: @textLinkColor;
+	text-decoration: underline;
+	text-align: center;
+	width: 100%;
 }
 
 @media all and (min-width: 50em) {

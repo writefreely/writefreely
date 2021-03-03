@@ -12,7 +12,7 @@ export const writeFreelySchema = new Schema({
       draggable: true,
       toDOM: (node) => [
         "div",
-        { class: "editorreadmore", style: "width: 100%;text-align:center" },
+        { class: "editorreadmore" },
         "Read more...",
       ],
       parseDOM: [{ tag: "div.editorreadmore" }],
