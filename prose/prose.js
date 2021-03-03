@@ -23,7 +23,7 @@ let $title = document.querySelector("#title");
 let $content = document.querySelector("#content");
 
 // Bugs:
-// 1. When there's just an empty line and a hard break is inserted with shift-enter then two enters are inserted 
+// 1. When there's just an empty line and a hard break is inserted with shift-enter then two enters are inserted
 // which do not show up in the markdown ( maybe bc. they are training enters )
 
 class ProseMirrorView {
@@ -42,7 +42,10 @@ class ProseMirrorView {
 
     const doc = writeAsMarkdownParser.parse(
       // Replace all "solo" \n's with \\\n for correct markdown parsing
-      content.replaceAll(/(?<!\n)\n(?!\n)/g, "\\\n")
+      // Can't use lookahead or lookbehind because it's not supported on Safari
+      content.replaceAll(/([^]{0,1})(\n)([^]{0,1})/g, (match, p1, p2, p3) => {
+        return p1 !== "\n" && p3 !== "\n" ? p1 + "\\\n" + p3 : match;
+      })
     );
 
     this.view = new EditorView(target, {
@@ -55,8 +58,10 @@ class ProseMirrorView {
               return true;
             },
             "Mod-k": () => {
-              const linkButton = document.querySelector(".ProseMirror-icon[title='Add or remove link']")
-              linkButton.dispatchEvent(new Event('mousedown'));
+              const linkButton = document.querySelector(
+                ".ProseMirror-icon[title='Add or remove link']"
+              );
+              linkButton.dispatchEvent(new Event("mousedown"));
               return true;
             },
           }),
@@ -71,7 +76,9 @@ class ProseMirrorView {
         const newContent = writeAsMarkdownSerializer
           .serialize(newState.doc)
           // Replace all \\\ns ( not followed by a \n ) with \n
-          .replaceAll(/\\\n(?!\n)/g, "\n");
+          .replaceAll(/(\\\n)(\n{0,1})/g, (match, p1, p2) =>
+            p2 !== "\n" ? "\n" + p2 : match
+          );
         $content.value = newContent;
         let draft = "";
         if ($title.value != null && $title.value !== "") {
@@ -79,7 +86,7 @@ class ProseMirrorView {
         }
         draft += newContent;
         clearTimeout(typingTimer);
-        typingTimer = setTimeout(doneTyping, doneTypingInterval);        
+        typingTimer = setTimeout(doneTyping, doneTypingInterval);
         this.updateState(newState);
       },
     });

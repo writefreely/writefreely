@@ -19,7 +19,8 @@
   "devDependencies": {
     "@babel/core": "^7.8.7",
     "@babel/preset-env": "^7.9.0",
-    "babel-loader": "^8.0.6"
+    "babel-loader": "^8.0.6",
+    "prettier": "^2.2.1"
   },
   "scripts": {
     "develop": "webpack --mode development --watch",
