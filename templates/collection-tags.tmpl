@@ -29,6 +29,7 @@
 		<meta property="og:type" content="article" />
 		<meta property="og:url" content="{{.CanonicalURL}}tag:{{.Tag}}" />
 		<meta property="og:image" content="{{.Collection.AvatarURL}}">
+		{{template "collection-meta" .}}
 		{{if .Collection.StyleSheet}}<style type="text/css">{{.Collection.StyleSheetDisplay}}</style>{{end}}
 
 		{{if .Collection.RenderMathJax}}

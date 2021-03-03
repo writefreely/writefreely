@@ -151,6 +151,16 @@ textarea.section.norm {
 		</div>
 	</div>
 
+	{{if .Monetization}}
+	<div class="option">
+		<h2>Web Monetization</h2>
+		<div class="section">
+			<p class="explain">Web Monetization enables you to receive micropayments from readers that have a <a href="https://coil.com">Coil membership</a>. Add your payment pointer to enable Web Monetization on your blog.</p>
+			<input type="text" name="monetization_pointer" style="width:100%" value="{{.MonetizationPointer}}" placeholder="$wallet.example.com/alice" />
+		</div>
+	</div>
+	{{end}}
+
 	<div class="option" style="text-align: center; margin-top: 4em;">
 		<input type="submit" id="save-changes" value="Save changes" />
 		<p><a href="{{if .SingleUser}}/{{else}}/{{.Alias}}/{{end}}">View Blog</a></p>
@@ -251,12 +261,15 @@ var $normalHandleEnv = document.getElementById('normal-handle-env');
 var opt = {
 	showLineNumbers: false,
 	showPrintMargin: 0,
+	minLines: 10,
+	maxLines: 40,
 };
 var theme = "ace/theme/chrome";
 var cssEditor = ace.edit("css-editor");
 cssEditor.setTheme(theme);
 cssEditor.session.setMode("ace/mode/css");
 cssEditor.setOptions(opt);
+cssEditor.resize(true);
 </script>
 
 {{template "footer" .}}
