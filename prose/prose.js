@@ -43,7 +43,7 @@ class ProseMirrorView {
     const doc = writeAsMarkdownParser.parse(
       // Replace all "solo" \n's with \\\n for correct markdown parsing
       // Can't use lookahead or lookbehind because it's not supported on Safari
-      content.replaceAll(/([^]{0,1})(\n)([^]{0,1})/g, (match, p1, p2, p3) => {
+      content.replace(/([^]{0,1})(\n)([^]{0,1})/g, (match, p1, p2, p3) => {
         return p1 !== "\n" && p3 !== "\n" ? p1 + "\\\n" + p3 : match;
       })
     );
@@ -76,7 +76,7 @@ class ProseMirrorView {
         const newContent = writeAsMarkdownSerializer
           .serialize(newState.doc)
           // Replace all \\\ns ( not followed by a \n ) with \n
-          .replaceAll(/(\\\n)(\n{0,1})/g, (match, p1, p2) =>
+          .replace(/(\\\n)(\n{0,1})/g, (match, p1, p2) =>
             p2 !== "\n" ? "\n" + p2 : match
           );
         $content.value = newContent;
