@@ -131,6 +131,7 @@ release-docker :
 
 ui : force_look
 	cd less/; $(MAKE) $(MFLAGS)
+	cd prose/; $(MAKE) $(MFLAGS)
 
 assets : generate
 	go-bindata -pkg writefreely -ignore=\\.gitignore -tags="!wflib" schema.sql sqlite.sql
