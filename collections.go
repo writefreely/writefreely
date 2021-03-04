@@ -56,6 +56,8 @@ type (
 		PublicOwner bool           `datastore:"public_owner" json:"-"`
 		URL         string         `json:"url,omitempty"`
 
+		MonetizationPointer string `json:"monetization_pointer,omitempty"`
+
 		db       *datastore
 		hostName string
 	}
@@ -87,14 +89,15 @@ type (
 		Handle    string `schema:"handle" json:"handle"`
 
 		// Actual collection values updated in the DB
-		Alias       *string         `schema:"alias" json:"alias"`
-		Title       *string         `schema:"title" json:"title"`
-		Description *string         `schema:"description" json:"description"`
-		StyleSheet  *sql.NullString `schema:"style_sheet" json:"style_sheet"`
-		Script      *sql.NullString `schema:"script" json:"script"`
-		Signature   *sql.NullString `schema:"signature" json:"signature"`
-		Visibility  *int            `schema:"visibility" json:"public"`
-		Format      *sql.NullString `schema:"format" json:"format"`
+		Alias        *string         `schema:"alias" json:"alias"`
+		Title        *string         `schema:"title" json:"title"`
+		Description  *string         `schema:"description" json:"description"`
+		StyleSheet   *sql.NullString `schema:"style_sheet" json:"style_sheet"`
+		Script       *sql.NullString `schema:"script" json:"script"`
+		Signature    *sql.NullString `schema:"signature" json:"signature"`
+		Monetization *string         `schema:"monetization_pointer" json:"monetization_pointer"`
+		Visibility   *int            `schema:"visibility" json:"public"`
+		Format       *sql.NullString `schema:"format" json:"format"`
 	}
 	CollectionFormat struct {
 		Format string
@@ -552,6 +555,7 @@ type CollectionPage struct {
 	IsOwner        bool
 	CanPin         bool
 	Username       string
+	Monetization   string
 	Collections    *[]Collection
 	PinnedPosts    *[]PublicPost
 	IsAdmin        bool
@@ -723,14 +727,14 @@ func newDisplayCollection(c *Collection, cr *collectionReq, page int) *DisplayCo
 	return coll
 }
 
+// getCollectionPage returns the collection page as an int. If the parsed page value is not
+// greater than 0 then the default value of 1 is returned.
 func getCollectionPage(vars map[string]string) int {
-	page := 1
-	var p int
-	p, _ = strconv.Atoi(vars["page"])
-	if p > 0 {
-		page = p
+	if p, _ := strconv.Atoi(vars["page"]); p > 0 {
+		return p
 	}
-	return page
+
+	return 1
 }
 
 // handleViewCollection displays the requested Collection
@@ -829,6 +833,7 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 	// Add more data
 	// TODO: fix this mess of collections inside collections
 	displayPage.PinnedPosts, _ = app.db.GetPinnedPosts(coll.CollectionObj, isOwner)
+	displayPage.Monetization = app.db.GetCollectionAttribute(coll.ID, "monetization_pointer")
 
 	collTmpl := "collection"
 	if app.cfg.App.Chorus {
@@ -947,6 +952,7 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 	// Add more data
 	// TODO: fix this mess of collections inside collections
 	displayPage.PinnedPosts, _ = app.db.GetPinnedPosts(coll.CollectionObj, isOwner)
+	displayPage.Monetization = app.db.GetCollectionAttribute(coll.ID, "monetization_pointer")
 
 	err = templates["collection-tags"].ExecuteTemplate(w, "collection-tags", displayPage)
 	if err != nil {

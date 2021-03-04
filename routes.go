@@ -26,6 +26,7 @@ import (
 func (app *App) InitStaticRoutes(r *mux.Router) {
 	// Handle static files
 	fs := http.FileServer(http.Dir(filepath.Join(app.cfg.Server.StaticParentDir, staticDir)))
+	fs = cacheControl(fs)
 	app.shttp = http.NewServeMux()
 	app.shttp.Handle("/", fs)
 	r.PathPrefix("/").Handler(fs)
@@ -206,7 +207,6 @@ func RouteCollections(handler *Handler, r *mux.Router) {
 	r.HandleFunc("/page/{page:[0-9]+}", handler.Web(handleViewCollection, UserLevelReader))
 	r.HandleFunc("/tag:{tag}", handler.Web(handleViewCollectionTag, UserLevelReader))
 	r.HandleFunc("/tag:{tag}/feed/", handler.Web(ViewFeed, UserLevelReader))
-	r.HandleFunc("/tags/{tag}", handler.Web(handleViewCollectionTag, UserLevelReader))
 	r.HandleFunc("/sitemap.xml", handler.AllReader(handleViewSitemap))
 	r.HandleFunc("/feed/", handler.AllReader(ViewFeed))
 	r.HandleFunc("/{slug}", handler.CollectionPostOrStatic)

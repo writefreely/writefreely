@@ -16,6 +16,7 @@ import (
 	"html"
 	"html/template"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 	"unicode"
@@ -73,6 +74,25 @@ func applyMarkdown(data []byte, baseURL string, cfg *config.Config) string {
 	return applyMarkdownSpecial(data, false, baseURL, cfg)
 }
 
+func disableYoutubeAutoplay(outHTML string) string {
+	for _, match := range youtubeReg.FindAllString(outHTML, -1) {
+		u, err := url.Parse(match)
+		if err != nil {
+			continue
+		}
+		u.RawQuery = html.UnescapeString(u.RawQuery)
+		q := u.Query()
+		// Set Youtube autoplay url parameter, if any, to 0
+		if len(q["autoplay"]) == 1 {
+			q.Set("autoplay", "0")
+		}
+		u.RawQuery = q.Encode()
+		cleanURL := u.String()
+		outHTML = strings.Replace(outHTML, match, cleanURL, 1)
+	}
+	return outHTML
+}
+
 func applyMarkdownSpecial(data []byte, skipNoFollow bool, baseURL string, cfg *config.Config) string {
 	mdExtensions := 0 |
 		blackfriday.EXTENSION_TABLES |
@@ -108,10 +128,7 @@ func applyMarkdownSpecial(data []byte, skipNoFollow bool, baseURL string, cfg *c
 	// Strip newlines on certain block elements that render with them
 	outHTML = blockReg.ReplaceAllString(outHTML, "<$1>")
 	outHTML = endBlockReg.ReplaceAllString(outHTML, "</$1></$2>")
-	// Remove all query parameters on YouTube embed links
-	// TODO: make this more specific. Taking the nuclear approach here to strip ?autoplay=1
-	outHTML = youtubeReg.ReplaceAllString(outHTML, "$1")
-
+	outHTML = disableYoutubeAutoplay(outHTML)
 	return outHTML
 }
 
@@ -140,9 +157,7 @@ func applyBasicMarkdown(data []byte) string {
 func postTitle(content, friendlyId string) string {
 	const maxTitleLen = 80
 
-	// Strip HTML tags with bluemonday's StrictPolicy, then unescape the HTML
-	// entities added in by sanitizing the content.
-	content = html.UnescapeString(bluemonday.StrictPolicy().Sanitize(content))
+	content = stripHTMLWithoutEscaping(content)
 
 	content = strings.TrimLeftFunc(stripmd.Strip(content), unicode.IsSpace)
 	eol := strings.IndexRune(content, '\n')
@@ -160,9 +175,7 @@ func postTitle(content, friendlyId string) string {
 func friendlyPostTitle(content, friendlyId string) string {
 	const maxTitleLen = 80
 
-	// Strip HTML tags with bluemonday's StrictPolicy, then unescape the HTML
-	// entities added in by sanitizing the content.
-	content = html.UnescapeString(bluemonday.StrictPolicy().Sanitize(content))
+	content = stripHTMLWithoutEscaping(content)
 
 	content = strings.TrimLeftFunc(stripmd.Strip(content), unicode.IsSpace)
 	eol := strings.IndexRune(content, '\n')
@@ -177,6 +190,12 @@ func friendlyPostTitle(content, friendlyId string) string {
 		title += "..."
 	}
 	return title
+}
+
+// Strip HTML tags with bluemonday's StrictPolicy, then unescape the HTML
+// entities added in by sanitizing the content.
+func stripHTMLWithoutEscaping(content string) string {
+	return html.UnescapeString(bluemonday.StrictPolicy().Sanitize(content))
 }
 
 func getSanitizationPolicy() *bluemonday.Policy {
