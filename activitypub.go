@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -17,10 +17,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/writeas/writefreely/config"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -40,6 +42,17 @@ const (
 
 	apCacheTime = time.Minute
 )
+
+var instanceColl *Collection
+
+func initActivityPub(cfg *config.Config) {
+	ur, _ := url.Parse(cfg.App.Host)
+	instanceColl = &Collection{
+		ID:    0,
+		Alias: ur.Host,
+		Title: ur.Host,
+	}
+}
 
 type RemoteUser struct {
 	ID          int64
@@ -76,12 +89,17 @@ func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Re
 
 	vars := mux.Vars(r)
 	alias := vars["alias"]
+	if alias == "" {
+		alias = filepath.Base(r.RequestURI)
+	}
 
 	// TODO: enforce visibility
 	// Get base Collection data
 	var c *Collection
 	var err error
-	if app.cfg.App.SingleUser {
+	if alias == r.Host {
+		c = instanceColl
+	} else if app.cfg.App.SingleUser {
 		c, err = app.db.GetCollectionByID(1)
 	} else {
 		c, err = app.db.GetCollection(alias)
@@ -545,6 +563,22 @@ func resolveIRI(hostName, url string) ([]byte, error) {
 	r, _ := http.NewRequest("GET", url, nil)
 	r.Header.Add("Accept", "application/activity+json")
 	r.Header.Set("User-Agent", ServerUserAgent(hostName))
+
+	p := instanceColl.PersonObject()
+	h := sha256.New()
+	h.Write([]byte{})
+	r.Header.Add("Digest", "SHA-256="+base64.StdEncoding.EncodeToString(h.Sum(nil)))
+
+	// Sign using the 'Signature' header
+	privKey, err := activitypub.DecodePrivateKey(p.GetPrivKey())
+	if err != nil {
+		return nil, err
+	}
+	signer := httpsig.NewSigner(p.PublicKey.ID, privKey, httpsig.RSASHA256, []string{"(request-target)", "date", "host", "digest"})
+	err = signer.SignSigHeader(r)
+	if err != nil {
+		log.Error("Can't sign: %v", err)
+	}
 
 	if debugging {
 		dump, err := httputil.DumpRequestOut(r, true)

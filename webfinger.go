@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -32,7 +32,9 @@ var wfUserNotFoundErr = impart.HTTPError{http.StatusNotFound, "User not found."}
 func (wfr wfResolver) FindUser(username string, host, requestHost string, r []webfinger.Rel) (*webfinger.Resource, error) {
 	var c *Collection
 	var err error
-	if wfr.cfg.App.SingleUser {
+	if username == host {
+		c = instanceColl
+	} else if wfr.cfg.App.SingleUser {
 		c, err = wfr.db.GetCollectionByID(1)
 	} else {
 		c, err = wfr.db.GetCollection(username)
