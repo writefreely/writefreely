@@ -45,12 +45,14 @@ const (
 
 var instanceColl *Collection
 
-func initActivityPub(cfg *config.Config) {
-	ur, _ := url.Parse(cfg.App.Host)
+func initActivityPub(app *App) {
+	ur, _ := url.Parse(app.cfg.App.Host)
 	instanceColl = &Collection{
-		ID:    0,
-		Alias: ur.Host,
-		Title: ur.Host,
+		ID:       0,
+		Alias:    ur.Host,
+		Title:    ur.Host,
+		db:       app.db,
+		hostName: app.cfg.App.Host,
 	}
 }
 

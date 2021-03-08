@@ -384,12 +384,12 @@ func Initialize(apper Apper, debug bool) (*App, error) {
 
 	apper.App().InitDecoder()
 
-	apper.App().InitActivityPub()
-
 	err = ConnectToDatabase(apper.App())
 	if err != nil {
 		return nil, fmt.Errorf("connect to DB: %s", err)
 	}
+
+	initActivityPub(apper.App())
 
 	// Handle local timeline, if enabled
 	if apper.App().cfg.App.LocalTimeline {
@@ -499,10 +499,6 @@ func (app *App) InitDecoder() {
 	app.formDecoder.RegisterConverter(sql.NullBool{}, converter.ConvertSQLNullBool)
 	app.formDecoder.RegisterConverter(sql.NullInt64{}, converter.ConvertSQLNullInt64)
 	app.formDecoder.RegisterConverter(sql.NullFloat64{}, converter.ConvertSQLNullFloat64)
-}
-
-func (app *App) InitActivityPub() {
-	initActivityPub(app.cfg)
 }
 
 // ConnectToDatabase validates and connects to the configured database, then
