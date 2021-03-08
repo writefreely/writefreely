@@ -905,6 +905,29 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 		}
 	}
 
+	// Update Monetization value
+	if c.Monetization != nil {
+		skipUpdate := false
+		if *c.Monetization != "" {
+			// Strip away any excess spaces
+			trimmed := strings.TrimSpace(*c.Monetization)
+			// Only update value when it starts with "$", per spec: https://paymentpointers.org
+			if strings.HasPrefix(trimmed, "$") {
+				c.Monetization = &trimmed
+			} else {
+				// Value appears invalid, so don't update
+				skipUpdate = true
+			}
+		}
+		if !skipUpdate {
+			_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?", collID, "monetization_pointer", *c.Monetization, *c.Monetization)
+			if err != nil {
+				log.Error("Unable to insert monetization_pointer value: %v", err)
+				return err
+			}
+		}
+	}
+
 	// Update rest of the collection data
 	res, err = db.Exec("UPDATE collections SET "+q.Updates+" WHERE "+q.Conditions, q.Params...)
 	if err != nil {
@@ -2160,6 +2183,28 @@ func (db *datastore) CollectionHasAttribute(id int64, attr string) bool {
 		return false
 	}
 	return true
+}
+
+func (db *datastore) GetCollectionAttribute(id int64, attr string) string {
+	var v string
+	err := db.QueryRow("SELECT value FROM collectionattributes WHERE collection_id = ? AND attribute = ?", id, attr).Scan(&v)
+	switch {
+	case err == sql.ErrNoRows:
+		return ""
+	case err != nil:
+		log.Error("Couldn't SELECT value in getCollectionAttribute for attribute '%s': %v", attr, err)
+		return ""
+	}
+	return v
+}
+
+func (db *datastore) SetCollectionAttribute(id int64, attr, v string) error {
+	_, err := db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?)", id, attr, v)
+	if err != nil {
+		log.Error("Unable to INSERT into collectionattributes: %v", err)
+		return err
+	}
+	return nil
 }
 
 // DeleteAccount will delete the entire account for userID

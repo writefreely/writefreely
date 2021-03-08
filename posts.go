@@ -211,8 +211,7 @@ func (p Post) Summary() string {
 	if p.Content == "" {
 		return ""
 	}
-	// Strip out HTML
-	p.Content = bluemonday.StrictPolicy().Sanitize(p.Content)
+	p.Content = stripHTMLWithoutEscaping(p.Content)
 	// and Markdown
 	p.Content = stripmd.Strip(p.Content)
 
@@ -1132,7 +1131,12 @@ func (p *PublicPost) CanonicalURL(hostName string) string {
 
 func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 	cfg := app.cfg
-	o := activitystreams.NewArticleObject()
+	var o *activitystreams.Object
+	if cfg.App.NotesOnly || strings.Index(p.Content, "\n\n") == -1 {
+		o = activitystreams.NewNoteObject()
+	} else {
+		o = activitystreams.NewArticleObject()
+	}
 	o.ID = p.Collection.FederatedAPIBase() + "api/posts/" + p.ID
 	o.Published = p.Created
 	o.URL = p.CanonicalURL(cfg.App.Host)
@@ -1480,6 +1484,7 @@ Are you sure it was ever here?`,
 			IsOwner        bool
 			IsPinned       bool
 			IsCustomDomain bool
+			Monetization   string
 			PinnedPosts    *[]PublicPost
 			IsFound        bool
 			IsAdmin        bool
@@ -1497,6 +1502,7 @@ Are you sure it was ever here?`,
 		tp.CanInvite = canUserInvite(app.cfg, tp.IsAdmin)
 		tp.PinnedPosts, _ = app.db.GetPinnedPosts(coll, p.IsOwner)
 		tp.IsPinned = len(*tp.PinnedPosts) > 0 && PostsContains(tp.PinnedPosts, p)
+		tp.Monetization = app.db.GetCollectionAttribute(coll.ID, "monetization_pointer")
 
 		if !postFound {
 			w.WriteHeader(http.StatusNotFound)
