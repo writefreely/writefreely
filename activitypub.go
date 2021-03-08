@@ -17,7 +17,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/writeas/writefreely/config"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
@@ -109,15 +108,18 @@ func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return err
 	}
-	silenced, err := app.db.IsUserSilenced(c.OwnerID)
-	if err != nil {
-		log.Error("fetch collection activities: %v", err)
-		return ErrInternalGeneral
-	}
-	if silenced {
-		return ErrCollectionNotFound
-	}
 	c.hostName = app.cfg.App.Host
+
+	if !c.IsInstanceColl() {
+		silenced, err := app.db.IsUserSilenced(c.OwnerID)
+		if err != nil {
+			log.Error("fetch collection activities: %v", err)
+			return ErrInternalGeneral
+		}
+		if silenced {
+			return ErrCollectionNotFound
+		}
+	}
 
 	p := c.PersonObject()
 
