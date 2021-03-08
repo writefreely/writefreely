@@ -43,15 +43,18 @@ func (wfr wfResolver) FindUser(username string, host, requestHost string, r []we
 		log.Error("Unable to get blog: %v", err)
 		return nil, err
 	}
-	silenced, err := wfr.db.IsUserSilenced(c.OwnerID)
-	if err != nil {
-		log.Error("webfinger find user: check is silenced: %v", err)
-		return nil, err
-	}
-	if silenced {
-		return nil, wfUserNotFoundErr
-	}
 	c.hostName = wfr.cfg.App.Host
+
+	if !c.IsInstanceColl() {
+		silenced, err := wfr.db.IsUserSilenced(c.OwnerID)
+		if err != nil {
+			log.Error("webfinger find user: check is silenced: %v", err)
+			return nil, err
+		}
+		if silenced {
+			return nil, wfUserNotFoundErr
+		}
+	}
 	if wfr.cfg.App.SingleUser {
 		// Ensure handle matches user-chosen one on single-user blogs
 		if username != c.Alias {
