@@ -31,7 +31,7 @@ export const writeAsMarkdownParser = new MarkdownParser(
       getAttrs: (tok) => ({
         src: tok.attrGet("src"),
         title: tok.attrGet("title") || null,
-        alt: tok.children?.[0].content || null,
+        alt: (tok.children !== null && typeof tok.children[0] !== 'undefined' ? tok.children[0].content : null),
       }),
     },
     hardbreak: { node: "hard_break" },
