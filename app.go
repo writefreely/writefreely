@@ -902,3 +902,19 @@ func ServerUserAgent(hostName string) string {
 	}
 	return "Go (" + serverSoftware + "/" + softwareVer + hostUAStr + ")"
 }
+
+// GetCollectionFromRequest returns the collection associated with the HTTP request made. If
+// the application is in single user mode then the first collection in the database is
+// returned. If the application is in multi user mode then the collection associated with the
+// alias variable set in the HTTP request URL is used.
+func GetCollectionFromAliasReqVar(app *App, r *http.Request) (*Collection, error) {
+	if app.cfg.App.SingleUser {
+		return app.db.GetCollectionByID(1)
+	}
+
+	// obtain the alias varaible used in the URL as set by the request handler
+	vars := mux.Vars(r)
+	alias := vars["alias"]
+
+	return app.db.GetCollection(alias)
+}

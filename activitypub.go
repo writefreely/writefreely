@@ -74,21 +74,13 @@ func activityPubClient() *http.Client {
 func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Server", serverSoftware)
 
-	vars := mux.Vars(r)
-	alias := vars["alias"]
-
 	// TODO: enforce visibility
 	// Get base Collection data
-	var c *Collection
-	var err error
-	if app.cfg.App.SingleUser {
-		c, err = app.db.GetCollectionByID(1)
-	} else {
-		c, err = app.db.GetCollection(alias)
-	}
+	c, err := GetCollectionFromAliasReqVar(app, r)
 	if err != nil {
 		return err
 	}
+
 	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("fetch collection activities: %v", err)
@@ -112,17 +104,12 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 	alias := vars["alias"]
 
 	// TODO: enforce visibility
-	// Get base Collection data
-	var c *Collection
-	var err error
-	if app.cfg.App.SingleUser {
-		c, err = app.db.GetCollectionByID(1)
-	} else {
-		c, err = app.db.GetCollection(alias)
-	}
+	// Get base Collection data using the alias set in the http request
+	c, err := app.db.GetCollection(alias)
 	if err != nil {
 		return err
 	}
+
 	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("fetch collection outbox: %v", err)
@@ -132,12 +119,6 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host
-
-	if app.cfg.App.SingleUser {
-		if alias != c.Alias {
-			return ErrCollectionNotFound
-		}
-	}
 
 	res := &CollectionObj{Collection: *c}
 	app.db.GetPostsCount(res, false)
@@ -171,21 +152,13 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Server", serverSoftware)
 
-	vars := mux.Vars(r)
-	alias := vars["alias"]
-
 	// TODO: enforce visibility
 	// Get base Collection data
-	var c *Collection
-	var err error
-	if app.cfg.App.SingleUser {
-		c, err = app.db.GetCollectionByID(1)
-	} else {
-		c, err = app.db.GetCollection(alias)
-	}
+	c, err := GetCollectionFromAliasReqVar(app, r)
 	if err != nil {
 		return err
 	}
+
 	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("fetch collection followers: %v", err)
@@ -226,21 +199,13 @@ func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Req
 func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Server", serverSoftware)
 
-	vars := mux.Vars(r)
-	alias := vars["alias"]
-
 	// TODO: enforce visibility
 	// Get base Collection data
-	var c *Collection
-	var err error
-	if app.cfg.App.SingleUser {
-		c, err = app.db.GetCollectionByID(1)
-	} else {
-		c, err = app.db.GetCollection(alias)
-	}
+	c, err := GetCollectionFromAliasReqVar(app, r)
 	if err != nil {
 		return err
 	}
+
 	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("fetch collection following: %v", err)
@@ -271,19 +236,12 @@ func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Req
 func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Server", serverSoftware)
 
-	vars := mux.Vars(r)
-	alias := vars["alias"]
-	var c *Collection
-	var err error
-	if app.cfg.App.SingleUser {
-		c, err = app.db.GetCollectionByID(1)
-	} else {
-		c, err = app.db.GetCollection(alias)
-	}
+	c, err := GetCollectionFromAliasReqVar(app, r)
 	if err != nil {
 		// TODO: return Reject?
 		return err
 	}
+
 	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("fetch collection inbox: %v", err)
