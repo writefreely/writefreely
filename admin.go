@@ -126,6 +126,7 @@ func handleViewAdminDash(app *App, u *User, w http.ResponseWriter, r *http.Reque
 
 	// Get user stats
 	p.UsersCount = app.db.GetAllUsersCount()
+
 	var err error
 	p.CollectionsCount, err = app.db.GetTotalCollections()
 	if err != nil {
@@ -491,8 +492,10 @@ func handleAdminUpdateSite(app *App, u *User, w http.ResponseWriter, r *http.Req
 		return impart.HTTPError{http.StatusNotFound, "No such page."}
 	}
 
-	var err error
-	m := ""
+	var (
+		m   string
+		err error
+	)
 	if id == "landing" {
 		// Handle special landing page
 		err = app.db.UpdateDynamicContent("landing-banner", "", r.FormValue("banner"), "section")

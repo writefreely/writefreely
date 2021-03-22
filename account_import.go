@@ -86,9 +86,12 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		return impart.HTTPError{http.StatusBadRequest, "form data for file dates was invalid"}
 	}
 	files := r.MultipartForm.File["files"]
-	var fileErrs []error
-	filesSubmitted := len(files)
-	var filesImported int
+
+	var (
+		filesImported  int
+		fileErrs       []error
+		filesSubmitted = len(files)
+	)
 	for _, formFile := range files {
 		fname := ""
 		ok := func() bool {

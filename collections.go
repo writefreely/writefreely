@@ -348,8 +348,11 @@ func newCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 	alias := r.FormValue("alias")
 	title := r.FormValue("title")
 
-	var missingParams, accessToken string
-	var u *User
+	var (
+		u             *User
+		missingParams string
+		accessToken   string
+	)
 	c := struct {
 		Alias string `json:"alias" schema:"alias"`
 		Title string `json:"title" schema:"title"`
@@ -384,8 +387,10 @@ func newCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 		return impart.HTTPError{http.StatusBadRequest, fmt.Sprintf("Parameter(s) %srequired.", missingParams)}
 	}
 
-	var userID int64
-	var err error
+	var (
+		userID int64
+		err    error
+	)
 	if reqJSON && !c.Web {
 		accessToken = r.Header.Get("Authorization")
 		if accessToken == "" {
@@ -798,6 +803,7 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 	}
 	displayPage.IsAdmin = u != nil && u.IsAdmin()
 	displayPage.CanInvite = canUserInvite(app.cfg, displayPage.IsAdmin)
+
 	var owner *User
 	if u != nil {
 		displayPage.Username = u.Username
@@ -814,6 +820,7 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 			displayPage.Collections = pubColls
 		}
 	}
+
 	isOwner := owner != nil
 	if !isOwner {
 		// Current user doesn't own collection; retrieve owner information
@@ -918,6 +925,7 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 		},
 		Tag: tag,
 	}
+
 	var owner *User
 	if u != nil {
 		displayPage.Username = u.Username
