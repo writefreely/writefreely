@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -32,7 +32,9 @@ var wfUserNotFoundErr = impart.HTTPError{http.StatusNotFound, "User not found."}
 func (wfr wfResolver) FindUser(username string, host, requestHost string, r []webfinger.Rel) (*webfinger.Resource, error) {
 	var c *Collection
 	var err error
-	if wfr.cfg.App.SingleUser {
+	if username == host {
+		c = instanceColl
+	} else if wfr.cfg.App.SingleUser {
 		c, err = wfr.db.GetCollectionByID(1)
 	} else {
 		c, err = wfr.db.GetCollection(username)
@@ -41,15 +43,18 @@ func (wfr wfResolver) FindUser(username string, host, requestHost string, r []we
 		log.Error("Unable to get blog: %v", err)
 		return nil, err
 	}
-	silenced, err := wfr.db.IsUserSilenced(c.OwnerID)
-	if err != nil {
-		log.Error("webfinger find user: check is silenced: %v", err)
-		return nil, err
-	}
-	if silenced {
-		return nil, wfUserNotFoundErr
-	}
 	c.hostName = wfr.cfg.App.Host
+
+	if !c.IsInstanceColl() {
+		silenced, err := wfr.db.IsUserSilenced(c.OwnerID)
+		if err != nil {
+			log.Error("webfinger find user: check is silenced: %v", err)
+			return nil, err
+		}
+		if silenced {
+			return nil, wfUserNotFoundErr
+		}
+	}
 	if wfr.cfg.App.SingleUser {
 		// Ensure handle matches user-chosen one on single-user blogs
 		if username != c.Alias {
