@@ -48,6 +48,7 @@ export const writeAsMarkdownSerializer = new MarkdownSerializer(
       state.closeBlock(node);
     },
     bullet_list(state, node) {
+      node.attrs.tight = true;
       state.renderList(node, "  ", () => `${node.attrs.bullet || "*"} `);
     },
     ordered_list(state, node) {
