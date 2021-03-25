@@ -3,7 +3,7 @@ import markdownit from "markdown-it";
 
 import { writeFreelySchema } from "./schema";
 
-export const writeAsMarkdownParser = new MarkdownParser(
+export const writeFreelyMarkdownParser = new MarkdownParser(
   writeFreelySchema,
   markdownit("commonmark", { html: true }),
   {

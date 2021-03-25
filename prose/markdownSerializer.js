@@ -26,7 +26,7 @@ function isPlainURL(link, parent, index, side) {
   return !link.isInSet(next.marks);
 }
 
-export const writeAsMarkdownSerializer = new MarkdownSerializer(
+export const writeFreelyMarkdownSerializer = new MarkdownSerializer(
   {
     readmore(state, node) {
       state.write("<!--more-->\n");
