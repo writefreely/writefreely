@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2020 A Bunch Tell LLC.
+ * Copyright © 2019-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -19,7 +19,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
-	"github.com/writeas/nerds/store"
+	"github.com/writeas/web-core/id"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/writefreely/page"
 )
@@ -121,7 +121,7 @@ func handleCreateUserInvite(app *App, u *User, w http.ResponseWriter, r *http.Re
 		expDate = &ed
 	}
 
-	inviteID := store.GenerateRandomString("0123456789BCDFGHJKLMNPQRSTVWXYZbcdfghjklmnpqrstvwxyz", 6)
+	inviteID := id.GenerateRandomString("0123456789BCDFGHJKLMNPQRSTVWXYZbcdfghjklmnpqrstvwxyz", 6)
 	err = app.db.CreateUserInvite(inviteID, u.ID, maxUses, expDate)
 	if err != nil {
 		return err
