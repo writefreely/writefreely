@@ -1,3 +1,13 @@
+/*
+ * Copyright © 2020-2021 A Bunch Tell LLC.
+ *
+ * This file is part of WriteFreely.
+ *
+ * WriteFreely is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License, included
+ * in the LICENSE file in this source code package.
+ */
+
 package writefreely_test
 
 import (
@@ -5,7 +15,7 @@ import (
 
 	"github.com/guregu/null/zero"
 	"github.com/stretchr/testify/assert"
-	"github.com/writeas/writefreely"
+	"github.com/writefreely/writefreely"
 )
 
 func TestPostSummary(t *testing.T) {

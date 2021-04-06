@@ -35,11 +35,11 @@ import (
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/converter"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/author"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/key"
-	"github.com/writeas/writefreely/migrations"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/author"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/key"
+	"github.com/writefreely/writefreely/migrations"
+	"github.com/writefreely/writefreely/page"
 	"golang.org/x/crypto/acme/autocert"
 )
 

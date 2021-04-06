@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -28,8 +28,8 @@ import (
 	blackfriday "github.com/writeas/saturday"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/stringmanip"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/parse"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/parse"
 )
 
 var (

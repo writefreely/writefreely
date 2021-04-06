@@ -4,7 +4,7 @@ Welcome! We're glad you're interested in contributing to WriteFreely.
 
 For **questions**, **help**, **feature requests**, and **general discussion**, please use [our forum](https://discuss.write.as).
 
-For **bug reports**, please [open a GitHub issue](https://github.com/writeas/writefreely/issues/new). See our guide on [submitting bug reports](https://writefreely.org/contribute#bugs).
+For **bug reports**, please [open a GitHub issue](https://github.com/writefreely/writefreely/issues/new). See our guide on [submitting bug reports](https://writefreely.org/contribute#bugs).
 
 ## Getting Started
 
@@ -80,9 +80,9 @@ We highly value commit messages that follow established form within the project.
 
 When in doubt, look to our existing git history for examples of good commit messages. Here are a few:
 
-* [Rename Suspend status to Silence](https://github.com/writeas/writefreely/commit/7e014ca65958750ab703e317b1ce8cfc4aad2d6e)
-* [Show 404 when remote user not found](https://github.com/writeas/writefreely/commit/867eb53b3596bd7b3f2be3c53a3faf857f4cd36d)
-* [Fix post deletion on Pleroma](https://github.com/writeas/writefreely/commit/fe82cbb96e3d5c57cfde0db76c28c4ea6dabfe50)
+* [Rename Suspend status to Silence](https://github.com/writefreely/writefreely/commit/7e014ca65958750ab703e317b1ce8cfc4aad2d6e)
+* [Show 404 when remote user not found](https://github.com/writefreely/writefreely/commit/867eb53b3596bd7b3f2be3c53a3faf857f4cd36d)
+* [Fix post deletion on Pleroma](https://github.com/writefreely/writefreely/commit/fe82cbb96e3d5c57cfde0db76c28c4ea6dabfe50)
 
 ### Submitting pull requests
 
