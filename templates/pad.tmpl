@@ -186,21 +186,14 @@
 			var xpostTarg = H.get('crosspostTarget', '[]');
 
 			var http = new XMLHttpRequest();
-			var lang = navigator.languages ? navigator.languages[0] : (navigator.language || navigator.userLanguage);
-			lang = lang.substring(0, 2);
 			var post = H.getTitleStrict(content);
 
 			var params = {
 				body: post.content,
 				title: post.title,
-				font: font,
-			{{ if or .Post.Slug .Post.Id }}
-                        };
-                        {{ else }}
-                                lang: lang
-                        };
-			{{ end }}
-			
+				font: font
+			};
+
 			{{ if .Post.Slug }}
 			var url = "/api/collections/{{.EditCollection.Alias}}/posts/{{.Post.Id}}";
 			{{ else if .Post.Id }}
@@ -210,6 +203,10 @@
 			}
 			params.token = token;
 			{{ else }}
+			var lang = navigator.languages ? navigator.languages[0] : (navigator.language || navigator.userLanguage);
+			lang = lang.substring(0, 2);
+			params.lang = lang;
+
 			var url = "/api/posts";
 			var postTarget = H.get('postTarget', 'anonymous');
 			if (postTarget != 'anonymous') {
