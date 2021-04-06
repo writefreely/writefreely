@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -388,6 +388,8 @@ func Initialize(apper Apper, debug bool) (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("connect to DB: %s", err)
 	}
+
+	initActivityPub(apper.App())
 
 	// Handle local timeline, if enabled
 	if apper.App().cfg.App.LocalTimeline {

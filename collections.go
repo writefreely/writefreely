@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -178,6 +178,11 @@ func (c *Collection) NewFormat() *CollectionFormat {
 	}
 
 	return cf
+}
+
+func (c *Collection) IsInstanceColl() bool {
+	ur, _ := url.Parse(c.hostName)
+	return c.Alias == ur.Host
 }
 
 func (c *Collection) IsUnlisted() bool {

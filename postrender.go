@@ -60,6 +60,14 @@ func (p *PublicPost) formatContent(cfg *config.Config, isOwner bool) {
 }
 
 func (p *Post) augmentContent(c *Collection) {
+	if p.PinnedPosition.Valid {
+		// Don't augment posts that are pinned
+		return
+	}
+	if strings.Index(p.Content, "<!--nosig-->") > -1 {
+		// Don't augment posts with the special "nosig" shortcode
+		return
+	}
 	// Add post signatures
 	if c.Signature != "" {
 		p.Content += "\n\n" + c.Signature

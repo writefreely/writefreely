@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 
 	"github.com/prologic/go-gopher"
@@ -26,6 +27,11 @@ func initGopher(apper Apper) {
 	gopher.HandleFunc("/", handler.Gopher(handleGopher))
 	log.Info("Serving on gopher://localhost:%d", apper.App().Config().Server.GopherPort)
 	gopher.ListenAndServe(fmt.Sprintf(":%d", apper.App().Config().Server.GopherPort), nil)
+}
+
+// Utility function to strip the URL from the hostname provided by app.cfg.App.Host
+func stripHostProtocol(app *App) string {
+	return string(regexp.MustCompile("^.*://").ReplaceAll([]byte(app.cfg.App.Host), []byte("")))
 }
 
 func handleGopher(app *App, w gopher.ResponseWriter, r *gopher.Request) error {
@@ -51,6 +57,8 @@ func handleGopher(app *App, w gopher.ResponseWriter, r *gopher.Request) error {
 
 	for _, c := range *colls {
 		w.WriteItem(&gopher.Item{
+			Host:        stripHostProtocol(app),
+			Port:        app.cfg.Server.GopherPort,
 			Type:        gopher.DIRECTORY,
 			Description: c.DisplayTitle(),
 			Selector:    "/" + c.Alias + "/",
@@ -99,6 +107,8 @@ func handleGopherCollection(app *App, w gopher.ResponseWriter, r *gopher.Request
 
 	for _, p := range *posts {
 		w.WriteItem(&gopher.Item{
+			Port:        app.cfg.Server.GopherPort,
+			Host:        stripHostProtocol(app),
 			Type:        gopher.FILE,
 			Description: p.CreatedDate() + " - " + p.DisplayTitle(),
 			Selector:    baseSel + p.Slug.String,

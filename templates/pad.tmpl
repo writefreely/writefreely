@@ -194,8 +194,13 @@
 				body: post.content,
 				title: post.title,
 				font: font,
-				lang: lang
-			};
+			{{ if or .Post.Slug .Post.Id }}
+                        };
+                        {{ else }}
+                                lang: lang
+                        };
+			{{ end }}
+			
 			{{ if .Post.Slug }}
 			var url = "/api/collections/{{.EditCollection.Alias}}/posts/{{.Post.Id}}";
 			{{ else if .Post.Id }}
