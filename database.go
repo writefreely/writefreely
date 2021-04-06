@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -15,7 +15,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/writeas/web-core/silobridge"
-	wf_db "github.com/writeas/writefreely/db"
+	wf_db "github.com/writefreely/writefreely/db"
 	"net/http"
 	"strings"
 	"time"
@@ -32,9 +32,9 @@ import (
 	"github.com/writeas/web-core/id"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/query"
-	"github.com/writeas/writefreely/author"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/key"
+	"github.com/writefreely/writefreely/author"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/key"
 )
 
 const (

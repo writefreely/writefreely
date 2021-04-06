@@ -1,4 +1,4 @@
-module github.com/writeas/writefreely
+module github.com/writefreely/writefreely
 
 require (
 	github.com/clbanning/mxj v1.8.4 // indirect

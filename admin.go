@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -24,8 +24,8 @@ import (
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/passgen"
-	"github.com/writeas/writefreely/appstats"
-	"github.com/writeas/writefreely/config"
+	"github.com/writefreely/writefreely/appstats"
+	"github.com/writefreely/writefreely/config"
 )
 
 var (

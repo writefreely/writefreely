@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2020 A Bunch Tell LLC.
+ * Copyright © 2019-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -25,7 +25,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/config"
+	"github.com/writefreely/writefreely/config"
 )
 
 // OAuthButtons holds display information for different OAuth providers we support.
