@@ -38,6 +38,8 @@ github.com/go-sql-driver/mysql v1.6.0 h1:BCTh4TKNUYmOmMUcQ3IipzF5prigylS7XXjEkfC
 github.com/go-sql-driver/mysql v1.6.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
 github.com/go-test/deep v1.0.1 h1:UQhStjbkDClarlmv0am7OXXO4/GaPdCGiUiMTvi28sg=
 github.com/go-test/deep v1.0.1/go.mod h1:wGDj63lr65AM2AQyKZd/NYHGb0R+1RLqB8NKt3aSFNA=
+github.com/gofrs/uuid v3.3.0+incompatible h1:8K4tyRfvU1CYPgJsveYFQMhpFd/wXNM7iK6rR7UHz84=
+github.com/gofrs/uuid v3.3.0+incompatible/go.mod h1:b2aQJv3Z4Fp6yNu3cdSllBxTCLRxnplIgP/c0N/04lM=
 github.com/gologme/log v1.2.0 h1:Ya5Ip/KD6FX7uH0S31QO87nCCSucKtF44TLbTtO7V4c=
 github.com/gologme/log v1.2.0/go.mod h1:gq31gQ8wEHkR+WekdWsqDuf8pXTUZA9BnnzTuPz1Y9U=
 github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e h1:JKmoR8x90Iww1ks85zJ1lfDGgIiMDuIptTOhJq+zKyg=
@@ -147,8 +149,8 @@ github.com/writeas/saturday v1.7.2-0.20200427193424-392b95a03320 h1:PozPZ29CQ/xt
 github.com/writeas/saturday v1.7.2-0.20200427193424-392b95a03320/go.mod h1:ETE1EK6ogxptJpAgUbcJD0prAtX48bSloie80+tvnzQ=
 github.com/writeas/slug v1.2.0 h1:EMQ+cwLiOcA6EtFwUgyw3Ge18x9uflUnOnR6bp/J+/g=
 github.com/writeas/slug v1.2.0/go.mod h1:RE8shOqQP3YhsfsQe0L3RnuejfQ4Mk+JjY5YJQFubfQ=
-github.com/writeas/web-core v1.2.1-0.20200813161734-68a680d1b03c h1:/aPb8WKtC+Ga/xUEcME0iX3VKBeeJ02kXCaROaZ21SE=
-github.com/writeas/web-core v1.2.1-0.20200813161734-68a680d1b03c/go.mod h1:vTYajviuNBAxjctPp2NUYdgjofywVkxUGpeaERF3SfI=
+github.com/writeas/web-core v1.3.0 h1:oEVJBPZhrFMf9eya+DvFUX1i8NZGZe1eu5sQXnhuzKw=
+github.com/writeas/web-core v1.3.0/go.mod h1:DzNxa0YLV/wNeeWeHFPNa/nHmyJBFIIzXN/m9PpDm5c=
 github.com/writefreely/go-nodeinfo v1.2.0 h1:La+YbTCvmpTwFhBSlebWDDL81N88Qf/SCAvRLR7F8ss=
 github.com/writefreely/go-nodeinfo v1.2.0/go.mod h1:UTvE78KpcjYOlRHupZIiSEFcXHioTXuacCbHU+CAcPg=
 golang.org/x/crypto v0.0.0-20180527072434-ab813273cd59/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=

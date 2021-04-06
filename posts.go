@@ -1176,6 +1176,11 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 			})
 		}
 	}
+	if len(p.Images) > 0 {
+		for _, i := range p.Images {
+			o.Attachment = append(o.Attachment, activitystreams.NewImageAttachment(i))
+		}
+	}
 	// Find mentioned users
 	mentionedUsers := make(map[string]string)
 

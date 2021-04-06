@@ -40,7 +40,7 @@ require (
 	github.com/writeas/nerds v1.0.0
 	github.com/writeas/saturday v1.7.2-0.20200427193424-392b95a03320
 	github.com/writeas/slug v1.2.0
-	github.com/writeas/web-core v1.2.1-0.20200813161734-68a680d1b03c
+	github.com/writeas/web-core v1.3.0
 	github.com/writefreely/go-nodeinfo v1.2.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
