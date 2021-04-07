@@ -128,7 +128,7 @@ func (app *App) FetchPublicPosts() (interface{}, error) {
 }
 
 func viewLocalTimelineAPI(app *App, w http.ResponseWriter, r *http.Request) error {
-	updateTimelineCache(app.timeline)
+	updateTimelineCache(app.timeline, false)
 
 	skip, _ := strconv.Atoi(r.FormValue("skip"))
 
@@ -156,13 +156,19 @@ func viewLocalTimeline(app *App, w http.ResponseWriter, r *http.Request) error {
 	return showLocalTimeline(app, w, r, page, vars["author"], vars["tag"])
 }
 
-func updateTimelineCache(tl *localTimeline) {
-	// Fetch posts if enough time has passed since last cache
-	if tl.posts == nil || tl.m.Invalidate() {
+// updateTimelineCache will reset and update the cache if it is stale or
+// the boolean passed in is true.
+func updateTimelineCache(tl *localTimeline, reset bool) {
+	if reset {
+		tl.m.Reset()
+	}
+
+	// Fetch posts if the cache is empty, has been reset or enough time has
+	// passed since last cache.
+	if tl.posts == nil || reset || tl.m.Invalidate() {
 		log.Info("[READ] Updating post cache")
-		var err error
-		var postsInterfaces interface{}
-		postsInterfaces, err = tl.m.Get()
+
+		postsInterfaces, err := tl.m.Get()
 		if err != nil {
 			log.Error("[READ] Unable to cache posts: %v", err)
 		} else {
@@ -170,10 +176,11 @@ func updateTimelineCache(tl *localTimeline) {
 			tl.posts = &castPosts
 		}
 	}
+
 }
 
 func showLocalTimeline(app *App, w http.ResponseWriter, r *http.Request, page int, author, tag string) error {
-	updateTimelineCache(app.timeline)
+	updateTimelineCache(app.timeline, false)
 
 	pl := len(*(app.timeline.posts))
 	ttlPages := int(math.Ceil(float64(pl) / float64(app.timeline.postsPerPage)))
@@ -286,7 +293,7 @@ func viewLocalTimelineFeed(app *App, w http.ResponseWriter, req *http.Request) e
 		return impart.HTTPError{http.StatusNotFound, "Page doesn't exist."}
 	}
 
-	updateTimelineCache(app.timeline)
+	updateTimelineCache(app.timeline, false)
 
 	feed := &Feed{
 		Title:       app.cfg.App.SiteName + " Reader",
