@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -36,8 +36,8 @@ import (
 	"github.com/writeas/web-core/i18n"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/tags"
-	"github.com/writeas/writefreely/page"
-	"github.com/writeas/writefreely/parse"
+	"github.com/writefreely/writefreely/page"
+	"github.com/writefreely/writefreely/parse"
 )
 
 const (
@@ -1174,6 +1174,11 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 				HRef: tagBaseURL + t,
 				Name: "#" + t,
 			})
+		}
+	}
+	if len(p.Images) > 0 {
+		for _, i := range p.Images {
+			o.Attachment = append(o.Attachment, activitystreams.NewImageAttachment(i))
 		}
 	}
 	// Find mentioned users

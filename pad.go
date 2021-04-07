@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -17,7 +17,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/page"
 )
 
 func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {

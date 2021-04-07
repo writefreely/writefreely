@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -30,9 +30,9 @@ import (
 	"github.com/writeas/web-core/bots"
 	"github.com/writeas/web-core/log"
 	waposts "github.com/writeas/web-core/posts"
-	"github.com/writeas/writefreely/author"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/author"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/page"
 )
 
 type (
@@ -180,6 +180,11 @@ func (c *Collection) NewFormat() *CollectionFormat {
 	return cf
 }
 
+func (c *Collection) IsInstanceColl() bool {
+	ur, _ := url.Parse(c.hostName)
+	return c.Alias == ur.Host
+}
+
 func (c *Collection) IsUnlisted() bool {
 	return c.Visibility == 0
 }
@@ -235,7 +240,7 @@ func (c *Collection) DisplayCanonicalURL() string {
 func (c *Collection) RedirectingCanonicalURL(isRedir bool) string {
 	if c.hostName == "" {
 		// If this is true, the human programmers screwed up. So ask for a bug report and fail, fail, fail
-		log.Error("[PROGRAMMER ERROR] WARNING: Collection.hostName is empty! Federation and many other things will fail! If you're seeing this in the wild, please report this bug and let us know what you were doing just before this: https://github.com/writeas/writefreely/issues/new?template=bug_report.md")
+		log.Error("[PROGRAMMER ERROR] WARNING: Collection.hostName is empty! Federation and many other things will fail! If you're seeing this in the wild, please report this bug and let us know what you were doing just before this: https://github.com/writefreely/writefreely/issues/new?template=bug_report.md")
 	}
 	if isSingleUser {
 		return c.hostName + "/"

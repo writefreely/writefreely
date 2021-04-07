@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -15,7 +15,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/writeas/web-core/silobridge"
-	wf_db "github.com/writeas/writefreely/db"
+	wf_db "github.com/writefreely/writefreely/db"
 	"net/http"
 	"strings"
 	"time"
@@ -32,9 +32,9 @@ import (
 	"github.com/writeas/web-core/id"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/query"
-	"github.com/writeas/writefreely/author"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/key"
+	"github.com/writefreely/writefreely/author"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/key"
 )
 
 const (
@@ -638,13 +638,17 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 			ownerCollID.Int64 = collID
 			ownerCollID.Valid = true
 			var slugVal string
-			if post.Title != nil && *post.Title != "" {
-				slugVal = getSlug(*post.Title, post.Language.String)
-				if slugVal == "" {
+			if post.Slug != nil && *post.Slug != "" {
+				slugVal = *post.Slug
+			} else {
+				if post.Title != nil && *post.Title != "" {
+					slugVal = getSlug(*post.Title, post.Language.String)
+					if slugVal == "" {
+						slugVal = getSlug(*post.Content, post.Language.String)
+					}
+				} else {
 					slugVal = getSlug(*post.Content, post.Language.String)
 				}
-			} else {
-				slugVal = getSlug(*post.Content, post.Language.String)
 			}
 			if slugVal == "" {
 				slugVal = friendlyID

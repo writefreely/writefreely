@@ -1,5 +1,5 @@
 GITREV=`git describe | cut -c 2-`
-LDFLAGS=-ldflags="-X 'github.com/writeas/writefreely.softwareVer=$(GITREV)'"
+LDFLAGS=-ldflags="-X 'github.com/writefreely/writefreely.softwareVer=$(GITREV)'"
 
 GOCMD=go
 GOINSTALL=$(GOCMD) install $(LDFLAGS)

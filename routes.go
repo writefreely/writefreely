@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -12,6 +12,7 @@ package writefreely
 
 import (
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -125,9 +126,13 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 
 	write.HandleFunc("/api/markdown", handler.All(handleRenderMarkdown)).Methods("POST")
 
+	instanceURL, _ := url.Parse(apper.App().Config().App.Host)
+	host := instanceURL.Host
+
 	// Handle collections
 	write.HandleFunc("/api/collections", handler.All(newCollection)).Methods("POST")
 	apiColls := write.PathPrefix("/api/collections/").Subrouter()
+	apiColls.HandleFunc("/"+host, handler.AllReader(fetchCollection)).Methods("GET")
 	apiColls.HandleFunc("/{alias:[0-9a-zA-Z\\-]+}", handler.AllReader(fetchCollection)).Methods("GET")
 	apiColls.HandleFunc("/{alias:[0-9a-zA-Z\\-]+}", handler.All(existingCollection)).Methods("POST", "DELETE")
 	apiColls.HandleFunc("/{alias}/posts", handler.AllReader(fetchCollectionPosts)).Methods("GET")

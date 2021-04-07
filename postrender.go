@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -28,8 +28,8 @@ import (
 	blackfriday "github.com/writeas/saturday"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/stringmanip"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/parse"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/parse"
 )
 
 var (
@@ -60,6 +60,14 @@ func (p *PublicPost) formatContent(cfg *config.Config, isOwner bool) {
 }
 
 func (p *Post) augmentContent(c *Collection) {
+	if p.PinnedPosition.Valid {
+		// Don't augment posts that are pinned
+		return
+	}
+	if strings.Index(p.Content, "<!--nosig-->") > -1 {
+		// Don't augment posts with the special "nosig" shortcode
+		return
+	}
 	// Add post signatures
 	if c.Signature != "" {
 		p.Content += "\n\n" + c.Signature

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2020 A Bunch Tell LLC.
+ * Copyright © 2019-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -14,7 +14,7 @@ import (
 	"context"
 	"database/sql"
 
-	wf_db "github.com/writeas/writefreely/db"
+	wf_db "github.com/writefreely/writefreely/db"
 )
 
 func oauthSlack(db *datastore) error {
