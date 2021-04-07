@@ -624,14 +624,6 @@ func deleteFederatedPost(app *App, p *PublicPost, collID int64) error {
 }
 
 func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
-	if debugging {
-		if isUpdate {
-			log.Info("Federating updated post!")
-		} else {
-			log.Info("Federating new post!")
-		}
-	}
-
 	// If app is private, do not federate
 	if app.cfg.App.Private {
 		return nil
@@ -640,6 +632,14 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 	// Do not federate posts from private or protected blogs
 	if p.Collection.Visibility == CollPrivate || p.Collection.Visibility == CollProtected {
 		return nil
+	}
+
+	if debugging {
+		if isUpdate {
+			log.Info("Federating updated post!")
+		} else {
+			log.Info("Federating new post!")
+		}
 	}
 
 	actor := p.Collection.PersonObject(collID)
