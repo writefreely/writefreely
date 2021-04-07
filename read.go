@@ -160,7 +160,7 @@ func viewLocalTimeline(app *App, w http.ResponseWriter, r *http.Request) error {
 // the boolean passed in is true.
 func updateTimelineCache(tl *localTimeline, reset bool) {
 	if reset {
-		tl.Reset()
+		tl.m.Reset()
 	}
 
 	// Fetch posts if the cache is empty, has been reset or enough time has
