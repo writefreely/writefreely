@@ -847,19 +847,15 @@ func CreateUser(apper Apper, username, password string, isAdmin bool) error {
 }
 
 func adminInitDatabase(app *App) error {
-	schemaFileName := "schema.sql"
+	schema := schemaSQL
 	if app.cfg.Database.Type == driverSQLite {
-		schemaFileName = "sqlite.sql"
-	}
-
-	schema, err := Asset(schemaFileName)
-	if err != nil {
-		return fmt.Errorf("Unable to load schema file: %v", err)
+		schema = sqliteSQL
 	}
 
 	tblReg := regexp.MustCompile("CREATE TABLE (IF NOT EXISTS )?`([a-z_]+)`")
 
 	queries := strings.Split(string(schema), ";\n")
+	var err error
 	for _, q := range queries {
 		if strings.TrimSpace(q) == "" {
 			continue
