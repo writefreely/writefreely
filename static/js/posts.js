@@ -181,6 +181,13 @@ var localPosts = function() {
 		undoDelete: UndoDelete,
 	};
 }();
+var movePostHTML = function(postID) {
+	let $tmpl = document.getElementById('move-tmpl');
+	if ($tmpl === null) {
+		return "";
+	}
+	return $tmpl.innerHTML.replace(/POST_ID/g, postID);
+}
 var createPostEl = function(post, owned) {
 	var $post = document.createElement('div');
 	var title = (post.title || post.id);
@@ -194,7 +201,7 @@ var createPostEl = function(post, owned) {
 		posted = getFormattedDate(new Date(post.created))
 	}
 	var hasDraft = H.exists('draft' + post.id);
-	$post.innerHTML += '<h4><date>' + posted + '</date> <a class="action" href="/pad/' + post.id + '">edit' + (hasDraft ? 'ed' : '') + '</a> <a class="delete action" href="/' + post.id + '" onclick="delPost(event, \'' + post.id + '\'' + (owned === true ? ', true' : '') + ')">delete</a></h4>';
+	$post.innerHTML += '<h4><date>' + posted + '</date> <a class="action" href="/pad/' + post.id + '">edit' + (hasDraft ? 'ed' : '') + '</a> <a class="delete action" href="/' + post.id + '" onclick="delPost(event, \'' + post.id + '\'' + (owned === true ? ', true' : '') + ')">delete</a> '+movePostHTML(post.id)+'</h4>';
 
 	if (post.error) {
 		$post.innerHTML += '<p class="error"><strong>Sync error:</strong> ' + post.error + ' <nav><a href="#" onclick="localPosts.dismissError(event, this)">dismiss</a> <a href="#" onclick="localPosts.deletePost(event, this, \''+post.id+'\')">remove post</a></nav></p>';

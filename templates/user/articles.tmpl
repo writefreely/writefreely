@@ -5,6 +5,9 @@
 		font-style: italic;
 		color: #666;
 	}
+	#move-tmpl {
+		display: none;
+	}
 </style>
 
 <div class="snug content-container">
@@ -60,6 +63,25 @@
 <div id="unsynced-posts" class="atoms"></div>
 
 </div>
+
+{{ if .Collections }}
+	<div id="move-tmpl">
+		{{if gt (len .Collections) 1}}
+			<div class="action flat-select">
+				<select id="move-POST_ID" onchange="postActions.multiMove(this, 'POST_ID', {{if .SingleUser}}true{{else}}false{{end}})" title="Move this post to one of your blogs">
+					<option style="display:none"></option>
+					{{range .Collections}}<option value="{{.Alias}}">{{.DisplayTitle}}</option>{{end}}
+				</select>
+				<label for="move-POST_ID">move to...</label>
+				<img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" />
+			</div>
+		{{else}}
+			{{range .Collections}}
+				<a class="action" href="/POST_ID" title="Publish this post to your blog '{{.DisplayTitle}}'" onclick="postActions.move(this, 'POST_ID', '{{.Alias}}', {{if $.SingleUser}}true{{else}}false{{end}});return false">move to {{.DisplayTitle}}</a>
+			{{end}}
+		{{end}}
+	</div>
+{{ end }}
 
 <script src="/js/h.js"></script>
 <script src="/js/postactions.js"></script>
