@@ -60,6 +60,9 @@ form dd {
 	margin-top: 0;
 	max-width: 8em;
 }
+.or {
+	margin-bottom: 2.5em !important;
+}
 </style>
 {{end}}
 {{define "content"}}
@@ -73,6 +76,8 @@ form dd {
 
 	<div{{if not .OpenRegistration}} style="padding: 2em 0;"{{end}}>
 		{{ if .OpenRegistration }}
+			{{template "oauth-buttons" .}}
+		{{if not .DisablePasswordAuth}}
 		{{if .Flashes}}<ul class="errors">
 			{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 		</ul>{{end}}
@@ -101,6 +106,7 @@ form dd {
 				</dl>
 			</form>
 		</div>
+		{{end}}
 		{{ else }}
 		<p style="font-size: 1.3em; margin: 1rem 0;">Registration is currently closed.</p>
 		<p>You can always sign up on <a href="https://writefreely.org/instances">another instance</a>.</p>

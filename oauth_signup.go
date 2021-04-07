@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 A Bunch Tell LLC.
+ * Copyright © 2020-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -17,7 +17,7 @@ import (
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/page"
 	"html/template"
 	"net/http"
 	"strings"

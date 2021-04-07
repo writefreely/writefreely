@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -36,8 +36,8 @@ import (
 	"github.com/writeas/web-core/i18n"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/tags"
-	"github.com/writeas/writefreely/page"
-	"github.com/writeas/writefreely/parse"
+	"github.com/writefreely/writefreely/page"
+	"github.com/writefreely/writefreely/parse"
 )
 
 const (
@@ -211,8 +211,7 @@ func (p Post) Summary() string {
 	if p.Content == "" {
 		return ""
 	}
-	// Strip out HTML
-	p.Content = bluemonday.StrictPolicy().Sanitize(p.Content)
+	p.Content = stripHTMLWithoutEscaping(p.Content)
 	// and Markdown
 	p.Content = stripmd.Strip(p.Content)
 
@@ -1132,7 +1131,12 @@ func (p *PublicPost) CanonicalURL(hostName string) string {
 
 func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 	cfg := app.cfg
-	o := activitystreams.NewArticleObject()
+	var o *activitystreams.Object
+	if cfg.App.NotesOnly || strings.Index(p.Content, "\n\n") == -1 {
+		o = activitystreams.NewNoteObject()
+	} else {
+		o = activitystreams.NewArticleObject()
+	}
 	o.ID = p.Collection.FederatedAPIBase() + "api/posts/" + p.ID
 	o.Published = p.Created
 	o.URL = p.CanonicalURL(cfg.App.Host)
@@ -1141,6 +1145,7 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 		p.Collection.FederatedAccount() + "/followers",
 	}
 	o.Name = p.DisplayTitle()
+	p.augmentContent()
 	if p.HTMLContent == template.HTML("") {
 		p.formatContent(cfg, false)
 	}
@@ -1169,6 +1174,11 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 				HRef: tagBaseURL + t,
 				Name: "#" + t,
 			})
+		}
+	}
+	if len(p.Images) > 0 {
+		for _, i := range p.Images {
+			o.Attachment = append(o.Attachment, activitystreams.NewImageAttachment(i))
 		}
 	}
 	// Find mentioned users
@@ -1420,17 +1430,23 @@ Are you sure it was ever here?`,
 			return err
 		}
 	}
-	p.IsOwner = owner != nil && p.OwnerID.Valid && owner.ID == p.OwnerID.Int64
+
+	// Check if the authenticated user is the post owner
+	p.IsOwner = u != nil && u.ID == p.OwnerID.Int64
 	p.Collection = coll
 	p.IsTopLevel = app.cfg.App.SingleUser
 
-	if !p.IsOwner && silenced {
+	// Only allow a post owner or admin to view a post for silenced collections
+	if silenced && !p.IsOwner && (u == nil || !u.IsAdmin()) {
 		return ErrPostNotFound
 	}
+
 	// Check if post has been unpublished
 	if p.Content == "" && p.Title.String == "" {
 		return impart.HTTPError{http.StatusGone, "Post was unpublished."}
 	}
+
+	p.augmentContent()
 
 	// Serve collection post
 	if isRaw {
@@ -1473,6 +1489,7 @@ Are you sure it was ever here?`,
 			IsOwner        bool
 			IsPinned       bool
 			IsCustomDomain bool
+			Monetization   string
 			PinnedPosts    *[]PublicPost
 			IsFound        bool
 			IsAdmin        bool
@@ -1490,6 +1507,7 @@ Are you sure it was ever here?`,
 		tp.CanInvite = canUserInvite(app.cfg, tp.IsAdmin)
 		tp.PinnedPosts, _ = app.db.GetPinnedPosts(coll, p.IsOwner)
 		tp.IsPinned = len(*tp.PinnedPosts) > 0 && PostsContains(tp.PinnedPosts, p)
+		tp.Monetization = app.db.GetCollectionAttribute(coll.ID, "monetization_pointer")
 
 		if !postFound {
 			w.WriteHeader(http.StatusNotFound)

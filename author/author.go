@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -11,7 +11,7 @@
 package author
 
 import (
-	"github.com/writeas/writefreely/config"
+	"github.com/writefreely/writefreely/config"
 	"os"
 	"path/filepath"
 	"regexp"

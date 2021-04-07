@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2020 A Bunch Tell LLC.
+ * Copyright © 2019-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -25,24 +25,32 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/config"
+	"github.com/writefreely/writefreely/config"
 )
 
 // OAuthButtons holds display information for different OAuth providers we support.
 type OAuthButtons struct {
-	SlackEnabled      bool
-	WriteAsEnabled    bool
-	GitLabEnabled     bool
-	GitLabDisplayName string
+	SlackEnabled       bool
+	WriteAsEnabled     bool
+	GitLabEnabled      bool
+	GitLabDisplayName  string
+	GiteaEnabled       bool
+	GiteaDisplayName   string
+	GenericEnabled     bool
+	GenericDisplayName string
 }
 
 // NewOAuthButtons creates a new OAuthButtons struct based on our app configuration.
 func NewOAuthButtons(cfg *config.Config) *OAuthButtons {
 	return &OAuthButtons{
-		SlackEnabled:      cfg.SlackOauth.ClientID != "",
-		WriteAsEnabled:    cfg.WriteAsOauth.ClientID != "",
-		GitLabEnabled:     cfg.GitlabOauth.ClientID != "",
-		GitLabDisplayName: config.OrDefaultString(cfg.GitlabOauth.DisplayName, gitlabDisplayName),
+		SlackEnabled:       cfg.SlackOauth.ClientID != "",
+		WriteAsEnabled:     cfg.WriteAsOauth.ClientID != "",
+		GitLabEnabled:      cfg.GitlabOauth.ClientID != "",
+		GitLabDisplayName:  config.OrDefaultString(cfg.GitlabOauth.DisplayName, gitlabDisplayName),
+		GiteaEnabled:       cfg.GiteaOauth.ClientID != "",
+		GiteaDisplayName:   config.OrDefaultString(cfg.GiteaOauth.DisplayName, giteaDisplayName),
+		GenericEnabled:     cfg.GenericOauth.ClientID != "",
+		GenericDisplayName: config.OrDefaultString(cfg.GenericOauth.DisplayName, genericOauthDisplayName),
 	}
 }
 
@@ -235,6 +243,65 @@ func configureGitlabOauth(parentHandler *Handler, r *mux.Router, app *App) {
 	}
 }
 
+func configureGenericOauth(parentHandler *Handler, r *mux.Router, app *App) {
+	if app.Config().GenericOauth.ClientID != "" {
+		callbackLocation := app.Config().App.Host + "/oauth/callback/generic"
+
+		var callbackProxy *callbackProxyClient = nil
+		if app.Config().GenericOauth.CallbackProxy != "" {
+			callbackProxy = &callbackProxyClient{
+				server:           app.Config().GenericOauth.CallbackProxyAPI,
+				callbackLocation: app.Config().App.Host + "/oauth/callback/generic",
+				httpClient:       config.DefaultHTTPClient(),
+			}
+			callbackLocation = app.Config().GenericOauth.CallbackProxy
+		}
+
+		oauthClient := genericOauthClient{
+			ClientID:         app.Config().GenericOauth.ClientID,
+			ClientSecret:     app.Config().GenericOauth.ClientSecret,
+			ExchangeLocation: app.Config().GenericOauth.Host + app.Config().GenericOauth.TokenEndpoint,
+			InspectLocation:  app.Config().GenericOauth.Host + app.Config().GenericOauth.InspectEndpoint,
+			AuthLocation:     app.Config().GenericOauth.Host + app.Config().GenericOauth.AuthEndpoint,
+			HttpClient:       config.DefaultHTTPClient(),
+			CallbackLocation: callbackLocation,
+			Scope:            config.OrDefaultString(app.Config().GenericOauth.Scope, "read_user"),
+			MapUserID:        config.OrDefaultString(app.Config().GenericOauth.MapUserID, "user_id"),
+			MapUsername:      config.OrDefaultString(app.Config().GenericOauth.MapUsername, "username"),
+			MapDisplayName:   config.OrDefaultString(app.Config().GenericOauth.MapDisplayName, "-"),
+			MapEmail:         config.OrDefaultString(app.Config().GenericOauth.MapEmail, "email"),
+		}
+		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
+	}
+}
+
+func configureGiteaOauth(parentHandler *Handler, r *mux.Router, app *App) {
+	if app.Config().GiteaOauth.ClientID != "" {
+		callbackLocation := app.Config().App.Host + "/oauth/callback/gitea"
+
+		var callbackProxy *callbackProxyClient = nil
+		if app.Config().GiteaOauth.CallbackProxy != "" {
+			callbackProxy = &callbackProxyClient{
+				server:           app.Config().GiteaOauth.CallbackProxyAPI,
+				callbackLocation: app.Config().App.Host + "/oauth/callback/gitea",
+				httpClient:       config.DefaultHTTPClient(),
+			}
+			callbackLocation = app.Config().GiteaOauth.CallbackProxy
+		}
+
+		oauthClient := giteaOauthClient{
+			ClientID:         app.Config().GiteaOauth.ClientID,
+			ClientSecret:     app.Config().GiteaOauth.ClientSecret,
+			ExchangeLocation: app.Config().GiteaOauth.Host + "/login/oauth/access_token",
+			InspectLocation:  app.Config().GiteaOauth.Host + "/api/v1/user",
+			AuthLocation:     app.Config().GiteaOauth.Host + "/login/oauth/authorize",
+			HttpClient:       config.DefaultHTTPClient(),
+			CallbackLocation: callbackLocation,
+		}
+		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
+	}
+}
+
 func configureOauthRoutes(parentHandler *Handler, r *mux.Router, app *App, oauthClient oauthClient, callbackProxy *callbackProxyClient) {
 	handler := &oauthHandler{
 		Config:        app.Config(),
@@ -264,6 +331,12 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 	tokenResponse, err := h.oauthClient.exchangeOauthCode(ctx, code)
 	if err != nil {
 		log.Error("Unable to exchangeOauthCode: %s", err)
+		// TODO: show user friendly message if needed
+		// TODO: show NO message for cases like user pressing "Cancel" on authorize step
+		addSessionFlash(app, w, r, err.Error(), nil)
+		if attachUserID > 0 {
+			return impart.HTTPError{http.StatusFound, "/me/settings"}
+		}
 		return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 	}
 
@@ -354,7 +427,7 @@ func (r *callbackProxyClient) register(ctx context.Context, state string) error 
 	if err != nil {
 		return err
 	}
-	req.Header.Set("User-Agent", "writefreely")
+	req.Header.Set("User-Agent", ServerUserAgent(""))
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 

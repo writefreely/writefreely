@@ -1,3 +1,13 @@
+/*
+ * Copyright © 2019-2021 A Bunch Tell LLC.
+ *
+ * This file is part of WriteFreely.
+ *
+ * WriteFreely is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License, included
+ * in the LICENSE file in this source code package.
+ */
+
 package writefreely
 
 import (
@@ -7,7 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/writeas/impart"
 	"github.com/writeas/nerds/store"
-	"github.com/writeas/writefreely/config"
+	"github.com/writefreely/writefreely/config"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -244,7 +254,7 @@ func TestViewOauthCallback(t *testing.T) {
 		req, err := http.NewRequest("GET", "/oauth/callback", nil)
 		assert.NoError(t, err)
 		rr := httptest.NewRecorder()
-		err = h.viewOauthCallback(nil, rr, req)
+		err = h.viewOauthCallback(&App{cfg: app.Config(), sessionStore: app.SessionStore()}, rr, req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
 	})

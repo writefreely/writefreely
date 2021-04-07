@@ -26,7 +26,7 @@
 		{{end}}
 	</table>
 
-	<nav class="pager">
+	<nav class="pager pages">
 		{{range $n := .TotalPages}}<a href="/admin/users{{if ne $n 1}}?p={{$n}}{{end}}" {{if eq $.CurPage $n}}class="selected"{{end}}>{{$n}}</a>{{end}}
 	</nav>
 

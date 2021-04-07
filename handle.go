@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -24,8 +24,8 @@ import (
 	"github.com/prologic/go-gopher"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/page"
 )
 
 // UserLevel represents the required user level for accessing an endpoint
@@ -621,6 +621,9 @@ func (h *Handler) AllReader(f handlerFunc) http.HandlerFunc {
 				log.Info(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
+			// Allow any origin, as public endpoints are handled in here
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+
 			if h.app.App().cfg.App.Private {
 				// This instance is private, so ensure it's being accessed by a valid user
 				// Check if authenticated with an access token
@@ -942,4 +945,11 @@ func sendRedirect(w http.ResponseWriter, code int, location string) int {
 	w.Header().Set("Location", location)
 	w.WriteHeader(code)
 	return code
+}
+
+func cacheControl(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=604800, immutable")
+		next.ServeHTTP(w, r)
+	})
 }

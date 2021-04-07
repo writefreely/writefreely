@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -24,8 +24,8 @@ import (
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/passgen"
-	"github.com/writeas/writefreely/appstats"
-	"github.com/writeas/writefreely/config"
+	"github.com/writefreely/writefreely/appstats"
+	"github.com/writefreely/writefreely/config"
 )
 
 var (
@@ -328,6 +328,9 @@ func handleAdminToggleUserStatus(app *App, u *User, w http.ResponseWriter, r *ht
 		err = app.db.SetUserStatus(user.ID, UserActive)
 	} else {
 		err = app.db.SetUserStatus(user.ID, UserSilenced)
+
+		// reset the cache to removed silence user posts
+		updateTimelineCache(app.timeline, true)
 	}
 	if err != nil {
 		log.Error("toggle user silenced: %v", err)
@@ -529,6 +532,7 @@ func handleAdminUpdateConfig(apper Apper, u *User, w http.ResponseWriter, r *htt
 	}
 	apper.App().cfg.App.Federation = r.FormValue("federation") == "on"
 	apper.App().cfg.App.PublicStats = r.FormValue("public_stats") == "on"
+	apper.App().cfg.App.Monetization = r.FormValue("monetization") == "on"
 	apper.App().cfg.App.Private = r.FormValue("private") == "on"
 	apper.App().cfg.App.LocalTimeline = r.FormValue("local_timeline") == "on"
 	if apper.App().cfg.App.LocalTimeline && apper.App().timeline == nil {

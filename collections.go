@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -30,9 +30,9 @@ import (
 	"github.com/writeas/web-core/bots"
 	"github.com/writeas/web-core/log"
 	waposts "github.com/writeas/web-core/posts"
-	"github.com/writeas/writefreely/author"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/author"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/page"
 )
 
 type (
@@ -47,6 +47,7 @@ type (
 		Language    string         `schema:"lang" json:"lang,omitempty"`
 		StyleSheet  string         `datastore:"style_sheet" schema:"style_sheet" json:"style_sheet"`
 		Script      string         `datastore:"script" schema:"script" json:"script,omitempty"`
+		Signature   string         `datastore:"post_signature" schema:"signature" json:"-"`
 		Public      bool           `datastore:"public" json:"public"`
 		Visibility  collVisibility `datastore:"private" json:"-"`
 		Format      string         `datastore:"format" json:"format,omitempty"`
@@ -54,6 +55,8 @@ type (
 		OwnerID     int64          `datastore:"owner_id" json:"-"`
 		PublicOwner bool           `datastore:"public_owner" json:"-"`
 		URL         string         `json:"url,omitempty"`
+
+		MonetizationPointer string `json:"monetization_pointer,omitempty"`
 
 		db       *datastore
 		hostName string
@@ -86,13 +89,15 @@ type (
 		Handle    string `schema:"handle" json:"handle"`
 
 		// Actual collection values updated in the DB
-		Alias       *string         `schema:"alias" json:"alias"`
-		Title       *string         `schema:"title" json:"title"`
-		Description *string         `schema:"description" json:"description"`
-		StyleSheet  *sql.NullString `schema:"style_sheet" json:"style_sheet"`
-		Script      *sql.NullString `schema:"script" json:"script"`
-		Visibility  *int            `schema:"visibility" json:"public"`
-		Format      *sql.NullString `schema:"format" json:"format"`
+		Alias        *string         `schema:"alias" json:"alias"`
+		Title        *string         `schema:"title" json:"title"`
+		Description  *string         `schema:"description" json:"description"`
+		StyleSheet   *sql.NullString `schema:"style_sheet" json:"style_sheet"`
+		Script       *sql.NullString `schema:"script" json:"script"`
+		Signature    *sql.NullString `schema:"signature" json:"signature"`
+		Monetization *string         `schema:"monetization_pointer" json:"monetization_pointer"`
+		Visibility   *int            `schema:"visibility" json:"public"`
+		Format       *sql.NullString `schema:"format" json:"format"`
 	}
 	CollectionFormat struct {
 		Format string
@@ -175,6 +180,11 @@ func (c *Collection) NewFormat() *CollectionFormat {
 	return cf
 }
 
+func (c *Collection) IsInstanceColl() bool {
+	ur, _ := url.Parse(c.hostName)
+	return c.Alias == ur.Host
+}
+
 func (c *Collection) IsUnlisted() bool {
 	return c.Visibility == 0
 }
@@ -230,7 +240,7 @@ func (c *Collection) DisplayCanonicalURL() string {
 func (c *Collection) RedirectingCanonicalURL(isRedir bool) string {
 	if c.hostName == "" {
 		// If this is true, the human programmers screwed up. So ask for a bug report and fail, fail, fail
-		log.Error("[PROGRAMMER ERROR] WARNING: Collection.hostName is empty! Federation and many other things will fail! If you're seeing this in the wild, please report this bug and let us know what you were doing just before this: https://github.com/writeas/writefreely/issues/new?template=bug_report.md")
+		log.Error("[PROGRAMMER ERROR] WARNING: Collection.hostName is empty! Federation and many other things will fail! If you're seeing this in the wild, please report this bug and let us know what you were doing just before this: https://github.com/writefreely/writefreely/issues/new?template=bug_report.md")
 	}
 	if isSingleUser {
 		return c.hostName + "/"
@@ -550,6 +560,7 @@ type CollectionPage struct {
 	IsOwner        bool
 	CanPin         bool
 	Username       string
+	Monetization   string
 	Collections    *[]Collection
 	PinnedPosts    *[]PublicPost
 	IsAdmin        bool
@@ -721,14 +732,14 @@ func newDisplayCollection(c *Collection, cr *collectionReq, page int) *DisplayCo
 	return coll
 }
 
+// getCollectionPage returns the collection page as an int. If the parsed page value is not
+// greater than 0 then the default value of 1 is returned.
 func getCollectionPage(vars map[string]string) int {
-	page := 1
-	var p int
-	p, _ = strconv.Atoi(vars["page"])
-	if p > 0 {
-		page = p
+	if p, _ := strconv.Atoi(vars["page"]); p > 0 {
+		return p
 	}
-	return page
+
+	return 1
 }
 
 // handleViewCollection displays the requested Collection
@@ -827,6 +838,7 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 	// Add more data
 	// TODO: fix this mess of collections inside collections
 	displayPage.PinnedPosts, _ = app.db.GetPinnedPosts(coll.CollectionObj, isOwner)
+	displayPage.Monetization = app.db.GetCollectionAttribute(coll.ID, "monetization_pointer")
 
 	collTmpl := "collection"
 	if app.cfg.App.Chorus {
@@ -945,6 +957,7 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 	// Add more data
 	// TODO: fix this mess of collections inside collections
 	displayPage.PinnedPosts, _ = app.db.GetPinnedPosts(coll.CollectionObj, isOwner)
+	displayPage.Monetization = app.db.GetCollectionAttribute(coll.ID, "monetization_pointer")
 
 	err = templates["collection-tags"].ExecuteTemplate(w, "collection-tags", displayPage)
 	if err != nil {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -35,11 +35,11 @@ import (
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/converter"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/author"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/key"
-	"github.com/writeas/writefreely/migrations"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/author"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/key"
+	"github.com/writefreely/writefreely/migrations"
+	"github.com/writefreely/writefreely/page"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -238,6 +238,7 @@ func handleViewLanding(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p := struct {
 		page.StaticPage
+		*OAuthButtons
 		Flashes []template.HTML
 		Banner  template.HTML
 		Content template.HTML
@@ -245,6 +246,7 @@ func handleViewLanding(app *App, w http.ResponseWriter, r *http.Request) error {
 		ForcedLanding bool
 	}{
 		StaticPage:    pageForReq(app, r),
+		OAuthButtons:  NewOAuthButtons(app.Config()),
 		ForcedLanding: forceLanding,
 	}
 
@@ -386,6 +388,8 @@ func Initialize(apper Apper, debug bool) (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("connect to DB: %s", err)
 	}
+
+	initActivityPub(apper.App())
 
 	// Handle local timeline, if enabled
 	if apper.App().cfg.App.LocalTimeline {
@@ -889,4 +893,14 @@ func adminInitDatabase(app *App) error {
 
 	log.Info("Done.")
 	return nil
+}
+
+// ServerUserAgent returns a User-Agent string to use in external requests. The
+// hostName parameter may be left empty.
+func ServerUserAgent(hostName string) string {
+	hostUAStr := ""
+	if hostName != "" {
+		hostUAStr = "; +" + hostName
+	}
+	return "Go (" + serverSoftware + "/" + softwareVer + hostUAStr + ")"
 }

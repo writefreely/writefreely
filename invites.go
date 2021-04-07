@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2020 A Bunch Tell LLC.
+ * Copyright © 2019-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -21,7 +21,7 @@ import (
 	"github.com/writeas/impart"
 	"github.com/writeas/nerds/store"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/page"
 )
 
 type Invite struct {
@@ -170,14 +170,14 @@ func handleViewInvite(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p := struct {
 		page.StaticPage
+		*OAuthButtons
 		Error   string
 		Flashes []template.HTML
 		Invite  string
-		OAuth   *OAuthButtons
 	}{
-		StaticPage: pageForReq(app, r),
-		Invite:     inviteCode,
-		OAuth:      NewOAuthButtons(app.cfg),
+		StaticPage:   pageForReq(app, r),
+		OAuthButtons: NewOAuthButtons(app.cfg),
+		Invite:       inviteCode,
 	}
 
 	if expired {

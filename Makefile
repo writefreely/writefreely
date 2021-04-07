@@ -1,5 +1,5 @@
 GITREV=`git describe | cut -c 2-`
-LDFLAGS=-ldflags="-X 'github.com/writeas/writefreely.softwareVer=$(GITREV)'"
+LDFLAGS=-ldflags="-X 'github.com/writefreely/writefreely.softwareVer=$(GITREV)'"
 
 GOCMD=go
 GOINSTALL=$(GOCMD) install $(LDFLAGS)
@@ -131,6 +131,7 @@ release-docker :
 
 ui : force_look
 	cd less/; $(MAKE) $(MFLAGS)
+	cd prose/; $(MAKE) $(MFLAGS)
 
 assets : generate
 	go-bindata -pkg writefreely -ignore=\\.gitignore -tags="!wflib" schema.sql sqlite.sql

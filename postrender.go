@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -16,6 +16,7 @@ import (
 	"html"
 	"html/template"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 	"unicode"
@@ -27,8 +28,8 @@ import (
 	blackfriday "github.com/writeas/saturday"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/stringmanip"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/parse"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/parse"
 )
 
 var (
@@ -58,8 +59,46 @@ func (p *PublicPost) formatContent(cfg *config.Config, isOwner bool) {
 	p.Post.formatContent(cfg, &p.Collection.Collection, isOwner)
 }
 
+func (p *Post) augmentContent(c *Collection) {
+	if p.PinnedPosition.Valid {
+		// Don't augment posts that are pinned
+		return
+	}
+	if strings.Index(p.Content, "<!--nosig-->") > -1 {
+		// Don't augment posts with the special "nosig" shortcode
+		return
+	}
+	// Add post signatures
+	if c.Signature != "" {
+		p.Content += "\n\n" + c.Signature
+	}
+}
+
+func (p *PublicPost) augmentContent() {
+	p.Post.augmentContent(&p.Collection.Collection)
+}
+
 func applyMarkdown(data []byte, baseURL string, cfg *config.Config) string {
 	return applyMarkdownSpecial(data, false, baseURL, cfg)
+}
+
+func disableYoutubeAutoplay(outHTML string) string {
+	for _, match := range youtubeReg.FindAllString(outHTML, -1) {
+		u, err := url.Parse(match)
+		if err != nil {
+			continue
+		}
+		u.RawQuery = html.UnescapeString(u.RawQuery)
+		q := u.Query()
+		// Set Youtube autoplay url parameter, if any, to 0
+		if len(q["autoplay"]) == 1 {
+			q.Set("autoplay", "0")
+		}
+		u.RawQuery = q.Encode()
+		cleanURL := u.String()
+		outHTML = strings.Replace(outHTML, match, cleanURL, 1)
+	}
+	return outHTML
 }
 
 func applyMarkdownSpecial(data []byte, skipNoFollow bool, baseURL string, cfg *config.Config) string {
@@ -97,10 +136,7 @@ func applyMarkdownSpecial(data []byte, skipNoFollow bool, baseURL string, cfg *c
 	// Strip newlines on certain block elements that render with them
 	outHTML = blockReg.ReplaceAllString(outHTML, "<$1>")
 	outHTML = endBlockReg.ReplaceAllString(outHTML, "</$1></$2>")
-	// Remove all query parameters on YouTube embed links
-	// TODO: make this more specific. Taking the nuclear approach here to strip ?autoplay=1
-	outHTML = youtubeReg.ReplaceAllString(outHTML, "$1")
-
+	outHTML = disableYoutubeAutoplay(outHTML)
 	return outHTML
 }
 
@@ -129,9 +165,7 @@ func applyBasicMarkdown(data []byte) string {
 func postTitle(content, friendlyId string) string {
 	const maxTitleLen = 80
 
-	// Strip HTML tags with bluemonday's StrictPolicy, then unescape the HTML
-	// entities added in by sanitizing the content.
-	content = html.UnescapeString(bluemonday.StrictPolicy().Sanitize(content))
+	content = stripHTMLWithoutEscaping(content)
 
 	content = strings.TrimLeftFunc(stripmd.Strip(content), unicode.IsSpace)
 	eol := strings.IndexRune(content, '\n')
@@ -149,9 +183,7 @@ func postTitle(content, friendlyId string) string {
 func friendlyPostTitle(content, friendlyId string) string {
 	const maxTitleLen = 80
 
-	// Strip HTML tags with bluemonday's StrictPolicy, then unescape the HTML
-	// entities added in by sanitizing the content.
-	content = html.UnescapeString(bluemonday.StrictPolicy().Sanitize(content))
+	content = stripHTMLWithoutEscaping(content)
 
 	content = strings.TrimLeftFunc(stripmd.Strip(content), unicode.IsSpace)
 	eol := strings.IndexRune(content, '\n')
@@ -166,6 +198,12 @@ func friendlyPostTitle(content, friendlyId string) string {
 		title += "..."
 	}
 	return title
+}
+
+// Strip HTML tags with bluemonday's StrictPolicy, then unescape the HTML
+// entities added in by sanitizing the content.
+func stripHTMLWithoutEscaping(content string) string {
+	return html.UnescapeString(bluemonday.StrictPolicy().Sanitize(content))
 }
 
 func getSanitizationPolicy() *bluemonday.Policy {

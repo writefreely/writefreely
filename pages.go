@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2019, 2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -12,7 +12,7 @@ package writefreely
 
 import (
 	"database/sql"
-	"github.com/writeas/writefreely/config"
+	"github.com/writefreely/writefreely/config"
 	"time"
 )
 

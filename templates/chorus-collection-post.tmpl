@@ -29,6 +29,7 @@
 		<meta property="og:updated_time" content="{{.Created8601}}" />
 		{{range .Images}}<meta property="og:image" content="{{.}}" />{{else}}<meta property="og:image" content="{{.Collection.AvatarURL}}">{{end}}
 		<meta property="article:published_time" content="{{.Created8601}}">
+		{{template "collection-meta" .}}
 		{{if .Collection.StyleSheet}}<style type="text/css">{{.Collection.StyleSheetDisplay}}</style>{{end}}
 	<style type="text/css">
 body footer {

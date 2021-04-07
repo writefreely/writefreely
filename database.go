@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -14,7 +14,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	wf_db "github.com/writeas/writefreely/db"
+	"github.com/writeas/web-core/silobridge"
+	wf_db "github.com/writefreely/writefreely/db"
 	"net/http"
 	"strings"
 	"time"
@@ -31,9 +32,9 @@ import (
 	"github.com/writeas/web-core/id"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/query"
-	"github.com/writeas/writefreely/author"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/key"
+	"github.com/writefreely/writefreely/author"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/key"
 )
 
 const (
@@ -637,13 +638,17 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 			ownerCollID.Int64 = collID
 			ownerCollID.Valid = true
 			var slugVal string
-			if post.Title != nil && *post.Title != "" {
-				slugVal = getSlug(*post.Title, post.Language.String)
-				if slugVal == "" {
+			if post.Slug != nil && *post.Slug != "" {
+				slugVal = *post.Slug
+			} else {
+				if post.Title != nil && *post.Title != "" {
+					slugVal = getSlug(*post.Title, post.Language.String)
+					if slugVal == "" {
+						slugVal = getSlug(*post.Content, post.Language.String)
+					}
+				} else {
 					slugVal = getSlug(*post.Content, post.Language.String)
 				}
-			} else {
-				slugVal = getSlug(*post.Content, post.Language.String)
 			}
 			if slugVal == "" {
 				slugVal = friendlyID
@@ -791,10 +796,10 @@ func (db *datastore) GetCollectionBy(condition string, value interface{}) (*Coll
 	c := &Collection{}
 
 	// FIXME: change Collection to reflect database values. Add helper functions to get actual values
-	var styleSheet, script, format zero.String
-	row := db.QueryRow("SELECT id, alias, title, description, style_sheet, script, format, owner_id, privacy, view_count FROM collections WHERE "+condition, value)
+	var styleSheet, script, signature, format zero.String
+	row := db.QueryRow("SELECT id, alias, title, description, style_sheet, script, post_signature, format, owner_id, privacy, view_count FROM collections WHERE "+condition, value)
 
-	err := row.Scan(&c.ID, &c.Alias, &c.Title, &c.Description, &styleSheet, &script, &format, &c.OwnerID, &c.Visibility, &c.Views)
+	err := row.Scan(&c.ID, &c.Alias, &c.Title, &c.Description, &styleSheet, &script, &signature, &format, &c.OwnerID, &c.Visibility, &c.Views)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, impart.HTTPError{http.StatusNotFound, "Collection doesn't exist."}
@@ -806,6 +811,7 @@ func (db *datastore) GetCollectionBy(condition string, value interface{}) (*Coll
 	}
 	c.StyleSheet = styleSheet.String
 	c.Script = script.String
+	c.Signature = signature.String
 	c.Format = format.String
 	c.Public = c.IsPublic()
 
@@ -849,7 +855,8 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 		SetStringPtr(c.Title, "title").
 		SetStringPtr(c.Description, "description").
 		SetNullString(c.StyleSheet, "style_sheet").
-		SetNullString(c.Script, "script")
+		SetNullString(c.Script, "script").
+		SetNullString(c.Signature, "post_signature")
 
 	if c.Format != nil {
 		cf := &CollectionFormat{Format: c.Format.String}
@@ -899,6 +906,29 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 		if err != nil {
 			log.Error("Unable to delete render_mathjax value: %v", err)
 			return err
+		}
+	}
+
+	// Update Monetization value
+	if c.Monetization != nil {
+		skipUpdate := false
+		if *c.Monetization != "" {
+			// Strip away any excess spaces
+			trimmed := strings.TrimSpace(*c.Monetization)
+			// Only update value when it starts with "$", per spec: https://paymentpointers.org
+			if strings.HasPrefix(trimmed, "$") {
+				c.Monetization = &trimmed
+			} else {
+				// Value appears invalid, so don't update
+				skipUpdate = true
+			}
+		}
+		if !skipUpdate {
+			_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?", collID, "monetization_pointer", *c.Monetization, *c.Monetization)
+			if err != nil {
+				log.Error("Unable to insert monetization_pointer value: %v", err)
+				return err
+			}
 		}
 	}
 
@@ -1150,6 +1180,7 @@ func (db *datastore) GetPosts(cfg *config.Config, c *Collection, page int, inclu
 			break
 		}
 		p.extractData()
+		p.augmentContent(c)
 		p.formatContent(cfg, c, includeFuture)
 
 		posts = append(posts, p.processPost())
@@ -1214,6 +1245,7 @@ func (db *datastore) GetPostsTagged(cfg *config.Config, c *Collection, tag strin
 			break
 		}
 		p.extractData()
+		p.augmentContent(c)
 		p.formatContent(cfg, c, includeFuture)
 
 		posts = append(posts, p.processPost())
@@ -1590,6 +1622,7 @@ func (db *datastore) GetPinnedPosts(coll *CollectionObj, includeFuture bool) (*[
 			break
 		}
 		p.extractData()
+		p.augmentContent(&coll.Collection)
 
 		pp := p.processPost()
 		pp.Collection = coll
@@ -2167,6 +2200,28 @@ func (db *datastore) CollectionHasAttribute(id int64, attr string) bool {
 	return true
 }
 
+func (db *datastore) GetCollectionAttribute(id int64, attr string) string {
+	var v string
+	err := db.QueryRow("SELECT value FROM collectionattributes WHERE collection_id = ? AND attribute = ?", id, attr).Scan(&v)
+	switch {
+	case err == sql.ErrNoRows:
+		return ""
+	case err != nil:
+		log.Error("Couldn't SELECT value in getCollectionAttribute for attribute '%s': %v", attr, err)
+		return ""
+	}
+	return v
+}
+
+func (db *datastore) SetCollectionAttribute(id int64, attr, v string) error {
+	_, err := db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?)", id, attr, v)
+	if err != nil {
+		log.Error("Unable to INSERT into collectionattributes: %v", err)
+		return err
+	}
+	return nil
+}
+
 // DeleteAccount will delete the entire account for userID
 func (db *datastore) DeleteAccount(userID int64) error {
 	// Get all collections
@@ -2632,9 +2687,11 @@ func (db *datastore) GetIDForRemoteUser(ctx context.Context, remoteUserID, provi
 }
 
 type oauthAccountInfo struct {
-	Provider     string
-	ClientID     string
-	RemoteUserID string
+	Provider        string
+	ClientID        string
+	RemoteUserID    string
+	DisplayName     string
+	AllowDisconnect bool
 }
 
 func (db *datastore) GetOauthAccounts(ctx context.Context, userID int64) ([]oauthAccountInfo, error) {
@@ -2697,6 +2754,17 @@ func handleFailedPostInsert(err error) error {
 func (db *datastore) GetProfilePageFromHandle(app *App, handle string) (string, error) {
 	handle = strings.TrimLeft(handle, "@")
 	actorIRI := ""
+	parts := strings.Split(handle, "@")
+	if len(parts) != 2 {
+		return "", fmt.Errorf("invalid handle format")
+	}
+	domain := parts[1]
+
+	// Check non-AP instances
+	if siloProfileURL := silobridge.Profile(parts[0], domain); siloProfileURL != "" {
+		return siloProfileURL, nil
+	}
+
 	remoteUser, err := getRemoteUserFromHandle(app, handle)
 	if err != nil {
 		// can't find using handle in the table but the table may already have this user without

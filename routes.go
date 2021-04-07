@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -12,6 +12,7 @@ package writefreely
 
 import (
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -26,6 +27,7 @@ import (
 func (app *App) InitStaticRoutes(r *mux.Router) {
 	// Handle static files
 	fs := http.FileServer(http.Dir(filepath.Join(app.cfg.Server.StaticParentDir, staticDir)))
+	fs = cacheControl(fs)
 	app.shttp = http.NewServeMux()
 	app.shttp.Handle("/", fs)
 	r.PathPrefix("/").Handler(fs)
@@ -76,6 +78,8 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	configureSlackOauth(handler, write, apper.App())
 	configureWriteAsOauth(handler, write, apper.App())
 	configureGitlabOauth(handler, write, apper.App())
+	configureGenericOauth(handler, write, apper.App())
+	configureGiteaOauth(handler, write, apper.App())
 
 	// Set up dyamic page handlers
 	// Handle auth
@@ -122,9 +126,13 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 
 	write.HandleFunc("/api/markdown", handler.All(handleRenderMarkdown)).Methods("POST")
 
+	instanceURL, _ := url.Parse(apper.App().Config().App.Host)
+	host := instanceURL.Host
+
 	// Handle collections
 	write.HandleFunc("/api/collections", handler.All(newCollection)).Methods("POST")
 	apiColls := write.PathPrefix("/api/collections/").Subrouter()
+	apiColls.HandleFunc("/"+host, handler.AllReader(fetchCollection)).Methods("GET")
 	apiColls.HandleFunc("/{alias:[0-9a-zA-Z\\-]+}", handler.AllReader(fetchCollection)).Methods("GET")
 	apiColls.HandleFunc("/{alias:[0-9a-zA-Z\\-]+}", handler.All(existingCollection)).Methods("POST", "DELETE")
 	apiColls.HandleFunc("/{alias}/posts", handler.AllReader(fetchCollectionPosts)).Methods("GET")
@@ -204,7 +212,6 @@ func RouteCollections(handler *Handler, r *mux.Router) {
 	r.HandleFunc("/page/{page:[0-9]+}", handler.Web(handleViewCollection, UserLevelReader))
 	r.HandleFunc("/tag:{tag}", handler.Web(handleViewCollectionTag, UserLevelReader))
 	r.HandleFunc("/tag:{tag}/feed/", handler.Web(ViewFeed, UserLevelReader))
-	r.HandleFunc("/tags/{tag}", handler.Web(handleViewCollectionTag, UserLevelReader))
 	r.HandleFunc("/sitemap.xml", handler.AllReader(handleViewSitemap))
 	r.HandleFunc("/feed/", handler.AllReader(ViewFeed))
 	r.HandleFunc("/{slug}", handler.CollectionPostOrStatic)

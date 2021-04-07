@@ -24,7 +24,7 @@
 			<nav id="user-nav">
 				{{if .Username}}
 				<nav class="dropdown-nav">
-					<ul><li><a>{{.Username}}</a> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /><ul>
+					<ul><li class="has-submenu"><a>{{.Username}}</a> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /><ul>
 							{{if .IsAdmin}}<li><a href="/admin">Admin dashboard</a></li>{{end}}
 							<li><a href="/me/settings">Account settings</a></li>
 							<li><a href="/me/export">Export</a></li>
@@ -67,6 +67,7 @@
 		{{ template "footer" . }}
 		
 		{{if not .JSDisabled}}
+		<script type="text/javascript" src="/js/menu.js"></script>
 		<script type="text/javascript">
 		{{if .WebFonts}}
 		try { // Google Fonts

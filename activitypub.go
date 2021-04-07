@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -40,6 +41,19 @@ const (
 
 	apCacheTime = time.Minute
 )
+
+var instanceColl *Collection
+
+func initActivityPub(app *App) {
+	ur, _ := url.Parse(app.cfg.App.Host)
+	instanceColl = &Collection{
+		ID:       0,
+		Alias:    ur.Host,
+		Title:    ur.Host,
+		db:       app.db,
+		hostName: app.cfg.App.Host,
+	}
+}
 
 type RemoteUser struct {
 	ID          int64
@@ -76,12 +90,17 @@ func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Re
 
 	vars := mux.Vars(r)
 	alias := vars["alias"]
+	if alias == "" {
+		alias = filepath.Base(r.RequestURI)
+	}
 
 	// TODO: enforce visibility
 	// Get base Collection data
 	var c *Collection
 	var err error
-	if app.cfg.App.SingleUser {
+	if alias == r.Host {
+		c = instanceColl
+	} else if app.cfg.App.SingleUser {
 		c, err = app.db.GetCollectionByID(1)
 	} else {
 		c, err = app.db.GetCollection(alias)
@@ -89,15 +108,18 @@ func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return err
 	}
-	silenced, err := app.db.IsUserSilenced(c.OwnerID)
-	if err != nil {
-		log.Error("fetch collection activities: %v", err)
-		return ErrInternalGeneral
-	}
-	if silenced {
-		return ErrCollectionNotFound
-	}
 	c.hostName = app.cfg.App.Host
+
+	if !c.IsInstanceColl() {
+		silenced, err := app.db.IsUserSilenced(c.OwnerID)
+		if err != nil {
+			log.Error("fetch collection activities: %v", err)
+			return ErrInternalGeneral
+		}
+		if silenced {
+			return ErrCollectionNotFound
+		}
+	}
 
 	p := c.PersonObject()
 
@@ -494,7 +516,7 @@ func makeActivityPost(hostName string, p *activitystreams.Person, url string, m 
 
 	r, _ := http.NewRequest("POST", url, bytes.NewBuffer(b))
 	r.Header.Add("Content-Type", "application/activity+json")
-	r.Header.Set("User-Agent", "Go ("+serverSoftware+"/"+softwareVer+"; +"+hostName+")")
+	r.Header.Set("User-Agent", ServerUserAgent(hostName))
 	h := sha256.New()
 	h.Write(b)
 	r.Header.Add("Digest", "SHA-256="+base64.StdEncoding.EncodeToString(h.Sum(nil)))
@@ -544,7 +566,23 @@ func resolveIRI(hostName, url string) ([]byte, error) {
 
 	r, _ := http.NewRequest("GET", url, nil)
 	r.Header.Add("Accept", "application/activity+json")
-	r.Header.Set("User-Agent", "Go ("+serverSoftware+"/"+softwareVer+"; +"+hostName+")")
+	r.Header.Set("User-Agent", ServerUserAgent(hostName))
+
+	p := instanceColl.PersonObject()
+	h := sha256.New()
+	h.Write([]byte{})
+	r.Header.Add("Digest", "SHA-256="+base64.StdEncoding.EncodeToString(h.Sum(nil)))
+
+	// Sign using the 'Signature' header
+	privKey, err := activitypub.DecodePrivateKey(p.GetPrivKey())
+	if err != nil {
+		return nil, err
+	}
+	signer := httpsig.NewSigner(p.PublicKey.ID, privKey, httpsig.RSASHA256, []string{"(request-target)", "date", "host", "digest"})
+	err = signer.SignSigHeader(r)
+	if err != nil {
+		log.Error("Can't sign: %v", err)
+	}
 
 	if debugging {
 		dump, err := httputil.DumpRequestOut(r, true)
@@ -624,6 +662,16 @@ func deleteFederatedPost(app *App, p *PublicPost, collID int64) error {
 }
 
 func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
+	// If app is private, do not federate
+	if app.cfg.App.Private {
+		return nil
+	}
+
+	// Do not federate posts from private or protected blogs
+	if p.Collection.Visibility == CollPrivate || p.Collection.Visibility == CollProtected {
+		return nil
+	}
+
 	if debugging {
 		if isUpdate {
 			log.Info("Federating updated post!")
@@ -631,6 +679,7 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			log.Info("Federating new post!")
 		}
 	}
+
 	actor := p.Collection.PersonObject(collID)
 	na := p.ActivityObject(app)
 
@@ -699,6 +748,10 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			// I don't believe we'd ever have too many mentions in a single post that this
 			// could become a burden.
 			remoteUser, err := getRemoteUser(app, tag.HRef)
+			if err != nil {
+				log.Error("Unable to find remote user %s. Skipping: %v", tag.HRef, err)
+				continue
+			}
 			err = makeActivityPost(app.cfg.App.Host, actor, remoteUser.Inbox, activity)
 			if err != nil {
 				log.Error("Couldn't post! %v", err)

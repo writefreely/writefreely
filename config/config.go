@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -81,12 +81,39 @@ type (
 		CallbackProxyAPI string `ini:"callback_proxy_api"`
 	}
 
+	GiteaOauthCfg struct {
+		ClientID         string `ini:"client_id"`
+		ClientSecret     string `ini:"client_secret"`
+		Host             string `ini:"host"`
+		DisplayName      string `ini:"display_name"`
+		CallbackProxy    string `ini:"callback_proxy"`
+		CallbackProxyAPI string `ini:"callback_proxy_api"`
+	}
+
 	SlackOauthCfg struct {
 		ClientID         string `ini:"client_id"`
 		ClientSecret     string `ini:"client_secret"`
 		TeamID           string `ini:"team_id"`
 		CallbackProxy    string `ini:"callback_proxy"`
 		CallbackProxyAPI string `ini:"callback_proxy_api"`
+	}
+
+	GenericOauthCfg struct {
+		ClientID         string `ini:"client_id"`
+		ClientSecret     string `ini:"client_secret"`
+		Host             string `ini:"host"`
+		DisplayName      string `ini:"display_name"`
+		CallbackProxy    string `ini:"callback_proxy"`
+		CallbackProxyAPI string `ini:"callback_proxy_api"`
+		TokenEndpoint    string `ini:"token_endpoint"`
+		InspectEndpoint  string `ini:"inspect_endpoint"`
+		AuthEndpoint     string `ini:"auth_endpoint"`
+		Scope            string `ini:"scope"`
+		AllowDisconnect  bool   `ini:"allow_disconnect"`
+		MapUserID        string `ini:"map_user_id"`
+		MapUsername      string `ini:"map_username"`
+		MapDisplayName   string `ini:"map_display_name"`
+		MapEmail         string `ini:"map_email"`
 	}
 
 	// AppCfg holds values that affect how the application functions
@@ -115,9 +142,12 @@ type (
 		MinUsernameLen   int  `ini:"min_username_len"`
 		MaxBlogs         int  `ini:"max_blogs"`
 
+		// Options for public instances
 		// Federation
-		Federation  bool `ini:"federation"`
-		PublicStats bool `ini:"public_stats"`
+		Federation   bool `ini:"federation"`
+		PublicStats  bool `ini:"public_stats"`
+		Monetization bool `ini:"monetization"`
+		NotesOnly    bool `ini:"notes_only"`
 
 		// Access
 		Private bool `ini:"private"`
@@ -131,6 +161,9 @@ type (
 
 		// Check for Updates
 		UpdateChecks bool `ini:"update_checks"`
+
+		// Disable password authentication if use only Oauth
+		DisablePasswordAuth bool `ini:"disable_password_auth"`
 	}
 
 	// Config holds the complete configuration for running a writefreely instance
@@ -141,6 +174,8 @@ type (
 		SlackOauth   SlackOauthCfg   `ini:"oauth.slack"`
 		WriteAsOauth WriteAsOauthCfg `ini:"oauth.writeas"`
 		GitlabOauth  GitlabOauthCfg  `ini:"oauth.gitlab"`
+		GiteaOauth   GiteaOauthCfg   `ini:"oauth.gitea"`
+		GenericOauth GenericOauthCfg `ini:"oauth.generic"`
 	}
 )
 
