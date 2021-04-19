@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -15,11 +15,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely"
-
 	"github.com/gorilla/mux"
 	"github.com/urfave/cli/v2"
+	"github.com/writeas/web-core/log"
+	"github.com/writefreely/writefreely"
 )
 
 func main() {

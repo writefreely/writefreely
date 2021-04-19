@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 A Bunch Tell LLC.
+ * Copyright © 2020-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -13,9 +13,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/writeas/writefreely"
-
 	"github.com/urfave/cli/v2"
+	"github.com/writefreely/writefreely"
 )
 
 var (

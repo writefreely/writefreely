@@ -4,17 +4,17 @@
 </p>
 <hr />
 <p align="center">
-	<a href="https://github.com/writeas/writefreely/releases/">
+	<a href="https://github.com/writefreely/writefreely/releases/">
 		<img src="https://img.shields.io/github/release/writeas/writefreely.svg" alt="Latest release" />
 	</a>
 	<a href="https://travis-ci.org/writeas/writefreely">
 		<img src="https://travis-ci.org/writeas/writefreely.svg" alt="Build status" />
 	</a>
-	<a href="https://github.com/writeas/writefreely/releases/latest">
+	<a href="https://github.com/writefreely/writefreely/releases/latest">
 		<img src="https://img.shields.io/github/downloads/writeas/writefreely/total.svg" />
 	</a>
-	<a href="https://goreportcard.com/report/github.com/writeas/writefreely">
-		<img src="https://goreportcard.com/badge/github.com/writeas/writefreely" alt="Go Report Card" />
+	<a href="https://goreportcard.com/report/github.com/writefreely/writefreely">
+		<img src="https://goreportcard.com/badge/github.com/writefreely/writefreely" alt="Go Report Card" />
 	</a>
 	<a href="https://hub.docker.com/r/writeas/writefreely/">
 		<img src="https://img.shields.io/docker/pulls/writeas/writefreely.svg" />
@@ -62,7 +62,7 @@ The quickest way to deploy WriteFreely is with [Write.as](https://write.as/write
 
 WriteFreely deploys as a static binary on any platform and architecture that Go supports. Just use our built-in SQLite support, or add a MySQL database, and you'll be up and running!
 
-For common platforms, start with our [pre-built binaries](https://github.com/writeas/writefreely/releases/) and head over to our [installation guide](https://writefreely.org/start) to get started.
+For common platforms, start with our [pre-built binaries](https://github.com/writefreely/writefreely/releases/) and head over to our [installation guide](https://writefreely.org/start) to get started.
 
 ### Packages
 
@@ -80,10 +80,10 @@ Start hacking on WriteFreely with our [developer setup guide](https://writefreel
 
 ## Contributing
 
-We gladly welcome contributions to WriteFreely, whether in the form of [code](https://github.com/writeas/writefreely/blob/master/CONTRIBUTING.md#contributing-to-writefreely), [bug reports](https://github.com/writeas/writefreely/issues/new?template=bug_report.md), [feature requests](https://discuss.write.as/c/feedback/feature-requests), [translations](https://poeditor.com/join/project/TIZ6HFRFdE), or [documentation](https://github.com/writefreely/documentation) improvements.
+We gladly welcome contributions to WriteFreely, whether in the form of [code](https://github.com/writefreely/writefreely/blob/master/CONTRIBUTING.md#contributing-to-writefreely), [bug reports](https://github.com/writefreely/writefreely/issues/new?template=bug_report.md), [feature requests](https://discuss.write.as/c/feedback/feature-requests), [translations](https://poeditor.com/join/project/TIZ6HFRFdE), or [documentation](https://github.com/writefreely/documentation) improvements.
 
-Before contributing anything, please read our [Contributing Guide](https://github.com/writeas/writefreely/blob/master/CONTRIBUTING.md#contributing-to-writefreely). It describes the correct channels for submitting contributions and any potential requirements.
+Before contributing anything, please read our [Contributing Guide](https://github.com/writefreely/writefreely/blob/master/CONTRIBUTING.md#contributing-to-writefreely). It describes the correct channels for submitting contributions and any potential requirements.
 
 ## License
 
-Copyright © 2018-2020 [A Bunch Tell LLC](https://abunchtell.com) and contributing authors. Licensed under the [AGPL](https://github.com/writeas/writefreely/blob/develop/LICENSE).
+Copyright © 2018-2021 [A Bunch Tell LLC](https://abunchtell.com) and contributing authors. Licensed under the [AGPL](https://github.com/writefreely/writefreely/blob/develop/LICENSE).

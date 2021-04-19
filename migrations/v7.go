@@ -1,10 +1,20 @@
+/*
+ * Copyright © 2020-2021 A Bunch Tell LLC.
+ *
+ * This file is part of WriteFreely.
+ *
+ * WriteFreely is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License, included
+ * in the LICENSE file in this source code package.
+ */
+
 package migrations
 
 import (
 	"context"
 	"database/sql"
 
-	wf_db "github.com/writeas/writefreely/db"
+	wf_db "github.com/writefreely/writefreely/db"
 )
 
 func oauthAttach(db *datastore) error {

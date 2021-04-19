@@ -30,9 +30,9 @@ import (
 	"github.com/writeas/web-core/bots"
 	"github.com/writeas/web-core/log"
 	waposts "github.com/writeas/web-core/posts"
-	"github.com/writeas/writefreely/author"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/author"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/page"
 )
 
 type (
@@ -110,6 +110,8 @@ type (
 
 		// User-related fields
 		isCollOwner bool
+
+		isAuthorized bool
 	}
 )
 
@@ -240,7 +242,7 @@ func (c *Collection) DisplayCanonicalURL() string {
 func (c *Collection) RedirectingCanonicalURL(isRedir bool) string {
 	if c.hostName == "" {
 		// If this is true, the human programmers screwed up. So ask for a bug report and fail, fail, fail
-		log.Error("[PROGRAMMER ERROR] WARNING: Collection.hostName is empty! Federation and many other things will fail! If you're seeing this in the wild, please report this bug and let us know what you were doing just before this: https://github.com/writeas/writefreely/issues/new?template=bug_report.md")
+		log.Error("[PROGRAMMER ERROR] WARNING: Collection.hostName is empty! Federation and many other things will fail! If you're seeing this in the wild, please report this bug and let us know what you were doing just before this: https://github.com/writefreely/writefreely/issues/new?template=bug_report.md")
 	}
 	if isSingleUser {
 		return c.hostName + "/"
@@ -558,6 +560,7 @@ type CollectionPage struct {
 	IsCustomDomain bool
 	IsWelcome      bool
 	IsOwner        bool
+	IsCollLoggedIn bool
 	CanPin         bool
 	Username       string
 	Monetization   string
@@ -677,9 +680,9 @@ func processCollectionPermissions(app *App, cr *collectionReq, u *User, w http.R
 			}
 
 			// See if we've authorized this collection
-			authd := isAuthorizedForCollection(app, c.Alias, r)
+			cr.isAuthorized = isAuthorizedForCollection(app, c.Alias, r)
 
-			if !authd {
+			if !cr.isAuthorized {
 				p := struct {
 					page.StaticPage
 					*CollectionObj
@@ -797,6 +800,7 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 	// Serve collection
 	displayPage := CollectionPage{
 		DisplayCollection: coll,
+		IsCollLoggedIn:    cr.isAuthorized,
 		StaticPage:        pageForReq(app, r),
 		IsCustomDomain:    cr.isCustomDomain,
 		IsWelcome:         r.FormValue("greeting") != "",
@@ -1162,4 +1166,44 @@ func isAuthorizedForCollection(app *App, alias string, r *http.Request) bool {
 		_, authd = session.Values[alias]
 	}
 	return authd
+}
+
+func logOutCollection(app *App, alias string, w http.ResponseWriter, r *http.Request) error {
+	session, err := app.sessionStore.Get(r, blogPassCookieName)
+	if err != nil {
+		return err
+	}
+
+	// Remove this from map of blogs logged into
+	delete(session.Values, alias)
+
+	// If not auth'd with any blog, delete entire cookie
+	if len(session.Values) == 0 {
+		session.Options.MaxAge = -1
+	}
+	return session.Save(r, w)
+}
+
+func handleLogOutCollection(app *App, w http.ResponseWriter, r *http.Request) error {
+	alias := collectionAliasFromReq(r)
+	var c *Collection
+	var err error
+	if app.cfg.App.SingleUser {
+		c, err = app.db.GetCollectionByID(1)
+	} else {
+		c, err = app.db.GetCollection(alias)
+	}
+	if err != nil {
+		return err
+	}
+	if !c.IsProtected() {
+		// Invalid to log out of this collection
+		return ErrCollectionPageNotFound
+	}
+
+	err = logOutCollection(app, c.Alias, w, r)
+	if err != nil {
+		addSessionFlash(app, w, r, "Logging out failed. Try clearing cookies for this site, instead.", nil)
+	}
+	return impart.HTTPError{http.StatusFound, c.CanonicalURL()}
 }

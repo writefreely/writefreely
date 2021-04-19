@@ -40,27 +40,42 @@
 
 	</head>
 	<body id="collection" itemscope itemtype="http://schema.org/WebPage">
-		{{if or .IsOwner .SingleUser}}<nav id="manage"><ul>
-			<li class="has-submenu"><a onclick="void(0)">&#9776; Menu</a>
-				<ul>
-					{{ if .IsOwner }}
-					{{if .SingleUser}}
-					<li><a href="/me/new">New Post</a></li>
-					{{else}}
-					<li><a href="/#{{.Alias}}" class="write">{{.SiteName}}</a></li>
-					{{end}}
-					{{if .SimpleNav}}<li><a href="/new#{{.Alias}}">New Post</a></li>{{end}}
-					<li><a href="/me/c/{{.Alias}}">Customize</a></li>
-					<li><a href="/me/c/{{.Alias}}/stats">Stats</a></li>
-					<li class="separator"><hr /></li>
-					{{if not .SingleUser}}<li><a href="/me/c/"><img class="ic-18dp" src="/img/ic_blogs_dark@2x.png" /> View Blogs</a></li>{{end}}
-					<li><a href="/me/posts/"><img class="ic-18dp" src="/img/ic_list_dark@2x.png" /> View Drafts</a></li>
-					{{ else }}
-					<li><a href="/login">Log in</a></li>
-					{{ end }}
-				</ul>
-			</li>
-		</ul></nav>{{end}}
+		{{if or .IsOwner .SingleUser}}
+			<nav id="manage"><ul>
+				<li class="has-submenu"><a onclick="void(0)">&#9776; Menu</a>
+					<ul>
+						{{ if .IsOwner }}
+							{{if .SingleUser}}
+							<li><a href="/me/new">New Post</a></li>
+							{{else}}
+							<li><a href="/#{{.Alias}}" class="write">{{.SiteName}}</a></li>
+							{{end}}
+							{{if .SimpleNav}}<li><a href="/new#{{.Alias}}">New Post</a></li>{{end}}
+							<li><a href="/me/c/{{.Alias}}">Customize</a></li>
+							<li><a href="/me/c/{{.Alias}}/stats">Stats</a></li>
+							<li class="separator"><hr /></li>
+							{{if not .SingleUser}}<li><a href="/me/c/"><img class="ic-18dp" src="/img/ic_blogs_dark@2x.png" /> View Blogs</a></li>{{end}}
+							<li><a href="/me/posts/"><img class="ic-18dp" src="/img/ic_list_dark@2x.png" /> View Drafts</a></li>
+						{{ else }}
+							<li><a href="/login">Log in{{if .IsProtected}} to {{.DisplayTitle}}{{end}}</a></li>
+							{{if .IsProtected}}
+								<li class="separator"><hr /></li>
+								<li><a href="/logout">Log out</a></li>
+							{{end}}
+						{{ end }}
+					</ul>
+				</li>
+			</ul></nav>
+		{{else if .IsCollLoggedIn}}
+			<nav id="manage" class="shiny"><ul>
+				<li class="has-submenu"><a onclick="void(0)">&#9776; Menu</a>
+					<ul>
+						<li class="menu-heading" style="padding: .5rem .75rem; box-sizing: border-box;">{{.DisplayTitle}}</li>
+						<li><a href="{{.CanonicalURL}}logout">Log out</a></li>
+					</ul>
+				</li>
+			</ul></nav>
+		{{end}}
 		
 		<header>
 		{{if .Silenced}}

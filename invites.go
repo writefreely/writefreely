@@ -21,7 +21,7 @@ import (
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/id"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/page"
 )
 
 type Invite struct {

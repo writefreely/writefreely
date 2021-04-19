@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -24,8 +24,8 @@ import (
 	"github.com/prologic/go-gopher"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/page"
 )
 
 // UserLevel represents the required user level for accessing an endpoint
@@ -602,7 +602,7 @@ func (h *Handler) AllReader(f handlerFunc) http.HandlerFunc {
 			}()
 
 			// Allow any origin, as public endpoints are handled in here
-			w.Header().Set("Access-Control-Allow-Origin", "*");
+			w.Header().Set("Access-Control-Allow-Origin", "*")
 
 			if h.app.App().cfg.App.Private {
 				// This instance is private, so ensure it's being accessed by a valid user
