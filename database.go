@@ -25,7 +25,6 @@ import (
 	uuid "github.com/nu7hatch/gouuid"
 	"github.com/writeas/activityserve"
 	"github.com/writeas/impart"
-	"github.com/writeas/nerds/store"
 	"github.com/writeas/web-core/activitypub"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/data"
@@ -613,7 +612,7 @@ func (db *datastore) CreateOwnedPost(post *SubmittedPost, accessToken, collAlias
 
 func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Post, error) {
 	idLen := postIDLen
-	friendlyID := store.GenerateFriendlyRandomString(idLen)
+	friendlyID := id.GenerateFriendlyRandomString(idLen)
 
 	// Handle appearance / font face
 	appearance := post.Font
@@ -2607,7 +2606,7 @@ func (db *datastore) GetCollectionLastPostTime(id int64) (*time.Time, error) {
 }
 
 func (db *datastore) GenerateOAuthState(ctx context.Context, provider string, clientID string, attachUser int64, inviteCode string) (string, error) {
-	state := store.Generate62RandomString(24)
+	state := id.Generate62RandomString(24)
 	attachUserVal := sql.NullInt64{Valid: attachUser > 0, Int64: attachUser}
 	inviteCodeVal := sql.NullString{Valid: inviteCode != "", String: inviteCode}
 	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_states (state, provider, client_id, used, created_at, attach_user_id, invite_code) VALUES (?, ?, ?, FALSE, "+db.now()+", ?, ?)", state, provider, clientID, attachUserVal, inviteCodeVal)

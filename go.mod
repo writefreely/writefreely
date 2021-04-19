@@ -37,10 +37,9 @@ require (
 	github.com/writeas/impart v1.1.1
 	github.com/writeas/import v0.2.1
 	github.com/writeas/monday v0.0.0-20181024183321-54a7dd579219
-	github.com/writeas/nerds v1.0.0
 	github.com/writeas/saturday v1.7.2-0.20200427193424-392b95a03320
 	github.com/writeas/slug v1.2.0
-	github.com/writeas/web-core v1.3.0
+	github.com/writeas/web-core v1.3.1-0.20210330164422-95a3a717ed8f
 	github.com/writefreely/go-nodeinfo v1.2.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect

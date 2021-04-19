@@ -16,7 +16,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/stretchr/testify/assert"
 	"github.com/writeas/impart"
-	"github.com/writeas/nerds/store"
+	"github.com/writeas/web-core/id"
 	"github.com/writefreely/writefreely/config"
 	"net/http"
 	"net/http/httptest"
@@ -137,7 +137,7 @@ func (m *MockOAuthDatastore) GenerateOAuthState(ctx context.Context, provider st
 	if m.DoGenerateOAuthState != nil {
 		return m.DoGenerateOAuthState(ctx, provider, clientID, attachUserID, inviteCode)
 	}
-	return store.Generate62RandomString(14), nil
+	return id.Generate62RandomString(14), nil
 }
 
 func TestViewOauthInit(t *testing.T) {
