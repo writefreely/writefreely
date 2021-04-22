@@ -1,5 +1,5 @@
 GITREV=`git describe | cut -c 2-`
-LDFLAGS=-ldflags="-X 'github.com/writeas/writefreely.softwareVer=$(GITREV)'"
+LDFLAGS=-ldflags="-X 'github.com/writefreely/writefreely.softwareVer=$(GITREV)'"
 
 GOCMD=go
 GOINSTALL=$(GOCMD) install $(LDFLAGS)
@@ -86,6 +86,7 @@ release : clean ui assets
 	cp -r templates $(BUILDPATH)
 	cp -r pages $(BUILDPATH)
 	cp -r static $(BUILDPATH)
+	scripts/invalidate-css.sh $(BUILDPATH)
 	mkdir $(BUILDPATH)/keys
 	$(MAKE) build-linux
 	mv build/$(BINARY_NAME)-linux-amd64 $(BUILDPATH)/$(BINARY_NAME)
@@ -130,6 +131,7 @@ release-docker :
 
 ui : force_look
 	cd less/; $(MAKE) $(MFLAGS)
+	cd prose/; $(MAKE) $(MFLAGS)
 
 assets : generate
 	go-bindata -pkg writefreely -ignore=\\.gitignore -tags="!wflib" schema.sql sqlite.sql

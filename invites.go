@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 A Bunch Tell LLC.
+ * Copyright © 2019-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -19,9 +19,9 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
-	"github.com/writeas/nerds/store"
+	"github.com/writeas/web-core/id"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/page"
 )
 
 type Invite struct {
@@ -42,6 +42,18 @@ func (i Invite) Expired() bool {
 	return i.Expires != nil && i.Expires.Before(time.Now())
 }
 
+func (i Invite) Active(db *datastore) bool {
+	if i.Expired() {
+		return false
+	}
+	if i.MaxUses.Valid && i.MaxUses.Int64 > 0 {
+		if c := db.GetUsersInvitedCount(i.ID); c >= i.MaxUses.Int64 {
+			return false
+		}
+	}
+	return true
+}
+
 func (i Invite) ExpiresFriendly() string {
 	return i.Expires.Format("January 2, 2006, 3:04 PM")
 }
@@ -56,15 +68,15 @@ func handleViewUserInvites(app *App, u *User, w http.ResponseWriter, r *http.Req
 
 	p := struct {
 		*UserPage
-		Invites   *[]Invite
-		Suspended bool
+		Invites  *[]Invite
+		Silenced bool
 	}{
 		UserPage: NewUserPage(app, r, u, "Invite People", f),
 	}
 
 	var err error
 
-	p.Suspended, err = app.db.IsUserSuspended(u.ID)
+	p.Silenced, err = app.db.IsUserSilenced(u.ID)
 	if err != nil {
 		log.Error("view invites: %v", err)
 	}
@@ -86,7 +98,7 @@ func handleCreateUserInvite(app *App, u *User, w http.ResponseWriter, r *http.Re
 	expVal := r.FormValue("expires")
 
 	if u.IsSilenced() {
-		return ErrUserSuspended
+		return ErrUserSilenced
 	}
 
 	var err error
@@ -109,7 +121,7 @@ func handleCreateUserInvite(app *App, u *User, w http.ResponseWriter, r *http.Re
 		expDate = &ed
 	}
 
-	inviteID := store.GenerateRandomString("0123456789BCDFGHJKLMNPQRSTVWXYZbcdfghjklmnpqrstvwxyz", 6)
+	inviteID := id.GenerateRandomString("0123456789BCDFGHJKLMNPQRSTVWXYZbcdfghjklmnpqrstvwxyz", 6)
 	err = app.db.CreateUserInvite(inviteID, u.ID, maxUses, expDate)
 	if err != nil {
 		return err
@@ -158,17 +170,22 @@ func handleViewInvite(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p := struct {
 		page.StaticPage
+		*OAuthButtons
 		Error   string
 		Flashes []template.HTML
 		Invite  string
 	}{
-		StaticPage: pageForReq(app, r),
-		Invite:     inviteCode,
+		StaticPage:   pageForReq(app, r),
+		OAuthButtons: NewOAuthButtons(app.cfg),
+		Invite:       inviteCode,
 	}
 
 	if expired {
 		p.Error = "This invite link has expired."
 	}
+
+	// Tell search engines not to index invite links
+	w.Header().Set("X-Robots-Tag", "noindex")
 
 	// Get error messages
 	session, err := app.sessionStore.Get(r, cookieName)

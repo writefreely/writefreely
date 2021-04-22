@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -36,12 +36,12 @@ func ViewFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 		return nil
 	}
 
-	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("view feed: get user: %v", err)
 		return ErrInternalGeneral
 	}
-	if suspended {
+	if silenced {
 		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host
@@ -104,7 +104,7 @@ func ViewFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 			Title:       title,
 			Link:        &Link{Href: permalink},
 			Description: "<![CDATA[" + stripmd.Strip(p.Content) + "]]>",
-			Content:     applyMarkdown([]byte(p.Content), "", app.cfg),
+			Content:     string(p.HTMLContent),
 			Author:      &Author{author, ""},
 			Created:     p.Created,
 			Updated:     p.Updated,

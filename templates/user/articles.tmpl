@@ -6,11 +6,11 @@
 {{if .Flashes}}<ul class="errors">
 	{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 </ul>{{end}}
-{{if .Suspended}}
-	{{template "user-suspended"}}
+{{if .Silenced}}
+	{{template "user-silenced"}}
 {{end}}
 
-<h2 id="posts-header">drafts</h2>
+<h1 id="posts-header">Drafts</h1>
 
 {{ if .AnonymousPosts }}
 	<p>These are your draft posts. You can share them individually (without a blog) or move them to your blog when you're ready.</p>

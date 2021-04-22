@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -25,7 +25,7 @@ import (
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/memo"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/page"
 )
 
 const (
@@ -33,6 +33,8 @@ const (
 	tlAPIPageLimit   = 10
 	tlMaxAuthorPosts = 5
 	tlPostsPerPage   = 16
+	tlMaxPostCache   = 250
+	tlCacheDur       = 10 * time.Minute
 )
 
 type localTimeline struct {
@@ -60,19 +62,25 @@ type readPublication struct {
 func initLocalTimeline(app *App) {
 	app.timeline = &localTimeline{
 		postsPerPage: tlPostsPerPage,
-		m:            memo.New(app.FetchPublicPosts, 10*time.Minute),
+		m:            memo.New(app.FetchPublicPosts, tlCacheDur),
 	}
 }
 
 // satisfies memo.Func
 func (app *App) FetchPublicPosts() (interface{}, error) {
+	// Conditions
+	limit := fmt.Sprintf("LIMIT %d", tlMaxPostCache)
+	// This is better than the hard limit when limiting posts from individual authors
+	// ageCond := `p.created >= ` + app.db.dateSub(3, "month") + ` AND `
+
 	// Finds all public posts and posts in a public collection published during the owner's active subscription period and within the last 3 months
 	rows, err := app.db.Query(`SELECT p.id, alias, c.title, p.slug, p.title, p.content, p.text_appearance, p.language, p.rtl, p.created, p.updated
 	FROM collections c
 	LEFT JOIN posts p ON p.collection_id = c.id
 	LEFT JOIN users u ON u.id = p.owner_id
-	WHERE c.privacy = 1 AND (p.created >= ` + app.db.dateSub(3, "month") + ` AND p.created <= ` + app.db.now() + ` AND pinned_position IS NULL) AND u.status = 0
-	ORDER BY p.created DESC`)
+	WHERE c.privacy = 1 AND (p.created <= ` + app.db.now() + ` AND pinned_position IS NULL) AND u.status = 0
+	ORDER BY p.created DESC
+	` + limit)
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve collection posts." + err.Error()}
@@ -120,7 +128,7 @@ func (app *App) FetchPublicPosts() (interface{}, error) {
 }
 
 func viewLocalTimelineAPI(app *App, w http.ResponseWriter, r *http.Request) error {
-	updateTimelineCache(app.timeline)
+	updateTimelineCache(app.timeline, false)
 
 	skip, _ := strconv.Atoi(r.FormValue("skip"))
 
@@ -148,13 +156,19 @@ func viewLocalTimeline(app *App, w http.ResponseWriter, r *http.Request) error {
 	return showLocalTimeline(app, w, r, page, vars["author"], vars["tag"])
 }
 
-func updateTimelineCache(tl *localTimeline) {
-	// Fetch posts if enough time has passed since last cache
-	if tl.posts == nil || tl.m.Invalidate() {
+// updateTimelineCache will reset and update the cache if it is stale or
+// the boolean passed in is true.
+func updateTimelineCache(tl *localTimeline, reset bool) {
+	if reset {
+		tl.m.Reset()
+	}
+
+	// Fetch posts if the cache is empty, has been reset or enough time has
+	// passed since last cache.
+	if tl.posts == nil || reset || tl.m.Invalidate() {
 		log.Info("[READ] Updating post cache")
-		var err error
-		var postsInterfaces interface{}
-		postsInterfaces, err = tl.m.Get()
+
+		postsInterfaces, err := tl.m.Get()
 		if err != nil {
 			log.Error("[READ] Unable to cache posts: %v", err)
 		} else {
@@ -162,10 +176,11 @@ func updateTimelineCache(tl *localTimeline) {
 			tl.posts = &castPosts
 		}
 	}
+
 }
 
 func showLocalTimeline(app *App, w http.ResponseWriter, r *http.Request, page int, author, tag string) error {
-	updateTimelineCache(app.timeline)
+	updateTimelineCache(app.timeline, false)
 
 	pl := len(*(app.timeline.posts))
 	ttlPages := int(math.Ceil(float64(pl) / float64(app.timeline.postsPerPage)))
@@ -278,7 +293,7 @@ func viewLocalTimelineFeed(app *App, w http.ResponseWriter, req *http.Request) e
 		return impart.HTTPError{http.StatusNotFound, "Page doesn't exist."}
 	}
 
-	updateTimelineCache(app.timeline)
+	updateTimelineCache(app.timeline, false)
 
 	feed := &Feed{
 		Title:       app.cfg.App.SiteName + " Reader",

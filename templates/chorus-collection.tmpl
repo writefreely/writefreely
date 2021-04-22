@@ -27,6 +27,7 @@
 		<meta property="og:url" content="{{.CanonicalURL}}" />
 		<meta property="og:description" content="{{.Description}}" />
 		<meta property="og:image" content="{{.AvatarURL}}">
+		{{template "collection-meta" .}}
 		{{if .StyleSheet}}<style type="text/css">{{.StyleSheetDisplay}}</style>{{end}}
 	<style type="text/css">
 body#collection header {
@@ -61,8 +62,8 @@ body#collection header nav.tabs a:first-child {
 	<body id="collection" itemscope itemtype="http://schema.org/WebPage">
 		{{template "user-navigation" .}}
 		
-		{{if .Suspended}}
-			{{template "user-suspended"}}
+		{{if .Silenced}}
+			{{template "user-silenced"}}
 		{{end}}
 		<header>
 		<h1 dir="{{.Direction}}" id="blog-title"><a href="/{{if .IsTopLevel}}{{else}}{{.Prefix}}{{.Alias}}/{{end}}" class="h-card p-author u-url" rel="me author">{{.DisplayTitle}}</a></h1>
@@ -89,8 +90,8 @@ body#collection header nav.tabs a:first-child {
 			{{template "posts" .}}
 
 		{{if gt .TotalPages 1}}<nav id="paging" class="content-container clearfix">
-			{{if or (and .Format.Ascending (lt .CurrentPage .TotalPages)) (isRTL .Direction)}}
-				{{if gt .CurrentPage 1}}<a href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">&#8672; {{if and .Format.Ascending (lt .CurrentPage .TotalPages)}}Previous{{else}}Newer{{end}}</a>{{end}}
+			{{if or (and .Format.Ascending (le .CurrentPage .TotalPages)) (isRTL .Direction)}}
+				{{if gt .CurrentPage 1}}<a href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">&#8672; {{if and .Format.Ascending (le .CurrentPage .TotalPages)}}Previous{{else}}Newer{{end}}</a>{{end}}
 				{{if lt .CurrentPage .TotalPages}}<a style="float:right;" href="{{.NextPageURL .Prefix .CurrentPage .IsTopLevel}}">{{if and .Format.Ascending (lt .CurrentPage .TotalPages)}}Next{{else}}Older{{end}} &#8674;</a>{{end}}
 			{{else}}
 				{{if lt .CurrentPage .TotalPages}}<a href="{{.NextPageURL .Prefix .CurrentPage .IsTopLevel}}">&#8672; Older</a>{{end}}

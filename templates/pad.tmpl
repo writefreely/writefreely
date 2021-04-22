@@ -16,13 +16,15 @@
 		<textarea id="writer" placeholder="Write..." class="{{.Post.Font}}" autofocus>{{if .Post.Title}}# {{.Post.Title}}
 
 {{end}}{{.Post.Content}}</textarea>
+
+		<div class="alert success hidden" id="edited-elsewhere">This post has been updated elsewhere since you last published! <a href="#" id="erase-edit">Delete draft and reload</a>.</div>
 		
 		<header id="tools">
 			<div id="clip">
 				{{if not .SingleUser}}<h1><a href="/me/c/" title="View blogs"><img class="ic-24dp" src="/img/ic_blogs_dark@2x.png" /></a></h1>{{end}}
 				<nav id="target" {{if .SingleUser}}style="margin-left:0"{{end}}><ul>
 						{{if .Editing}}<li>{{if .EditCollection}}<a href="{{.EditCollection.CanonicalURL}}">{{.EditCollection.Title}}</a>{{else}}<a>Draft</a>{{end}}</li>
-						{{else}}<li><a id="publish-to"><span id="target-name">Draft</span> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
+						{{else}}<li class="has-submenu"><a id="publish-to"><span id="target-name">Draft</span> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
 						<ul>
 							<li class="menu-heading">Publish to...</li>
 							{{if .Blogs}}{{range $idx, $el := .Blogs}}
@@ -43,7 +45,7 @@
 					</li>{{end}}
 				</ul></nav>
 				<nav id="font-picker" class="if-room room-3 hidden" style="margin-left:-1em"><ul>
-						<li><a href="#" id="" onclick="return false"><img class="ic-24dp" src="/img/ic_font_dark@2x.png" /> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
+						<li class="has-submenu"><a href="#" id="" onclick="return false"><img class="ic-24dp" src="/img/ic_font_dark@2x.png" /> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
 						<ul style="text-align: center">
 							<li class="menu-heading">Font</li>
 							<li class="selected"><a class="font norm" href="#norm">Serif</a></li>
@@ -64,30 +66,53 @@
 		</header>
 
 		<script src="/js/h.js"></script>
+		<script type="text/javascript" src="/js/menu.js"></script>
 		<script>
 		function toggleTheme() {
-			var btns = Array.prototype.slice.call(document.getElementById('tools').querySelectorAll('a img'));
-			var newTheme = '';
 			if (document.body.classList.contains('light')) {
-				newTheme = 'dark';
-				document.body.className = document.body.className.replace(/(?:^|\s)light(?!\S)/g, newTheme);
-				for (var i=0; i<btns.length; i++) {
-					btns[i].src = btns[i].src.replace('_dark@2x.png', '@2x.png');
+				setTheme('dark');
+			} else {
+				setTheme('light');
+			}
+			H.set('padTheme', newTheme);
+		}
+
+		function setTheme(newTheme) {
+			document.body.classList.remove('light');
+			document.body.classList.remove('dark');
+			document.body.classList.add(newTheme);
+			var btns = Array.prototype.slice.call(document.getElementById('tools').querySelectorAll('a img'));
+			if (newTheme == 'light') {
+				// check if current theme is dark otherwise we'll get `_dark_dark@2x.png`
+				if (H.get('padTheme', 'auto') == 'dark'){
+					for (var i=0; i<btns.length; i++) {
+						btns[i].src = btns[i].src.replace('@2x.png', '_dark@2x.png');
+					}
 				}
 			} else {
-				newTheme = 'light';
-				document.body.className = document.body.className.replace(/(?:^|\s)dark(?!\S)/g, newTheme);
 				for (var i=0; i<btns.length; i++) {
-					btns[i].src = btns[i].src.replace('@2x.png', '_dark@2x.png');
+					btns[i].src = btns[i].src.replace('_dark@2x.png', '@2x.png');
 				}
 			}
 			H.set('padTheme', newTheme);
 		}
-		if (H.get('padTheme', 'light') != 'light') {
-			toggleTheme();
+
+		if (H.get('padTheme', 'auto') == 'light') {
+			setTheme('light');
+		} else if (H.get('padTheme', 'auto') == 'dark') {
+			setTheme('dark');
+		} else {
+			const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches
+			if (isDarkMode) {
+				setTheme('dark');
+			} else {
+				setTheme('light');
+			}
 		}
+
 		var $writer = H.getEl('writer');
 		var $btnPublish = H.getEl('publish');
+		var $btnEraseEdit = H.getEl('edited-elsewhere');
 		var $wc = H.getEl("wc");
 		var updateWordCount = function() {
 			var words = 0;
@@ -110,7 +135,17 @@
 		};
 		{{if .Post.Id}}var draftDoc = 'draft{{.Post.Id}}';
 		var origDoc = '{{.Post.Content}}';{{else}}var draftDoc = 'lastDoc';{{end}}
-		H.load($writer, draftDoc, true);
+		var updatedStr = '{{.Post.Updated8601}}';
+		var updated = null;
+		if (updatedStr != '') {
+			updated = new Date(updatedStr);
+		}
+		var ok = H.load($writer, draftDoc, true, updated);
+		if (!ok) {
+			// Show "edited elsewhere" warning
+			$btnEraseEdit.el.classList.remove('hidden');
+		}
+		var defaultTimeSet = false;
 		updateWordCount();
 		
 		var typingTimer;
@@ -131,9 +166,9 @@
 		{{else}}var canPublish = true;{{end}}
 		var publishing = false;
 		var justPublished = false;
-		var suspended = {{.Suspended}};
+		var silenced = {{.Silenced}};
 		var publish = function(content, font) {
-			if (suspended === true) {
+			if (silenced === true) {
 				alert("Your account is silenced, so you can't publish or update posts.");
 				return;
 			}
@@ -159,8 +194,13 @@
 				body: post.content,
 				title: post.title,
 				font: font,
-				lang: lang
-			};
+			{{ if or .Post.Slug .Post.Id }}
+                        };
+                        {{ else }}
+                                lang: lang
+                        };
+			{{ end }}
+			
 			{{ if .Post.Slug }}
 			var url = "/api/collections/{{.EditCollection.Alias}}/posts/{{.Post.Id}}";
 			{{ else if .Post.Id }}
@@ -190,6 +230,7 @@
 						data = JSON.parse(http.responseText);
 						id = data.data.id;
 						nextURL = '{{if .SingleUser}}/d{{end}}/'+id;
+						localStorage.setItem('draft'+id+'-published', new Date().toISOString());
 
 						{{ if not .Post.Id }}
 							// Post created
@@ -257,6 +298,13 @@
 				var content = $writer.el.value;
 				publish(content, selectedFont);
 			}
+		});
+		H.getEl('erase-edit').on('click', function(e) {
+			e.preventDefault();
+			H.remove(draftDoc);
+			H.remove(draftDoc+'-published');
+			justPublished = true; // Block auto-save
+			location.reload();
 		});
 
 		H.getEl('toggle-theme').on('click', function(e) {
@@ -338,12 +386,20 @@
 		var doneTyping = function() {
 			if (draftDoc == 'lastDoc' || $writer.el.value != origDoc) {
 				H.save($writer, draftDoc);
+				if (!defaultTimeSet) {
+					var lastLocalPublishStr = localStorage.getItem(draftDoc+'-published');
+					if (lastLocalPublishStr == null || lastLocalPublishStr == '') {
+						localStorage.setItem(draftDoc+'-published', updatedStr);
+					}
+					defaultTimeSet = true;
+				}
 				updateWordCount();
 			}
 		};
 		window.addEventListener('beforeunload', function(e) {
 			if (draftDoc != 'lastDoc' && $writer.el.value == origDoc) {
 				H.remove(draftDoc);
+				H.remove(draftDoc+'-published');
 			} else if (!justPublished) {
 				doneTyping();
 			}

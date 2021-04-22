@@ -27,6 +27,7 @@
 		<meta property="og:url" content="{{.CanonicalURL}}" />
 		<meta property="og:description" content="{{.Description}}" />
 		<meta property="og:image" content="{{.AvatarURL}}">
+		{{template "collection-meta" .}}
 		{{if .StyleSheet}}<style type="text/css">{{.StyleSheetDisplay}}</style>{{end}}
 
 		{{if .RenderMathJax}}
@@ -39,31 +40,46 @@
 
 	</head>
 	<body id="collection" itemscope itemtype="http://schema.org/WebPage">
-		{{if or .IsOwner .SingleUser}}<nav id="manage"><ul>
-			<li><a onclick="void(0)">&#9776; Menu</a>
-				<ul>
-					{{ if .IsOwner }}
-					{{if .SingleUser}}
-					<li><a href="/me/new">New Post</a></li>
-					{{else}}
-					<li><a href="/#{{.Alias}}" class="write">{{.SiteName}}</a></li>
-					{{end}}
-					{{if .SimpleNav}}<li><a href="/new#{{.Alias}}">New Post</a></li>{{end}}
-					<li><a href="/me/c/{{.Alias}}">Customize</a></li>
-					<li><a href="/me/c/{{.Alias}}/stats">Stats</a></li>
-					<li class="separator"><hr /></li>
-					{{if not .SingleUser}}<li><a href="/me/c/"><img class="ic-18dp" src="/img/ic_blogs_dark@2x.png" /> View Blogs</a></li>{{end}}
-					<li><a href="/me/posts/"><img class="ic-18dp" src="/img/ic_list_dark@2x.png" /> View Drafts</a></li>
-					{{ else }}
-					<li><a href="/login">Log in</a></li>
-					{{ end }}
-				</ul>
-			</li>
-		</ul></nav>{{end}}
+		{{if or .IsOwner .SingleUser}}
+			<nav id="manage"><ul>
+				<li class="has-submenu"><a onclick="void(0)">&#9776; Menu</a>
+					<ul>
+						{{ if .IsOwner }}
+							{{if .SingleUser}}
+							<li><a href="/me/new">New Post</a></li>
+							{{else}}
+							<li><a href="/#{{.Alias}}" class="write">{{.SiteName}}</a></li>
+							{{end}}
+							{{if .SimpleNav}}<li><a href="/new#{{.Alias}}">New Post</a></li>{{end}}
+							<li><a href="/me/c/{{.Alias}}">Customize</a></li>
+							<li><a href="/me/c/{{.Alias}}/stats">Stats</a></li>
+							<li class="separator"><hr /></li>
+							{{if not .SingleUser}}<li><a href="/me/c/"><img class="ic-18dp" src="/img/ic_blogs_dark@2x.png" /> View Blogs</a></li>{{end}}
+							<li><a href="/me/posts/"><img class="ic-18dp" src="/img/ic_list_dark@2x.png" /> View Drafts</a></li>
+						{{ else }}
+							<li><a href="/login">Log in{{if .IsProtected}} to {{.DisplayTitle}}{{end}}</a></li>
+							{{if .IsProtected}}
+								<li class="separator"><hr /></li>
+								<li><a href="/logout">Log out</a></li>
+							{{end}}
+						{{ end }}
+					</ul>
+				</li>
+			</ul></nav>
+		{{else if .IsCollLoggedIn}}
+			<nav id="manage" class="shiny"><ul>
+				<li class="has-submenu"><a onclick="void(0)">&#9776; Menu</a>
+					<ul>
+						<li class="menu-heading" style="padding: .5rem .75rem; box-sizing: border-box;">{{.DisplayTitle}}</li>
+						<li><a href="{{.CanonicalURL}}logout">Log out</a></li>
+					</ul>
+				</li>
+			</ul></nav>
+		{{end}}
 		
 		<header>
-		{{if .Suspended}}
-			{{template "user-suspended"}}
+		{{if .Silenced}}
+			{{template "user-silenced"}}
 		{{end}}
 		<h1 dir="{{.Direction}}" id="blog-title">{{if .Posts}}{{else}}<span class="writeas-prefix"><a href="/">write.as</a></span> {{end}}<a href="/{{if .IsTopLevel}}{{else}}{{.Prefix}}{{.Alias}}/{{end}}" class="h-card p-author u-url" rel="me author">{{.DisplayTitle}}</a></h1>
 		{{if .Description}}<p class="description p-note">{{.Description}}</p>{{end}}
@@ -89,8 +105,8 @@
 			{{template "posts" .}}
 
 		{{if gt .TotalPages 1}}<nav id="paging" class="content-container clearfix">
-			{{if or (and .Format.Ascending (lt .CurrentPage .TotalPages)) (isRTL .Direction)}}
-				{{if gt .CurrentPage 1}}<a href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">&#8672; {{if and .Format.Ascending (lt .CurrentPage .TotalPages)}}Previous{{else}}Newer{{end}}</a>{{end}}
+			{{if or (and .Format.Ascending (le .CurrentPage .TotalPages)) (isRTL .Direction)}}
+				{{if gt .CurrentPage 1}}<a href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">&#8672; {{if and .Format.Ascending (le .CurrentPage .TotalPages)}}Previous{{else}}Newer{{end}}</a>{{end}}
 				{{if lt .CurrentPage .TotalPages}}<a style="float:right;" href="{{.NextPageURL .Prefix .CurrentPage .IsTopLevel}}">{{if and .Format.Ascending (lt .CurrentPage .TotalPages)}}Next{{else}}Older{{end}} &#8674;</a>{{end}}
 			{{else}}
 				{{if lt .CurrentPage .TotalPages}}<a href="{{.NextPageURL .Prefix .CurrentPage .IsTopLevel}}">&#8672; Older</a>{{end}}
@@ -117,6 +133,7 @@
 	<script src="/js/h.js"></script>
 	<script src="/js/postactions.js"></script>
 	<script src="/js/localdate.js"></script>
+	<script type="text/javascript" src="/js/menu.js"></script>
 	<script type="text/javascript">
 var deleting = false;
 function delPost(e, id, owned) {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019, 2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -12,8 +12,8 @@ package writefreely
 
 import (
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/config"
 	"github.com/writefreely/go-nodeinfo"
+	"github.com/writefreely/writefreely/config"
 	"strings"
 )
 
@@ -45,7 +45,7 @@ func nodeInfoConfig(db *datastore, cfg *config.Config) *nodeinfo.Config {
 			Private:         cfg.App.Private,
 			Software: nodeinfo.SoftwareMeta{
 				HomePage: softwareURL,
-				GitHub:   "https://github.com/writeas/writefreely",
+				GitHub:   "https://github.com/writefreely/writefreely",
 				Follow:   "https://writing.exchange/@write_as",
 			},
 			MaxBlogs:     cfg.App.MaxBlogs,

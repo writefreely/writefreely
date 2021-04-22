@@ -1,7 +1,7 @@
 // +build sqlite,!wflib
 
 /*
- * Copyright © 2019 A Bunch Tell LLC.
+ * Copyright © 2019-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -56,6 +56,16 @@ func (db *datastore) isIgnorableError(err error) bool {
 		}
 	} else {
 		log.Error("isIgnorableError: failed check for unrecognized driver '%s'", db.driverName)
+	}
+
+	return false
+}
+
+func (db *datastore) isHighLoadError(err error) bool {
+	if db.driverName == driverMySQL {
+		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
+			return mysqlErr.Number == mySQLErrMaxUserConns || mysqlErr.Number == mySQLErrTooManyConns
+		}
 	}
 
 	return false

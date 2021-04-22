@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -11,6 +11,7 @@
 package writefreely
 
 import (
+	"errors"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -22,7 +23,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/writeas/web-core/l10n"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/config"
+	"github.com/writefreely/writefreely/config"
 )
 
 var (
@@ -37,6 +38,10 @@ var (
 		"localstr":    localStr,
 		"localhtml":   localHTML,
 		"tolower":     strings.ToLower,
+		"title":       strings.Title,
+		"hasPrefix":   strings.HasPrefix,
+		"hasSuffix":   strings.HasSuffix,
+		"dict":        dict,
 	}
 )
 
@@ -64,7 +69,7 @@ func initTemplate(parentDir, name string) {
 		filepath.Join(parentDir, templatesDir, name+".tmpl"),
 		filepath.Join(parentDir, templatesDir, "include", "footer.tmpl"),
 		filepath.Join(parentDir, templatesDir, "base.tmpl"),
-		filepath.Join(parentDir, templatesDir, "user", "include", "suspended.tmpl"),
+		filepath.Join(parentDir, templatesDir, "user", "include", "silenced.tmpl"),
 	}
 	if name == "collection" || name == "collection-tags" || name == "chorus-collection" {
 		// These pages list out collection posts, so we also parse templatesDir + "include/posts.tmpl"
@@ -84,12 +89,18 @@ func initPage(parentDir, path, key string) {
 		log.Info("  [%s] %s", key, path)
 	}
 
-	pages[key] = template.Must(template.New("").Funcs(funcMap).ParseFiles(
+	files := []string{
 		path,
 		filepath.Join(parentDir, templatesDir, "include", "footer.tmpl"),
 		filepath.Join(parentDir, templatesDir, "base.tmpl"),
-		filepath.Join(parentDir, templatesDir, "user", "include", "suspended.tmpl"),
-	))
+		filepath.Join(parentDir, templatesDir, "user", "include", "silenced.tmpl"),
+	}
+
+	if key == "login.tmpl" || key == "landing.tmpl" || key == "signup.tmpl" {
+		files = append(files, filepath.Join(parentDir, templatesDir, "include", "oauth.tmpl"))
+	}
+
+	pages[key] = template.Must(template.New("").Funcs(funcMap).ParseFiles(files...))
 }
 
 func initUserPage(parentDir, path, key string) {
@@ -101,7 +112,8 @@ func initUserPage(parentDir, path, key string) {
 		path,
 		filepath.Join(parentDir, templatesDir, "user", "include", "header.tmpl"),
 		filepath.Join(parentDir, templatesDir, "user", "include", "footer.tmpl"),
-		filepath.Join(parentDir, templatesDir, "user", "include", "suspended.tmpl"),
+		filepath.Join(parentDir, templatesDir, "user", "include", "silenced.tmpl"),
+		filepath.Join(parentDir, templatesDir, "user", "include", "nav.tmpl"),
 	))
 }
 
@@ -198,4 +210,20 @@ func localHTML(term, lang string) template.HTML {
 	}
 	s = strings.Replace(s, "write.as", "<a href=\"https://writefreely.org\">writefreely</a>", 1)
 	return template.HTML(s)
+}
+
+// from: https://stackoverflow.com/a/18276968/1549194
+func dict(values ...interface{}) (map[string]interface{}, error) {
+	if len(values)%2 != 0 {
+		return nil, errors.New("dict: invalid number of parameters")
+	}
+	dict := make(map[string]interface{}, len(values)/2)
+	for i := 0; i < len(values); i += 2 {
+		key, ok := values[i].(string)
+		if !ok {
+			return nil, errors.New("dict: keys must be strings")
+		}
+		dict[key] = values[i+1]
+	}
+	return dict, nil
 }

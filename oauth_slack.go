@@ -13,8 +13,6 @@ package writefreely
 import (
 	"context"
 	"errors"
-	"fmt"
-	"github.com/writeas/nerds/store"
 	"github.com/writeas/slug"
 	"net/http"
 	"net/url"
@@ -113,7 +111,7 @@ func (c slackOauthClient) exchangeOauthCode(ctx context.Context, code string) (*
 		return nil, err
 	}
 	req.WithContext(ctx)
-	req.Header.Set("User-Agent", "writefreely")
+	req.Header.Set("User-Agent", ServerUserAgent(""))
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.SetBasicAuth(c.ClientID, c.ClientSecret)
@@ -142,7 +140,7 @@ func (c slackOauthClient) inspectOauthAccessToken(ctx context.Context, accessTok
 		return nil, err
 	}
 	req.WithContext(ctx)
-	req.Header.Set("User-Agent", "writefreely")
+	req.Header.Set("User-Agent", ServerUserAgent(""))
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
@@ -167,7 +165,7 @@ func (c slackOauthClient) inspectOauthAccessToken(ctx context.Context, accessTok
 func (resp slackUserIdentityResponse) InspectResponse() *InspectResponse {
 	return &InspectResponse{
 		UserID:      resp.User.ID,
-		Username:    fmt.Sprintf("%s-%s", slug.Make(resp.User.Name), store.GenerateRandomString("0123456789bcdfghjklmnpqrstvwxyz", 5)),
+		Username:    slug.Make(resp.User.Name),
 		DisplayName: resp.User.Name,
 		Email:       resp.User.Email,
 	}

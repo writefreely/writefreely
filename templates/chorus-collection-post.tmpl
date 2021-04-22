@@ -29,6 +29,7 @@
 		<meta property="og:updated_time" content="{{.Created8601}}" />
 		{{range .Images}}<meta property="og:image" content="{{.}}" />{{else}}<meta property="og:image" content="{{.Collection.AvatarURL}}">{{end}}
 		<meta property="article:published_time" content="{{.Created8601}}">
+		{{template "collection-meta" .}}
 		{{if .Collection.StyleSheet}}<style type="text/css">{{.Collection.StyleSheetDisplay}}</style>{{end}}
 	<style type="text/css">
 body footer {
@@ -55,10 +56,10 @@ body#post header {
 
 		{{template "user-navigation" .}}
 		
-		{{if .Suspended}}
-			{{template "user-suspended"}}
+		{{if .Silenced}}
+			{{template "user-silenced"}}
 		{{end}}
-		<article id="post-body" class="{{.Font}} h-entry">{{if .IsScheduled}}<p class="badge">Scheduled</p>{{end}}{{if .Title.String}}<h2 id="title" class="p-name{{if $.Collection.Format.ShowDates}} dated{{end}}">{{.FormattedDisplayTitle}}</h2>{{end}}{{if $.Collection.Format.ShowDates}}<time class="dt-published" datetime="{{.Created8601}}" pubdate itemprop="datePublished" content="{{.Created}}">{{.DisplayDate}}</time>{{end}}<div class="e-content">{{.HTMLContent}}</div></article>
+		<article id="post-body" class="{{.Font}} h-entry">{{if .IsScheduled}}<p class="badge">Scheduled</p>{{end}}{{if .Title.String}}<h2 id="title" class="p-name{{if $.Collection.Format.ShowDates}} dated{{end}}">{{.FormattedDisplayTitle}}</h2>{{end}}{{if and $.Collection.Format.ShowDates (not .IsPinned)}}<time class="dt-published" datetime="{{.Created8601}}" pubdate itemprop="datePublished" content="{{.Created}}">{{.DisplayDate}}</time>{{end}}<div class="e-content">{{.HTMLContent}}</div></article>
 
 		{{ if .Collection.ShowFooterBranding }}
 		<footer dir="ltr">

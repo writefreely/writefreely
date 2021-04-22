@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -35,8 +36,8 @@ import (
 	"github.com/writeas/web-core/i18n"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/tags"
-	"github.com/writeas/writefreely/page"
-	"github.com/writeas/writefreely/parse"
+	"github.com/writefreely/writefreely/page"
+	"github.com/writefreely/writefreely/parse"
 )
 
 const (
@@ -62,6 +63,7 @@ type (
 		Description string
 		Author      string
 		Views       int64
+		Images      []string
 		IsPlainText bool
 		IsCode      bool
 		IsLinkable  bool
@@ -133,6 +135,7 @@ type (
 		Views        int64
 		Font         string
 		Created      time.Time
+		Updated      time.Time
 		IsRTL        sql.NullBool
 		Language     sql.NullString
 		OwnerID      int64
@@ -208,8 +211,7 @@ func (p Post) Summary() string {
 	if p.Content == "" {
 		return ""
 	}
-	// Strip out HTML
-	p.Content = bluemonday.StrictPolicy().Sanitize(p.Content)
+	p.Content = stripHTMLWithoutEscaping(p.Content)
 	// and Markdown
 	p.Content = stripmd.Strip(p.Content)
 
@@ -381,12 +383,13 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 		if !isRaw {
 			post.HTMLContent = template.HTML(applyMarkdown([]byte(content), "", app.cfg))
+			post.Images = extractImages(post.Content)
 		}
 	}
 
-	var suspended bool
+	var silenced bool
 	if found {
-		suspended, err = app.db.IsUserSuspended(ownerID.Int64)
+		silenced, err = app.db.IsUserSilenced(ownerID.Int64)
 		if err != nil {
 			log.Error("view post: %v", err)
 		}
@@ -439,10 +442,10 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		page := struct {
 			*AnonymousPost
 			page.StaticPage
-			Username  string
-			IsOwner   bool
-			SiteURL   string
-			Suspended bool
+			Username string
+			IsOwner  bool
+			SiteURL  string
+			Silenced bool
 		}{
 			AnonymousPost: post,
 			StaticPage:    pageForReq(app, r),
@@ -453,10 +456,10 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 			page.IsOwner = ownerID.Valid && ownerID.Int64 == u.ID
 		}
 
-		if !page.IsOwner && suspended {
+		if !page.IsOwner && silenced {
 			return ErrPostNotFound
 		}
-		page.Suspended = suspended
+		page.Silenced = silenced
 		err = templates["post"].ExecuteTemplate(w, "post", page)
 		if err != nil {
 			log.Error("Post template execute error: %v", err)
@@ -513,12 +516,12 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	} else {
 		userID = app.db.GetUserID(accessToken)
 	}
-	suspended, err := app.db.IsUserSuspended(userID)
+	silenced, err := app.db.IsUserSilenced(userID)
 	if err != nil {
 		log.Error("new post: %v", err)
 	}
-	if suspended {
-		return ErrUserSuspended
+	if silenced {
+		return ErrUserSilenced
 	}
 
 	if userID == -1 {
@@ -686,12 +689,12 @@ func existingPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	suspended, err := app.db.IsUserSuspended(userID)
+	silenced, err := app.db.IsUserSilenced(userID)
 	if err != nil {
 		log.Error("existing post: %v", err)
 	}
-	if suspended {
-		return ErrUserSuspended
+	if silenced {
+		return ErrUserSilenced
 	}
 
 	// Modify post struct
@@ -888,12 +891,12 @@ func addPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		ownerID = u.ID
 	}
 
-	suspended, err := app.db.IsUserSuspended(ownerID)
+	silenced, err := app.db.IsUserSilenced(ownerID)
 	if err != nil {
 		log.Error("add post: %v", err)
 	}
-	if suspended {
-		return ErrUserSuspended
+	if silenced {
+		return ErrUserSilenced
 	}
 
 	// Parse claimed posts in format:
@@ -990,12 +993,12 @@ func pinPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		userID = u.ID
 	}
 
-	suspended, err := app.db.IsUserSuspended(userID)
+	silenced, err := app.db.IsUserSilenced(userID)
 	if err != nil {
 		log.Error("pin post: %v", err)
 	}
-	if suspended {
-		return ErrUserSuspended
+	if silenced {
+		return ErrUserSilenced
 	}
 
 	// Parse request
@@ -1071,11 +1074,11 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	suspended, err := app.db.IsUserSuspended(p.OwnerID.Int64)
+	silenced, err := app.db.IsUserSilenced(p.OwnerID.Int64)
 	if err != nil {
 		log.Error("fetch post: %v", err)
 	}
-	if suspended {
+	if silenced {
 		return ErrPostNotFound
 	}
 
@@ -1128,7 +1131,12 @@ func (p *PublicPost) CanonicalURL(hostName string) string {
 
 func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 	cfg := app.cfg
-	o := activitystreams.NewArticleObject()
+	var o *activitystreams.Object
+	if cfg.App.NotesOnly || strings.Index(p.Content, "\n\n") == -1 {
+		o = activitystreams.NewNoteObject()
+	} else {
+		o = activitystreams.NewArticleObject()
+	}
 	o.ID = p.Collection.FederatedAPIBase() + "api/posts/" + p.ID
 	o.Published = p.Created
 	o.URL = p.CanonicalURL(cfg.App.Host)
@@ -1137,6 +1145,7 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 		p.Collection.FederatedAccount() + "/followers",
 	}
 	o.Name = p.DisplayTitle()
+	p.augmentContent()
 	if p.HTMLContent == template.HTML("") {
 		p.formatContent(cfg, false)
 	}
@@ -1167,19 +1176,23 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 			})
 		}
 	}
+	if len(p.Images) > 0 {
+		for _, i := range p.Images {
+			o.Attachment = append(o.Attachment, activitystreams.NewImageAttachment(i))
+		}
+	}
 	// Find mentioned users
 	mentionedUsers := make(map[string]string)
 
 	stripper := bluemonday.StrictPolicy()
 	content := stripper.Sanitize(p.Content)
-	mentionRegex := regexp.MustCompile(`@[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]+\b`)
-	mentions := mentionRegex.FindAllString(content, -1)
+	mentions := mentionReg.FindAllString(content, -1)
 
 	for _, handle := range mentions {
 		actorIRI, err := app.db.GetProfilePageFromHandle(app, handle)
 		if err != nil {
-			log.Info("Can't find this user either in the database nor in the remote instance")
-			return nil
+			log.Info("Couldn't find user '%s' locally or remotely", handle)
+			continue
 		}
 		mentionedUsers[handle] = actorIRI
 	}
@@ -1238,9 +1251,9 @@ func getRawPost(app *App, friendlyID string) *RawPost {
 	var isRTL sql.NullBool
 	var lang sql.NullString
 	var ownerID sql.NullInt64
-	var created time.Time
+	var created, updated time.Time
 
-	err := app.db.QueryRow("SELECT title, content, text_appearance, language, rtl, created, owner_id FROM posts WHERE id = ?", friendlyID).Scan(&title, &content, &font, &lang, &isRTL, &created, &ownerID)
+	err := app.db.QueryRow("SELECT title, content, text_appearance, language, rtl, created, updated, owner_id FROM posts WHERE id = ?", friendlyID).Scan(&title, &content, &font, &lang, &isRTL, &created, &updated, &ownerID)
 	switch {
 	case err == sql.ErrNoRows:
 		return &RawPost{Content: "", Found: false, Gone: false}
@@ -1248,7 +1261,7 @@ func getRawPost(app *App, friendlyID string) *RawPost {
 		return &RawPost{Content: "", Found: true, Gone: false}
 	}
 
-	return &RawPost{Title: title, Content: content, Font: font, Created: created, IsRTL: isRTL, Language: lang, OwnerID: ownerID.Int64, Found: true, Gone: content == ""}
+	return &RawPost{Title: title, Content: content, Font: font, Created: created, Updated: updated, IsRTL: isRTL, Language: lang, OwnerID: ownerID.Int64, Found: true, Gone: content == ""}
 
 }
 
@@ -1257,15 +1270,15 @@ func getRawCollectionPost(app *App, slug, collAlias string) *RawPost {
 	var id, title, content, font string
 	var isRTL sql.NullBool
 	var lang sql.NullString
-	var created time.Time
+	var created, updated time.Time
 	var ownerID null.Int
 	var views int64
 	var err error
 
 	if app.cfg.App.SingleUser {
-		err = app.db.QueryRow("SELECT id, title, content, text_appearance, language, rtl, view_count, created, owner_id FROM posts WHERE slug = ? AND collection_id = 1", slug).Scan(&id, &title, &content, &font, &lang, &isRTL, &views, &created, &ownerID)
+		err = app.db.QueryRow("SELECT id, title, content, text_appearance, language, rtl, view_count, created, updated, owner_id FROM posts WHERE slug = ? AND collection_id = 1", slug).Scan(&id, &title, &content, &font, &lang, &isRTL, &views, &created, &updated, &ownerID)
 	} else {
-		err = app.db.QueryRow("SELECT id, title, content, text_appearance, language, rtl, view_count, created, owner_id FROM posts WHERE slug = ? AND collection_id = (SELECT id FROM collections WHERE alias = ?)", slug, collAlias).Scan(&id, &title, &content, &font, &lang, &isRTL, &views, &created, &ownerID)
+		err = app.db.QueryRow("SELECT id, title, content, text_appearance, language, rtl, view_count, created, updated, owner_id FROM posts WHERE slug = ? AND collection_id = (SELECT id FROM collections WHERE alias = ?)", slug, collAlias).Scan(&id, &title, &content, &font, &lang, &isRTL, &views, &created, &updated, &ownerID)
 	}
 	switch {
 	case err == sql.ErrNoRows:
@@ -1281,6 +1294,7 @@ func getRawCollectionPost(app *App, slug, collAlias string) *RawPost {
 		Content:  content,
 		Font:     font,
 		Created:  created,
+		Updated:  updated,
 		IsRTL:    isRTL,
 		Language: lang,
 		OwnerID:  ownerID.Int64,
@@ -1355,7 +1369,7 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 	}
 	c.hostName = app.cfg.App.Host
 
-	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("view collection post: %v", err)
 	}
@@ -1365,7 +1379,7 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 		return ErrPostNotFound
 	}
 	if c.IsProtected() && (u == nil || u.ID != c.OwnerID) {
-		if suspended {
+		if silenced {
 			return ErrPostNotFound
 		} else if !isAuthorizedForCollection(app, c.Alias, r) {
 			return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "/?g=" + slug}
@@ -1416,17 +1430,23 @@ Are you sure it was ever here?`,
 			return err
 		}
 	}
-	p.IsOwner = owner != nil && p.OwnerID.Valid && owner.ID == p.OwnerID.Int64
+
+	// Check if the authenticated user is the post owner
+	p.IsOwner = u != nil && u.ID == p.OwnerID.Int64
 	p.Collection = coll
 	p.IsTopLevel = app.cfg.App.SingleUser
 
-	if !p.IsOwner && suspended {
+	// Only allow a post owner or admin to view a post for silenced collections
+	if silenced && !p.IsOwner && (u == nil || !u.IsAdmin()) {
 		return ErrPostNotFound
 	}
+
 	// Check if post has been unpublished
 	if p.Content == "" && p.Title.String == "" {
 		return impart.HTTPError{http.StatusGone, "Post was unpublished."}
 	}
+
+	p.augmentContent()
 
 	// Serve collection post
 	if isRaw {
@@ -1469,23 +1489,25 @@ Are you sure it was ever here?`,
 			IsOwner        bool
 			IsPinned       bool
 			IsCustomDomain bool
+			Monetization   string
 			PinnedPosts    *[]PublicPost
 			IsFound        bool
 			IsAdmin        bool
 			CanInvite      bool
-			Suspended      bool
+			Silenced       bool
 		}{
 			PublicPost:     p,
 			StaticPage:     pageForReq(app, r),
 			IsOwner:        cr.isCollOwner,
 			IsCustomDomain: cr.isCustomDomain,
 			IsFound:        postFound,
-			Suspended:      suspended,
+			Silenced:       silenced,
 		}
 		tp.IsAdmin = u != nil && u.IsAdmin()
 		tp.CanInvite = canUserInvite(app.cfg, tp.IsAdmin)
 		tp.PinnedPosts, _ = app.db.GetPinnedPosts(coll, p.IsOwner)
 		tp.IsPinned = len(*tp.PinnedPosts) > 0 && PostsContains(tp.PinnedPosts, p)
+		tp.Monetization = app.db.GetCollectionAttribute(coll.ID, "monetization_pointer")
 
 		if !postFound {
 			w.WriteHeader(http.StatusNotFound)
@@ -1541,22 +1563,39 @@ func (rp *RawPost) Created8601() string {
 	return rp.Created.Format("2006-01-02T15:04:05Z")
 }
 
-var imageURLRegex = regexp.MustCompile(`(?i)^https?:\/\/[^ ]*\.(gif|png|jpg|jpeg|image)$`)
+func (rp *RawPost) Updated8601() string {
+	if rp.Updated.IsZero() {
+		return ""
+	}
+	return rp.Updated.Format("2006-01-02T15:04:05Z")
+}
+
+var imageURLRegex = regexp.MustCompile(`(?i)[^ ]+\.(gif|png|jpg|jpeg|image)$`)
 
 func (p *Post) extractImages() {
-	matches := extract.ExtractUrls(p.Content)
+	p.Images = extractImages(p.Content)
+}
+
+func extractImages(content string) []string {
+	matches := extract.ExtractUrls(content)
 	urls := map[string]bool{}
 	for i := range matches {
-		u := matches[i].Text
-		if !imageURLRegex.MatchString(u) {
+		uRaw := matches[i].Text
+		// Parse the extracted text so we can examine the path
+		u, err := url.Parse(uRaw)
+		if err != nil {
 			continue
 		}
-		urls[u] = true
+		// Ensure the path looks like it leads to an image file
+		if !imageURLRegex.MatchString(u.Path) {
+			continue
+		}
+		urls[uRaw] = true
 	}
 
 	resURLs := make([]string, 0)
 	for k := range urls {
 		resURLs = append(resURLs, k)
 	}
-	p.Images = resURLs
+	return resURLs
 }

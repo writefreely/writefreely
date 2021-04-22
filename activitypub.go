@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -28,9 +29,9 @@ import (
 	"github.com/writeas/activity/streams"
 	"github.com/writeas/httpsig"
 	"github.com/writeas/impart"
-	"github.com/writeas/nerds/store"
 	"github.com/writeas/web-core/activitypub"
 	"github.com/writeas/web-core/activitystreams"
+	"github.com/writeas/web-core/id"
 	"github.com/writeas/web-core/log"
 )
 
@@ -40,6 +41,19 @@ const (
 
 	apCacheTime = time.Minute
 )
+
+var instanceColl *Collection
+
+func initActivityPub(app *App) {
+	ur, _ := url.Parse(app.cfg.App.Host)
+	instanceColl = &Collection{
+		ID:       0,
+		Alias:    ur.Host,
+		Title:    ur.Host,
+		db:       app.db,
+		hostName: app.cfg.App.Host,
+	}
+}
 
 type RemoteUser struct {
 	ID          int64
@@ -65,17 +79,28 @@ func (ru *RemoteUser) AsPerson() *activitystreams.Person {
 	}
 }
 
+func activityPubClient() *http.Client {
+	return &http.Client{
+		Timeout: 15 * time.Second,
+	}
+}
+
 func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Server", serverSoftware)
 
 	vars := mux.Vars(r)
 	alias := vars["alias"]
+	if alias == "" {
+		alias = filepath.Base(r.RequestURI)
+	}
 
 	// TODO: enforce visibility
 	// Get base Collection data
 	var c *Collection
 	var err error
-	if app.cfg.App.SingleUser {
+	if alias == r.Host {
+		c = instanceColl
+	} else if app.cfg.App.SingleUser {
 		c, err = app.db.GetCollectionByID(1)
 	} else {
 		c, err = app.db.GetCollection(alias)
@@ -83,15 +108,18 @@ func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return err
 	}
-	suspended, err := app.db.IsUserSuspended(c.OwnerID)
-	if err != nil {
-		log.Error("fetch collection activities: %v", err)
-		return ErrInternalGeneral
-	}
-	if suspended {
-		return ErrCollectionNotFound
-	}
 	c.hostName = app.cfg.App.Host
+
+	if !c.IsInstanceColl() {
+		silenced, err := app.db.IsUserSilenced(c.OwnerID)
+		if err != nil {
+			log.Error("fetch collection activities: %v", err)
+			return ErrInternalGeneral
+		}
+		if silenced {
+			return ErrCollectionNotFound
+		}
+	}
 
 	p := c.PersonObject()
 
@@ -117,12 +145,12 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		return err
 	}
-	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("fetch collection outbox: %v", err)
 		return ErrInternalGeneral
 	}
-	if suspended {
+	if silenced {
 		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host
@@ -154,6 +182,7 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 		pp.Collection = res
 		o := pp.ActivityObject(app)
 		a := activitystreams.NewCreateActivity(o)
+		a.Context = nil
 		ocp.OrderedItems = append(ocp.OrderedItems, *a)
 	}
 
@@ -179,12 +208,12 @@ func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return err
 	}
-	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("fetch collection followers: %v", err)
 		return ErrInternalGeneral
 	}
-	if suspended {
+	if silenced {
 		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host
@@ -234,12 +263,12 @@ func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return err
 	}
-	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("fetch collection following: %v", err)
 		return ErrInternalGeneral
 	}
-	if suspended {
+	if silenced {
 		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host
@@ -277,12 +306,12 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		// TODO: return Reject?
 		return err
 	}
-	suspended, err := app.db.IsUserSuspended(c.OwnerID)
+	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
 		log.Error("fetch collection inbox: %v", err)
 		return ErrInternalGeneral
 	}
-	if suspended {
+	if silenced {
 		return ErrCollectionNotFound
 	}
 	c.hostName = app.cfg.App.Host
@@ -324,7 +353,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			if followID == nil {
 				log.Error("Didn't resolve follow ID")
 			} else {
-				aID := c.FederatedAccount() + "#accept-" + store.GenerateFriendlyRandomString(20)
+				aID := c.FederatedAccount() + "#accept-" + id.GenerateFriendlyRandomString(20)
 				acceptID, err := url.Parse(aID)
 				if err != nil {
 					log.Error("Couldn't parse generated Accept URL '%s': %v", aID, err)
@@ -389,6 +418,13 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 	}
 
 	go func() {
+		if to == nil {
+			if debugging {
+				log.Error("No `to` value!")
+			}
+			return
+		}
+
 		time.Sleep(2 * time.Second)
 		am, err := a.Serialize()
 		if err != nil {
@@ -397,10 +433,6 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		}
 		am["@context"] = []string{activitystreams.Namespace}
 
-		if to == nil {
-			log.Error("No to! %v", err)
-			return
-		}
 		err = makeActivityPost(app.cfg.App.Host, p, fullActor.Inbox, am)
 		if err != nil {
 			log.Error("Unable to make activity POST: %v", err)
@@ -484,7 +516,7 @@ func makeActivityPost(hostName string, p *activitystreams.Person, url string, m 
 
 	r, _ := http.NewRequest("POST", url, bytes.NewBuffer(b))
 	r.Header.Add("Content-Type", "application/activity+json")
-	r.Header.Set("User-Agent", "Go ("+serverSoftware+"/"+softwareVer+"; +"+hostName+")")
+	r.Header.Set("User-Agent", ServerUserAgent(hostName))
 	h := sha256.New()
 	h.Write(b)
 	r.Header.Add("Digest", "SHA-256="+base64.StdEncoding.EncodeToString(h.Sum(nil)))
@@ -509,7 +541,7 @@ func makeActivityPost(hostName string, p *activitystreams.Person, url string, m 
 		}
 	}
 
-	resp, err := http.DefaultClient.Do(r)
+	resp, err := activityPubClient().Do(r)
 	if err != nil {
 		return err
 	}
@@ -534,7 +566,23 @@ func resolveIRI(hostName, url string) ([]byte, error) {
 
 	r, _ := http.NewRequest("GET", url, nil)
 	r.Header.Add("Accept", "application/activity+json")
-	r.Header.Set("User-Agent", "Go ("+serverSoftware+"/"+softwareVer+"; +"+hostName+")")
+	r.Header.Set("User-Agent", ServerUserAgent(hostName))
+
+	p := instanceColl.PersonObject()
+	h := sha256.New()
+	h.Write([]byte{})
+	r.Header.Add("Digest", "SHA-256="+base64.StdEncoding.EncodeToString(h.Sum(nil)))
+
+	// Sign using the 'Signature' header
+	privKey, err := activitypub.DecodePrivateKey(p.GetPrivKey())
+	if err != nil {
+		return nil, err
+	}
+	signer := httpsig.NewSigner(p.PublicKey.ID, privKey, httpsig.RSASHA256, []string{"(request-target)", "date", "host", "digest"})
+	err = signer.SignSigHeader(r)
+	if err != nil {
+		log.Error("Can't sign: %v", err)
+	}
 
 	if debugging {
 		dump, err := httputil.DumpRequestOut(r, true)
@@ -545,7 +593,7 @@ func resolveIRI(hostName, url string) ([]byte, error) {
 		}
 	}
 
-	resp, err := http.DefaultClient.Do(r)
+	resp, err := activityPubClient().Do(r)
 	if err != nil {
 		return nil, err
 	}
@@ -600,7 +648,12 @@ func deleteFederatedPost(app *App, p *PublicPost, collID int64) error {
 			na.CC = append(na.CC, f)
 		}
 
-		err = makeActivityPost(app.cfg.App.Host, actor, si, activitystreams.NewDeleteActivity(na))
+		da := activitystreams.NewDeleteActivity(na)
+		// Make the ID unique to ensure it works in Pleroma
+		// See: https://git.pleroma.social/pleroma/pleroma/issues/1481
+		da.ID += "#Delete"
+
+		err = makeActivityPost(app.cfg.App.Host, actor, si, da)
 		if err != nil {
 			log.Error("Couldn't delete post! %v", err)
 		}
@@ -609,6 +662,16 @@ func deleteFederatedPost(app *App, p *PublicPost, collID int64) error {
 }
 
 func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
+	// If app is private, do not federate
+	if app.cfg.App.Private {
+		return nil
+	}
+
+	// Do not federate posts from private or protected blogs
+	if p.Collection.Visibility == CollPrivate || p.Collection.Visibility == CollProtected {
+		return nil
+	}
+
 	if debugging {
 		if isUpdate {
 			log.Info("Federating updated post!")
@@ -616,6 +679,7 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			log.Info("Federating new post!")
 		}
 	}
+
 	actor := p.Collection.PersonObject(collID)
 	na := p.ActivityObject(app)
 
@@ -684,6 +748,10 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			// I don't believe we'd ever have too many mentions in a single post that this
 			// could become a burden.
 			remoteUser, err := getRemoteUser(app, tag.HRef)
+			if err != nil {
+				log.Error("Unable to find remote user %s. Skipping: %v", tag.HRef, err)
+				continue
+			}
 			err = makeActivityPost(app.cfg.App.Host, actor, remoteUser.Inbox, activity)
 			if err != nil {
 				log.Error("Couldn't post! %v", err)
@@ -696,7 +764,8 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 
 func getRemoteUser(app *App, actorID string) (*RemoteUser, error) {
 	u := RemoteUser{ActorID: actorID}
-	err := app.db.QueryRow("SELECT id, inbox, shared_inbox, handle FROM remoteusers WHERE actor_id = ?", actorID).Scan(&u.ID, &u.Inbox, &u.SharedInbox, &u.Handle)
+	var handle sql.NullString
+	err := app.db.QueryRow("SELECT id, inbox, shared_inbox, handle FROM remoteusers WHERE actor_id = ?", actorID).Scan(&u.ID, &u.Inbox, &u.SharedInbox, &handle)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, impart.HTTPError{http.StatusNotFound, "No remote user with that ID."}
@@ -704,6 +773,8 @@ func getRemoteUser(app *App, actorID string) (*RemoteUser, error) {
 		log.Error("Couldn't get remote user %s: %v", actorID, err)
 		return nil, err
 	}
+
+	u.Handle = handle.String
 
 	return &u, nil
 }

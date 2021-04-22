@@ -5,6 +5,7 @@ all :
 	lessc app.less --clean-css="--s1 --advanced" $(CSSDIR)write.css
 	lessc fonts.less --clean-css="--s1 --advanced" $(CSSDIR)fonts.css
 	lessc icons.less --clean-css="--s1 --advanced" $(CSSDIR)icons.css
+	lessc prose.less --clean-css="--s1 --advanced" $(CSSDIR)prose.css
 
 install :
 	./install-less.sh

@@ -23,13 +23,13 @@
 		<meta name="twitter:description" content="{{.Description}}">
 		{{if gt .Views 1}}<meta name="twitter:label1" value="Views">
 		<meta name="twitter:data1" value="{{largeNumFmt .Views}}">{{end}}
-		<meta name="twitter:image" content="{{.Host}}/img/wf-sq.png">
+		{{if gt (len .Images) 0}}<meta name="twitter:image" content="{{index .Images 0}}">{{else}}<meta name="twitter:image" content="{{.Host}}/img/wf-sq.png">{{end}}
 		<meta property="og:title" content="{{if .Title}}{{.Title}}{{else}}{{.GenTitle}}{{end}}" />
 		<meta property="og:site_name" content="{{.SiteName}}" />
 		<meta property="og:type" content="article" />
 		<meta property="og:url" content="{{.Host}}/{{if .SingleUser}}d/{{end}}{{.ID}}" />
 		<meta property="og:description" content="{{.Description}}" />
-		<meta property="og:image" content="{{.Host}}/img/wf-sq.png">
+		{{range .Images}}<meta property="og:image" content="{{.}}" />{{else}}<meta property="og:image" content="{{.Host}}/img/wf-sq.png">{{end}}
 		{{if .Author}}<meta property="article:author" content="https://{{.Author}}" />{{end}}
 		<!-- Add highlighting logic -->
 		{{template "highlighting" .}}
@@ -49,8 +49,8 @@
 			</nav>
 		</header>
 
-		{{if .Suspended}}
-			{{template "user-suspended"}}
+		{{if .Silenced}}
+			{{template "user-silenced"}}
 		{{end}}
 		
 		<article class="{{.Font}} h-entry">{{if .Title}}<h2 id="title" class="p-name">{{.Title}}</h2>{{end}}{{ if .IsPlainText }}<p id="post-body" class="e-content">{{.Content}}</p>{{ else }}<div id="post-body" class="e-content">{{.HTMLContent}}</div>{{ end }}</article>

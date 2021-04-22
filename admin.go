@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -24,8 +24,8 @@ import (
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/passgen"
-	"github.com/writeas/writefreely/appstats"
-	"github.com/writeas/writefreely/config"
+	"github.com/writefreely/writefreely/appstats"
+	"github.com/writefreely/writefreely/config"
 )
 
 var (
@@ -90,6 +90,18 @@ type instanceContent struct {
 	Updated time.Time
 }
 
+type AdminPage struct {
+	UpdateAvailable bool
+}
+
+func NewAdminPage(app *App) *AdminPage {
+	ap := &AdminPage{}
+	if app.updates != nil {
+		ap.UpdateAvailable = app.updates.AreAvailableNoCheck()
+	}
+	return ap
+}
+
 func (c instanceContent) UpdatedFriendly() string {
 	/*
 		// TODO: accept a locale in this method and use that for the format
@@ -100,15 +112,46 @@ func (c instanceContent) UpdatedFriendly() string {
 }
 
 func handleViewAdminDash(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	p := struct {
+		*UserPage
+		*AdminPage
+		Message string
+
+		UsersCount, CollectionsCount, PostsCount int64
+	}{
+		UserPage:  NewUserPage(app, r, u, "Admin", nil),
+		AdminPage: NewAdminPage(app),
+		Message:   r.FormValue("m"),
+	}
+
+	// Get user stats
+	p.UsersCount = app.db.GetAllUsersCount()
+	var err error
+	p.CollectionsCount, err = app.db.GetTotalCollections()
+	if err != nil {
+		return err
+	}
+	p.PostsCount, err = app.db.GetTotalPosts()
+	if err != nil {
+		return err
+	}
+
+	showUserPage(w, "admin", p)
+	return nil
+}
+
+func handleViewAdminMonitor(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	updateAppStats()
 	p := struct {
 		*UserPage
+		*AdminPage
 		SysStatus systemStatus
 		Config    config.AppCfg
 
 		Message, ConfigMessage string
 	}{
 		UserPage:  NewUserPage(app, r, u, "Admin", nil),
+		AdminPage: NewAdminPage(app),
 		SysStatus: sysStatus,
 		Config:    app.cfg.App,
 
@@ -116,13 +159,34 @@ func handleViewAdminDash(app *App, u *User, w http.ResponseWriter, r *http.Reque
 		ConfigMessage: r.FormValue("cm"),
 	}
 
-	showUserPage(w, "admin", p)
+	showUserPage(w, "monitor", p)
+	return nil
+}
+
+func handleViewAdminSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	p := struct {
+		*UserPage
+		*AdminPage
+		Config config.AppCfg
+
+		Message, ConfigMessage string
+	}{
+		UserPage:  NewUserPage(app, r, u, "Admin", nil),
+		AdminPage: NewAdminPage(app),
+		Config:    app.cfg.App,
+
+		Message:       r.FormValue("m"),
+		ConfigMessage: r.FormValue("cm"),
+	}
+
+	showUserPage(w, "app-settings", p)
 	return nil
 }
 
 func handleViewAdminUsers(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	p := struct {
 		*UserPage
+		*AdminPage
 		Config  config.AppCfg
 		Message string
 		Flashes []string
@@ -132,9 +196,10 @@ func handleViewAdminUsers(app *App, u *User, w http.ResponseWriter, r *http.Requ
 		TotalUsers int64
 		TotalPages []int
 	}{
-		UserPage: NewUserPage(app, r, u, "Users", nil),
-		Config:   app.cfg.App,
-		Message:  r.FormValue("m"),
+		UserPage:  NewUserPage(app, r, u, "Users", nil),
+		AdminPage: NewAdminPage(app),
+		Config:    app.cfg.App,
+		Message:   r.FormValue("m"),
 	}
 
 	p.Flashes, _ = getSessionFlashes(app, w, r, nil)
@@ -171,6 +236,7 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 
 	p := struct {
 		*UserPage
+		*AdminPage
 		Config  config.AppCfg
 		Message string
 
@@ -181,9 +247,10 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 		TotalPosts  int64
 		ClearEmail  string
 	}{
-		Config:  app.cfg.App,
-		Message: r.FormValue("m"),
-		Colls:   []inspectedCollection{},
+		AdminPage: NewAdminPage(app),
+		Config:    app.cfg.App,
+		Message:   r.FormValue("m"),
+		Colls:     []inspectedCollection{},
 	}
 
 	var err error
@@ -294,9 +361,12 @@ func handleAdminToggleUserStatus(app *App, u *User, w http.ResponseWriter, r *ht
 		err = app.db.SetUserStatus(user.ID, UserActive)
 	} else {
 		err = app.db.SetUserStatus(user.ID, UserSilenced)
+
+		// reset the cache to removed silence user posts
+		updateTimelineCache(app.timeline, true)
 	}
 	if err != nil {
-		log.Error("toggle user suspended: %v", err)
+		log.Error("toggle user silenced: %v", err)
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not toggle user status: %v", err)}
 	}
 	return impart.HTTPError{http.StatusFound, fmt.Sprintf("/admin/user/%s#status", username)}
@@ -337,14 +407,16 @@ func handleAdminResetUserPass(app *App, u *User, w http.ResponseWriter, r *http.
 func handleViewAdminPages(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	p := struct {
 		*UserPage
+		*AdminPage
 		Config  config.AppCfg
 		Message string
 
 		Pages []*instanceContent
 	}{
-		UserPage: NewUserPage(app, r, u, "Pages", nil),
-		Config:   app.cfg.App,
-		Message:  r.FormValue("m"),
+		UserPage:  NewUserPage(app, r, u, "Pages", nil),
+		AdminPage: NewAdminPage(app),
+		Config:    app.cfg.App,
+		Message:   r.FormValue("m"),
 	}
 
 	var err error
@@ -401,14 +473,16 @@ func handleViewAdminPage(app *App, u *User, w http.ResponseWriter, r *http.Reque
 
 	p := struct {
 		*UserPage
+		*AdminPage
 		Config  config.AppCfg
 		Message string
 
 		Banner  *instanceContent
 		Content *instanceContent
 	}{
-		Config:  app.cfg.App,
-		Message: r.FormValue("m"),
+		AdminPage: NewAdminPage(app),
+		Config:    app.cfg.App,
+		Message:   r.FormValue("m"),
 	}
 
 	var err error
@@ -491,6 +565,7 @@ func handleAdminUpdateConfig(apper Apper, u *User, w http.ResponseWriter, r *htt
 	}
 	apper.App().cfg.App.Federation = r.FormValue("federation") == "on"
 	apper.App().cfg.App.PublicStats = r.FormValue("public_stats") == "on"
+	apper.App().cfg.App.Monetization = r.FormValue("monetization") == "on"
 	apper.App().cfg.App.Private = r.FormValue("private") == "on"
 	apper.App().cfg.App.LocalTimeline = r.FormValue("local_timeline") == "on"
 	if apper.App().cfg.App.LocalTimeline && apper.App().timeline == nil {
@@ -508,7 +583,7 @@ func handleAdminUpdateConfig(apper Apper, u *User, w http.ResponseWriter, r *htt
 	if err != nil {
 		m = "?cm=" + err.Error()
 	}
-	return impart.HTTPError{http.StatusFound, "/admin" + m + "#config"}
+	return impart.HTTPError{http.StatusFound, "/admin/settings" + m + "#config"}
 }
 
 func updateAppStats() {
@@ -559,5 +634,41 @@ func adminResetPassword(app *App, u *User, newPass string) error {
 	if err != nil {
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not update passphrase: %v", err)}
 	}
+	return nil
+}
+
+func handleViewAdminUpdates(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	check := r.URL.Query().Get("check")
+
+	if check == "now" && app.cfg.App.UpdateChecks {
+		app.updates.CheckNow()
+	}
+
+	p := struct {
+		*UserPage
+		*AdminPage
+		CurReleaseNotesURL    string
+		LastChecked           string
+		LastChecked8601       string
+		LatestVersion         string
+		LatestReleaseURL      string
+		LatestReleaseNotesURL string
+		CheckFailed           bool
+	}{
+		UserPage:  NewUserPage(app, r, u, "Updates", nil),
+		AdminPage: NewAdminPage(app),
+	}
+	p.CurReleaseNotesURL = wfReleaseNotesURL(p.Version)
+	if app.cfg.App.UpdateChecks {
+		p.LastChecked = app.updates.lastCheck.Format("January 2, 2006, 3:04 PM")
+		p.LastChecked8601 = app.updates.lastCheck.Format("2006-01-02T15:04:05Z")
+		p.LatestVersion = app.updates.LatestVersion()
+		p.LatestReleaseURL = app.updates.ReleaseURL()
+		p.LatestReleaseNotesURL = app.updates.ReleaseNotesURL()
+		p.UpdateAvailable = app.updates.AreAvailable()
+		p.CheckFailed = app.updates.checkError != nil
+	}
+
+	showUserPage(w, "app-updates", p)
 	return nil
 }
