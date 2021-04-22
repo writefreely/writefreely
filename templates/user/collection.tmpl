@@ -193,25 +193,10 @@ textarea.section.norm {
 		</div>
 
 <script src="/js/h.js"></script>
+<script src="/js/modals.js"></script>
 <script src="/js/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
-// Begin shared modal code
-function showModal(id) {
-	document.getElementById('overlay').style.display = 'block';
-	document.getElementById('modal-'+id).style.display = 'block';
-}
-
-var closeModals = function(e) {
-	e.preventDefault();
-	document.getElementById('overlay').style.display = 'none';
-	var modals = document.querySelectorAll('.modal');
-	for (var i=0; i<modals.length; i++) {
-		modals[i].style.display = 'none'; 
-	}
-};
-H.getEl('overlay').on('click', closeModals);
 H.getEl('cancel-delete').on('click', closeModals);
-// end
 var deleteBlog = function(e) {
 	if (document.getElementById('confirm-text').value != '{{.Alias}}') {
 		document.getElementById('delete-errors').innerHTML = '<li class="urgent">Enter <strong>{{.Alias}}</strong> in the box below.</li>';
