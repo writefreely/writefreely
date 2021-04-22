@@ -1172,7 +1172,8 @@ func handleUserDelete(app *App, u *User, w http.ResponseWriter, r *http.Request)
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not delete account: %v", err)}
 	}
 
-	_ = addSessionFlash(app, w, r, "Account deleted successfully, sorry to see you go.", nil)
+	// FIXME: This doesn't ever appear to the user, as (I believe) the value is erased when the session cookie is reset
+	_ = addSessionFlash(app, w, r, "Thanks for writing with us! You account was deleted successfully.", nil)
 	return impart.HTTPError{http.StatusFound, "/me/logout"}
 }
 
