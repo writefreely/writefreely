@@ -341,7 +341,7 @@ func handleAdminDeleteUser(app *App, u *User, w http.ResponseWriter, r *http.Req
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not delete user account for '%s': %v", username, err)}
 	}
 
-	_ = addSessionFlash(app, w, r, fmt.Sprintf("Account for user \"%s\" was deleted successfully.", username), nil)
+	_ = addSessionFlash(app, w, r, fmt.Sprintf("User \"%s\" was deleted successfully.", username), nil)
 	return impart.HTTPError{http.StatusFound, "/admin/users"}
 }
 
