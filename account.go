@@ -1158,7 +1158,11 @@ func handleUserDelete(app *App, u *User, w http.ResponseWriter, r *http.Request)
 		return impart.HTTPError{http.StatusBadRequest, "Confirmation username must match your username exactly."}
 	}
 
-	// TODO: prevent admin delete themselves?
+	// Check for account deletion safeguards in place
+	if u.IsAdmin() {
+		return impart.HTTPError{http.StatusForbidden, "Cannot delete admin."}
+	}
+
 	err := app.db.DeleteAccount(u.ID)
 	if err != nil {
 		log.Error("user delete account: %v", err)
