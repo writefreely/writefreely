@@ -7,21 +7,23 @@
 	{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 </ul>{{end}}
 
-{{if .Suspended}}
-	{{template "user-suspended"}}
+{{if .Silenced}}
+	{{template "user-silenced"}}
 {{end}}
-<h2>blogs</h2>
+<h1>Blogs</h1>
 <ul class="atoms collections">
-	{{range $i, $el := .Collections}}<li class="collection"><h3>
-		<a class="title" href="/{{.Alias}}/">{{if .Title}}{{.Title}}{{else}}{{.Alias}}{{end}}</a>
-	</h3> 
-	<h4>
-		<a class="action new-post" href="{{if $.Chorus}}/new{{else}}/{{end}}#{{.Alias}}">new post</a>
-		<a class="action" href="/me/c/{{.Alias}}">customize</a>
-		<a class="action" href="/me/c/{{.Alias}}/stats">stats</a>
-	</h4>
-	{{if .Description}}<p class="description">{{.Description}}</p>{{end}}
-</li>{{end}}
+	{{range $i, $el := .Collections}}<li class="collection">
+		<div class="row lineitem">
+			<div>
+				<h3>
+					<a class="title" href="/{{.Alias}}/" >{{if .Title}}{{.Title}}{{else}}{{.Alias}}{{end}}</a>
+					<span class="electron" {{if .IsPrivate}}style="font-style: italic"{{end}}>{{if .IsPrivate}}private{{else}}{{.DisplayCanonicalURL}}{{end}}</span>
+				</h3>
+				{{template "collection-nav" (dict "Alias" .Alias "Path" $.Path "SingleUser" $.SingleUser "CanPost" true	)}}
+				{{if .Description}}<p class="description">{{.Description}}</p>{{end}}
+			</div>
+		</div>
+	</li>{{end}}
 	<li id="create-collection">
 		{{if not .NewBlogsDisabled}}
 		<form method="POST" action="/api/collections" id="new-collection-form" onsubmit="return createCollection()">

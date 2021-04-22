@@ -4,7 +4,16 @@
 <div class="snug content-container">
 	{{template "admin-header" .}}
 
-	<h2 id="posts-header" style="display: flex; justify-content: space-between;">Users <span style="font-style: italic; font-size: 0.75em;">{{.TotalUsers}} total</strong></h2>
+	<!-- TODO: if other use for flashes use patern like account_import.go -->
+	{{if .Flashes}}
+		<p class="alert success">
+		{{range .Flashes}}{{.}}{{end}}
+		</p>
+	{{end}}
+	<div class="row admin-actions" style="justify-content: space-between;">
+		<span style="font-style: italic; font-size: 1.2em">{{.TotalUsers}} {{pluralize "user" "users" .TotalUsers}}</span>
+		<a class="btn cta" href="/me/invites">+ Invite people</a>
+	</div>
 
 	<table class="classy export" style="width:100%">
 		<tr>
@@ -23,7 +32,7 @@
 		{{end}}
 	</table>
 
-	<nav class="pager">
+	<nav class="pager pages">
 		{{range $n := .TotalPages}}<a href="/admin/users{{if ne $n 1}}?p={{$n}}{{end}}" {{if eq $.CurPage $n}}class="selected"{{end}}>{{$n}}</a>{{end}}
 	</nav>
 

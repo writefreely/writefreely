@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -17,7 +17,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/page"
 )
 
 func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
@@ -35,10 +35,10 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 	appData := &struct {
 		page.StaticPage
-		Post      *RawPost
-		User      *User
-		Blogs     *[]Collection
-		Suspended bool
+		Post     *RawPost
+		User     *User
+		Blogs    *[]Collection
+		Silenced bool
 
 		Editing        bool        // True if we're modifying an existing post
 		EditCollection *Collection // Collection of the post we're editing, if any
@@ -53,9 +53,9 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 		if err != nil {
 			log.Error("Unable to get user's blogs for Pad: %v", err)
 		}
-		appData.Suspended, err = app.db.IsUserSuspended(appData.User.ID)
+		appData.Silenced, err = app.db.IsUserSilenced(appData.User.ID)
 		if err != nil {
-			log.Error("Unable to get users suspension status for Pad: %v", err)
+			log.Error("Unable to get user status for Pad: %v", err)
 		}
 	}
 
@@ -127,16 +127,16 @@ func handleViewMeta(app *App, w http.ResponseWriter, r *http.Request) error {
 		EditCollection *Collection // Collection of the post we're editing, if any
 		Flashes        []string
 		NeedsToken     bool
-		Suspended      bool
+		Silenced       bool
 	}{
 		StaticPage: pageForReq(app, r),
 		Post:       &RawPost{Font: "norm"},
 		User:       getUserSession(app, r),
 	}
 	var err error
-	appData.Suspended, err = app.db.IsUserSuspended(appData.User.ID)
+	appData.Silenced, err = app.db.IsUserSilenced(appData.User.ID)
 	if err != nil {
-		log.Error("view meta: get user suspended status: %v", err)
+		log.Error("view meta: get user status: %v", err)
 		return ErrInternalGeneral
 	}
 

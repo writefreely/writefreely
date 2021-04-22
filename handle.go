@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -21,10 +21,11 @@ import (
 	"time"
 
 	"github.com/gorilla/sessions"
+	"github.com/prologic/go-gopher"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/page"
 )
 
 // UserLevel represents the required user level for accessing an endpoint
@@ -64,6 +65,7 @@ func UserLevelReader(cfg *config.Config) UserLevel {
 
 type (
 	handlerFunc          func(app *App, w http.ResponseWriter, r *http.Request) error
+	gopherFunc           func(app *App, w gopher.ResponseWriter, r *gopher.Request) error
 	userHandlerFunc      func(app *App, u *User, w http.ResponseWriter, r *http.Request) error
 	userApperHandlerFunc func(apper Apper, u *User, w http.ResponseWriter, r *http.Request) error
 	dataHandlerFunc      func(app *App, w http.ResponseWriter, r *http.Request) ([]byte, string, error)
@@ -83,6 +85,7 @@ type ErrorPages struct {
 	NotFound            *template.Template
 	Gone                *template.Template
 	InternalServerError *template.Template
+	UnavailableError    *template.Template
 	Blank               *template.Template
 }
 
@@ -94,6 +97,7 @@ func NewHandler(apper Apper) *Handler {
 			NotFound:            template.Must(template.New("").Parse("{{define \"base\"}}<html><head><title>404</title></head><body><p>Not found.</p></body></html>{{end}}")),
 			Gone:                template.Must(template.New("").Parse("{{define \"base\"}}<html><head><title>410</title></head><body><p>Gone.</p></body></html>{{end}}")),
 			InternalServerError: template.Must(template.New("").Parse("{{define \"base\"}}<html><head><title>500</title></head><body><p>Internal server error.</p></body></html>{{end}}")),
+			UnavailableError:    template.Must(template.New("").Parse("{{define \"base\"}}<html><head><title>503</title></head><body><p>Service is temporarily unavailable.</p></body></html>{{end}}")),
 			Blank:               template.Must(template.New("").Parse("{{define \"base\"}}<html><head><title>{{.Title}}</title></head><body><p>{{.Content}}</p></body></html>{{end}}")),
 		},
 		sessionStore: apper.App().SessionStore(),
@@ -111,6 +115,7 @@ func NewWFHandler(apper Apper) *Handler {
 		NotFound:            pages["404-general.tmpl"],
 		Gone:                pages["410.tmpl"],
 		InternalServerError: pages["500.tmpl"],
+		UnavailableError:    pages["503.tmpl"],
 		Blank:               pages["blank.tmpl"],
 	})
 	return h
@@ -596,6 +601,9 @@ func (h *Handler) AllReader(f handlerFunc) http.HandlerFunc {
 				log.Info(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
+			// Allow any origin, as public endpoints are handled in here
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+
 			if h.app.App().cfg.App.Private {
 				// This instance is private, so ensure it's being accessed by a valid user
 				// Check if authenticated with an access token
@@ -763,6 +771,10 @@ func (h *Handler) handleHTTPError(w http.ResponseWriter, r *http.Request, err er
 			log.Info("handleHTTPErorr internal error render")
 			h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
 			return
+		} else if err.Status == http.StatusServiceUnavailable {
+			w.WriteHeader(err.Status)
+			h.errors.UnavailableError.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
+			return
 		} else if err.Status == http.StatusAccepted {
 			impart.WriteSuccess(w, "", err.Status)
 			return
@@ -891,8 +903,33 @@ func (h *Handler) LogHandlerFunc(f http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+func (h *Handler) Gopher(f gopherFunc) gopher.HandlerFunc {
+	return func(w gopher.ResponseWriter, r *gopher.Request) {
+		defer func() {
+			if e := recover(); e != nil {
+				log.Error("%s: %s", e, debug.Stack())
+				w.WriteError("An internal error occurred")
+			}
+			log.Info("gopher: %s", r.Selector)
+		}()
+
+		err := f(h.app.App(), w, r)
+		if err != nil {
+			log.Error("failed: %s", err)
+			w.WriteError("the page failed for some reason (see logs)")
+		}
+	}
+}
+
 func sendRedirect(w http.ResponseWriter, code int, location string) int {
 	w.Header().Set("Location", location)
 	w.WriteHeader(code)
 	return code
+}
+
+func cacheControl(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=604800, immutable")
+		next.ServeHTTP(w, r)
+	})
 }

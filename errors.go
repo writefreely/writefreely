@@ -37,6 +37,8 @@ var (
 	ErrInternalGeneral       = impart.HTTPError{http.StatusInternalServerError, "The humans messed something up. They've been notified."}
 	ErrInternalCookieSession = impart.HTTPError{http.StatusInternalServerError, "Could not get cookie session."}
 
+	ErrUnavailable = impart.HTTPError{http.StatusServiceUnavailable, "Service temporarily unavailable due to high load."}
+
 	ErrCollectionNotFound     = impart.HTTPError{http.StatusNotFound, "Collection doesn't exist."}
 	ErrCollectionGone         = impart.HTTPError{http.StatusGone, "This blog was unpublished."}
 	ErrCollectionPageNotFound = impart.HTTPError{http.StatusNotFound, "Collection page doesn't exist."}
@@ -49,7 +51,9 @@ var (
 	ErrRemoteUserNotFound = impart.HTTPError{http.StatusNotFound, "Remote user not found."}
 	ErrUserNotFoundEmail  = impart.HTTPError{http.StatusNotFound, "Please enter your username instead of your email address."}
 
-	ErrUserSuspended = impart.HTTPError{http.StatusForbidden, "Account is silenced."}
+	ErrUserSilenced = impart.HTTPError{http.StatusForbidden, "Account is silenced."}
+
+	ErrDisabledPasswordAuth = impart.HTTPError{http.StatusForbidden, "Password authentication is disabled."}
 )
 
 // Post operation errors

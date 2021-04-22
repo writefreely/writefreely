@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2020 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -53,6 +53,11 @@ func PostLede(t string, includePunc bool) string {
 		t = t[:punc+iAdj]
 	}
 	punc = stringmanip.IndexRune(t, '。')
+	if punc > -1 {
+		c := []rune(t)
+		t = string(c[:punc+iAdj])
+	}
+	punc = stringmanip.IndexRune(t, '?')
 	if punc > -1 {
 		c := []rune(t)
 		t = string(c[:punc+iAdj])

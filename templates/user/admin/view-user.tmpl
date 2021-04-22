@@ -7,21 +7,21 @@ table.classy th {
 h3 {
 	font-weight: normal;
 }
-td.active-suspend {
+td.active-silence {
 	display: flex;
 	align-items: center;
 }
 
-td.active-suspend > input[type="submit"] {
+td.active-silence > input[type="submit"] {
 	margin-left: auto;
 	margin-right: 5%;
 }
 
 @media only screen and (max-width: 500px) {
-	td.active-suspend {
+	td.active-silence {
 		flex-wrap: wrap;
 	}
-	td.active-suspend > input[type="submit"] {
+	td.active-silence > input[type="submit"] {
 		margin: auto;
 	}
 }
@@ -32,8 +32,13 @@ input.copy-text {
 	width: 100%;
 	box-sizing: border-box;
 }
+.modal {
+	position: fixed;
+}
 </style>
 <div class="snug content-container">
+	<div id="overlay"></div>
+
 	{{template "admin-header" .}}
 
 	<h2 id="posts-header">{{.User.Username}}</h2>
@@ -71,9 +76,8 @@ input.copy-text {
 		</tr>
 		<tr>
 			<form action="/admin/user/{{.User.Username}}/status" method="POST" {{if not .User.IsSilenced}}onsubmit="return confirmSilence()"{{end}}>
-				<a id="status"/>
-				<th>Status</th>
-				<td class="active-suspend">
+				<th><a id="status"></a>Status</th>
+				<td class="active-silence">
 				{{if .User.IsSilenced}}
 					<p>Silenced</p>
 					<input type="submit" value="Unsilence"/>
@@ -140,9 +144,60 @@ input.copy-text {
 		{{end}}
 	</table>
 	{{end}}
+
+	{{ if not .User.IsAdmin }}
+	<h2>Incinerator</h2>
+	<div class="alert danger">
+		<div class="row">
+			<div>
+				<h3>Delete this user</h3>
+				<p>Permanently erase all user data, with no way to recover it.</p>
+			</div>
+			<button class="cta danger" onclick="prepareDeleteUser()">Delete this user...</button>
+		</div>
+	</div>
+	{{end}}
 </div>
 
+<div id="modal-delete-user" class="modal">
+	<h2>Are you sure?</h2>
+	<div class="body">
+		<p style="text-align:left">This action <strong>cannot</strong> be undone. It will permanently erase all traces of this user, <strong>{{.User.Username}}</strong>, including their account information, blogs, and posts.</p>
+		<p>Please type <strong>{{.User.Username}}</strong> to confirm.</p>
+
+		<ul id="delete-errors" class="errors"></ul>
+
+		<form action="/admin/user/{{.User.Username}}/delete" method="post" onsubmit="confirmDeletion()">
+			<input id="confirm-text" placeholder="{{.User.Username}}" type="text" class="confirm boxy" name="confirm-username" style="margin-top: 0.5em;" />
+			<div style="text-align:right; margin-top: 1em;">
+				<a id="cancel-delete" style="margin-right:2em" href="#">Cancel</a>
+				<input class="danger" type="submit" id="confirm-delete" value="Delete this user" disabled />
+			</div>
+	</div>
+</div>
+
+<script src="/js/h.js"></script>
+<script src="/js/modals.js"></script>
 <script type="text/javascript">
+H.getEl('cancel-delete').on('click', closeModals);
+
+let $confirmDelBtn = document.getElementById('confirm-delete');
+let $confirmText = document.getElementById('confirm-text')
+$confirmText.addEventListener('input', function() {
+	$confirmDelBtn.disabled = this.value !== '{{.User.Username}}'
+});
+
+function prepareDeleteUser() {
+	$confirmText.value = ''
+	showModal('delete-user')
+	$confirmText.focus()
+}
+
+function confirmDeletion() {
+	$confirmDelBtn.disabled = true
+	$confirmDelBtn.value = 'Deleting...'
+}
+
 function confirmSilence() {
 	return confirm("Silence this user? They'll still be able to log in and access their posts, but no one else will be able to see them anymore. You can reverse this decision at any time.");
 }

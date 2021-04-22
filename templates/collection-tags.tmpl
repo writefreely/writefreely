@@ -29,6 +29,7 @@
 		<meta property="og:type" content="article" />
 		<meta property="og:url" content="{{.CanonicalURL}}tag:{{.Tag}}" />
 		<meta property="og:image" content="{{.Collection.AvatarURL}}">
+		{{template "collection-meta" .}}
 		{{if .Collection.StyleSheet}}<style type="text/css">{{.Collection.StyleSheetDisplay}}</style>{{end}}
 
 		{{if .Collection.RenderMathJax}}
@@ -53,8 +54,8 @@
 			</nav>
 		</header>
 		
-		{{if .Suspended}}
-			{{template "user-suspended"}}
+		{{if .Silenced}}
+			{{template "user-silenced"}}
 		{{end}}
 		{{if .Posts}}<section id="wrapper" itemscope itemtype="http://schema.org/Blog">{{else}}<div id="wrapper">{{end}}
 			<h1>{{.Tag}}</h1>

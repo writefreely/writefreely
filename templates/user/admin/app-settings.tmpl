@@ -1,0 +1,168 @@
+{{define "app-settings"}}
+{{template "header" .}}
+
+<style type="text/css">
+h2 {font-weight: normal;}
+form {
+	margin: 0 0 2em;
+}
+form dt {
+	line-height: inherit;
+}
+.invisible {
+	display: none;
+}
+p.docs {
+	font-size: 0.86em;
+}
+input[type=checkbox] {
+	height: 1em;
+	width: 1em;
+}
+select {
+	font-size: 1em;
+}
+</style>
+
+<div class="content-container snug">
+	{{template "admin-header" .}}
+
+	{{if .Message}}<p><a name="config"></a>{{.Message}}</p>{{end}}
+
+	{{if .ConfigMessage}}<p class="success" style="text-align: center">{{.ConfigMessage}}</p>{{end}}
+
+	<form action="/admin/update/config" method="post">
+		<div class="features row">
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}>
+				Site Title
+				<p>Your public site name.</p>
+			</div>
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><input type="text" name="site_name" id="site_name" class="inline" value="{{.Config.SiteName}}" style="width: 14em;"/></div>
+		</div>
+		<div class="features row">
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}>
+				Site Description
+				<p>Describe your site &mdash; this shows in your site's metadata.</p>
+			</div>
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><input type="text" name="site_desc" id="site_desc" class="inline" value="{{.Config.SiteDesc}}" style="width: 14em;"/></div>
+		</div>
+		<div class="features row">
+			<div>
+				Host
+				<p>The public address where users will access your site, starting with <code>http://</code> or <code>https://</code>.</p>
+			</div>
+			<div>{{.Config.Host}}</div>
+		</div>
+		<div class="features row">
+			<div>
+				Community Mode
+				<p>Whether your site is made for one person or many.</p>
+			</div>
+			<div>{{if .Config.SingleUser}}Single user{{else}}Multiple users{{end}}</div>
+		</div>
+		<div class="features row">
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}>
+				Landing Page
+				<p>The page that logged-out visitors will see first. This should be an absolute path like: <code>/read</code></p>
+			</div>
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><input type="text" name="landing" id="landing" class="inline" value="{{.Config.Landing}}" style="width: 14em;"/></div>
+		</div>
+		<div class="features row">
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><label for="open_registration">
+					Open Registrations
+					<p>Allow anyone who visits the site to create an account.</p>
+				</label></div>
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><input type="checkbox" name="open_registration" id="open_registration" {{if .Config.OpenRegistration}}checked="checked"{{end}} />
+			</div>
+		</div>
+		<div class="features row">
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><label for="user_invites">
+					Allow invitations from...
+					<p>Choose who is allowed to invite new people.</p>
+				</label></div>
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}>
+				<select name="user_invites" id="user_invites">
+					<option value="none" {{if eq .Config.UserInvites ""}}selected="selected"{{end}}>No one</option>
+					<option value="admin" {{if eq .Config.UserInvites "admin"}}selected="selected"{{end}}>Only Admins</option>
+					<option value="user" {{if eq .Config.UserInvites "user"}}selected="selected"{{end}}>All Users</option>
+				</select>
+			</div>
+		</div>
+		<div class="features row">
+			<div><label for="private">
+					Private Instance
+					<p>Limit site access to people with an account.</p>
+				</label></div>
+			<div><input type="checkbox" name="private" id="private" {{if .Config.Private}}checked="checked"{{end}} /></div>
+		</div>
+		<div class="features row">
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><label for="local_timeline">
+					Reader
+					<p>Show a feed of user posts for anyone who chooses to share there.</p>
+				</label></div>
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><input type="checkbox" name="local_timeline" id="local_timeline" {{if .Config.LocalTimeline}}checked="checked"{{end}} /></div>
+		</div>
+		<div class="features row">
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><label for="default_visibility">
+					Default blog visibility
+					<p>The default setting for new accounts and blogs.</p>
+				</label></div>
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}>
+				<select name="default_visibility" id="default_visibility">
+					<option value="unlisted" {{if eq .Config.DefaultVisibility "unlisted"}}selected="selected"{{end}}>Unlisted</option>
+					<option value="public" {{if eq .Config.DefaultVisibility "public"}}selected="selected"{{end}}>Public</option>
+					<option value="private" {{if eq .Config.DefaultVisibility "private"}}selected="selected"{{end}}>Private</option>
+				</select>
+			</div>
+		</div>
+		<div class="features row">
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><label for="max_blogs">
+					Maximum Blogs per User
+					<p>Keep things simple by setting this to <strong>1</strong>, unlimited by setting to <strong>0</strong>, or pick another amount.</p>
+				</label></div>
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><input type="number" name="max_blogs" id="max_blogs" class="inline" min="0" value="{{.Config.MaxBlogs}}"/></div>
+		</div>
+		<div class="features row">
+			<div><label for="federation">
+					Federation
+					<p>Enable accounts on this site to propagate their posts via the ActivityPub protocol.</p>
+				</label></div>
+			<div><input type="checkbox" name="federation" id="federation" {{if .Config.Federation}}checked="checked"{{end}} /></div>
+		</div>
+		<div class="features row">
+			<div><label for="public_stats">
+					Public Stats
+					<p>Publicly display the number of users and posts on your <strong>About</strong> page.</p>
+				</label></div>
+			<div><input type="checkbox" name="public_stats" id="public_stats" {{if .Config.PublicStats}}checked="checked"{{end}} /></div>
+		</div>
+		<div class="features row">
+			<div><label for="monetization">
+					Monetization
+					<p>Enable blogs on this site to receive micro&shy;pay&shy;ments from readers via <a target="wm" href="https://webmonetization.org/">Web Monetization</a>.</p>
+				</label></div>
+			<div><input type="checkbox" name="monetization" id="monetization" {{if .Config.Monetization}}checked="checked"{{end}} /></div>
+		</div>
+		<div class="features row">
+			<div><label for="min_username_len">
+					Minimum Username Length
+					<p>The minimum number of characters allowed in a username. (Recommended: 2 or more.)</p>
+				</label></div>
+			<div><input type="number" name="min_username_len" id="min_username_len" class="inline" min="1" max="100" value="{{.Config.MinUsernameLen}}"/></div>
+		</div>
+		<div class="features row">
+			<input type="submit" value="Save Settings" />
+		</div>
+	</form>
+
+	<p class="docs">Still have questions? Read more details in the <a href="https://writefreely.org/docs/{{.OfficialVersion}}/admin/config">configuration docs</a>.</p>
+</div>
+
+<script>
+history.replaceState(null, "", "/admin/settings"+window.location.hash);
+</script>
+
+{{template "footer" .}}
+
+{{template "body-end" .}}
+{{end}}

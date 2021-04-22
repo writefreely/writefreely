@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -19,7 +19,7 @@ import (
 	"github.com/writeas/go-webfinger"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/config"
+	"github.com/writefreely/writefreely/config"
 )
 
 type wfResolver struct {
@@ -32,7 +32,9 @@ var wfUserNotFoundErr = impart.HTTPError{http.StatusNotFound, "User not found."}
 func (wfr wfResolver) FindUser(username string, host, requestHost string, r []webfinger.Rel) (*webfinger.Resource, error) {
 	var c *Collection
 	var err error
-	if wfr.cfg.App.SingleUser {
+	if username == host {
+		c = instanceColl
+	} else if wfr.cfg.App.SingleUser {
 		c, err = wfr.db.GetCollectionByID(1)
 	} else {
 		c, err = wfr.db.GetCollection(username)
@@ -41,15 +43,18 @@ func (wfr wfResolver) FindUser(username string, host, requestHost string, r []we
 		log.Error("Unable to get blog: %v", err)
 		return nil, err
 	}
-	suspended, err := wfr.db.IsUserSuspended(c.OwnerID)
-	if err != nil {
-		log.Error("webfinger find user: check is suspended: %v", err)
-		return nil, err
-	}
-	if suspended {
-		return nil, wfUserNotFoundErr
-	}
 	c.hostName = wfr.cfg.App.Host
+
+	if !c.IsInstanceColl() {
+		silenced, err := wfr.db.IsUserSilenced(c.OwnerID)
+		if err != nil {
+			log.Error("webfinger find user: check is silenced: %v", err)
+			return nil, err
+		}
+		if silenced {
+			return nil, wfUserNotFoundErr
+		}
+	}
 	if wfr.cfg.App.SingleUser {
 		// Ensure handle matches user-chosen one on single-user blogs
 		if username != c.Alias {
@@ -101,20 +106,20 @@ func RemoteLookup(handle string) string {
 	parts := strings.Split(handle, "@")
 	resp, err := http.Get("https://" + parts[1] + "/.well-known/webfinger?resource=acct:" + handle)
 	if err != nil {
-		log.Error("Error performing webfinger request", err)
+		log.Error("Error on webfinger request: %v", err)
 		return ""
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Error("Error reading webfinger response", err)
+		log.Error("Error on webfinger response: %v", err)
 		return ""
 	}
 
 	var result webfinger.Resource
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		log.Error("Unsupported webfinger response received: %v", err)
+		log.Error("Unable to parse webfinger response: %v", err)
 		return ""
 	}
 

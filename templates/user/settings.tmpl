@@ -4,13 +4,19 @@
 <style type="text/css">
 .option { margin: 2em 0em; }
 h3 { font-weight: normal; }
-.section > *:not(input) { font-size: 0.86em; }
+.section p, .section label {
+	font-size: 0.86em;
+}
+.oauth-provider img {
+	max-height: 2.75em;
+	vertical-align: middle;
+}
 </style>
-<div class="content-container snug regular">
-	{{if .Suspended}}
-		{{template "user-suspended"}}
+<div class="content-container snug">
+	{{if .Silenced}}
+		{{template "user-silenced"}}
 	{{end}}
-	<h2>{{if .IsLogOut}}Before you go...{{else}}Account Settings {{if .IsAdmin}}<a href="/admin">admin settings</a>{{end}}{{end}}</h2>
+	<h1>{{if .IsLogOut}}Before you go...{{else}}Account Settings{{end}}</h1>
 	{{if .Flashes}}<ul class="errors">
 		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 	</ul>{{end}}
@@ -20,7 +26,7 @@ h3 { font-weight: normal; }
 		<p class="introduction">Please add an <strong>email address</strong> and/or <strong>passphrase</strong> so you can log in again later.</p>
 	</div>
 	{{ else }}
-	<div class="option">
+	<div>
 		<p>Change your account settings here.</p>
 	</div>
 
@@ -35,6 +41,7 @@ h3 { font-weight: normal; }
 	</form>
 	{{ end }}
 
+	{{if not .DisablePasswordAuth}}
 	<form method="post" action="/api/me/self" autocomplete="false">
 		<input type="hidden" name="logout" value="{{.IsLogOut}}" />
 		<div class="option">
@@ -62,21 +69,99 @@ h3 { font-weight: normal; }
 			</div>
 		</div>
 
-		<div class="option" style="text-align: center; margin-top: 4em;">
+		<div class="option" style="text-align: center;">
 			<input type="submit" value="Save changes" tabindex="4" />
 		</div>
 	</form>
+	{{end}}
+
+	{{ if .OauthSection }}
+		<hr />
+
+		{{ if .OauthAccounts }}
+		<div class="option">
+			<h2>Linked Accounts</h2>
+			<p>These are your linked external accounts.</p>
+			{{ range $oauth_account := .OauthAccounts }}
+				<form method="post" action="/api/me/oauth/remove" autocomplete="false">
+					<input type="hidden" name="provider" value="{{ $oauth_account.Provider }}" />
+					<input type="hidden" name="client_id" value="{{ $oauth_account.ClientID }}" />
+					<input type="hidden" name="remote_user_id" value="{{ $oauth_account.RemoteUserID }}" />
+					<div class="section oauth-provider">
+						{{ if $oauth_account.DisplayName}}
+							{{ if $oauth_account.AllowDisconnect}}
+							<input type="submit" value="Remove {{.DisplayName}}" />
+							{{else}}
+							<a class="btn cta"><strong>{{.DisplayName}}</strong></a>
+							{{end}}
+						{{else}}
+							<img src="/img/mark/{{$oauth_account.Provider}}.png" alt="{{ $oauth_account.Provider | title }}" />
+							<input type="submit" value="Remove {{ $oauth_account.Provider | title }}" />
+						{{end}}
+					</div>
+				</form>
+			{{ end }}
+		</div>
+		{{ end }}
+		{{ if or .OauthSlack .OauthWriteAs .OauthGitLab .OauthGeneric .OauthGitea }}
+		<div class="option">
+			<h2>Link External Accounts</h2>
+			<p>Connect additional accounts to enable logging in with those providers, instead of using your username and password.</p>
+			<div class="row signinbtns">
+			{{ if .OauthWriteAs }}
+				<div class="section oauth-provider">
+					<a class="btn cta loginbtn" id="writeas-login" href="/oauth/write.as?attach=t">
+						<img src="/img/mark/writeas-white.png" alt="Write.as" />
+						Link <strong>Write.as</strong>
+					</a>
+				</div>
+			{{ end }}
+			{{ if .OauthSlack }}
+				<div class="section oauth-provider">
+					<a class="btn cta loginbtn" id="slack-login" href="/oauth/slack?attach=t">
+						<img src="/img/mark/slack.png" alt="Slack" />
+						Link <strong>Slack</strong>
+					</a>
+				</div>
+			{{ end }}
+			{{ if .OauthGitLab }}
+				<div class="section oauth-provider">
+					<a class="btn cta loginbtn" id="gitlab-login" href="/oauth/gitlab?attach=t">
+						<img src="/img/mark/gitlab.png" alt="GitLab" />
+						Link <strong>{{.GitLabDisplayName}}</strong>
+					</a>
+				</div>
+			{{ end }}
+			{{ if .OauthGitea }}
+				<div class="section oauth-provider">
+					<a class="btn cta loginbtn" id="gitea-login" href="/oauth/gitea?attach=t">
+						<img src="/img/mark/gitea.png" alt="Gitea" />
+						Link <strong>{{.GiteaDisplayName}}</strong>
+					</a>
+				</div>
+			{{ end }}
+			{{ if .OauthGeneric }}
+				<div class="section oauth-provider">
+					<a class="btn cta loginbtn" id="generic-oauth-login" href="/oauth/generic?attach=t">
+						Link <strong>{{ .OauthGenericDisplayName }}</strong>
+					</a>
+				</div>
+			{{ end }}
+			</div>
+		</div>
+		{{ end }}
+	{{ end }}
 
 	{{ if not .IsAdmin }}
-	<hr/>
-	<h2>Delete Account</h2>
-	<h3><strong>Danger Zone - This cannot be undone</strong></h3>
-	<p>This will delete your account and all your blogs and posts. Before continuing make sure to <a href="/me/export">export your data</a>.</p>
-	<form action="/me/delete" method="post">
-		<p>Type your username to confirm deletion.<p>
-		<input name="confirm-username" type="text" title="confirm username to delete" placeholder="confirm username">
-		<input class="danger" type="submit" value="DELETE">
-	</form>
+		<hr/>
+		<h2>Delete Account</h2>
+		<h3><strong>Danger Zone - This cannot be undone</strong></h3>
+		<p>This will delete your account and all your blogs and posts. Before continuing make sure to <a href="/me/export">export your data</a>.</p>
+		<form action="/me/delete" method="post">
+			<p>Type your username to confirm deletion.<p>
+				<input name="confirm-username" type="text" title="confirm username to delete" placeholder="confirm username">
+				<input class="danger" type="submit" value="DELETE">
+		</form>
 	{{end}}
 </div>
 

@@ -75,11 +75,14 @@
 		body#collection header nav.tabs a:first-child {
 			margin-left: 1em;
 		}
+		body#collection article {
+			max-width: 40em !important;
+		}
 		</style>
 {{end}}
 {{define "body-attrs"}}id="collection"{{end}}
 {{define "content"}}
-	<div class="content-container snug" style="max-width: 40rem;">
+	<div class="content-container snug">
 		<h1>{{.ContentTitle}}</h1>
 		<p{{if .SelTopic}} style="text-align:center"{{end}}>{{if .SelTopic}}#{{.SelTopic}} posts{{else}}{{.Content}}{{end}}</p>
 	</div>

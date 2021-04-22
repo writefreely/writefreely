@@ -1,3 +1,13 @@
+/*
+ * Copyright © 2019-2021 A Bunch Tell LLC.
+ *
+ * This file is part of WriteFreely.
+ *
+ * WriteFreely is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License, included
+ * in the LICENSE file in this source code package.
+ */
+
 package writefreely
 
 import (
@@ -6,8 +16,8 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/stretchr/testify/assert"
 	"github.com/writeas/impart"
-	"github.com/writeas/nerds/store"
-	"github.com/writeas/writefreely/config"
+	"github.com/writeas/web-core/id"
+	"github.com/writefreely/writefreely/config"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -22,8 +32,8 @@ type MockOAuthDatastoreProvider struct {
 }
 
 type MockOAuthDatastore struct {
-	DoGenerateOAuthState func(context.Context, string, string) (string, error)
-	DoValidateOAuthState func(context.Context, string) (string, string, error)
+	DoGenerateOAuthState func(context.Context, string, string, int64, string) (string, error)
+	DoValidateOAuthState func(context.Context, string) (string, string, int64, string, error)
 	DoGetIDForRemoteUser func(context.Context, string, string, string) (int64, error)
 	DoCreateUser         func(*config.Config, *User, string) error
 	DoRecordRemoteUserID func(context.Context, int64, string, string, string, string) error
@@ -86,11 +96,11 @@ func (m *MockOAuthDatastoreProvider) Config() *config.Config {
 	return cfg
 }
 
-func (m *MockOAuthDatastore) ValidateOAuthState(ctx context.Context, state string) (string, string, error) {
+func (m *MockOAuthDatastore) ValidateOAuthState(ctx context.Context, state string) (string, string, int64, string, error) {
 	if m.DoValidateOAuthState != nil {
 		return m.DoValidateOAuthState(ctx, state)
 	}
-	return "", "", nil
+	return "", "", 0, "", nil
 }
 
 func (m *MockOAuthDatastore) GetIDForRemoteUser(ctx context.Context, remoteUserID, provider, clientID string) (int64, error) {
@@ -119,17 +129,15 @@ func (m *MockOAuthDatastore) GetUserByID(userID int64) (*User, error) {
 	if m.DoGetUserByID != nil {
 		return m.DoGetUserByID(userID)
 	}
-	user := &User{
-
-	}
+	user := &User{}
 	return user, nil
 }
 
-func (m *MockOAuthDatastore) GenerateOAuthState(ctx context.Context, provider string, clientID string) (string, error) {
+func (m *MockOAuthDatastore) GenerateOAuthState(ctx context.Context, provider string, clientID string, attachUserID int64, inviteCode string) (string, error) {
 	if m.DoGenerateOAuthState != nil {
-		return m.DoGenerateOAuthState(ctx, provider, clientID)
+		return m.DoGenerateOAuthState(ctx, provider, clientID, attachUserID, inviteCode)
 	}
-	return store.Generate62RandomString(14), nil
+	return id.Generate62RandomString(14), nil
 }
 
 func TestViewOauthInit(t *testing.T) {
@@ -173,7 +181,7 @@ func TestViewOauthInit(t *testing.T) {
 		app := &MockOAuthDatastoreProvider{
 			DoDB: func() OAuthDatastore {
 				return &MockOAuthDatastore{
-					DoGenerateOAuthState: func(ctx context.Context, provider, clientID string) (string, error) {
+					DoGenerateOAuthState: func(ctx context.Context, provider, clientID string, attachUserID int64, inviteCode string) (string, error) {
 						return "", fmt.Errorf("pretend unable to write state error")
 					},
 				}
@@ -246,7 +254,7 @@ func TestViewOauthCallback(t *testing.T) {
 		req, err := http.NewRequest("GET", "/oauth/callback", nil)
 		assert.NoError(t, err)
 		rr := httptest.NewRecorder()
-		err = h.viewOauthCallback(nil, rr, req)
+		err = h.viewOauthCallback(&App{cfg: app.Config(), sessionStore: app.SessionStore()}, rr, req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
 	})

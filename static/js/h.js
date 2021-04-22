@@ -110,17 +110,57 @@ Element.prototype.show = function() {
 
 
 var H = {
+	getQEl: function(elementQuery) {
+		return new Element(document.querySelector(elementQuery));
+	},
 	getEl: function(elementId) {
 		return new Element(document.getElementById(elementId));
 	},
 	save: function($el, key) {
 		localStorage.setItem(key, $el.el.value);
 	},
-	load: function($el, key, onlyLoadPopulated) {
+	saveClassic: function($titleEl, $el, key) {
+		var out = "";
+		var title = $titleEl.el.value;
+		if (title !== "") {
+			out = "# "+title+"\n\n";
+		}
+		out += $el.el.value;
+		localStorage.setItem(key, out);
+	},
+	load: function($el, key, onlyLoadPopulated, postUpdated) {
+		var val = localStorage.getItem(key);
+		if (onlyLoadPopulated && val == null) {
+			// Do nothing
+			return true;
+		}
+		$el.el.value = val;
+		if (postUpdated != null) {
+			var lastLocalPublishStr = localStorage.getItem(key+'-published');
+			if (lastLocalPublishStr != null && lastLocalPublishStr != '') {
+				try {
+					var lastLocalPublish = new Date(lastLocalPublishStr);
+					if (postUpdated > lastLocalPublish) {
+						return false;
+					}
+				} catch (e) {
+					console.error("unable to parse draft updated time");
+				}
+			}
+		}
+		return true;
+	},
+	loadClassic: function($titleEl, $el, key, onlyLoadPopulated) {
 		var val = localStorage.getItem(key);
 		if (onlyLoadPopulated && val == null) {
 			// Do nothing
 			return;
+		}
+		if (val.indexOf("# ") === 0) {
+			var eol = val.indexOf("\n");
+			title = val.substring("# ".length, eol);
+			val = val.substring(eol+"\n\n".length);
+			$titleEl.el.value = title;
 		}
 		$el.el.value = val;
 	},
