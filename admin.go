@@ -555,6 +555,7 @@ func handleAdminUpdateConfig(apper Apper, u *User, w http.ResponseWriter, r *htt
 	apper.App().cfg.App.SiteDesc = r.FormValue("site_desc")
 	apper.App().cfg.App.Landing = r.FormValue("landing")
 	apper.App().cfg.App.OpenRegistration = r.FormValue("open_registration") == "on"
+	apper.App().cfg.App.OpenDeletion = r.FormValue("open_deletion") == "on"
 	mul, err := strconv.Atoi(r.FormValue("min_username_len"))
 	if err == nil {
 		apper.App().cfg.App.MinUsernameLen = mul

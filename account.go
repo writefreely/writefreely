@@ -1156,6 +1156,10 @@ func getTempInfo(app *App, key string, r *http.Request, w http.ResponseWriter) s
 }
 
 func handleUserDelete(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	if !app.cfg.App.OpenDeletion {
+		return impart.HTTPError{http.StatusForbidden, "Open account deletion is disabled on this instance."}
+	}
+
 	confirmUsername := r.PostFormValue("confirm-username")
 	if u.Username != confirmUsername {
 		return impart.HTTPError{http.StatusBadRequest, "Confirmation username must match your username exactly."}
