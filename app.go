@@ -166,6 +166,14 @@ func (app *App) LoadKeys() error {
 	if debugging {
 		log.Info("  %s", emailKeyPath)
 	}
+
+	executable, err := os.Executable()
+	if err != nil {
+		executable = "writefreely"
+	} else {
+		executable = filepath.Base(executable)
+	}
+
 	app.keys.EmailKey, err = ioutil.ReadFile(emailKeyPath)
 	if err != nil {
 		return err
@@ -184,6 +192,22 @@ func (app *App) LoadKeys() error {
 	}
 	app.keys.CookieKey, err = ioutil.ReadFile(cookieKeyPath)
 	if err != nil {
+		return err
+	}
+
+	if debugging {
+		log.Info("  %s", csrfKeyPath)
+	}
+	app.keys.CSRFKey, err = ioutil.ReadFile(csrfKeyPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			log.Error(`Missing key: %s.
+
+  Run this command to generate missing keys:
+    %s keys generate
+
+`, csrfKeyPath, executable)
+		}
 		return err
 	}
 
@@ -634,6 +658,10 @@ func GenerateKeyFiles(app *App) error {
 		keyErrs = err
 	}
 	err = generateKey(cookieKeyPath)
+	if err != nil {
+		keyErrs = err
+	}
+	err = generateKey(csrfKeyPath)
 	if err != nil {
 		keyErrs = err
 	}

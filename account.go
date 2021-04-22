@@ -20,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/guregu/null/zero"
@@ -1082,6 +1083,7 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		HasPass                 bool
 		IsLogOut                bool
 		Silenced                bool
+		CSRFField               template.HTML
 		OauthSection            bool
 		OauthAccounts           []oauthAccountInfo
 		OauthSlack              bool
@@ -1098,6 +1100,7 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		HasPass:                 passIsSet,
 		IsLogOut:                r.FormValue("logout") == "1",
 		Silenced:                fullUser.IsSilenced(),
+		CSRFField:               csrf.TemplateField(r),
 		OauthSection:            displayOauthSection,
 		OauthAccounts:           oauthAccounts,
 		OauthSlack:              enableOauthSlack,

@@ -181,6 +181,7 @@ h3 { font-weight: normal; }
 		<ul id="delete-errors" class="errors"></ul>
 
 		<form action="/me/delete" method="post" onsubmit="confirmDeletion()">
+			{{ .CSRFField }}
 			<input id="confirm-text" placeholder="{{.Username}}" type="text" class="confirm boxy" name="confirm-username" style="margin-top: 0.5em;" />
 			<div style="text-align:right; margin-top: 1em;">
 				<a id="cancel-delete" style="margin-right:2em" href="#">Cancel</a>
