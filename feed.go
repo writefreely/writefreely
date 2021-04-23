@@ -97,7 +97,11 @@ func ViewFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 
 	var title, permalink string
 	for _, p := range *coll.Posts {
-		title = p.PlainDisplayTitle()
+		if p.Title.String != "" {
+			title = p.PlainDisplayTitle()
+		} else {
+			title = ""
+		}
 		permalink = fmt.Sprintf("%s%s", baseUrl, p.Slug.String)
 		feed.Items = append(feed.Items, &Item{
 			Id:          fmt.Sprintf("%s%s", basePermalinkUrl, p.Slug.String),
