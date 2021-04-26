@@ -267,9 +267,8 @@ func Load(fname string) (*Config, error) {
 		return nil, err
 	}
 	d, err := idna.ToASCII(u.Hostname())
-	log.Error("Host: %s", uc.App.Host)
 	if err != nil {
-		log.Error("ToASCII: %s", err)
+		log.Error("idna.ToASCII for %s: %s", u.Hostname(), err)
 		return nil, err
 	}
 	uc.App.Host = u.Scheme + "://" + d
