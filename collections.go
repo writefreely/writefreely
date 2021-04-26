@@ -33,6 +33,7 @@ import (
 	"github.com/writefreely/writefreely/author"
 	"github.com/writefreely/writefreely/config"
 	"github.com/writefreely/writefreely/page"
+	"golang.org/x/net/idna"
 )
 
 type (
@@ -236,7 +237,9 @@ func (c *Collection) DisplayCanonicalURL() string {
 	if p == "/" {
 		p = ""
 	}
-	return u.Hostname() + p
+	d := u.Hostname()
+	d, _ = idna.ToUnicode(d)
+	return d + p
 }
 
 func (c *Collection) RedirectingCanonicalURL(isRedir bool) string {

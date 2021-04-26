@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -12,8 +12,11 @@
 package config
 
 import (
+	"net/url"
 	"strings"
 
+	"github.com/writeas/web-core/log"
+	"golang.org/x/net/idna"
 	"gopkg.in/ini.v1"
 )
 
@@ -257,6 +260,23 @@ func Load(fname string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Do any transformations
+	u, err := url.Parse(uc.App.Host)
+	if err != nil {
+		return nil, err
+	}
+	d, err := idna.ToASCII(u.Hostname())
+	log.Error("Host: %s", uc.App.Host)
+	if err != nil {
+		log.Error("ToASCII: %s", err)
+		return nil, err
+	}
+	uc.App.Host = u.Scheme + "://" + d
+	if u.Port() != "" {
+		uc.App.Host += ":" + u.Port()
+	}
+
 	return uc, nil
 }
 

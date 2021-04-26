@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018, 2020-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -11,14 +11,34 @@
 package config
 
 import (
+	"github.com/writeas/web-core/log"
+	"golang.org/x/net/idna"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
 
 // FriendlyHost returns the app's Host sans any schema
 func (ac AppCfg) FriendlyHost() string {
-	return ac.Host[strings.Index(ac.Host, "://")+len("://"):]
+	rawHost := ac.Host[strings.Index(ac.Host, "://")+len("://"):]
+
+	u, err := url.Parse(ac.Host)
+	if err != nil {
+		log.Error("url.Parse failed on %s: %s", ac.Host, err)
+		return rawHost
+	}
+	d, err := idna.ToUnicode(u.Hostname())
+	if err != nil {
+		log.Error("idna.ToUnicode failed on %s: %s", ac.Host, err)
+		return rawHost
+	}
+
+	res := d
+	if u.Port() != "" {
+		res += ":" + u.Port()
+	}
+	return res
 }
 
 func (ac AppCfg) CanCreateBlogs(currentlyUsed uint64) bool {
