@@ -106,6 +106,11 @@ func handleGopherCollection(app *App, w gopher.ResponseWriter, r *gopher.Request
 	}
 	c.hostName = app.cfg.App.Host
 
+	w.WriteInfo(c.DisplayTitle())
+	if c.Description != "" {
+		w.WriteInfo(c.Description)
+	}
+
 	posts, err := app.db.GetPosts(app.cfg, c, 0, false, false, false)
 	if err != nil {
 		return err
