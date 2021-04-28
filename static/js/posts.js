@@ -190,7 +190,8 @@ var movePostHTML = function(postID) {
 }
 var createPostEl = function(post, owned) {
 	var $post = document.createElement('div');
-	var title = (post.title || post.id);
+	let p = H.createPost(post.id, "", post.body)
+	var title = (post.title || p.title || post.id);
 	title = title.replace(/</g, "&lt;");
 	$post.id = 'post-' + post.id;
 	$post.className = 'post';
@@ -207,6 +208,7 @@ var createPostEl = function(post, owned) {
 		$post.innerHTML += '<p class="error"><strong>Sync error:</strong> ' + post.error + ' <nav><a href="#" onclick="localPosts.dismissError(event, this)">dismiss</a> <a href="#" onclick="localPosts.deletePost(event, this, \''+post.id+'\')">remove post</a></nav></p>';
 	}
 	if (post.summary) {
+		// TODO: switch to using p.summary, after ensuring it matches summary generated on the backend.
 		$post.innerHTML += '<p>' + post.summary.replace(/</g, "&lt;") + '</p>';
 	} else if (post.body) {
 		var preview;
