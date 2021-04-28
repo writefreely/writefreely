@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 A Bunch Tell LLC.
+ * Copyright © 2019, 2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -20,7 +20,7 @@ const (
 )
 
 type Keychain struct {
-	EmailKey, CookieAuthKey, CookieKey []byte
+	EmailKey, CookieAuthKey, CookieKey, CSRFKey []byte
 }
 
 // GenerateKeys generates necessary keys for the app on the given Keychain,
@@ -43,6 +43,12 @@ func (keys *Keychain) GenerateKeys() error {
 	}
 	if len(keys.CookieKey) == 0 {
 		keys.CookieKey, err = GenerateBytes(EncKeysBytes)
+		if err != nil {
+			keyErrs = err
+		}
+	}
+	if len(keys.CSRFKey) == 0 {
+		keys.CSRFKey, err = GenerateBytes(EncKeysBytes)
 		if err != nil {
 			keyErrs = err
 		}

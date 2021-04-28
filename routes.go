@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"github.com/writeas/go-webfinger"
 	"github.com/writeas/web-core/log"
@@ -98,6 +99,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	me.HandleFunc("/c/", handler.User(viewCollections)).Methods("GET")
 	me.HandleFunc("/c/{collection}", handler.User(viewEditCollection)).Methods("GET")
 	me.HandleFunc("/c/{collection}/stats", handler.User(viewStats)).Methods("GET")
+	me.Path("/delete").Handler(csrf.Protect(apper.App().keys.CSRFKey)(handler.User(handleUserDelete))).Methods("POST")
 	me.HandleFunc("/posts", handler.Redirect("/me/posts/", UserLevelUser)).Methods("GET")
 	me.HandleFunc("/posts/", handler.User(viewArticles)).Methods("GET")
 	me.HandleFunc("/posts/export.csv", handler.Download(viewExportPosts, UserLevelUser)).Methods("GET")
@@ -106,7 +108,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	me.HandleFunc("/export", handler.User(viewExportOptions)).Methods("GET")
 	me.HandleFunc("/export.json", handler.Download(viewExportFull, UserLevelUser)).Methods("GET")
 	me.HandleFunc("/import", handler.User(viewImport)).Methods("GET")
-	me.HandleFunc("/settings", handler.User(viewSettings)).Methods("GET")
+	me.Path("/settings").Handler(csrf.Protect(apper.App().keys.CSRFKey)(handler.User(viewSettings))).Methods("GET")
 	me.HandleFunc("/invites", handler.User(handleViewUserInvites)).Methods("GET")
 	me.HandleFunc("/logout", handler.Web(viewLogout, UserLevelNone)).Methods("GET")
 

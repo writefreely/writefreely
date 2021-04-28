@@ -76,6 +76,14 @@ select {
 			</div>
 		</div>
 		<div class="features row">
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><label for="open_deletion">
+					Allow account deletion
+					<p>Allow all users to delete their account. Admins can always delete users.</p>
+				</label></div>
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><input type="checkbox" name="open_deletion" id="open_deletion" {{if .Config.OpenDeletion}}checked="checked"{{end}} />
+			</div>
+		</div>
+		<div class="features row">
 			<div{{if .Config.SingleUser}} class="invisible"{{end}}><label for="user_invites">
 					Allow invitations from...
 					<p>Choose who is allowed to invite new people.</p>

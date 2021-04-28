@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -139,6 +139,7 @@ type (
 		// Users
 		SingleUser       bool `ini:"single_user"`
 		OpenRegistration bool `ini:"open_registration"`
+		OpenDeletion     bool `ini:"open_deletion"`
 		MinUsernameLen   int  `ini:"min_username_len"`
 		MaxBlogs         int  `ini:"max_blogs"`
 

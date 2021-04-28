@@ -3,6 +3,9 @@
 
 <style type="text/css">
 .option { margin: 2em 0em; }
+h2 {
+	margin-top: 2.5em;
+}
 h3 { font-weight: normal; }
 .section p, .section label {
 	font-size: 0.86em;
@@ -11,8 +14,13 @@ h3 { font-weight: normal; }
 	max-height: 2.75em;
 	vertical-align: middle;
 }
+.modal {
+	position: fixed;
+}
 </style>
 <div class="content-container snug">
+	<div id="overlay"></div>
+
 	{{if .Silenced}}
 		{{template "user-silenced"}}
 	{{end}}
@@ -76,8 +84,6 @@ h3 { font-weight: normal; }
 	{{end}}
 
 	{{ if .OauthSection }}
-		<hr />
-
 		{{ if .OauthAccounts }}
 		<div class="option">
 			<h2>Linked Accounts</h2>
@@ -151,8 +157,41 @@ h3 { font-weight: normal; }
 		</div>
 		{{ end }}
 	{{ end }}
+
+	{{ if and .OpenDeletion (not .IsAdmin) }}
+		<h2>Incinerator</h2>
+		<div class="alert danger">
+			<div class="row">
+				<div>
+					<h3>Delete your account</h3>
+					<p>Permanently erase all your data, with no way to recover it.</p>
+				</div>
+				<button class="cta danger" onclick="prepareDeleteUser()">Delete your account...</button>
+			</div>
+		</div>
+	{{end}}
 </div>
 
+<div id="modal-delete-user" class="modal">
+	<h2>Are you sure?</h2>
+	<div class="body">
+		<p style="text-align:left">This action <strong>cannot</strong> be undone. It will immediately and permanently erase your account, including your blogs and posts. Before continuing, you might want to <a href="/me/export">export your data</a>.</p>
+		<p>If you're sure, please type <strong>{{.Username}}</strong> to confirm.</p>
+
+		<ul id="delete-errors" class="errors"></ul>
+
+		<form action="/me/delete" method="post" onsubmit="confirmDeletion()">
+			{{ .CSRFField }}
+			<input id="confirm-text" placeholder="{{.Username}}" type="text" class="confirm boxy" name="confirm-username" style="margin-top: 0.5em;" />
+			<div style="text-align:right; margin-top: 1em;">
+				<a id="cancel-delete" style="margin-right:2em" href="#">Cancel</a>
+				<input class="danger" type="submit" id="confirm-delete" value="Delete your account" disabled />
+			</div>
+	</div>
+</div>
+
+<script src="/js/h.js"></script>
+<script src="/js/modals.js"></script>
 <script>
 var showChecks = document.querySelectorAll('input.show');
 for (var i=0; i<showChecks.length; i++) {
@@ -165,6 +204,27 @@ for (var i=0; i<showChecks.length; i++) {
 		}
 	});
 }
+
+{{ if and .OpenDeletion (not .IsAdmin) }}
+	H.getEl('cancel-delete').on('click', closeModals);
+
+	let $confirmDelBtn = document.getElementById('confirm-delete');
+	let $confirmText = document.getElementById('confirm-text')
+	$confirmText.addEventListener('input', function() {
+		$confirmDelBtn.disabled = this.value !== '{{.Username}}'
+	});
+
+	function prepareDeleteUser() {
+		$confirmText.value = ''
+		showModal('delete-user')
+		$confirmText.focus()
+	}
+
+	function confirmDeletion() {
+		$confirmDelBtn.disabled = true
+		$confirmDelBtn.value = 'Deleting...'
+	}
+{{ end }}
 </script>
 
 {{template "footer" .}}
