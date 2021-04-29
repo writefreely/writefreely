@@ -104,7 +104,7 @@ class ProseMirrorView {
   }
 
   get content() {
-    return defaultMarkdownSerializer.serialize(this.view.state.doc);
+    return writeFreelyMarkdownSerializer.serialize(this.view.state.doc);
   }
   focus() {
     this.view.focus();

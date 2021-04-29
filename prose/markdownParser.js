@@ -25,7 +25,7 @@ export const writeFreelyMarkdownParser = new MarkdownParser(
       getAttrs: (tok) => ({ params: tok.info || "" }),
       noCloseToken: true,
     },
-    // hr: { node: "horizontal_rule" },
+    hr: { node: "horizontal_rule" },
     image: {
       node: "image",
       getAttrs: (tok) => ({

@@ -47,6 +47,10 @@ export const writeFreelyMarkdownSerializer = new MarkdownSerializer(
       state.renderInline(node);
       state.closeBlock(node);
     },
+    horizontal_rule: function horizontal_rule(state, node) {
+      state.write(node.attrs.markup || "---");
+      state.closeBlock(node);
+    },
     bullet_list(state, node) {
       node.attrs.tight = true;
       state.renderList(node, "  ", () => `${node.attrs.bullet || "*"} `);
