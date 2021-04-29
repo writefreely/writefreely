@@ -7,7 +7,7 @@ export const writeFreelyMarkdownParser = new MarkdownParser(
   writeFreelySchema,
   markdownit("commonmark", { html: true }),
   {
-    // blockquote: { block: "blockquote" },
+    blockquote: { block: "blockquote" },
     paragraph: { block: "paragraph" },
     list_item: { block: "list_item" },
     bullet_list: { block: "bullet_list" },

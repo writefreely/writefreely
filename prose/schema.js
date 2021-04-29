@@ -3,7 +3,6 @@ import { Schema } from "prosemirror-model";
 
 export const writeFreelySchema = new Schema({
   nodes: schema.spec.nodes
-    .remove("blockquote")
     .addToEnd("readmore", {
       inline: false,
       content: "",
