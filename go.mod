@@ -42,7 +42,7 @@ require (
 	github.com/writeas/web-core v1.3.1-0.20210330164422-95a3a717ed8f
 	github.com/writefreely/go-nodeinfo v1.2.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
+	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	gopkg.in/ini.v1 v1.62.0
 )
 
