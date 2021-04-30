@@ -1,3 +1,5 @@
+@classicHorizMargin: 2rem;
+
 body#pad.classic {
 	header {
 		display: flex;
@@ -6,6 +8,7 @@ body#pad.classic {
 	}
 	#editor {
 		top: 4em;
+		bottom: 1em;
 	}
 	#title {
 		top: 4.25rem;
@@ -13,8 +16,7 @@ body#pad.classic {
 		height: auto;
 		font-weight: bold;
 		font-size: 2em;
-		padding-top: 0;
-		padding-bottom: 0;
+		padding: 0;
 		border: 0;
 	}
 	#tools {
@@ -31,6 +33,11 @@ body#pad.classic {
 	}
 }
 
+#title {
+	margin-left: @classicHorizMargin;
+	margin-right: @classicHorizMargin;
+}
+
 .ProseMirror {
 	position: relative;
 	height: calc(~"100% - 1.6em");
@@ -42,7 +49,7 @@ body#pad.classic {
 	white-space: pre-wrap;
 	-webkit-font-variant-ligatures: none;
 	font-variant-ligatures: none;
-	padding: 0.5em 0;
+	padding: 0.5em @classicHorizMargin;
 	line-height: 1.5;
 	outline: none;
 }
@@ -222,6 +229,8 @@ li.ProseMirror-selectednode:after {
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 	overflow: visible;
+	margin-left: @classicHorizMargin;
+	margin-right: @classicHorizMargin;
 }
 
 .ProseMirror-icon {
@@ -374,6 +383,10 @@ li.ProseMirror-selectednode:after {
 	margin: 4em auto 23px auto;
 }
 
+.dark #editor {
+	color: white;
+}
+
 .ProseMirror p:first-child,
 .ProseMirror h1:first-child,
 .ProseMirror h2:first-child,
@@ -419,36 +432,59 @@ textarea {
 }
 
 @media all and (min-width: 50em) {
-	#editor {
+	#photo-upload label {
+		display: inline;
+	}
+	.ProseMirror-menubar, #title, #photo-upload {
 		margin-left: 10%;
 		margin-right: 10%;
+	}
+	.ProseMirror {
+		padding-left: 10%;
+		padding-right: 10%;
 	}
 }
 
 @media all and (min-width: 60em) {
-	#editor {
+	.ProseMirror-menubar, #title, #photo-upload {
 		margin-left: 15%;
 		margin-right: 15%;
+	}
+	.ProseMirror {
+		padding-left: 15%;
+		padding-right: 15%;
 	}
 }
 
 @media all and (min-width: 70em) {
-	#editor {
+	.ProseMirror-menubar, #title, #photo-upload {
 		margin-left: 20%;
 		margin-right: 20%;
+	}
+	.ProseMirror {
+		padding-left: 20%;
+		padding-right: 20%;
 	}
 }
 
 @media all and (min-width: 85em) {
-	#editor {
+	.ProseMirror-menubar, #title, #photo-upload {
 		margin-left: 25%;
 		margin-right: 25%;
+	}
+	.ProseMirror {
+		padding-left: 25%;
+		padding-right: 25%;
 	}
 }
 
 @media all and (min-width: 105em) {
-	#editor {
+	.ProseMirror-menubar, #title, #photo-upload {
 		margin-left: 30%;
 		margin-right: 30%;
+	}
+	.ProseMirror {
+		padding-left: 30%;
+		padding-right: 30%;
 	}
 }
