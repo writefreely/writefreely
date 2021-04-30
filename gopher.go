@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -31,7 +32,12 @@ func initGopher(apper Apper) {
 
 // Utility function to strip the URL from the hostname provided by app.cfg.App.Host
 func stripHostProtocol(app *App) string {
-	return string(regexp.MustCompile("^.*://").ReplaceAll([]byte(app.cfg.App.Host), []byte("")))
+	u, err := url.Parse(app.cfg.App.Host)
+	if err != nil {
+		// Fall back to host, with scheme stripped
+		return string(regexp.MustCompile("^.*://").ReplaceAll([]byte(app.cfg.App.Host), []byte("")))
+	}
+	return u.Hostname()
 }
 
 func handleGopher(app *App, w gopher.ResponseWriter, r *gopher.Request) error {
@@ -99,6 +105,11 @@ func handleGopherCollection(app *App, w gopher.ResponseWriter, r *gopher.Request
 		baseSel = "/" + c.Alias + "/"
 	}
 	c.hostName = app.cfg.App.Host
+
+	w.WriteInfo(c.DisplayTitle())
+	if c.Description != "" {
+		w.WriteInfo(c.Description)
+	}
 
 	posts, err := app.db.GetPosts(app.cfg, c, 0, false, false, false)
 	if err != nil {
