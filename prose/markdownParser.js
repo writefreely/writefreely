@@ -3,11 +3,11 @@ import markdownit from "markdown-it";
 
 import { writeFreelySchema } from "./schema";
 
-export const writeAsMarkdownParser = new MarkdownParser(
+export const writeFreelyMarkdownParser = new MarkdownParser(
   writeFreelySchema,
   markdownit("commonmark", { html: true }),
   {
-    // blockquote: { block: "blockquote" },
+    blockquote: { block: "blockquote" },
     paragraph: { block: "paragraph" },
     list_item: { block: "list_item" },
     bullet_list: { block: "bullet_list" },
@@ -25,13 +25,13 @@ export const writeAsMarkdownParser = new MarkdownParser(
       getAttrs: (tok) => ({ params: tok.info || "" }),
       noCloseToken: true,
     },
-    // hr: { node: "horizontal_rule" },
+    hr: { node: "horizontal_rule" },
     image: {
       node: "image",
       getAttrs: (tok) => ({
         src: tok.attrGet("src"),
         title: tok.attrGet("title") || null,
-        alt: tok.children?.[0].content || null,
+        alt: (tok.children !== null && typeof tok.children[0] !== 'undefined' ? tok.children[0].content : null),
       }),
     },
     hardbreak: { node: "hard_break" },

@@ -82,7 +82,7 @@
 					btns[i].src = btns[i].src.replace('_dark@2x.png', '@2x.png');
 				}
 			} else {
-				TextnewTheme = 'light';
+				newTheme = 'light';
 				document.body.className = document.body.className.replace(/(?:^|\s)dark(?!\S)/g, newTheme);
 				for (var i=0; i<btns.length; i++) {
 					btns[i].src = btns[i].src.replace('@2x.png', '_dark@2x.png');
@@ -168,15 +168,12 @@
 			var xpostTarg = H.get('crosspostTarget', '[]');
 
 			var http = new XMLHttpRequest();
-			var lang = navigator.languages ? navigator.languages[0] : (navigator.language || navigator.userLanguage);
-			lang = lang.substring(0, 2);
 			var post = H.getTitleStrict(content);
 
 			var params = {
 				body: post.content,
 				title: title,
-				font: font,
-				lang: lang
+				font: font
 			};
 			{{ if .Post.Slug }}
 			var url = "/api/collections/{{.EditCollection.Alias}}/posts/{{.Post.Id}}";
@@ -187,6 +184,10 @@
 			}
 			params.token = token;
 			{{ else }}
+			var lang = navigator.languages ? navigator.languages[0] : (navigator.language || navigator.userLanguage);
+			lang = lang.substring(0, 2);
+			params.lang = lang;
+
 			var url = "/api/posts";
 			var postTarget = H.get('postTarget', 'anonymous');
 			if (postTarget != 'anonymous') {

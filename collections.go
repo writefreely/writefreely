@@ -57,7 +57,7 @@ type (
 		PublicOwner bool           `datastore:"public_owner" json:"-"`
 		URL         string         `json:"url,omitempty"`
 
-		MonetizationPointer string `json:"monetization_pointer,omitempty"`
+		Monetization string `json:"monetization_pointer,omitempty"`
 
 		db       *datastore
 		hostName string

@@ -26,15 +26,15 @@ function isPlainURL(link, parent, index, side) {
   return !link.isInSet(next.marks);
 }
 
-export const writeAsMarkdownSerializer = new MarkdownSerializer(
+export const writeFreelyMarkdownSerializer = new MarkdownSerializer(
   {
     readmore(state, node) {
       state.write("<!--more-->\n");
       state.closeBlock(node);
     },
-    // blockquote(state, node) {
-    //   state.wrapBlock("> ", undefined, node, () => state.renderContent(node));
-    // },
+    blockquote(state, node) {
+      state.wrapBlock("> ", null, node, () => state.renderContent(node));
+    },
     code_block(state, node) {
       state.write(`\`\`\`${node.attrs.params || ""}\n`);
       state.text(node.textContent, false);
@@ -47,7 +47,12 @@ export const writeAsMarkdownSerializer = new MarkdownSerializer(
       state.renderInline(node);
       state.closeBlock(node);
     },
+    horizontal_rule: function horizontal_rule(state, node) {
+      state.write(node.attrs.markup || "---");
+      state.closeBlock(node);
+    },
     bullet_list(state, node) {
+      node.attrs.tight = true;
       state.renderList(node, "  ", () => `${node.attrs.bullet || "*"} `);
     },
     ordered_list(state, node) {

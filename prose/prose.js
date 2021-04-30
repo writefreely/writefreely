@@ -14,8 +14,8 @@ import { EditorState, TextSelection } from "prosemirror-state";
 import { exampleSetup } from "prosemirror-example-setup";
 import { keymap } from "prosemirror-keymap";
 
-import { writeAsMarkdownParser } from "./markdownParser";
-import { writeAsMarkdownSerializer } from "./markdownSerializer";
+import { writeFreelyMarkdownParser } from "./markdownParser";
+import { writeFreelyMarkdownSerializer } from "./markdownSerializer";
 import { writeFreelySchema } from "./schema";
 import { getMenu } from "./menu";
 
@@ -40,7 +40,7 @@ class ProseMirrorView {
       $title.value = title;
     }
 
-    const doc = writeAsMarkdownParser.parse(
+    const doc = writeFreelyMarkdownParser.parse(
       // Replace all "solo" \n's with \\\n for correct markdown parsing
       // Can't use lookahead or lookbehind because it's not supported on Safari
       content.replace(/([^]{0,1})(\n)([^]{0,1})/g, (match, p1, p2, p3) => {
@@ -73,7 +73,7 @@ class ProseMirrorView {
       }),
       dispatchTransaction(transaction) {
         let newState = this.state.apply(transaction);
-        const newContent = writeAsMarkdownSerializer
+        const newContent = writeFreelyMarkdownSerializer
           .serialize(newState.doc)
           // Replace all \\\ns ( not followed by a \n ) with \n
           .replace(/(\\\n)(\n{0,1})/g, (match, p1, p2) =>
@@ -104,7 +104,7 @@ class ProseMirrorView {
   }
 
   get content() {
-    return defaultMarkdownSerializer.serialize(this.view.state.doc);
+    return writeFreelyMarkdownSerializer.serialize(this.view.state.doc);
   }
   focus() {
     this.view.focus();

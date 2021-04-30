@@ -41,6 +41,9 @@ func (app *App) InitSession() {
 		HttpOnly: true,
 		Secure:   strings.HasPrefix(app.cfg.App.Host, "https://"),
 	}
+	if store.Options.Secure {
+		store.Options.SameSite = http.SameSiteNoneMode
+	}
 	app.sessionStore = store
 }
 
