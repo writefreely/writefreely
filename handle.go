@@ -287,6 +287,26 @@ func (h *Handler) UserAPI(f userHandlerFunc) http.HandlerFunc {
 	return h.UserAll(false, f, apiAuth)
 }
 
+// UserWebAPI handles endpoints that accept a user authorized either via the web (cookies) or an Authorization header.
+func (h *Handler) UserWebAPI(f userHandlerFunc) http.HandlerFunc {
+	return h.UserAll(false, f, func(app *App, r *http.Request) (*User, error) {
+		// Authorize user via cookies
+		u := getUserSession(app, r)
+		if u != nil {
+			return u, nil
+		}
+
+		// Fall back to access token, since user isn't logged in via web
+		var err error
+		u, err = apiAuth(app, r)
+		if err != nil {
+			return nil, err
+		}
+
+		return u, nil
+	})
+}
+
 func (h *Handler) UserAll(web bool, f userHandlerFunc, a authFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		handleFunc := func() error {

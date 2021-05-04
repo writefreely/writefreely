@@ -16,6 +16,7 @@ import (
 	"html/template"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -691,6 +692,22 @@ func viewMyPostsAPI(app *App, u *User, w http.ResponseWriter, r *http.Request) e
 		return ErrBadRequestedType
 	}
 
+	isAnonPosts := r.FormValue("anonymous") == "1"
+	if isAnonPosts {
+		pageStr := r.FormValue("page")
+		pg, err := strconv.Atoi(pageStr)
+		if err != nil {
+			log.Error("Error parsing page parameter '%s': %s", pageStr, err)
+			pg = 1
+		}
+
+		p, err := app.db.GetAnonymousPosts(u, pg)
+		if err != nil {
+			return err
+		}
+		return impart.WriteSuccess(w, p, http.StatusOK)
+	}
+
 	var err error
 	p := GetPostsCache(u.ID)
 	if p == nil {
@@ -731,7 +748,7 @@ func viewMyCollectionsAPI(app *App, u *User, w http.ResponseWriter, r *http.Requ
 }
 
 func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
-	p, err := app.db.GetAnonymousPosts(u)
+	p, err := app.db.GetAnonymousPosts(u, 1)
 	if err != nil {
 		log.Error("unable to fetch anon posts: %v", err)
 	}

@@ -115,7 +115,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	write.HandleFunc("/api/me", handler.All(viewMeAPI)).Methods("GET")
 	apiMe := write.PathPrefix("/api/me/").Subrouter()
 	apiMe.HandleFunc("/", handler.All(viewMeAPI)).Methods("GET")
-	apiMe.HandleFunc("/posts", handler.UserAPI(viewMyPostsAPI)).Methods("GET")
+	apiMe.HandleFunc("/posts", handler.UserWebAPI(viewMyPostsAPI)).Methods("GET")
 	apiMe.HandleFunc("/collections", handler.UserAPI(viewMyCollectionsAPI)).Methods("GET")
 	apiMe.HandleFunc("/password", handler.All(updatePassphrase)).Methods("POST")
 	apiMe.HandleFunc("/self", handler.All(updateSettings)).Methods("POST")
