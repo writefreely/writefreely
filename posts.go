@@ -125,6 +125,7 @@ type (
 		Views       int64          `json:"views"`
 		Owner       *PublicUser    `json:"-"`
 		IsOwner     bool           `json:"-"`
+		URL         string         `json:"url,omitempty"`
 		Collection  *CollectionObj `json:"collection,omitempty"`
 	}
 
@@ -612,6 +613,7 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	newPost.extractData()
 	newPost.OwnerName = username
+	newPost.URL = newPost.CanonicalURL(app.cfg.App.Host)
 
 	// Write success now
 	response := impart.WriteSuccess(w, newPost, http.StatusCreated)
@@ -1124,7 +1126,7 @@ func (p *Post) processPost() PublicPost {
 
 func (p *PublicPost) CanonicalURL(hostName string) string {
 	if p.Collection == nil || p.Collection.Alias == "" {
-		return hostName + "/" + p.ID
+		return hostName + "/" + p.ID + ".md"
 	}
 	return p.Collection.CanonicalURL() + p.Slug.String
 }
