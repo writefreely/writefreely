@@ -397,7 +397,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// Check if post has been unpublished
-	if content == "" {
+	if title == "" && content == "" {
 		gone = true
 
 		if isJSON {
@@ -546,9 +546,14 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 			t := ""
 			p.Title = &t
 		}
-		if strings.TrimSpace(*(p.Content)) == "" {
+		if strings.TrimSpace(*(p.Title)) == "" && (p.Content == nil || strings.TrimSpace(*(p.Content)) == "") {
 			return ErrNoPublishableContent
 		}
+		if p.Content == nil {
+			c := ""
+			p.Content = &c
+		}
+
 	} else {
 		post := r.FormValue("body")
 		appearance := r.FormValue("font")
@@ -1260,10 +1265,22 @@ func getRawPost(app *App, friendlyID string) *RawPost {
 	case err == sql.ErrNoRows:
 		return &RawPost{Content: "", Found: false, Gone: false}
 	case err != nil:
+		log.Error("Unable to fetch getRawPost: %s", err)
 		return &RawPost{Content: "", Found: true, Gone: false}
 	}
 
-	return &RawPost{Title: title, Content: content, Font: font, Created: created, Updated: updated, IsRTL: isRTL, Language: lang, OwnerID: ownerID.Int64, Found: true, Gone: content == ""}
+	return &RawPost{
+		Title:    title,
+		Content:  content,
+		Font:     font,
+		Created:  created,
+		Updated:  updated,
+		IsRTL:    isRTL,
+		Language: lang,
+		OwnerID:  ownerID.Int64,
+		Found:    true,
+		Gone:     content == "" && title == "",
+	}
 
 }
 
@@ -1286,6 +1303,7 @@ func getRawCollectionPost(app *App, slug, collAlias string) *RawPost {
 	case err == sql.ErrNoRows:
 		return &RawPost{Content: "", Found: false, Gone: false}
 	case err != nil:
+		log.Error("Unable to fetch getRawCollectionPost: %s", err)
 		return &RawPost{Content: "", Found: true, Gone: false}
 	}
 
@@ -1301,7 +1319,7 @@ func getRawCollectionPost(app *App, slug, collAlias string) *RawPost {
 		Language: lang,
 		OwnerID:  ownerID.Int64,
 		Found:    true,
-		Gone:     content == "",
+		Gone:     content == "" && title == "",
 		Views:    views,
 	}
 }

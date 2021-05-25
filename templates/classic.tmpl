@@ -283,7 +283,7 @@
 		*/
 		$btnPublish.on('click', function(e) {
 			e.preventDefault();
-			if (!publishing && $content.el.value) {
+			if (!publishing && ($title.el.value || $content.el.value)) {
 				var title = $title.el.value;
 				var content = $content.el.value;
 				publish(title, content, selectedFont);
