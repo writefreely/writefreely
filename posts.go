@@ -48,6 +48,8 @@ const (
 	postIDLen     = 10
 
 	postMetaDateFormat = "2006-01-02 15:04:05"
+
+	shortCodePaid = "<!--paid-->"
 )
 
 type (
@@ -109,6 +111,7 @@ type (
 		HTMLExcerpt    template.HTML `db:"content" json:"-"`
 		Tags           []string      `json:"tags"`
 		Images         []string      `json:"images,omitempty"`
+		IsPaid         bool          `json:"paid"`
 
 		OwnerName string `json:"owner,omitempty"`
 	}
@@ -127,6 +130,20 @@ type (
 		IsOwner     bool           `json:"-"`
 		URL         string         `json:"url,omitempty"`
 		Collection  *CollectionObj `json:"collection,omitempty"`
+	}
+
+	CollectionPostPage struct {
+		*PublicPost
+		page.StaticPage
+		IsOwner        bool
+		IsPinned       bool
+		IsCustomDomain bool
+		Monetization   string
+		PinnedPosts    *[]PublicPost
+		IsFound        bool
+		IsAdmin        bool
+		CanInvite      bool
+		Silenced       bool
 	}
 
 	RawPost struct {
@@ -267,6 +284,14 @@ func (p *Post) HasTitleLink() bool {
 	}
 	hasLink, _ := regexp.MatchString(`([^!]+|^)\[.+\]\(.+\)`, p.Title.String)
 	return hasLink
+}
+
+func (c CollectionPostPage) DisplayMonetization() string {
+	if c.Collection == nil {
+		log.Info("CollectionPostPage.DisplayMonetization: c.Collection is nil")
+		return ""
+	}
+	return displayMonetization(c.Monetization, c.Collection.Alias)
 }
 
 func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
@@ -1154,7 +1179,8 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 	o.Name = p.DisplayTitle()
 	p.augmentContent()
 	if p.HTMLContent == template.HTML("") {
-		p.formatContent(cfg, false)
+		p.formatContent(cfg, false, false)
+		p.augmentReadingDestination()
 	}
 	o.Content = string(p.HTMLContent)
 	if p.Language.Valid {
@@ -1502,20 +1528,8 @@ Are you sure it was ever here?`,
 		p.extractData()
 		p.Content = strings.Replace(p.Content, "<!--more-->", "", 1)
 		// TODO: move this to function
-		p.formatContent(app.cfg, cr.isCollOwner)
-		tp := struct {
-			*PublicPost
-			page.StaticPage
-			IsOwner        bool
-			IsPinned       bool
-			IsCustomDomain bool
-			Monetization   string
-			PinnedPosts    *[]PublicPost
-			IsFound        bool
-			IsAdmin        bool
-			CanInvite      bool
-			Silenced       bool
-		}{
+		p.formatContent(app.cfg, cr.isCollOwner, true)
+		tp := CollectionPostPage{
 			PublicPost:     p,
 			StaticPage:     pageForReq(app, r),
 			IsOwner:        cr.isCollOwner,

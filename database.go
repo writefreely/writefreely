@@ -813,6 +813,7 @@ func (db *datastore) GetCollectionBy(condition string, value interface{}) (*Coll
 	c.Signature = signature.String
 	c.Format = format.String
 	c.Public = c.IsPublic()
+	c.Monetization = db.GetCollectionAttribute(c.ID, "monetization_pointer")
 
 	c.db = db
 
@@ -1182,7 +1183,7 @@ func (db *datastore) GetPosts(cfg *config.Config, c *Collection, page int, inclu
 		}
 		p.extractData()
 		p.augmentContent(c)
-		p.formatContent(cfg, c, includeFuture)
+		p.formatContent(cfg, c, includeFuture, false)
 
 		posts = append(posts, p.processPost())
 	}
@@ -1247,7 +1248,7 @@ func (db *datastore) GetPostsTagged(cfg *config.Config, c *Collection, tag strin
 		}
 		p.extractData()
 		p.augmentContent(c)
-		p.formatContent(cfg, c, includeFuture)
+		p.formatContent(cfg, c, includeFuture, false)
 
 		posts = append(posts, p.processPost())
 	}
@@ -1652,6 +1653,14 @@ func (db *datastore) GetCollections(u *User, hostName string) (*[]Collection, er
 		c.URL = c.CanonicalURL()
 		c.Public = c.IsPublic()
 
+		/*
+			// NOTE: future functionality
+			if visibility != nil { // TODO: && visibility == CollPublic {
+				// Add Monetization info when retrieving all public collections
+				c.Monetization = db.GetCollectionAttribute(c.ID, "monetization_pointer")
+			}
+		*/
+
 		colls = append(colls, c)
 	}
 	err = rows.Err()
@@ -1697,6 +1706,9 @@ func (db *datastore) GetPublicCollections(hostName string) (*[]Collection, error
 		c.hostName = hostName
 		c.URL = c.CanonicalURL()
 		c.Public = c.IsPublic()
+
+		// Add Monetization information
+		c.Monetization = db.GetCollectionAttribute(c.ID, "monetization_pointer")
 
 		colls = append(colls, c)
 	}

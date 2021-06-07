@@ -199,6 +199,23 @@ func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWr
 		},
 	}
 
+	var coll *Collection
+	if signup.Monetization != "" {
+		if coll == nil {
+			coll, err = app.db.GetCollection(signup.Alias)
+			if err != nil {
+				log.Error("Unable to get new collection '%s' for monetization on signup: %v", signup.Alias, err)
+				return nil, err
+			}
+		}
+		err = app.db.SetCollectionAttribute(coll.ID, "monetization_pointer", signup.Monetization)
+		if err != nil {
+			log.Error("Unable to add monetization on signup: %v", err)
+			return nil, err
+		}
+		coll.Monetization = signup.Monetization
+	}
+
 	var token string
 	if reqJSON && !signup.Web {
 		token, err = app.db.GetAccessToken(u.ID)

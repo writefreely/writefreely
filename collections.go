@@ -353,6 +353,17 @@ func (c *Collection) RenderMathJax() bool {
 	return c.db.CollectionHasAttribute(c.ID, "render_mathjax")
 }
 
+func (c *Collection) MonetizationURL() string {
+	if c.Monetization == "" {
+		return ""
+	}
+	return strings.Replace(c.Monetization, "$", "https://", 1)
+}
+
+func (c CollectionPage) DisplayMonetization() string {
+	return displayMonetization(c.Monetization, c.Alias)
+}
+
 func newCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r)
 	alias := r.FormValue("alias")
