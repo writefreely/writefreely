@@ -110,7 +110,7 @@ func (m *MockOAuthDatastore) GetIDForRemoteUser(ctx context.Context, remoteUserI
 	return -1, nil
 }
 
-func (m *MockOAuthDatastore) CreateUser(cfg *config.Config, u *User, username string) error {
+func (m *MockOAuthDatastore) CreateUser(cfg *config.Config, u *User, username, description string) error {
 	if m.DoCreateUser != nil {
 		return m.DoCreateUser(cfg, u, username)
 	}
