@@ -90,6 +90,7 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 		appData.EditCollection, err = app.db.GetCollectionForPad(collAlias)
 		if err != nil {
+			log.Error("Unable to GetCollectionForPad: %s", err)
 			return err
 		}
 		appData.EditCollection.hostName = app.cfg.App.Host
@@ -101,9 +102,10 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	if appData.Post.Gone {
 		return ErrPostUnpublished
-	} else if appData.Post.Found && appData.Post.Content != "" {
+	} else if appData.Post.Found && (appData.Post.Title != "" || appData.Post.Content != "") {
 		// Got the post
 	} else if appData.Post.Found {
+		log.Error("Found post, but other conditions failed.")
 		return ErrPostFetchError
 	} else {
 		return ErrPostNotFound

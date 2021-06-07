@@ -315,7 +315,6 @@ func viewLocalTimelineFeed(app *App, w http.ResponseWriter, req *http.Request) e
 			author = p.Collection.Title
 		} else {
 			author = "Anonymous"
-			permalink += ".md"
 		}
 		i := &Item{
 			Id:          app.cfg.App.Host + "/read/a/" + p.ID,

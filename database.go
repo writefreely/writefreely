@@ -875,7 +875,7 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 	// WHERE values
 	q.Where("alias = ? AND owner_id = ?", alias, c.OwnerID)
 
-	if q.Updates == "" {
+	if q.Updates == "" && c.Monetization == nil {
 		return ErrPostNoUpdatableVals
 	}
 
@@ -932,10 +932,12 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 	}
 
 	// Update rest of the collection data
-	res, err = db.Exec("UPDATE collections SET "+q.Updates+" WHERE "+q.Conditions, q.Params...)
-	if err != nil {
-		log.Error("Unable to update collection: %v", err)
-		return err
+	if q.Updates != "" {
+		res, err = db.Exec("UPDATE collections SET "+q.Updates+" WHERE "+q.Conditions, q.Params...)
+		if err != nil {
+			log.Error("Unable to update collection: %v", err)
+			return err
+		}
 	}
 
 	rowsAffected, _ = res.RowsAffected()
