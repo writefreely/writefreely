@@ -144,6 +144,9 @@ type (
 		IsAdmin        bool
 		CanInvite      bool
 		Silenced       bool
+
+		// Helper field for Chorus mode
+		CollAlias string
 	}
 
 	RawPost struct {
@@ -1536,6 +1539,7 @@ Are you sure it was ever here?`,
 			IsCustomDomain: cr.isCustomDomain,
 			IsFound:        postFound,
 			Silenced:       silenced,
+			CollAlias:      c.Alias,
 		}
 		tp.IsAdmin = u != nil && u.IsAdmin()
 		tp.CanInvite = canUserInvite(app.cfg, tp.IsAdmin)
@@ -1551,7 +1555,7 @@ Are you sure it was ever here?`,
 			postTmpl = "chorus-collection-post"
 		}
 		if err := templates[postTmpl].ExecuteTemplate(w, "post", tp); err != nil {
-			log.Error("Error in collection-post template: %v", err)
+			log.Error("Error in %s template: %v", postTmpl, err)
 		}
 	}
 

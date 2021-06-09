@@ -582,6 +582,9 @@ type CollectionPage struct {
 	PinnedPosts    *[]PublicPost
 	IsAdmin        bool
 	CanInvite      bool
+
+	// Helper field for Chorus mode
+	CollAlias string
 }
 
 func NewCollectionObj(c *Collection) *CollectionObj {
@@ -818,6 +821,7 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 		StaticPage:        pageForReq(app, r),
 		IsCustomDomain:    cr.isCustomDomain,
 		IsWelcome:         r.FormValue("greeting") != "",
+		CollAlias:         c.Alias,
 	}
 	displayPage.IsAdmin = u != nil && u.IsAdmin()
 	displayPage.CanInvite = canUserInvite(app.cfg, displayPage.IsAdmin)
