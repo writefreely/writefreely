@@ -42,12 +42,46 @@ var (
 	mentionReg      = regexp.MustCompile(`@([A-Za-z0-9._%+-]+)(@[A-Za-z0-9.-]+\.[A-Za-z]+)\b`)
 )
 
-func (p *Post) formatContent(cfg *config.Config, c *Collection, isOwner bool) {
+func (p *Post) handlePremiumContent(c *Collection, isOwner, postPage bool, cfg *config.Config) {
+	if c.Monetization != "" {
+		// User has Web Monetization enabled, so split content if it exists
+		spl := strings.Index(p.Content, shortCodePaid)
+		p.IsPaid = spl > -1
+		if postPage {
+			// We're viewing the individual post
+			if isOwner {
+				p.Content = strings.Replace(p.Content, shortCodePaid, "\n\n"+`<p class="split">Your subscriber content begins here.</p>`+"\n\n", 1)
+			} else {
+				if spl > -1 {
+					p.Content = p.Content[:spl+len(shortCodePaid)]
+					p.Content = strings.Replace(p.Content, shortCodePaid, "\n\n"+`<p class="split">Continue reading with a <strong>Coil</strong> membership.</p>`+"\n\n", 1)
+				}
+			}
+		} else {
+			// We've viewing the post on the collection landing
+			if spl > -1 {
+				baseURL := c.CanonicalURL()
+				if isOwner {
+					baseURL = "/" + c.Alias + "/"
+				}
+
+				p.Content = p.Content[:spl+len(shortCodePaid)]
+				p.HTMLExcerpt = template.HTML(applyMarkdown([]byte(p.Content[:spl]), baseURL, cfg))
+			}
+		}
+	}
+}
+
+func (p *Post) formatContent(cfg *config.Config, c *Collection, isOwner bool, isPostPage bool) {
 	baseURL := c.CanonicalURL()
 	// TODO: redundant
 	if !isSingleUser {
 		baseURL = "/" + c.Alias + "/"
 	}
+
+	p.handlePremiumContent(c, isOwner, isPostPage, cfg)
+	p.Content = strings.Replace(p.Content, "&lt;!--paid-->", "<!--paid-->", 1)
+
 	p.HTMLTitle = template.HTML(applyBasicMarkdown([]byte(p.Title.String)))
 	p.HTMLContent = template.HTML(applyMarkdown([]byte(p.Content), baseURL, cfg))
 	if exc := strings.Index(string(p.Content), "<!--more-->"); exc > -1 {
@@ -55,8 +89,8 @@ func (p *Post) formatContent(cfg *config.Config, c *Collection, isOwner bool) {
 	}
 }
 
-func (p *PublicPost) formatContent(cfg *config.Config, isOwner bool) {
-	p.Post.formatContent(cfg, &p.Collection.Collection, isOwner)
+func (p *PublicPost) formatContent(cfg *config.Config, isOwner bool, isPostPage bool) {
+	p.Post.formatContent(cfg, &p.Collection.Collection, isOwner, isPostPage)
 }
 
 func (p *Post) augmentContent(c *Collection) {
@@ -76,6 +110,12 @@ func (p *Post) augmentContent(c *Collection) {
 
 func (p *PublicPost) augmentContent() {
 	p.Post.augmentContent(&p.Collection.Collection)
+}
+
+func (p *PublicPost) augmentReadingDestination() {
+	if p.IsPaid {
+		p.HTMLContent += template.HTML("\n\n" + `<p><a class="read-more" href="` + p.Collection.CanonicalURL() + p.Slug.String + `">` + localStr("Read more...", p.Language.String) + `</a> ($)</p>`)
+	}
 }
 
 func applyMarkdown(data []byte, baseURL string, cfg *config.Config) string {

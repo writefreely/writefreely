@@ -74,7 +74,7 @@ func (app *App) FetchPublicPosts() (interface{}, error) {
 	// ageCond := `p.created >= ` + app.db.dateSub(3, "month") + ` AND `
 
 	// Finds all public posts and posts in a public collection published during the owner's active subscription period and within the last 3 months
-	rows, err := app.db.Query(`SELECT p.id, alias, c.title, p.slug, p.title, p.content, p.text_appearance, p.language, p.rtl, p.created, p.updated
+	rows, err := app.db.Query(`SELECT p.id, c.id, alias, c.title, p.slug, p.title, p.content, p.text_appearance, p.language, p.rtl, p.created, p.updated
 	FROM collections c
 	LEFT JOIN posts p ON p.collection_id = c.id
 	LEFT JOIN users u ON u.id = p.owner_id
@@ -94,7 +94,7 @@ func (app *App) FetchPublicPosts() (interface{}, error) {
 		p := &Post{}
 		c := &Collection{}
 		var alias, title sql.NullString
-		err = rows.Scan(&p.ID, &alias, &title, &p.Slug, &p.Title, &p.Content, &p.Font, &p.Language, &p.RTL, &p.Created, &p.Updated)
+		err = rows.Scan(&p.ID, &c.ID, &alias, &title, &p.Slug, &p.Title, &p.Content, &p.Font, &p.Language, &p.RTL, &p.Created, &p.Updated)
 		if err != nil {
 			log.Error("[READ] Unable to scan row, skipping: %v", err)
 			continue
@@ -111,9 +111,11 @@ func (app *App) FetchPublicPosts() (interface{}, error) {
 
 			c.Public = true
 			c.Title = title.String
+			c.Monetization = app.db.GetCollectionAttribute(c.ID, "monetization_pointer")
 		}
 
 		p.extractData()
+		p.handlePremiumContent(c, false, false, app.cfg)
 		p.HTMLContent = template.HTML(applyMarkdown([]byte(p.Content), "", app.cfg))
 		fp := p.processPost()
 		if isCollectionPost {

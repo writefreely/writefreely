@@ -127,7 +127,7 @@ func (h oauthHandler) viewOauthSignup(app *App, w http.ResponseWriter, r *http.R
 		displayName = r.FormValue(oauthParamUsername)
 	}
 
-	err = h.DB.CreateUser(h.Config, newUser, displayName)
+	err = h.DB.CreateUser(h.Config, newUser, displayName, "")
 	if err != nil {
 		return h.showOauthSignupPage(app, w, r, tp, err)
 	}

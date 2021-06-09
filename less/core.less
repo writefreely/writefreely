@@ -393,6 +393,14 @@ body {
 	}
 }
 
+img {
+	&.paid {
+		height: 0.86em;
+		vertical-align: middle;
+		margin-bottom: 0.1em;
+	}
+}
+
 nav#full-nav {
 	margin: 0;
 
@@ -741,6 +749,19 @@ input, button, select.inputform, textarea.inputform, a.btn {
 		text-decoration: none;
 		background: @lightNavBorder;
 	}
+}
+
+.btn.cta.secondary, input[type=submit].secondary {
+	background: transparent;
+	color: @primary;
+	&:hover {
+		background-color: #f9f9f9;
+	}
+}
+
+.btn.cta.disabled {
+	background-color: desaturate(@primary, 100%) !important;
+	border-color: desaturate(@primary, 100%) !important;
 }
 
 div.flat-select {

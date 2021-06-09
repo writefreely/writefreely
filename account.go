@@ -167,7 +167,7 @@ func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWr
 	}
 
 	// Create actual user
-	if err := app.db.CreateUser(app.cfg, u, desiredUsername); err != nil {
+	if err := app.db.CreateUser(app.cfg, u, desiredUsername, signup.Description); err != nil {
 		return nil, err
 	}
 
@@ -193,9 +193,27 @@ func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWr
 	}
 	resUser.Collections = &[]Collection{
 		{
-			Alias: signup.Alias,
-			Title: title,
+			Alias:       signup.Alias,
+			Title:       title,
+			Description: signup.Description,
 		},
+	}
+
+	var coll *Collection
+	if signup.Monetization != "" {
+		if coll == nil {
+			coll, err = app.db.GetCollection(signup.Alias)
+			if err != nil {
+				log.Error("Unable to get new collection '%s' for monetization on signup: %v", signup.Alias, err)
+				return nil, err
+			}
+		}
+		err = app.db.SetCollectionAttribute(coll.ID, "monetization_pointer", signup.Monetization)
+		if err != nil {
+			log.Error("Unable to add monetization on signup: %v", err)
+			return nil, err
+		}
+		coll.Monetization = signup.Monetization
 	}
 
 	var token string

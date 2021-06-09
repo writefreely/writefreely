@@ -99,7 +99,7 @@ type OAuthDatastore interface {
 	ValidateOAuthState(context.Context, string) (string, string, int64, string, error)
 	GenerateOAuthState(context.Context, string, string, int64, string) (string, error)
 
-	CreateUser(*config.Config, *User, string) error
+	CreateUser(*config.Config, *User, string, string) error
 	GetUserByID(int64) (*User, error)
 }
 

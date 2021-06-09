@@ -353,6 +353,17 @@ func (c *Collection) RenderMathJax() bool {
 	return c.db.CollectionHasAttribute(c.ID, "render_mathjax")
 }
 
+func (c *Collection) MonetizationURL() string {
+	if c.Monetization == "" {
+		return ""
+	}
+	return strings.Replace(c.Monetization, "$", "https://", 1)
+}
+
+func (c CollectionPage) DisplayMonetization() string {
+	return displayMonetization(c.Monetization, c.Alias)
+}
+
 func newCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r)
 	alias := r.FormValue("alias")
@@ -571,6 +582,9 @@ type CollectionPage struct {
 	PinnedPosts    *[]PublicPost
 	IsAdmin        bool
 	CanInvite      bool
+
+	// Helper field for Chorus mode
+	CollAlias string
 }
 
 func NewCollectionObj(c *Collection) *CollectionObj {
@@ -807,6 +821,7 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 		StaticPage:        pageForReq(app, r),
 		IsCustomDomain:    cr.isCustomDomain,
 		IsWelcome:         r.FormValue("greeting") != "",
+		CollAlias:         c.Alias,
 	}
 	displayPage.IsAdmin = u != nil && u.IsAdmin()
 	displayPage.CanInvite = canUserInvite(app.cfg, displayPage.IsAdmin)

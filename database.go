@@ -51,7 +51,7 @@ var (
 )
 
 type writestore interface {
-	CreateUser(*config.Config, *User, string) error
+	CreateUser(*config.Config, *User, string, string) error
 	UpdateUserEmail(keys *key.Keychain, userID int64, email string) error
 	UpdateEncryptedUserEmail(int64, []byte) error
 	GetUserByID(int64) (*User, error)
@@ -179,7 +179,7 @@ func (db *datastore) dateSub(l int, unit string) string {
 }
 
 // CreateUser creates a new user in the database from the given User, UPDATING it in the process with the user's ID.
-func (db *datastore) CreateUser(cfg *config.Config, u *User, collectionTitle string) error {
+func (db *datastore) CreateUser(cfg *config.Config, u *User, collectionTitle string, collectionDesc string) error {
 	if db.PostIDExists(u.Username) {
 		return impart.HTTPError{http.StatusConflict, "Invalid collection name."}
 	}
@@ -213,7 +213,7 @@ func (db *datastore) CreateUser(cfg *config.Config, u *User, collectionTitle str
 	if collectionTitle == "" {
 		collectionTitle = u.Username
 	}
-	res, err = t.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", u.Username, collectionTitle, "", defaultVisibility(cfg), u.ID, 0)
+	res, err = t.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", u.Username, collectionTitle, collectionDesc, defaultVisibility(cfg), u.ID, 0)
 	if err != nil {
 		t.Rollback()
 		if db.isDuplicateKeyErr(err) {
@@ -813,6 +813,7 @@ func (db *datastore) GetCollectionBy(condition string, value interface{}) (*Coll
 	c.Signature = signature.String
 	c.Format = format.String
 	c.Public = c.IsPublic()
+	c.Monetization = db.GetCollectionAttribute(c.ID, "monetization_pointer")
 
 	c.db = db
 
@@ -1182,7 +1183,7 @@ func (db *datastore) GetPosts(cfg *config.Config, c *Collection, page int, inclu
 		}
 		p.extractData()
 		p.augmentContent(c)
-		p.formatContent(cfg, c, includeFuture)
+		p.formatContent(cfg, c, includeFuture, false)
 
 		posts = append(posts, p.processPost())
 	}
@@ -1247,7 +1248,7 @@ func (db *datastore) GetPostsTagged(cfg *config.Config, c *Collection, tag strin
 		}
 		p.extractData()
 		p.augmentContent(c)
-		p.formatContent(cfg, c, includeFuture)
+		p.formatContent(cfg, c, includeFuture, false)
 
 		posts = append(posts, p.processPost())
 	}
@@ -1652,6 +1653,14 @@ func (db *datastore) GetCollections(u *User, hostName string) (*[]Collection, er
 		c.URL = c.CanonicalURL()
 		c.Public = c.IsPublic()
 
+		/*
+			// NOTE: future functionality
+			if visibility != nil { // TODO: && visibility == CollPublic {
+				// Add Monetization info when retrieving all public collections
+				c.Monetization = db.GetCollectionAttribute(c.ID, "monetization_pointer")
+			}
+		*/
+
 		colls = append(colls, c)
 	}
 	err = rows.Err()
@@ -1697,6 +1706,9 @@ func (db *datastore) GetPublicCollections(hostName string) (*[]Collection, error
 		c.hostName = hostName
 		c.URL = c.CanonicalURL()
 		c.Public = c.IsPublic()
+
+		// Add Monetization information
+		c.Monetization = db.GetCollectionAttribute(c.ID, "monetization_pointer")
 
 		colls = append(colls, c)
 	}

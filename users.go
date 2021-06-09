@@ -43,6 +43,10 @@ type (
 		Honeypot   string `json:"fullname" schema:"fullname"`
 		Normalize  bool   `json:"normalize" schema:"normalize"`
 		Signup     bool   `json:"signup" schema:"signup"`
+
+		// Feature fields
+		Description  string `json:"description" schema:"description"`
+		Monetization string `json:"monetization" schema:"monetization"`
 	}
 
 	// AuthUser contains information for a newly authenticated user (either

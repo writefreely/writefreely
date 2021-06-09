@@ -132,4 +132,13 @@ function unpinPost(e, postID) {
 	  })();
 	} catch (e) { /* ¯\_(ツ)_/¯ */ }
 	</script>
+
+    {{if and .Monetization (not .IsOwner)}}
+		<script src="/js/webmonetization.js"></script>
+		<script>
+            window.collAlias = '{{.Collection.Alias}}'
+            window.postSlug = '{{.Slug.String}}'
+            initMonetization()
+		</script>
+    {{end}}
 </html>{{end}}

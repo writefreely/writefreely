@@ -1,7 +1,13 @@
 {{ define "posts" }}
 {{ range $el := .Posts }}<article id="post-{{.ID}}" class="{{.Font}} h-entry" itemscope itemtype="http://schema.org/BlogPosting">
 	{{if .IsScheduled}}<p class="badge">Scheduled</p>{{end}}
-	{{if .Title.String}}<h2 class="post-title" itemprop="name" class="p-name">{{if .HasTitleLink}}{{.HTMLTitle}} <a class="user hidden action" href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{$.CanonicalURL}}{{.Slug.String}}{{end}}">view</a>{{else}}<a href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{$.CanonicalURL}}{{.Slug.String}}{{end}}" itemprop="url" class="u-url">{{.HTMLTitle}}</a>{{end}}
+	{{if .Title.String}}<h2 class="post-title" itemprop="name" class="p-name">
+		{{- if .HasTitleLink -}}
+			{{.HTMLTitle}} <a class="user hidden action" href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{$.CanonicalURL}}{{.Slug.String}}{{end}}">view{{if .IsPaid}} {{template "paid-badge" .}}{{end}}</a>
+		{{- else -}}
+			{{- if .IsPaid}}{{template "paid-badge" .}}{{end -}}
+			<a href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{$.CanonicalURL}}{{.Slug.String}}{{end}}" itemprop="url" class="u-url">{{.HTMLTitle}}</a>
+		{{- end}}
 		{{if $.IsOwner}}
 			<a class="user hidden action" href="/{{if not $.SingleUser}}{{$.Alias}}/{{end}}{{.Slug.String}}/edit">edit</a>
 			{{if $.CanPin}}<a class="user hidden pin action" href="/{{$.Alias}}/{{.Slug.String}}/pin" onclick="pinPost(event, '{{.ID}}', '{{.Slug.String}}', '{{.PlainDisplayTitle}}')">pin</a>{{end}}
@@ -24,7 +30,10 @@
 	{{if $.Format.ShowDates}}<time class="dt-published" datetime="{{.Created8601}}" pubdate itemprop="datePublished" content="{{.Created}}">{{if not .Title.String}}<a href="{{$.CanonicalURL}}{{.Slug.String}}" itemprop="url">{{end}}{{.DisplayDate}}{{if not .Title.String}}</a>{{end}}</time>{{end}}
 {{else}}
 <h2 class="post-title" itemprop="name">
-	{{if $.Format.ShowDates}}<time class="dt-published" datetime="{{.Created8601}}" pubdate itemprop="datePublished" content="{{.Created}}"><a href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{$.CanonicalURL}}{{.Slug.String}}{{end}}" itemprop="url" class="u-url">{{.DisplayDate}}</a></time>{{end}}
+	{{if $.Format.ShowDates -}}
+		{{- if .IsPaid}}{{template "paid-badge" .}}{{end -}}
+		<time class="dt-published" datetime="{{.Created8601}}" pubdate itemprop="datePublished" content="{{.Created}}"><a href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{$.CanonicalURL}}{{.Slug.String}}{{end}}" itemprop="url" class="u-url">{{.DisplayDate}}</a></time>
+	{{- end}}
 	{{if $.IsOwner}}
 		{{if not $.Format.ShowDates}}<a class="user hidden action" href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{$.CanonicalURL}}{{.Slug.String}}{{end}}">view</a>{{end}}
 		<a class="user hidden action" href="/{{if not $.SingleUser}}{{$.Alias}}/{{end}}{{.Slug.String}}/edit">edit</a>
@@ -51,3 +60,5 @@
 
 <a class="read-more" href="{{$.CanonicalURL}}{{.Slug.String}}">{{localstr "Read more..." .Language.String}}</a>{{else}}<div {{if .Language}}lang="{{.Language.String}}"{{end}} dir="{{.Direction}}" class="book e-content">{{if and (and (not $.IsOwner) (not $.Format.ShowDates)) (not .Title.String)}}<a class="hidden action" href="{{if $.IsOwner}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{$.CanonicalURL}}{{.Slug.String}}{{end}}">view</a>{{end}}{{.HTMLContent}}</div>{{end}}</article>{{ end }}
 {{ end }}
+
+{{define "paid-badge"}}<img class="paid" alt="Paid article" src="/img/paidarticle.svg" /> {{end}}
