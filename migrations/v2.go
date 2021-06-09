@@ -12,6 +12,9 @@ package migrations
 
 func supportInstancePages(db *datastore) error {
 	t, err := db.Begin()
+	if err != nil {
+		return err
+	}
 
 	_, err = t.Exec(`ALTER TABLE appcontent ADD COLUMN title ` + db.typeVarChar(255) + db.collateMultiByte() + ` NULL`)
 	if err != nil {
