@@ -5,13 +5,13 @@
 <hr />
 <p align="center">
 	<a href="https://github.com/writefreely/writefreely/releases/">
-		<img src="https://img.shields.io/github/release/writeas/writefreely.svg" alt="Latest release" />
+		<img src="https://img.shields.io/github/release/writefreely/writefreely.svg" alt="Latest release" />
 	</a>
 	<a href="https://travis-ci.org/writeas/writefreely">
-		<img src="https://travis-ci.org/writeas/writefreely.svg" alt="Build status" />
+		<img src="https://travis-ci.org/writefreely/writefreely.svg" alt="Build status" />
 	</a>
 	<a href="https://github.com/writefreely/writefreely/releases/latest">
-		<img src="https://img.shields.io/github/downloads/writeas/writefreely/total.svg" />
+		<img src="https://img.shields.io/github/downloads/writefreely/writefreely/total.svg" />
 	</a>
 	<a href="https://goreportcard.com/report/github.com/writefreely/writefreely">
 		<img src="https://goreportcard.com/badge/github.com/writefreely/writefreely" alt="Go Report Card" />
@@ -22,7 +22,7 @@
 </p>
 &nbsp;
 
-WriteFreely is free and open source software for building **a writing space** on the web &mdash; whether a publication, internal blog, or writing community in the fediverse.
+WriteFreely is a clean, minimalist publishing platform made for writers. Start a blog, share knowledge within your organization, or build a community around the shared act of writing.
 
 ![](https://writefreely.org/img/screens/pencil-reader.png)
 
