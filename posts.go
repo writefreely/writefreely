@@ -14,6 +14,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/writefreely/writefreely/spam"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -651,8 +652,17 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	// Write success now
 	response := impart.WriteSuccess(w, newPost, http.StatusCreated)
 
-	if newPost.Collection != nil && !app.cfg.App.Private && app.cfg.App.Federation && !newPost.Created.After(time.Now()) {
-		go federatePost(app, newPost, newPost.Collection.ID, false)
+	if newPost.Collection != nil {
+		if !app.cfg.App.Private && app.cfg.App.Federation && !newPost.Created.After(time.Now()) {
+			go federatePost(app, newPost, newPost.Collection.ID, false)
+		}
+		if app.cfg.Letters.Enabled() && newPost.Collection.EmailSubsEnabled() {
+			go app.db.InsertJob(&PostJob{
+				PostID: newPost.ID,
+				Action: "email",
+				Delay:  emailSendDelay,
+			})
+		}
 	}
 
 	return response
@@ -952,15 +962,22 @@ func addPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	if !app.cfg.App.Private && app.cfg.App.Federation {
-		for _, pRes := range *res {
-			if pRes.Code != http.StatusOK {
-				continue
-			}
+	for _, pRes := range *res {
+		if pRes.Code != http.StatusOK {
+			continue
+		}
+		if !app.cfg.App.Private && app.cfg.App.Federation {
 			if !pRes.Post.Created.After(time.Now()) {
 				pRes.Post.Collection.hostName = app.cfg.App.Host
 				go federatePost(app, pRes.Post, pRes.Post.Collection.ID, false)
 			}
+		}
+		if app.cfg.Letters.Enabled() && pRes.Post.Collection.EmailSubsEnabled() {
+			go app.db.InsertJob(&PostJob{
+				PostID: pRes.Post.ID,
+				Action: "email",
+				Delay:  emailSendDelay,
+			})
 		}
 	}
 	return impart.WriteSuccess(w, res, http.StatusOK)
@@ -1162,6 +1179,15 @@ func (p *PublicPost) CanonicalURL(hostName string) string {
 		return hostName + "/" + p.ID + ".md"
 	}
 	return p.Collection.CanonicalURL() + p.Slug.String
+}
+
+func (pp *PublicPost) DisplayCanonicalURL() string {
+	us := pp.CanonicalURL(pp.Collection.hostName)
+	u, err := url.Parse(us)
+	if err != nil {
+		return us
+	}
+	return u.Hostname() + u.Path
 }
 
 func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
@@ -1530,6 +1556,15 @@ Are you sure it was ever here?`,
 	} else {
 		p.extractData()
 		p.Content = strings.Replace(p.Content, "<!--more-->", "", 1)
+		if app.cfg.Letters.Enabled() && c.EmailSubsEnabled() {
+			// TODO: indicate plan is inactive or subs disabled when OWNER is viewing their own post.
+			if u != nil && u.IsEmailSubscriber(app, c.ID) {
+				p.Content = strings.Replace(p.Content, "<!--emailsub-->", `<p id="emailsub">You're subscribed to email updates. <a href="/api/collections/`+c.Alias+`/email/unsubscribe?slug=`+p.Slug.String+`">Unsubscribe</a>.</p>`, -1)
+			} else {
+				p.Content = strings.Replace(p.Content, "<!--emailsub-->", `<form method="post" id="emailsub" action="/api/collections/`+c.Alias+`/email/subscribe"><input type="hidden" name="slug" value="`+p.Slug.String+`" /><input type="hidden" name="web" value="1" /><div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="email" name="`+spam.HoneypotFieldName()+`" tabindex="-1" value="" /><input type="password" name="fake_password" tabindex="-1" placeholder="password" autocomplete="new-password" /></div><input type="email" name="email" placeholder="me@example.com" /><input type="submit" id="subscribe-btn" value="Subscribe" /></form>`, -1)
+			}
+		}
+		p.Content = strings.Replace(p.Content, "&lt;!--emailsub-->", "<!--emailsub-->", 1)
 		// TODO: move this to function
 		p.formatContent(app.cfg, cr.isCollOwner, true)
 		tp := CollectionPostPage{
@@ -1591,6 +1626,14 @@ func PostsContains(sl *[]PublicPost, s *PublicPost) bool {
 func (p *Post) extractData() {
 	p.Tags = tags.Extract(p.Content)
 	p.extractImages()
+}
+
+func (p *Post) IsSans() bool {
+	return p.Font == "sans"
+}
+
+func (p *Post) IsMonospace() bool {
+	return p.Font == "mono"
 }
 
 func (rp *RawPost) UserFacingCreated() string {

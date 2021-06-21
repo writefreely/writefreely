@@ -95,6 +95,44 @@ textarea.section.norm {
 	</div>
 
 	<div class="option">
+		<h2 id="updates">Updates</h2>
+		<div class="section">
+			<p class="explain">Keep readers updated with your latest posts wherever they are.</p>
+			<ul style="list-style:none">
+				<li>
+					<label class="option-text"><input type="checkbox" checked="checked" disabled />
+						RSS feed
+					</label>
+					<p class="describe">Readers can subscribe to your blog's <a href="{{.CanonicalURL}}feed/" target="feed">RSS feed</a> with their favorite RSS reader.</p>
+				</li>
+				{{if .LettersCfg.Enabled}}
+				<li>
+					<label class="option-text" id="email-sub-label"><input type="checkbox" name="email_subs" id="email_subs" {{if .EmailSubsEnabled}}checked="checked"{{end}} />
+						Email subscriptions
+					</label>
+					<p class="describe">
+						Let readers subscribe to your blog via email, and optionally accept private replies.
+					</p>
+					<div id="custom-letter-reply" style="font-size: .8em; margin-top: -0.5em; margin-left: 1.8em; margin-bottom: 1em;" {{if not .EmailSubsEnabled}}style="display:none"{{end}}>
+						Allow replies to this address:
+						<input type="email" name="letter_reply" id="letter_reply" placeholder="me@example.com" value="{{.LetterReplyTo}}" {{if not .EmailSubsEnabled}}disabled{{end}} />
+					</div>
+				</li>
+				{{end}}
+                {{if .Federation}}
+				<li>
+					<label class="option-text" id="federate-label"><input type="checkbox" name="federate" id="federate" {{if .Federation}}checked="checked"{{end}} disabled />
+						Federation
+					</label>
+					<strong id="normal-handle-env" class="fedi-handle">@<span id="fedi-handle">{{.Alias}}</span>@<span id="fedi-domain">{{.FriendlyHost}}</span></strong>
+					<p class="describe">Allow others to follow your blog and interact with your posts in the fediverse. <a href="https://video.writeas.org/videos/watch/cc55e615-d204-417c-9575-7b57674cc6f3" target="video">See how it works</a>.</p>
+				</li>
+				{{end}}
+			</ul>
+		</div>
+	</div>
+
+	<div class="option">
 		<h2>Display Format</h2>
 		<div class="section">
 			<p class="explain">Customize how your posts display on your page.
@@ -248,6 +286,13 @@ var $fediCustomDomain = document.getElementById('fedi-custom-domain');
 var $customDomain = document.getElementById('domain-alias');
 var $customHandleEnv = document.getElementById('custom-handle-env');
 var $normalHandleEnv = document.getElementById('normal-handle-env');
+
+var $emailSubsCheck = document.getElementById('email_subs');
+var $letterReply = document.getElementById('letter_reply');
+H.getEl('email_subs').on('click', function() {
+    let show = $emailSubsCheck.checked
+    $letterReply.disabled = !show
+})
 
 if (matchMedia('(pointer:fine)').matches) {
 	// Only initialize Ace editor on devices with a mouse

@@ -1,11 +1,17 @@
 module github.com/writefreely/writefreely
 
 require (
+	github.com/PuerkitoBio/goquery v1.7.0 // indirect
+	github.com/aymerick/douceur v0.2.0
 	github.com/clbanning/mxj v1.8.4 // indirect
 	github.com/dustin/go-humanize v1.0.0
+	github.com/facebookgo/ensure v0.0.0-20200202191622-63f1cf65ac4c // indirect
+	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
+	github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 // indirect
 	github.com/fatih/color v1.10.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/go-test/deep v1.0.1 // indirect
+	github.com/gobuffalo/envy v1.9.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/gorilla/csrf v1.7.0
 	github.com/gorilla/feeds v1.1.1
@@ -18,11 +24,14 @@ require (
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/kylemcc/twitter-text-go v0.0.0-20180726194232-7f582f6736ec
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
+	github.com/mailgun/mailgun-go v2.0.0+incompatible
 	github.com/manifoldco/promptui v0.8.0
 	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/microcosm-cc/bluemonday v1.0.5
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
+	github.com/onsi/ginkgo v1.16.4 // indirect
+	github.com/onsi/gomega v1.13.0 // indirect
 	github.com/prologic/go-gopher v0.0.0-20200721020712-3e11dcff0469
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
 	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
@@ -32,6 +41,7 @@ require (
 	github.com/writeas/activity v0.1.2
 	github.com/writeas/activityserve v0.0.0-20200409150223-d7ab3eaa4481
 	github.com/writeas/go-strip-markdown v2.0.1+incompatible
+	github.com/writeas/go-strip-markdown/v2 v2.1.1
 	github.com/writeas/go-webfinger v1.1.0
 	github.com/writeas/httpsig v1.0.0
 	github.com/writeas/impart v1.1.1
@@ -42,7 +52,7 @@ require (
 	github.com/writeas/web-core v1.3.1-0.20210330164422-95a3a717ed8f
 	github.com/writefreely/go-nodeinfo v1.2.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/net v0.0.0-20200707034311-ab3426394381
+	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
 	gopkg.in/ini.v1 v1.62.0
 )
 

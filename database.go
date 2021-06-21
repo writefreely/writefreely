@@ -14,6 +14,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/go-sql-driver/mysql"
 	"github.com/writeas/web-core/silobridge"
 	wf_db "github.com/writefreely/writefreely/db"
 	"net/http"
@@ -929,6 +930,41 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 				log.Error("Unable to insert monetization_pointer value: %v", err)
 				return err
 			}
+		}
+	}
+
+	// Update EmailSub value
+	if c.EmailSubs {
+		// TODO: ensure these work with SQLite
+		_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?", collID, "email_subs", "1", "1")
+		if err != nil {
+			log.Error("Unable to insert email_subs value: %v", err)
+			return err
+		}
+		skipUpdate := false
+		if c.LetterReply != nil {
+			// Strip away any excess spaces
+			trimmed := strings.TrimSpace(*c.LetterReply)
+			// Only update value when it contains "@"
+			if strings.IndexRune(trimmed, '@') > 0 {
+				c.LetterReply = &trimmed
+			} else {
+				// Value appears invalid, so don't update
+				skipUpdate = true
+			}
+			if !skipUpdate {
+				_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?", collID, collAttrLetterReplyTo, *c.LetterReply, *c.LetterReply)
+				if err != nil {
+					log.Error("Unable to insert %s value: %v", collAttrLetterReplyTo, err)
+					return err
+				}
+			}
+		}
+	} else {
+		_, err = db.Exec("DELETE FROM collectionattributes WHERE collection_id = ? AND attribute = ?", collID, "email_subs")
+		if err != nil {
+			log.Error("Unable to delete email_subs value: %v", err)
+			return err
 		}
 	}
 
@@ -2811,4 +2847,244 @@ func (db *datastore) GetProfilePageFromHandle(app *App, handle string) (string, 
 		actorIRI = remoteUser.ActorID
 	}
 	return actorIRI, nil
+}
+
+func (db *datastore) AddEmailSubscription(collID, userID int64, email string, confirmed bool) (*EmailSubscriber, error) {
+	friendlyChars := "0123456789BCDFGHJKLMNPQRSTVWXYZbcdfghjklmnpqrstvwxyz"
+	subID := id.GenerateRandomString(friendlyChars, 8)
+	token := id.GenerateRandomString(friendlyChars, 16)
+	emailVal := sql.NullString{
+		String: email,
+		Valid:  email != "",
+	}
+	userIDVal := sql.NullInt64{
+		Int64: userID,
+		Valid: userID > 0,
+	}
+
+	_, err := db.Exec("INSERT INTO emailsubscribers (id, collection_id, user_id, email, subscribed, token, confirmed) VALUES (?, ?, ?, ?, NOW(), ?, ?)", subID, collID, userIDVal, emailVal, token, confirmed)
+	if err != nil {
+		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
+			if mysqlErr.Number == mySQLErrDuplicateKey {
+				// Duplicate, so just return existing subscriber information
+				log.Info("Duplicate subscriber for email %s, user %d; returning existing subscriber", email, userID)
+				return db.FetchEmailSubscriber(email, userID, collID)
+			}
+		}
+		return nil, err
+	}
+
+	return &EmailSubscriber{
+		ID:     subID,
+		CollID: collID,
+		UserID: userIDVal,
+		Email:  emailVal,
+		Token:  token,
+	}, nil
+}
+
+func (db *datastore) IsEmailSubscriber(email string, userID, collID int64) bool {
+	var dummy int
+	var err error
+	if email != "" {
+		err = db.QueryRow("SELECT 1 FROM emailsubscribers WHERE email = ? AND collection_id = ?", email, collID).Scan(&dummy)
+	} else {
+		err = db.QueryRow("SELECT 1 FROM emailsubscribers WHERE user_id = ? AND collection_id = ?", userID, collID).Scan(&dummy)
+	}
+	switch {
+	case err == sql.ErrNoRows:
+		return false
+	case err != nil:
+		return false
+	}
+	return true
+}
+
+func (db *datastore) GetEmailSubscribers(collID int64, reqConfirmed bool) ([]*EmailSubscriber, error) {
+	cond := ""
+	if reqConfirmed {
+		cond = " AND confirmed = 1"
+	}
+	rows, err := db.Query(`SELECT s.id, collection_id, user_id, s.email, u.email, subscribed, token, confirmed, allow_export 
+FROM emailsubscribers s 
+LEFT JOIN users u 
+  ON u.id = user_id 
+WHERE collection_id = ?`+cond+`
+ORDER BY subscribed DESC`, collID)
+	if err != nil {
+		log.Error("Failed selecting email subscribers for collection %d: %v", collID, err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var subs []*EmailSubscriber
+	for rows.Next() {
+		s := &EmailSubscriber{}
+		err = rows.Scan(&s.ID, &s.CollID, &s.UserID, &s.Email, &s.acctEmail, &s.Subscribed, &s.Token, &s.Confirmed, &s.AllowExport)
+		if err != nil {
+			log.Error("Failed scanning row from email subscribers: %v", err)
+			continue
+		}
+		subs = append(subs, s)
+	}
+	return subs, nil
+}
+
+func (db *datastore) FetchEmailSubscriberEmail(subID, token string) (string, error) {
+	var email sql.NullString
+	// TODO: return user email if there's a user_id ?
+	err := db.QueryRow("SELECT email FROM emailsubscribers WHERE id = ? AND token = ?", subID, token).Scan(&email)
+	switch {
+	case err == sql.ErrNoRows:
+		return "", fmt.Errorf("Subscriber doesn't exist or token is invalid.")
+	case err != nil:
+		log.Error("Couldn't SELECT email from emailsubscribers: %v", err)
+		return "", fmt.Errorf("Something went very wrong.")
+	}
+
+	return email.String, nil
+}
+
+func (db *datastore) FetchEmailSubscriber(email string, userID, collID int64) (*EmailSubscriber, error) {
+	const emailSubCols = "id, collection_id, user_id, email, subscribed, token, confirmed, allow_export"
+
+	s := &EmailSubscriber{}
+	var row *sql.Row
+	if email != "" {
+		row = db.QueryRow("SELECT "+emailSubCols+" FROM emailsubscribers WHERE email = ? AND collection_id = ?", email, collID)
+	} else {
+		row = db.QueryRow("SELECT "+emailSubCols+" FROM emailsubscribers WHERE user_id = ? AND collection_id = ?", userID, collID)
+	}
+	err := row.Scan(&s.ID, &s.CollID, &s.UserID, &s.Email, &s.Subscribed, &s.Token, &s.Confirmed, &s.AllowExport)
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, nil
+	case err != nil:
+		return nil, err
+	}
+	return s, nil
+}
+
+func (db *datastore) DeleteEmailSubscriber(subID, token string) error {
+	res, err := db.Exec("DELETE FROM emailsubscribers WHERE id = ? AND token = ?", subID, token)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, _ := res.RowsAffected()
+	if rowsAffected == 0 {
+		return impart.HTTPError{http.StatusNotFound, "Invalid token, or subscriber doesn't exist"}
+	}
+	return nil
+}
+
+func (db *datastore) DeleteEmailSubscriberByUser(email string, userID, collID int64) error {
+	var res sql.Result
+	var err error
+	if email != "" {
+		res, err = db.Exec("DELETE FROM emailsubscribers WHERE email = ? AND collection_id = ?", email, collID)
+	} else {
+		res, err = db.Exec("DELETE FROM emailsubscribers WHERE user_id = ? AND collection_id = ?", userID, collID)
+	}
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, _ := res.RowsAffected()
+	if rowsAffected == 0 {
+		return impart.HTTPError{http.StatusNotFound, "Subscriber doesn't exist"}
+	}
+	return nil
+}
+
+func (db *datastore) UpdateSubscriberConfirmed(subID, token string) error {
+	email, err := db.FetchEmailSubscriberEmail(subID, token)
+	if err != nil {
+		log.Error("Didn't fetch email subscriber: %v", err)
+		return err
+	}
+
+	// TODO: ensure all addresses with original name are also confirmed, e.g. matt+fake@write.as and matt@write.as are now confirmed
+	_, err = db.Exec("UPDATE emailsubscribers SET confirmed = 1 WHERE email = ?", email)
+	if err != nil {
+		log.Error("Could not update email subscriber confirmation status: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (db *datastore) IsSubscriberConfirmed(email string) bool {
+	var dummy int64
+	err := db.QueryRow("SELECT 1 FROM emailsubscribers WHERE email = ? AND confirmed = 1", email).Scan(&dummy)
+	switch {
+	case err == sql.ErrNoRows:
+		return false
+	case err != nil:
+		log.Error("Couldn't SELECT in isSubscriberConfirmed: %v", err)
+		return false
+	}
+
+	return true
+}
+
+func (db *datastore) InsertJob(j *PostJob) error {
+	res, err := db.Exec("INSERT INTO publishjobs (post_id, action, delay) VALUES (?, ?, ?)", j.PostID, j.Action, j.Delay)
+	if err != nil {
+		return err
+	}
+	jobID, err := res.LastInsertId()
+	if err != nil {
+		log.Error("[jobs] Couldn't get last insert ID! %s", err)
+	}
+	log.Info("[jobs] Queued %s job #%d for post %s, delayed %d minutes", j.Action, jobID, j.PostID, j.Delay)
+	return nil
+}
+
+func (db *datastore) UpdateJobForPost(postID string, delay int64) error {
+	_, err := db.Exec("UPDATE publishjobs SET delay = ? WHERE post_id = ?", delay, postID)
+	if err != nil {
+		return fmt.Errorf("Unable to update publish job: %s", err)
+	}
+	log.Info("Updated job for post %s: delay %d", postID, delay)
+	return nil
+}
+
+func (db *datastore) DeleteJob(id int64) error {
+	_, err := db.Exec("DELETE FROM publishjobs WHERE id = ?", id)
+	if err != nil {
+		return err
+	}
+	log.Info("[job #%d] Deleted.", id)
+	return nil
+}
+
+func (db *datastore) DeleteJobByPost(postID string) error {
+	_, err := db.Exec("DELETE FROM publishjobs WHERE post_id = ?", postID)
+	if err != nil {
+		return err
+	}
+	log.Info("[job] Deleted job for post %s", postID)
+	return nil
+}
+
+func (db *datastore) GetJobsToRun(action string) ([]*PostJob, error) {
+	rows, err := db.Query(`SELECT pj.id, post_id, action, delay
+		FROM publishjobs pj
+		INNER JOIN posts p
+			ON post_id = p.id
+		WHERE action = ? AND created < DATE_SUB(NOW(), INTERVAL delay MINUTE) AND created > DATE_SUB(NOW(), INTERVAL delay + 5 MINUTE)
+		ORDER BY created ASC`, action)
+	if err != nil {
+		log.Error("Failed selecting from publishjobs: %v", err)
+		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve publish jobs."}
+	}
+	defer rows.Close()
+
+	jobs := []*PostJob{}
+	for rows.Next() {
+		j := &PostJob{}
+		err = rows.Scan(&j.ID, &j.PostID, &j.Action, &j.Delay)
+		jobs = append(jobs, j)
+	}
+	return jobs, nil
 }

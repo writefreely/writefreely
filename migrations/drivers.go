@@ -36,6 +36,13 @@ func (db *datastore) typeSmallInt() string {
 	return "SMALLINT"
 }
 
+func (db *datastore) typeTinyInt() string {
+	if db.driverName == driverSQLite {
+		return "INTEGER"
+	}
+	return "TINYINT"
+}
+
 func (db *datastore) typeText() string {
 	return "TEXT"
 }

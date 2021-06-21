@@ -134,3 +134,7 @@ func (u *User) IsAdmin() bool {
 func (u *User) IsSilenced() bool {
 	return u.Status&UserSilenced != 0
 }
+
+func (u *User) IsEmailSubscriber(app *App, collID int64) bool {
+	return app.db.IsEmailSubscriber("", u.ID, collID)
+}

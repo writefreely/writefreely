@@ -33,8 +33,11 @@ import (
 	"github.com/writefreely/writefreely/author"
 	"github.com/writefreely/writefreely/config"
 	"github.com/writefreely/writefreely/page"
+	"github.com/writefreely/writefreely/spam"
 	"golang.org/x/net/idna"
 )
+
+const collAttrLetterReplyTo = "letter_reply_to"
 
 type (
 	// TODO: add Direction to db
@@ -87,6 +90,7 @@ type (
 		Privacy   int    `schema:"privacy" json:"privacy"`
 		Pass      string `schema:"password" json:"password"`
 		MathJax   bool   `schema:"mathjax" json:"mathjax"`
+		EmailSubs bool   `schema:"email_subs" json:"email_subs"`
 		Handle    string `schema:"handle" json:"handle"`
 
 		// Actual collection values updated in the DB
@@ -97,6 +101,7 @@ type (
 		Script       *sql.NullString `schema:"script" json:"script"`
 		Signature    *sql.NullString `schema:"signature" json:"signature"`
 		Monetization *string         `schema:"monetization_pointer" json:"monetization_pointer"`
+		LetterReply  *string         `schema:"letter_reply" json:"letter_reply"`
 		Visibility   *int            `schema:"visibility" json:"public"`
 		Format       *sql.NullString `schema:"format" json:"format"`
 	}
@@ -353,6 +358,10 @@ func (c *Collection) RenderMathJax() bool {
 	return c.db.CollectionHasAttribute(c.ID, "render_mathjax")
 }
 
+func (c *Collection) EmailSubsEnabled() bool {
+	return c.db.CollectionHasAttribute(c.ID, "email_subs")
+}
+
 func (c *Collection) MonetizationURL() string {
 	if c.Monetization == "" {
 		return ""
@@ -575,13 +584,17 @@ type CollectionPage struct {
 	IsWelcome      bool
 	IsOwner        bool
 	IsCollLoggedIn bool
+	Honeypot       string
+	IsSubscriber   bool
 	CanPin         bool
 	Username       string
 	Monetization   string
+	Flash          template.HTML
 	Collections    *[]Collection
 	PinnedPosts    *[]PublicPost
-	IsAdmin        bool
-	CanInvite      bool
+
+	IsAdmin   bool
+	CanInvite bool
 
 	// Helper field for Chorus mode
 	CollAlias string
@@ -821,7 +834,12 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 		StaticPage:        pageForReq(app, r),
 		IsCustomDomain:    cr.isCustomDomain,
 		IsWelcome:         r.FormValue("greeting") != "",
+		Honeypot:          spam.HoneypotFieldName(),
 		CollAlias:         c.Alias,
+	}
+	flashes, _ := getSessionFlashes(app, w, r, nil)
+	for _, f := range flashes {
+		displayPage.Flash = template.HTML(f)
 	}
 	displayPage.IsAdmin = u != nil && u.IsAdmin()
 	displayPage.CanInvite = canUserInvite(app.cfg, displayPage.IsAdmin)
@@ -829,6 +847,7 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 	if u != nil {
 		displayPage.Username = u.Username
 		displayPage.IsOwner = u.ID == coll.OwnerID
+		displayPage.IsSubscriber = u.IsEmailSubscriber(app, coll.ID)
 		if displayPage.IsOwner {
 			// Add in needed information for users viewing their own collection
 			owner = u

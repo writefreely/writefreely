@@ -170,11 +170,17 @@ type (
 		DisablePasswordAuth bool `ini:"disable_password_auth"`
 	}
 
+	LettersCfg struct {
+		Domain         string `ini:"domain"`
+		MailgunPrivate string `ini:"mailgun_private"`
+	}
+
 	// Config holds the complete configuration for running a writefreely instance
 	Config struct {
 		Server       ServerCfg       `ini:"server"`
 		Database     DatabaseCfg     `ini:"database"`
 		App          AppCfg          `ini:"app"`
+		Letters      LettersCfg      `ini:"letters"`
 		SlackOauth   SlackOauthCfg   `ini:"oauth.slack"`
 		WriteAsOauth WriteAsOauthCfg `ini:"oauth.writeas"`
 		GitlabOauth  GitlabOauthCfg  `ini:"oauth.gitlab"`
@@ -233,6 +239,10 @@ func (ac *AppCfg) LandingPath() string {
 		return "/" + ac.Landing
 	}
 	return ac.Landing
+}
+
+func (lc LettersCfg) Enabled() bool {
+	return lc.Domain != "" && lc.MailgunPrivate != ""
 }
 
 func (ac AppCfg) SignupPath() string {
