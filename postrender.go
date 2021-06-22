@@ -11,6 +11,7 @@
 package writefreely
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html"
@@ -191,7 +192,12 @@ func applyBasicMarkdown(data []byte) string {
 		blackfriday.HTML_SMARTYPANTS_DASHES
 
 	// Generate Markdown
-	md := blackfriday.Markdown([]byte(data), blackfriday.HtmlRenderer(htmlFlags, "", ""), mdExtensions)
+	// This passes the supplied title into blackfriday.Markdown() as an H1 header, so we only render HTML that
+	// belongs in an H1.
+	md := blackfriday.Markdown(append([]byte("# "), data...), blackfriday.HtmlRenderer(htmlFlags, "", ""), mdExtensions)
+	// Remove H1 markup
+	md = bytes.TrimSpace(md) // blackfriday.Markdown adds a newline at the end of the <h1>
+	md = md[len("<h1>") : len(md)-len("</h1>")]
 	// Strip out bad HTML
 	policy := bluemonday.UGCPolicy()
 	policy.AllowAttrs("class", "id").Globally()
