@@ -1,8 +1,20 @@
+/*
+ * Copyright © 2020-2021 A Bunch Tell LLC and respective authors.
+ *
+ * This file is part of WriteFreely.
+ *
+ * WriteFreely is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License, included
+ * in the LICENSE file in this source code package.
+ */
+
 package writefreely
 
 import (
 	"context"
 	"errors"
+	"fmt"
+	"github.com/writeas/web-core/log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -118,6 +130,10 @@ func (c genericOauthClient) inspectOauthAccessToken(ctx context.Context, accessT
 	// map each relevant field in inspectResponse to the mapped field from the config
 	var inspectResponse InspectResponse
 	inspectResponse.UserID, _ = genericInterface[c.MapUserID].(string)
+	if inspectResponse.UserID == "" {
+		log.Error("[CONFIGURATION ERROR] Generic OAuth provider returned empty UserID value (`%s`).\n  Do you need to configure a different `map_user_id` value for this provider?", c.MapUserID)
+		return nil, fmt.Errorf("no UserID (`%s`) value returned", c.MapUserID)
+	}
 	inspectResponse.Username, _ = genericInterface[c.MapUsername].(string)
 	inspectResponse.DisplayName, _ = genericInterface[c.MapDisplayName].(string)
 	inspectResponse.Email, _ = genericInterface[c.MapEmail].(string)
