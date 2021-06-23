@@ -182,6 +182,10 @@ func applyMarkdownSpecial(data []byte, skipNoFollow bool, baseURL string, cfg *c
 }
 
 func applyBasicMarkdown(data []byte) string {
+	if len(data) == 0 {
+		return ""
+	}
+
 	mdExtensions := 0 |
 		blackfriday.EXTENSION_STRIKETHROUGH |
 		blackfriday.EXTENSION_SPACE_HEADERS |

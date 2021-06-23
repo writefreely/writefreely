@@ -18,6 +18,7 @@ func TestApplyBasicMarkdown(t *testing.T) {
 		in     string
 		result string
 	}{
+		{"empty", "", ""},
 		{"plain", "Hello, World!", "Hello, World!"},
 		{"multibyte", "こんにちは", `こんにちは`},
 		{"bold", "**안녕하세요**", `<strong>안녕하세요</strong>`},
