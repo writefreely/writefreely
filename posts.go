@@ -1461,7 +1461,7 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 			if slug == "feed" {
 				// User tried to access blog feed without a trailing slash, and
 				// there's no post with a slug "feed"
-				return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "/feed/"}
+				return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "feed/"}
 			}
 
 			po := &Post{
