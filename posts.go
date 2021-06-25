@@ -26,7 +26,7 @@ import (
 	"github.com/guregu/null/zero"
 	"github.com/kylemcc/twitter-text-go/extract"
 	"github.com/microcosm-cc/bluemonday"
-	stripmd "github.com/writeas/go-strip-markdown"
+	stripmd "github.com/writeas/go-strip-markdown/v2"
 	"github.com/writeas/impart"
 	"github.com/writeas/monday"
 	"github.com/writeas/slug"
@@ -234,7 +234,7 @@ func (p Post) Summary() string {
 	}
 	p.Content = stripHTMLWithoutEscaping(p.Content)
 	// and Markdown
-	p.Content = stripmd.Strip(p.Content)
+	p.Content = stripmd.StripOptions(p.Content, stripmd.Options{SkipImages: true})
 
 	title := p.Title.String
 	var desc string
