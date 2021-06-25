@@ -182,7 +182,7 @@ func applyMarkdownSpecial(data []byte, skipNoFollow bool, baseURL string, cfg *c
 }
 
 func applyBasicMarkdown(data []byte) string {
-	if len(data) == 0 {
+	if len(bytes.TrimSpace(data)) == 0 {
 		return ""
 	}
 

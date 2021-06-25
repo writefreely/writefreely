@@ -19,6 +19,12 @@ func TestApplyBasicMarkdown(t *testing.T) {
 		result string
 	}{
 		{"empty", "", ""},
+		{"empty spaces", "  ", ""},
+		{"empty tabs", "\t", ""},
+		{"empty newline", "\n", ""},
+		{"nums", "123", "123"},
+		{"dot", ".", "."},
+		{"dash", "-", "-"},
 		{"plain", "Hello, World!", "Hello, World!"},
 		{"multibyte", "こんにちは", `こんにちは`},
 		{"bold", "**안녕하세요**", `<strong>안녕하세요</strong>`},
