@@ -1021,9 +1021,10 @@ func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error 
 		if c.OwnerID != u.ID {
 			return ErrCollectionNotFound
 		}
+		c.hostName = app.cfg.App.Host
 	}
 
-	topPosts, err := app.db.GetTopPosts(u, alias)
+	topPosts, err := app.db.GetTopPosts(u, alias, c.hostName)
 	if err != nil {
 		log.Error("Unable to get top posts: %v", err)
 		return err

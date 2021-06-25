@@ -76,7 +76,7 @@ type writestore interface {
 	GetMeStats(u *User) userMeStats
 	GetTotalCollections() (int64, error)
 	GetTotalPosts() (int64, error)
-	GetTopPosts(u *User, alias string) (*[]PublicPost, error)
+	GetTopPosts(u *User, alias string, hostName string) (*[]PublicPost, error)
 	GetAnonymousPosts(u *User, page int) (*[]PublicPost, error)
 	GetUserPosts(u *User) (*[]PublicPost, error)
 
@@ -1767,7 +1767,7 @@ func (db *datastore) GetTotalPosts() (postCount int64, err error) {
 	return
 }
 
-func (db *datastore) GetTopPosts(u *User, alias string) (*[]PublicPost, error) {
+func (db *datastore) GetTopPosts(u *User, alias string, hostName string) (*[]PublicPost, error) {
 	params := []interface{}{u.ID}
 	where := ""
 	if alias != "" {
@@ -1802,6 +1802,7 @@ func (db *datastore) GetTopPosts(u *User, alias string) (*[]PublicPost, error) {
 			c.Title = title.String
 			c.Description = description.String
 			c.Views = views.Int64
+			c.hostName = hostName
 			pubPost.Collection = &CollectionObj{Collection: c}
 		}
 
