@@ -119,7 +119,7 @@ func (p *PublicPost) augmentReadingDestination() {
 }
 
 func applyMarkdown(data []byte, baseURL string, cfg *config.Config) string {
-	return applyMarkdownSpecial(data, baseURL, cfg, false)
+	return applyMarkdownSpecial(data, baseURL, cfg, cfg.App.SingleUser)
 }
 
 func disableYoutubeAutoplay(outHTML string) string {
