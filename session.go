@@ -130,12 +130,13 @@ func saveUserSession(app *App, r *http.Request, w http.ResponseWriter) error {
 	return err
 }
 
-func getFullUserSession(app *App, r *http.Request) *User {
+func getFullUserSession(app *App, r *http.Request) (*User, error) {
 	u := getUserSession(app, r)
 	if u == nil {
-		return nil
+		return nil, nil
 	}
 
-	u, _ = app.db.GetUserByID(u.ID)
-	return u
+	var err error
+	u, err = app.db.GetUserByID(u.ID)
+	return u, err
 }

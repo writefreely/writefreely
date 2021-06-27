@@ -332,7 +332,7 @@ func (db *datastore) IsUserSilenced(id int64) (bool, error) {
 	err := db.QueryRow("SELECT status FROM users WHERE id = ?", id).Scan(&u.Status)
 	switch {
 	case err == sql.ErrNoRows:
-		return false, fmt.Errorf("is user silenced: %v", ErrUserNotFound)
+		return false, ErrUserNotFound
 	case err != nil:
 		log.Error("Couldn't SELECT user status: %v", err)
 		return false, fmt.Errorf("is user silenced: %v", err)
