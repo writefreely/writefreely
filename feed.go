@@ -17,7 +17,7 @@ import (
 
 	. "github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
-	stripmd "github.com/writeas/go-strip-markdown"
+	stripmd "github.com/writeas/go-strip-markdown/v2"
 	"github.com/writeas/web-core/log"
 )
 

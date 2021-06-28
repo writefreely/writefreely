@@ -23,7 +23,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/microcosm-cc/bluemonday"
-	stripmd "github.com/writeas/go-strip-markdown"
+	stripmd "github.com/writeas/go-strip-markdown/v2"
 	"github.com/writeas/impart"
 	blackfriday "github.com/writeas/saturday"
 	"github.com/writeas/web-core/log"

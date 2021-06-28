@@ -127,8 +127,8 @@ github.com/writeas/activity v0.1.2 h1:Y12B5lIrabfqKE7e7HFCWiXrlfXljr9tlkFm2mp7Dg
 github.com/writeas/activity v0.1.2/go.mod h1:mYYgiewmEM+8tlifirK/vl6tmB2EbjYaxwb+ndUw5T0=
 github.com/writeas/activityserve v0.0.0-20200409150223-d7ab3eaa4481 h1:BiSivIxLQFcKoUorpNN3rNwwFG5bITPnqUSyIccfdh0=
 github.com/writeas/activityserve v0.0.0-20200409150223-d7ab3eaa4481/go.mod h1:4akDJSl+sSp+QhrQKMqzAqdV1gJ1pPx6XPI77zgMM8o=
-github.com/writeas/go-strip-markdown v2.0.1+incompatible h1:IIqxTM5Jr7RzhigcL6FkrCNfXkvbR+Nbu1ls48pXYcw=
-github.com/writeas/go-strip-markdown v2.0.1+incompatible/go.mod h1:Rsyu10ZhbEK9pXdk8V6MVnZmTzRG0alMNLMwa0J01fE=
+github.com/writeas/go-strip-markdown/v2 v2.1.1 h1:hAxUM21Uhznf/FnbVGiJciqzska6iLei22Ijc3q2e28=
+github.com/writeas/go-strip-markdown/v2 v2.1.1/go.mod h1:UvvgPJgn1vvN8nWuE5e7v/+qmDu3BSVnKAB6Gl7hFzA=
 github.com/writeas/go-webfinger v1.1.0 h1:MzNyt0ry/GMsRmJGftn2o9mPwqK1Q5MLdh4VuJCfb1Q=
 github.com/writeas/go-webfinger v1.1.0/go.mod h1:w2VxyRO/J5vfNjJHYVubsjUGHd3RLDoVciz0DE3ApOc=
 github.com/writeas/go-writeas v1.1.0 h1:WHGm6wriBkxYAOGbvriXH8DlMUGOi6jhSZLUZKQ+4mQ=
