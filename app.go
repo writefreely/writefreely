@@ -30,7 +30,7 @@ import (
 	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
 	"github.com/manifoldco/promptui"
-	stripmd "github.com/writeas/go-strip-markdown"
+	stripmd "github.com/writeas/go-strip-markdown/v2"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/converter"
@@ -56,7 +56,7 @@ var (
 	debugging bool
 
 	// Software version can be set from git env using -ldflags
-	softwareVer = "0.13.0"
+	softwareVer = "0.13.1"
 
 	// DEPRECATED VARS
 	isSingleUser bool
@@ -797,7 +797,7 @@ func connectToDatabase(app *App) {
 			os.Exit(1)
 		}
 		db, err = sql.Open("sqlite3_with_regex", app.cfg.Database.FileName+"?parseTime=true&cached=shared")
-		db.SetMaxOpenConns(1)
+		db.SetMaxOpenConns(2)
 	} else {
 		log.Error("Invalid database type '%s'. Only 'mysql' and 'sqlite3' are supported right now.", app.cfg.Database.Type)
 		os.Exit(1)

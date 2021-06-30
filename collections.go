@@ -242,6 +242,8 @@ func (c *Collection) DisplayCanonicalURL() string {
 	return d + p
 }
 
+// RedirectingCanonicalURL returns the fully-qualified canonical URL for the Collection, with a trailing slash. The
+// hostName field needs to be populated for this to work correctly.
 func (c *Collection) RedirectingCanonicalURL(isRedir bool) string {
 	if c.hostName == "" {
 		// If this is true, the human programmers screwed up. So ask for a bug report and fail, fail, fail
