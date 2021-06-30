@@ -797,7 +797,7 @@ func connectToDatabase(app *App) {
 			os.Exit(1)
 		}
 		db, err = sql.Open("sqlite3_with_regex", app.cfg.Database.FileName+"?parseTime=true&cached=shared")
-		db.SetMaxOpenConns(1)
+		db.SetMaxOpenConns(2)
 	} else {
 		log.Error("Invalid database type '%s'. Only 'mysql' and 'sqlite3' are supported right now.", app.cfg.Database.Type)
 		os.Exit(1)
