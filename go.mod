@@ -23,7 +23,7 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.5
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
-	github.com/prologic/go-gopher v0.0.0-20200721020712-3e11dcff0469
+	git.mills.io/prologic/go-gopher v0.0.0-20200721020712-3e11dcff0469
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
 	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
