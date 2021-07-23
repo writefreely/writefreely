@@ -18,7 +18,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/prologic/go-gopher"
+	"git.mills.io/prologic/go-gopher"
 	"github.com/writeas/web-core/log"
 )
 
