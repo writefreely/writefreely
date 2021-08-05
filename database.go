@@ -1688,7 +1688,7 @@ func (db *datastore) GetPublicCollections(hostName string) (*[]Collection, error
 	FROM collections c
 	LEFT JOIN users u ON u.id = c.owner_id
 	WHERE c.privacy = 1 AND u.status = 0
-	ORDER BY id ASC`)
+	ORDER BY title ASC`)
 	if err != nil {
 		log.Error("Failed selecting public collections: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve public collections."}
