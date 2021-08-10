@@ -328,19 +328,6 @@ Sent to %recipient.to%. Unsubscribe: ` + p.Collection.CanonicalURL() + `email/un
 	if len(subs) == 0 {
 		return nil
 	}
-	log.Info("[email] Adding %d recipient(s)", len(subs))
-	for _, s := range subs {
-		e := s.FinalEmail(app.keys)
-		log.Info("[email] Adding %s", e)
-		err = m.AddRecipientAndVariables(e, map[string]interface{}{
-			"id":    s.ID,
-			"to":    e,
-			"token": s.Token,
-		})
-		if err != nil {
-			log.Error("Unable to add receipient %s: %s", e, err)
-		}
-	}
 
 	if title != "" {
 		title = string(`<h2 id="title">` + p.FormattedDisplayTitle() + `</h2>`)
@@ -425,6 +412,21 @@ Sent to %recipient.to%. Unsubscribe: ` + p.Collection.CanonicalURL() + `email/un
 	}
 
 	m.SetHtml(html)
+
+	log.Info("[email] Adding %d recipient(s)", len(subs))
+	for _, s := range subs {
+		e := s.FinalEmail(app.keys)
+		log.Info("[email] Adding %s", e)
+		err = m.AddRecipientAndVariables(e, map[string]interface{}{
+			"id":    s.ID,
+			"to":    e,
+			"token": s.Token,
+		})
+		if err != nil {
+			log.Error("Unable to add receipient %s: %s", e, err)
+		}
+	}
+
 	res, _, err := gun.Send(m)
 	log.Info("[email] Send result: %s", res)
 	if err != nil {
