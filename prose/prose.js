@@ -40,13 +40,7 @@ class ProseMirrorView {
       $title.value = title;
     }
 
-    const doc = writeFreelyMarkdownParser.parse(
-      // Replace all "solo" \n's with \\\n for correct markdown parsing
-      // Can't use lookahead or lookbehind because it's not supported on Safari
-      content.replace(/([^]{0,1})(\n)([^]{0,1})/g, (match, p1, p2, p3) => {
-        return p1 !== "\n" && p3 !== "\n" ? p1 + "\\\n" + p3 : match;
-      })
-    );
+    const doc = writeFreelyMarkdownParser.parse(content)
 
     this.view = new EditorView(target, {
       state: EditorState.create({
