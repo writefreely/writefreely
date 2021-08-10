@@ -314,7 +314,7 @@ Originally published on ` + p.Collection.DisplayTitle() + ` (` + p.Collection.Ca
 Sent to %recipient.to%. Unsubscribe: ` + p.Collection.CanonicalURL() + `email/unsubscribe/%recipient.id%?t=%recipient.token%`
 
 	gun := mailgun.NewMailgun(app.cfg.Letters.Domain, app.cfg.Letters.MailgunPrivate)
-	m := mailgun.NewMessage(p.Collection.DisplayTitle()+" <"+p.Collection.Alias+"@"+app.cfg.Letters.Domain+">", p.Collection.DisplayTitle()+": "+p.DisplayTitle(), plainMsg)
+	m := mailgun.NewMessage(p.Collection.DisplayTitle()+" <"+p.Collection.Alias+"@"+app.cfg.Letters.Domain+">", p.Collection.DisplayTitle()+": "+stripmd.Strip(p.DisplayTitle()), plainMsg)
 	replyTo := app.db.GetCollectionAttribute(collID, collAttrLetterReplyTo)
 	if replyTo != "" {
 		m.SetReplyTo(replyTo)
