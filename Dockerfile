@@ -1,7 +1,7 @@
 # Build image
 FROM golang:1.15-alpine as build
 
-RUN apk add --update nodejs nodejs-npm make g++ git
+RUN apk add --update nodejs npm make g++ git
 RUN npm install -g less less-plugin-clean-css
 RUN go get -u github.com/go-bindata/go-bindata/...
 
