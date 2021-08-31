@@ -201,6 +201,9 @@ func applyBasicMarkdown(data []byte) string {
 	md := blackfriday.Markdown(append([]byte("# "), data...), blackfriday.HtmlRenderer(htmlFlags, "", ""), mdExtensions)
 	// Remove H1 markup
 	md = bytes.TrimSpace(md) // blackfriday.Markdown adds a newline at the end of the <h1>
+	if len(md) == 0 {
+		return ""
+	}
 	md = md[len("<h1>") : len(md)-len("</h1>")]
 	// Strip out bad HTML
 	policy := bluemonday.UGCPolicy()
