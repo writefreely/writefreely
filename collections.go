@@ -28,6 +28,7 @@ import (
 	"github.com/writeas/web-core/activitystreams"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/bots"
+	"github.com/writeas/web-core/i18n"
 	"github.com/writeas/web-core/log"
 	waposts "github.com/writeas/web-core/posts"
 	"github.com/writefreely/writefreely/author"
@@ -364,6 +365,16 @@ func (c *Collection) MonetizationURL() string {
 
 func (c CollectionPage) DisplayMonetization() string {
 	return displayMonetization(c.Monetization, c.Alias)
+}
+
+func (c *DisplayCollection) Direction() string {
+	if c.Language == "" {
+		return "auto"
+	}
+	if i18n.LangIsRTL(c.Language) {
+		return "rtl"
+	}
+	return "ltr"
 }
 
 func newCollection(app *App, w http.ResponseWriter, r *http.Request) error {
@@ -986,6 +997,92 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 	err = templates["collection-tags"].ExecuteTemplate(w, "collection-tags", displayPage)
 	if err != nil {
 		log.Error("Unable to render collection tag page: %v", err)
+	}
+
+	return nil
+}
+
+func handleViewCollectionLang(app *App, w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	lang := vars["lang"]
+
+	cr := &collectionReq{}
+	err := processCollectionRequest(cr, vars, w, r)
+	if err != nil {
+		return err
+	}
+
+	u, err := checkUserForCollection(app, cr, r, false)
+	if err != nil {
+		return err
+	}
+
+	page := getCollectionPage(vars)
+
+	c, err := processCollectionPermissions(app, cr, u, w, r)
+	if c == nil || err != nil {
+		return err
+	}
+
+	coll := newDisplayCollection(c, cr, page)
+	coll.Language = lang
+
+	coll.Posts, _ = app.db.GetLangPosts(app.cfg, c, lang, page, cr.isCollOwner)
+	if err != nil {
+		return ErrCollectionPageNotFound
+	}
+
+	// Serve collection
+	displayPage := struct {
+		CollectionPage
+		Tag string
+	}{
+		CollectionPage: CollectionPage{
+			DisplayCollection: coll,
+			StaticPage:        pageForReq(app, r),
+			IsCustomDomain:    cr.isCustomDomain,
+		},
+		Tag: lang,
+	}
+	var owner *User
+	if u != nil {
+		displayPage.Username = u.Username
+		displayPage.IsOwner = u.ID == coll.OwnerID
+		if displayPage.IsOwner {
+			// Add in needed information for users viewing their own collection
+			owner = u
+			displayPage.CanPin = true
+
+			pubColls, err := app.db.GetPublishableCollections(owner, app.cfg.App.Host)
+			if err != nil {
+				log.Error("unable to fetch collections: %v", err)
+			}
+			displayPage.Collections = pubColls
+		}
+	}
+	isOwner := owner != nil
+	if !isOwner {
+		// Current user doesn't own collection; retrieve owner information
+		owner, err = app.db.GetUserByID(coll.OwnerID)
+		if err != nil {
+			// Log the error and just continue
+			log.Error("Error getting user for collection: %v", err)
+		}
+		if owner.IsSilenced() {
+			return ErrCollectionNotFound
+		}
+	}
+	displayPage.Silenced = owner != nil && owner.IsSilenced()
+	displayPage.Owner = owner
+	coll.Owner = displayPage.Owner
+	// Add more data
+	// TODO: fix this mess of collections inside collections
+	displayPage.PinnedPosts, _ = app.db.GetPinnedPosts(coll.CollectionObj, isOwner)
+	displayPage.Monetization = app.db.GetCollectionAttribute(coll.ID, "monetization_pointer")
+
+	err = templates["collection"].ExecuteTemplate(w, "collection", displayPage)
+	if err != nil {
+		log.Error("Unable to render collection lang page: %v", err)
 	}
 
 	return nil
