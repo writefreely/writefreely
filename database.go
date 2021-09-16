@@ -1262,7 +1262,7 @@ func (db *datastore) GetPostsTagged(cfg *config.Config, c *Collection, tag strin
 
 func (db *datastore) GetCollLangTotalPosts(collID int64, lang string) (uint64, error) {
 	var articles uint64
-	err := db.QueryRow("SELECT COUNT(*) FROM posts WHERE collection_id = ? AND language = ?", collID, lang).Scan(&articles)
+	err := db.QueryRow("SELECT COUNT(*) FROM posts WHERE collection_id = ? AND language = ? AND created <= "+db.now(), collID, lang).Scan(&articles)
 	if err != nil && err != sql.ErrNoRows {
 		log.Error("Couldn't get total lang posts count for collection %d: %v", collID, err)
 		return 0, err
