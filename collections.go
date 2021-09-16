@@ -1027,6 +1027,20 @@ func handleViewCollectionLang(app *App, w http.ResponseWriter, r *http.Request) 
 	coll := newDisplayCollection(c, cr, page)
 	coll.Language = lang
 
+	ttlPosts, err := app.db.GetCollLangTotalPosts(coll.ID, lang)
+	if err != nil {
+		log.Error("Unable to getCollLangTotalPosts: %s", err)
+	}
+	pagePosts := coll.Format.PostsPerPage()
+	coll.TotalPages = int(math.Ceil(float64(ttlPosts) / float64(pagePosts)))
+	if coll.TotalPages > 0 && page > coll.TotalPages {
+		redirURL := fmt.Sprintf("/lang:%s/page/%d", lang, coll.TotalPages)
+		if !app.cfg.App.SingleUser {
+			redirURL = fmt.Sprintf("/%s%s%s", cr.prefix, coll.Alias, redirURL)
+		}
+		return impart.HTTPError{http.StatusFound, redirURL}
+	}
+
 	coll.Posts, _ = app.db.GetLangPosts(app.cfg, c, lang, page, cr.isCollOwner)
 	if err != nil {
 		return ErrCollectionPageNotFound

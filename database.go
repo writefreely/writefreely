@@ -1260,6 +1260,16 @@ func (db *datastore) GetPostsTagged(cfg *config.Config, c *Collection, tag strin
 	return &posts, nil
 }
 
+func (db *datastore) GetCollLangTotalPosts(collID int64, lang string) (uint64, error) {
+	var articles uint64
+	err := db.QueryRow("SELECT COUNT(*) FROM posts WHERE collection_id = ? AND language = ?", collID, lang).Scan(&articles)
+	if err != nil && err != sql.ErrNoRows {
+		log.Error("Couldn't get total lang posts count for collection %d: %v", collID, err)
+		return 0, err
+	}
+	return articles, nil
+}
+
 func (db *datastore) GetLangPosts(cfg *config.Config, c *Collection, lang string, page int, includeFuture bool) (*[]PublicPost, error) {
 	collID := c.ID
 
@@ -1285,7 +1295,10 @@ func (db *datastore) GetLangPosts(cfg *config.Config, c *Collection, lang string
 		timeCondition = "AND created <= " + db.now()
 	}
 
-	rows, err := db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND language = ? "+timeCondition+" ORDER BY created "+order+limitStr, collID, lang)
+	rows, err := db.Query(`SELECT `+postCols+`
+FROM posts
+WHERE collection_id = ? AND language = ? `+timeCondition+`
+ORDER BY created `+order+limitStr, collID, lang)
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve collection posts."}
