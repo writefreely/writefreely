@@ -79,17 +79,17 @@ form dd {
 					<label>
 						<dt>Username</dt>
 						<dd>
-							<input type="text" id="alias" name="alias" style="width: 100%; box-sizing: border-box;" tabindex="1" autofocus />
+							<input type="text" id="alias" name="alias" style="width: 100%; box-sizing: border-box;" autofocus />
 							{{if .Federation}}<p id="alias-site" class="demo">@<strong>your-username</strong>@{{.FriendlyHost}}</p>{{else}}<p id="alias-site" class="demo">{{.FriendlyHost}}/<strong>your-username</strong></p>{{end}}
 						</dd>
 					</label>
 					<label>
 						<dt>Password</dt>
-						<dd><input type="password" id="password" name="pass" autocomplete="new-password" placeholder="" tabindex="2" style="width: 100%; box-sizing: border-box;" /></dd>
+						<dd><input type="password" id="password" name="pass" autocomplete="new-password" placeholder="" style="width: 100%; box-sizing: border-box;" /></dd>
 					</label>
 					<label>
 						<dt>Email (optional)</dt>
-						<dd><input type="email" name="email" id="email" style="letter-spacing: 1px; width: 100%; box-sizing: border-box;" placeholder="me@example.com" tabindex="3" /></dd>
+						<dd><input type="email" name="email" id="email" style="letter-spacing: 1px; width: 100%; box-sizing: border-box;" placeholder="me@example.com" /></dd>
 					</label>
 					<dt>
 						<button id="btn-create" type="submit" style="margin-top: 0">Create blog</button>
