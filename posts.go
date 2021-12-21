@@ -1247,6 +1247,8 @@ func getSlug(title, lang string) string {
 
 func getSlugFromPost(title, body, lang string) string {
 	if title == "" {
+		// Remove Markdown, so e.g. link URLs and image alt text don't make it into the slug
+		body = strings.TrimSpace(stripmd.StripOptions(body, stripmd.Options{SkipImages: true}))
 		title = postTitle(body, body)
 	}
 	title = parse.PostLede(title, false)
