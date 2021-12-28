@@ -168,6 +168,9 @@ type (
 
 		// Disable password authentication if use only Oauth
 		DisablePasswordAuth bool `ini:"disable_password_auth"`
+
+		// Which Markdown renderer to use
+		Renderer string `ini:"markdown_renderer"`
 	}
 
 	// Config holds the complete configuration for running a writefreely instance
@@ -243,6 +246,13 @@ func (ac AppCfg) SignupPath() string {
 		return "/signup"
 	}
 	return "/"
+}
+
+func (ac AppCfg) MarkdownRenderer() string {
+	if strings.EqualFold(ac.Renderer, "goldmark") {
+		return "goldmark"
+	}
+	return "saturday"
 }
 
 // Load reads the given configuration file, then parses and returns it as a Config.
