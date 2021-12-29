@@ -92,8 +92,8 @@ export const writeFreelyMarkdownSerializer = new MarkdownSerializer(
   },
   {
     em: {
-      open: "*",
-      close: "*",
+      open: "_",
+      close: "_",
       mixable: true,
       expelEnclosingWhitespace: true,
     },
