@@ -1,7 +1,7 @@
-{{define "head"}}<title>Unpublished &mdash; {{.SiteName}}</title>{{end}}
+{{define "head"}}<title>Dépublié &mdash; {{.SiteName}}</title>{{end}}
 {{define "content"}}
 		<div class="error-page">
-			<p class="msg">{{if .Content}}{{.Content}}{{else}}Post was unpublished by the author.{{end}}</p>
-			<p class="commentary">It might be back some day.</p>
+			<p class="msg">{{if .Content}}{{.Content}}{{else}}La publication a été dépubliée par son auteur.{{end}}</p>
+			<p class="commentary">Elle pourrait être de retour un jour.</p>
 		</div>
 {{end}}

@@ -60,7 +60,7 @@ form dd {
 
 <div class="row">
 	<div style="margin: 0 auto; max-width: 25em;">
-		<h1>Sign up</h1>
+		<h1>Inscription</h1>
 
 		{{ if .Error }}
 			<p style="font-style: italic">{{.Error}}</p>
@@ -77,22 +77,22 @@ form dd {
 				<input type="hidden" name="invite_code" value="{{.Invite}}" />
 				<dl class="billing">
 					<label>
-						<dt>Username</dt>
+						<dt>Nom d'utilisateur</dt>
 						<dd>
 							<input type="text" id="alias" name="alias" style="width: 100%; box-sizing: border-box;" tabindex="1" autofocus />
-							{{if .Federation}}<p id="alias-site" class="demo">@<strong>your-username</strong>@{{.FriendlyHost}}</p>{{else}}<p id="alias-site" class="demo">{{.FriendlyHost}}/<strong>your-username</strong></p>{{end}}
+							{{if .Federation}}<p id="alias-site" class="demo">@<strong>votre-nom</strong>@{{.FriendlyHost}}</p>{{else}}<p id="alias-site" class="demo">{{.FriendlyHost}}/<strong>votre-nom</strong></p>{{end}}
 						</dd>
 					</label>
 					<label>
-						<dt>Password</dt>
+						<dt>Mot de passe</dt>
 						<dd><input type="password" id="password" name="pass" autocomplete="new-password" placeholder="" tabindex="2" style="width: 100%; box-sizing: border-box;" /></dd>
 					</label>
 					<label>
-						<dt>Email (optional)</dt>
-						<dd><input type="email" name="email" id="email" style="letter-spacing: 1px; width: 100%; box-sizing: border-box;" placeholder="me@example.com" tabindex="3" /></dd>
+						<dt>Email (optionnel)</dt>
+						<dd><input type="email" name="email" id="email" style="letter-spacing: 1px; width: 100%; box-sizing: border-box;" placeholder="moi@bdx.town" tabindex="3" /></dd>
 					</label>
 					<dt>
-						<button id="btn-create" type="submit" style="margin-top: 0">Create blog</button>
+						<button id="btn-create" type="submit" style="margin-top: 0">Créer mon blog</button>
 					</dt>
 				</dl>
 			</form>

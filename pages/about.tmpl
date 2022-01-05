@@ -9,16 +9,16 @@
 
 		{{if .PublicStats}}
 			<hr style="margin:1.5em 0;" />
-			<p><em>{{.SiteName}}</em> is home to <strong>{{largeNumFmt .AboutStats.NumPosts}}</strong> {{pluralize "article" "articles" .AboutStats.NumPosts}} across <strong>{{largeNumFmt .AboutStats.NumBlogs}}</strong> {{pluralize "blog" "blogs" .AboutStats.NumBlogs}}.</p>
+			<p><em>{{.SiteName}}</em> héberge <strong>{{largeNumFmt .AboutStats.NumPosts}}</strong> {{pluralize "article" "articles" .AboutStats.NumPosts}} parmis <strong>{{largeNumFmt .AboutStats.NumBlogs}}</strong> {{pluralize "blog" "blogs" .AboutStats.NumBlogs}}.</p>
 		{{end}}
 
 		{{if not .WFModesty}}
-		<h2 style="margin-top:2em">About WriteFreely</h2>
-		<p><a href="https://writefreely.org">WriteFreely</a> is a self-hosted, decentralized blogging platform for publishing beautiful, simple blogs.</p>
-		<p>It lets you publish a single blog, or host a community of writers who can create multiple blogs under one account. You can also enable federation, which allows people in the fediverse to follow your blog, bookmark your posts, and share them with others.</p>
+		<h2 style="margin-top:2em">A propos de WriteFreely</h2>
+		<p><a href="https://writefreely.org">WriteFreely</a> est une plate-forme de blogs décentralisée et auto-hébergée pour publier de beaux et simples blogs.</p>
+		<p>Il vous permet de publier un seul blog ou d'héberger une communauté d'écrivains qui peuvent créer plusieurs blogs sous un seul compte. Vous pouvez également activer la fédération, qui permet aux personnes du fediverse de suivre votre blog, d'ajouter vos articles à leurs favoris et de les partager avec d'autres.</p>
 		<div class="clearfix blurbs" style="font-size: 1.3em;text-align:center">
 			<div class="half big">
-				<p><a href="https://writefreely.org/start">Start an instance</a></p>
+				<p><a href="https://writefreely.org/start">Démarrer une instance</a></p>
 			</div>
 			<div class="half big">
 				<p><a href="https://writefreely.org">WriteFreely</a></p>

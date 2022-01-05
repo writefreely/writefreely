@@ -1,10 +1,10 @@
-{{define "head"}}<title>Post not found &mdash; {{.SiteName}}</title>{{end}}
+{{define "head"}}<title>Publication non trouvée &mdash; {{.SiteName}}</title>{{end}}
 {{define "content"}}
 		<div class="error-page" style="max-width:30em">
-			<p class="msg">Post not found.</p>
+			<p class="msg">Publication non trouvée.</p>
 			{{if and (not .SingleUser) .OpenRegistration}}
-			<p class="commentary" style="margin-top:2.5em">Why not share a thought of your own?</p>
-			<p><a href="/">Start a blog</a> and spread your ideas on <strong>{{.SiteName}}</strong>, a simple{{if .Federation}}, federated{{end}} blogging community.</p>
+			<p class="commentary" style="margin-top:2.5em">Pourquoi ne pas partager vos propres mots ?</p>
+			<p><a href="/">Créez un blog</a> et partagez vos idées sur <strong>{{.SiteName}}</strong></p>
 			{{end}}
 		</div>
 {{end}}
