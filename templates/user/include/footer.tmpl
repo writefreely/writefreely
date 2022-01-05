@@ -8,12 +8,12 @@
 		<hr />
 		<nav>
 			<a class="home" href="/">{{.SiteName}}</a>
-			{{if not .SingleUser}}<a href="/about">about</a>{{end}}
-			{{if and (not .SingleUser) .LocalTimeline}}<a href="/read">reader</a>{{end}}
-			<a href="https://writefreely.org/guide/{{.OfficialVersion}}" target="guide">writer's guide</a>
-			{{if not .SingleUser}}<a href="/privacy">privacy</a>{{end}}
+			{{if not .SingleUser}}<a href="/about">a propos</a>{{end}}
+			{{if and (not .SingleUser) .LocalTimeline}}<a href="/read">fil</a>{{end}}
+			<a href="https://writefreely.org/guide/{{.OfficialVersion}}" target="guide">guide d'écriture</a>
+			{{if not .SingleUser}}<a href="/privacy">vie privée</a>{{end}}
       {{if .WFModesty}}
-			<p style="font-size: 0.9em">powered by <a href="https://writefreely.org">writefreely</a></p>
+			<p style="font-size: 0.9em">propulsé par <a href="https://writefreely.org">writefreely</a></p>
 			{{else}}
 			<a href="https://writefreely.org">writefreely {{.Version}}</a>
 			{{end}}

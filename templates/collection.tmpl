@@ -46,21 +46,21 @@
 					<ul>
 						{{ if .IsOwner }}
 							{{if .SingleUser}}
-							<li><a href="/me/new">New Post</a></li>
+							<li><a href="/me/new">Publier</a></li>
 							{{else}}
 							<li><a href="/#{{.Alias}}" class="write">{{.SiteName}}</a></li>
 							{{end}}
-							{{if .SimpleNav}}<li><a href="/new#{{.Alias}}">New Post</a></li>{{end}}
-							<li><a href="/me/c/{{.Alias}}">Customize</a></li>
+							{{if .SimpleNav}}<li><a href="/new#{{.Alias}}">Publier</a></li>{{end}}
+							<li><a href="/me/c/{{.Alias}}">Personnaliser</a></li>
 							<li><a href="/me/c/{{.Alias}}/stats">Stats</a></li>
 							<li class="separator"><hr /></li>
-							{{if not .SingleUser}}<li><a href="/me/c/"><img class="ic-18dp" src="/img/ic_blogs_dark@2x.png" /> View Blogs</a></li>{{end}}
-							<li><a href="/me/posts/"><img class="ic-18dp" src="/img/ic_list_dark@2x.png" /> View Drafts</a></li>
+							{{if not .SingleUser}}<li><a href="/me/c/"><img class="ic-18dp" src="/img/ic_blogs_dark@2x.png" /> Voir les blogs</a></li>{{end}}
+							<li><a href="/me/posts/"><img class="ic-18dp" src="/img/ic_list_dark@2x.png" /> Voir les brouillons</a></li>
 						{{ else }}
 							<li><a href="/login">Log in{{if .IsProtected}} to {{.DisplayTitle}}{{end}}</a></li>
 							{{if .IsProtected}}
 								<li class="separator"><hr /></li>
-								<li><a href="/logout">Log out</a></li>
+								<li><a href="/logout">Se déconnecter</a></li>
 							{{end}}
 						{{ end }}
 					</ul>
@@ -71,7 +71,7 @@
 				<li class="has-submenu"><a onclick="void(0)">&#9776; Menu</a>
 					<ul>
 						<li class="menu-heading" style="padding: .5rem .75rem; box-sizing: border-box;">{{.DisplayTitle}}</li>
-						<li><a href="{{.CanonicalURL}}logout">Log out</a></li>
+						<li><a href="{{.CanonicalURL}}logout">Se déconnecter</a></li>
 					</ul>
 				</li>
 			</ul></nav>
@@ -120,7 +120,7 @@
 		<footer>
 			<hr />
 			<nav dir="ltr">
-				{{if not .SingleUser}}<a class="home pubd" href="/">{{.SiteName}}</a> &middot; {{end}}powered by <a style="margin-left:0" href="https://writefreely.org">writefreely</a>
+				{{if not .SingleUser}}<a class="home pubd" href="/">{{.SiteName}}</a> &middot; {{end}}propulsé par <a style="margin-left:0" href="https://writefreely.org">writefreely</a>
 			</nav>
 		</footer>
 		{{ end }}

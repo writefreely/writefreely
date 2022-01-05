@@ -17,46 +17,46 @@
 
 {{end}}{{.Post.Content}}</textarea>
 
-		<div class="alert success hidden" id="edited-elsewhere">This post has been updated elsewhere since you last published! <a href="#" id="erase-edit">Delete draft and reload</a>.</div>
+		<div class="alert success hidden" id="edited-elsewhere">Cette publication a été mise à jour depuis sa dernière édition ! <a href="#" id="erase-edit">Supprimer le brouillon et recharger</a>.</div>
 		
 		<header id="tools">
 			<div id="clip">
 				{{if not .SingleUser}}<h1><a href="/me/c/" title="View blogs"><img class="ic-24dp" src="/img/ic_blogs_dark@2x.png" /></a></h1>{{end}}
 				<nav id="target" {{if .SingleUser}}style="margin-left:0"{{end}}><ul>
-						{{if .Editing}}<li>{{if .EditCollection}}<a href="{{.EditCollection.CanonicalURL}}">{{.EditCollection.Title}}</a>{{else}}<a>Draft</a>{{end}}</li>
-						{{else}}<li class="has-submenu"><a id="publish-to"><span id="target-name">Draft</span> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
+						{{if .Editing}}<li>{{if .EditCollection}}<a href="{{.EditCollection.CanonicalURL}}">{{.EditCollection.Title}}</a>{{else}}<a>Brouillon</a>{{end}}</li>
+						{{else}}<li class="has-submenu"><a id="publish-to"><span id="target-name">Brouillon</span> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
 						<ul>
-							<li class="menu-heading">Publish to...</li>
+							<li class="menu-heading">Publier sur...</li>
 							{{if .Blogs}}{{range $idx, $el := .Blogs}}
 								<li class="target{{if eq $idx 0}} selected{{end}}" id="blog-{{$el.Alias}}"><a href="#{{$el.Alias}}"><i class="material-icons md-18">public</i> {{if $el.Title}}{{$el.Title}}{{else}}{{$el.Alias}}{{end}}</a></li>
 							{{end}}{{end}}
-							<li class="target" id="blog-anonymous"><a href="#anonymous"><i class="material-icons md-18">description</i> <em>Draft</em></a></li>
+							<li class="target" id="blog-anonymous"><a href="#anonymous"><i class="material-icons md-18">description</i> <em>Brouillon</em></a></li>
 							<li id="user-separator" class="separator"><hr /></li>
 						{{ if .SingleUser }}
-							<li><a href="/"><i class="material-icons md-18">launch</i> View Blog</a></li>
-							<li><a href="/me/c/{{.Username}}"><i class="material-icons md-18">palette</i> Customize</a></li>
+							<li><a href="/"><i class="material-icons md-18">launch</i> Voir le blog</a></li>
+							<li><a href="/me/c/{{.Username}}"><i class="material-icons md-18">palette</i> Personnaliser</a></li>
 							<li><a href="/me/c/{{.Username}}/stats"><i class="material-icons md-18">trending_up</i> Stats</a></li>
 						{{ else }}
-							<li><a href="/me/c/"><i class="material-icons md-18">library_books</i> View Blogs</a></li>
+							<li><a href="/me/c/"><i class="material-icons md-18">library_books</i> Voir le blog</a></li>
 						{{ end }}
-							<li><a href="/me/posts/"><i class="material-icons md-18">view_list</i> View Drafts</a></li>
-							<li><a href="/me/logout"><i class="material-icons md-18">power_settings_new</i>  Log out</a></li>
+							<li><a href="/me/posts/"><i class="material-icons md-18">view_list</i> Voir les brouillons</a></li>
+							<li><a href="/me/logout"><i class="material-icons md-18">power_settings_new</i>  Se déconnecter</a></li>
 						</ul>
 					</li>{{end}}
 				</ul></nav>
 				<nav id="font-picker" class="if-room room-3 hidden" style="margin-left:-1em"><ul>
 						<li class="has-submenu"><a href="#" id="" onclick="return false"><img class="ic-24dp" src="/img/ic_font_dark@2x.png" /> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
 						<ul style="text-align: center">
-							<li class="menu-heading">Font</li>
+							<li class="menu-heading">Police</li>
 							<li class="selected"><a class="font norm" href="#norm">Serif</a></li>
 							<li><a class="font sans" href="#sans">Sans-serif</a></li>
 							<li><a class="font wrap" href="#wrap">Monospace</a></li>
 						</ul>
 					</li>
 				</ul></nav>
-				<span id="wc" class="hidden if-room room-4">0 words</span>
+				<span id="wc" class="hidden if-room room-4">0 mots</span>
 			</div>
-			<noscript style="margin-left: 2em;"><strong>NOTE</strong>: for now, you'll need Javascript enabled to post.</noscript>
+			<noscript style="margin-left: 2em;"><strong>NOTE</strong>: pour l'instant, vous avez besoin de javascript pour publier.</noscript>
 			<div id="belt">
 				{{if .Editing}}<div class="tool hidden if-room"><a href="{{if .EditCollection}}{{.EditCollection.CanonicalURL}}{{.Post.Slug}}/edit/meta{{else}}/{{if .SingleUser}}d/{{end}}{{.Post.Id}}/meta{{end}}" title="Edit post metadata" id="edit-meta"><img class="ic-24dp" src="/img/ic_info_dark@2x.png" /></a></div>{{end}}
 				<div class="tool hidden if-room room-2"><a href="#theme" title="Toggle theme" id="toggle-theme"><img class="ic-24dp" src="/img/ic_brightness_dark@2x.png" /></a></div>

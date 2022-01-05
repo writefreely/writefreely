@@ -6,10 +6,10 @@
     {{if not .SingleUser}}
     <header class="admin">
         <nav class="pager">
-            {{if .CanPost}}<a href="{{if .SingleUser}}/me/new{{else}}/#{{.Alias}}{{end}}" class="btn gentlecta">New Post</a>{{end}}
-            <a href="/me/c/{{.Alias}}" {{if and (hasPrefix .Path "/me/c/") (hasSuffix .Path .Alias)}}class="selected"{{end}}>Customize</a>
+            {{if .CanPost}}<a href="{{if .SingleUser}}/me/new{{else}}/#{{.Alias}}{{end}}" class="btn gentlecta">Publier</a>{{end}}
+            <a href="/me/c/{{.Alias}}" {{if and (hasPrefix .Path "/me/c/") (hasSuffix .Path .Alias)}}class="selected"{{end}}>Personnaliser</a>
             <a href="/me/c/{{.Alias}}/stats" {{if hasSuffix .Path "/stats"}}class="selected"{{end}}>Stats</a>
-            <a href="{{if .SingleUser}}/{{else}}/{{.Alias}}/{{end}}">View Blog &rarr;</a>
+            <a href="{{if .SingleUser}}/{{else}}/{{.Alias}}/{{end}}">Voir le Blog &rarr;</a>
         </nav>
     </header>
     {{end}}

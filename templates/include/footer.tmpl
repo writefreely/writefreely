@@ -23,17 +23,17 @@
 					<div class="half">
 						<h3><a class="home" href="/">{{.SiteName}}</a></h3>
 						<ul>
-							<li><a href="/about">about</a></li>
+							<li><a href="/about">A propos</a></li>
 							{{if and (and (not .SingleUser) .LocalTimeline) .CanViewReader}}<a href="/read">reader</a>{{end}}
-							<li><a href="/privacy">privacy</a></li>
+							<li><a href="/privacy">Vie privée</a></li>
 						</ul>
 					</div>
 					<div class="half">
 						<h3><a href="https://writefreely.org" style="color:#444;text-transform:lowercase;">WriteFreely</a></h3>
 						<ul>
-							<li><a href="https://writefreely.org/guide/{{.OfficialVersion}}" target="guide">writer's guide</a></li>
-							<li><a href="https://developers.write.as/" title="Build on WriteFreely with our open developer API.">developers</a></li>
-							<li><a href="https://github.com/writefreely/writefreely">source code</a></li>
+							<li><a href="https://writefreely.org/guide/{{.OfficialVersion}}" target="guide">Guide d'écriture</a></li>
+							<li><a href="https://developers.write.as/" title="Build on WriteFreely with our open developer API.">développeurs</a></li>
+							<li><a href="https://github.com/writefreely/writefreely">code source</a></li>
 							<li style="margin-top:0.8em">{{.Version}}</li>
 						</ul>
 					</div>
