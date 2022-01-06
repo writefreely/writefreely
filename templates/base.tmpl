@@ -48,7 +48,7 @@
 						{{ end }}
 					{{if and (and  .LocalTimeline .CanViewReader) (not .Chorus)}}<a href="/read"{{if eq .Path "/read"}} class="selected"{{end}}>Fil</a>{{end}}
 					{{if eq .SignupPath "/signup"}}<a href="/signup"{{if eq .Path "/signup"}} class="selected"{{end}}>S'inscrire</a>{{end}}
-					{{if and (not .Username) (not .Private)}}<a href="/login"{{if eq .Path "/login"}} class="selected"{{end}}>Log in</a>{{else if .SimpleNav}}<a href="/me/logout">Se déconnecter</a>{{end}}
+					{{if and (not .Username) (not .Private)}}<a href="/login"{{if eq .Path "/login"}} class="selected"{{end}}>Connexion</a>{{else if .SimpleNav}}<a href="/me/logout">Se déconnecter</a>{{end}}
 					{{ end }}
 				</nav>
 				{{if .Chorus}}{{if .Username}}<div class="right-side" style="font-size: 0.86em;">

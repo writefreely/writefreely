@@ -2028,7 +2028,7 @@ func (db *datastore) ChangeSettings(app *App, u *User, s *userSettings) error {
 				hashedPass = authUser.HashedPass
 			}
 			if !auth.Authenticated(hashedPass, []byte(s.OldPass)) {
-				errPass = impart.HTTPError{http.StatusUnauthorized, "Incorrect password."}
+				errPass = impart.HTTPError{http.StatusUnauthorized, "Mot de passe incorrect."}
 				return errPass
 			}
 		}

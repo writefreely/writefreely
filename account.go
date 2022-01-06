@@ -512,7 +512,7 @@ func login(app *App, w http.ResponseWriter, r *http.Request) error {
 			return impart.HTTPError{http.StatusUnauthorized, "This user never set a password. Perhaps try logging in via OAuth?"}
 		}
 		if !auth.Authenticated(u.HashedPass, []byte(signin.Pass)) {
-			return impart.HTTPError{http.StatusUnauthorized, "Incorrect password."}
+			return impart.HTTPError{http.StatusUnauthorized, "Mot de passe incorrect."}
 		}
 	}
 

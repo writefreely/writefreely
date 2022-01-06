@@ -57,7 +57,7 @@
 							{{if not .SingleUser}}<li><a href="/me/c/"><img class="ic-18dp" src="/img/ic_blogs_dark@2x.png" /> Voir les blogs</a></li>{{end}}
 							<li><a href="/me/posts/"><img class="ic-18dp" src="/img/ic_list_dark@2x.png" /> Voir les brouillons</a></li>
 						{{ else }}
-							<li><a href="/login">Log in{{if .IsProtected}} to {{.DisplayTitle}}{{end}}</a></li>
+							<li><a href="/login">Connexion {{if .IsProtected}} à {{.DisplayTitle}}{{end}}</a></li>
 							{{if .IsProtected}}
 								<li class="separator"><hr /></li>
 								<li><a href="/logout">Se déconnecter</a></li>
