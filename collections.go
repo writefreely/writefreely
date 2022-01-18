@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2021 A Bunch Tell LLC.
+ * Copyright © 2018-2022 A Bunch Tell LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -24,12 +24,13 @@ import (
 	"unicode"
 
 	"github.com/gorilla/mux"
+	stripmd "github.com/writeas/go-strip-markdown/v2"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/activitystreams"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/bots"
 	"github.com/writeas/web-core/log"
-	waposts "github.com/writeas/web-core/posts"
+	"github.com/writeas/web-core/posts"
 	"github.com/writefreely/writefreely/author"
 	"github.com/writefreely/writefreely/config"
 	"github.com/writefreely/writefreely/page"
@@ -362,6 +363,26 @@ func (c *Collection) MonetizationURL() string {
 	return strings.Replace(c.Monetization, "$", "https://", 1)
 }
 
+// DisplayDescription returns the description with rendered Markdown and HTML.
+func (c *Collection) DisplayDescription() *template.HTML {
+	if c.Description == "" {
+		s := template.HTML("")
+		return &s
+	}
+	t := template.HTML(posts.ApplyBasicAccessibleMarkdown([]byte(c.Description)))
+	return &t
+}
+
+// PlainDescription returns the description with all Markdown and HTML removed.
+func (c *Collection) PlainDescription() string {
+	if c.Description == "" {
+		return ""
+	}
+	desc := stripHTMLWithoutEscaping(c.Description)
+	desc = stripmd.Strip(desc)
+	return desc
+}
+
 func (c CollectionPage) DisplayMonetization() string {
 	return displayMonetization(c.Monetization, c.Alias)
 }
@@ -551,11 +572,11 @@ func fetchCollectionPosts(app *App, w http.ResponseWriter, r *http.Request) erro
 		}
 	}
 
-	posts, err := app.db.GetPosts(app.cfg, c, page, isCollOwner, false, false)
+	ps, err := app.db.GetPosts(app.cfg, c, page, isCollOwner, false, false)
 	if err != nil {
 		return err
 	}
-	coll := &CollectionObj{Collection: *c, Posts: posts}
+	coll := &CollectionObj{Collection: *c, Posts: ps}
 	app.db.GetPostsCount(coll, isCollOwner)
 	// Strip non-public information
 	coll.Collection.ForPublic()
@@ -563,7 +584,7 @@ func fetchCollectionPosts(app *App, w http.ResponseWriter, r *http.Request) erro
 	// Transform post bodies if needed
 	if r.FormValue("body") == "html" {
 		for _, p := range *coll.Posts {
-			p.Content = waposts.ApplyMarkdown([]byte(p.Content))
+			p.Content = posts.ApplyMarkdown([]byte(p.Content))
 		}
 	}
 
