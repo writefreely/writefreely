@@ -924,7 +924,7 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 			}
 		}
 		if !skipUpdate {
-			_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?", collID, "monetization_pointer", *c.Monetization, *c.Monetization)
+			_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) "+db.upsert("collection_id", "attribute")+" value = ?", collID, "monetization_pointer", *c.Monetization, *c.Monetization)
 			if err != nil {
 				log.Error("Unable to insert monetization_pointer value: %v", err)
 				return err
