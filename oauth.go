@@ -293,10 +293,15 @@ func configureGiteaOauth(parentHandler *Handler, r *mux.Router, app *App) {
 			ClientID:         app.Config().GiteaOauth.ClientID,
 			ClientSecret:     app.Config().GiteaOauth.ClientSecret,
 			ExchangeLocation: app.Config().GiteaOauth.Host + "/login/oauth/access_token",
-			InspectLocation:  app.Config().GiteaOauth.Host + "/api/v1/user",
+			InspectLocation:  app.Config().GiteaOauth.Host + "/login/oauth/userinfo",
 			AuthLocation:     app.Config().GiteaOauth.Host + "/login/oauth/authorize",
 			HttpClient:       config.DefaultHTTPClient(),
 			CallbackLocation: callbackLocation,
+			Scope:            "openid profile email",
+			MapUserID:        "sub",
+			MapUsername:      "login",
+			MapDisplayName:   "full_name",
+			MapEmail:         "email",
 		}
 		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
 	}
@@ -355,7 +360,7 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 	}
 
 	if localUserID != -1 && attachUserID > 0 {
-		if err = addSessionFlash(app, w, r, "This Slack account is already attached to another user.", nil); err != nil {
+		if err = addSessionFlash(app, w, r, "This OAuth account is already attached to another user.", nil); err != nil {
 			return impart.HTTPError{Status: http.StatusInternalServerError, Message: err.Error()}
 		}
 		return impart.HTTPError{http.StatusFound, "/me/settings"}
@@ -376,6 +381,7 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 	}
 	if attachUserID > 0 {
 		log.Info("attaching to user %d", attachUserID)
+		log.Info("OAuth userid: %s", tokenInfo.UserID)
 		err = h.DB.RecordRemoteUserID(r.Context(), attachUserID, tokenInfo.UserID, provider, clientID, tokenResponse.AccessToken)
 		if err != nil {
 			return impart.HTTPError{http.StatusInternalServerError, err.Error()}
