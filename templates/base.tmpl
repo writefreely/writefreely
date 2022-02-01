@@ -3,6 +3,7 @@
 	<head>
 		{{ template "head" . }}
 		<link rel="stylesheet" type="text/css" href="{{.Host}}/css/{{.Theme}}.css" />
+		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="{{.Host}}/local/custom.css" />{{end}}
 		<link rel="shortcut icon" href="{{.Host}}/favicon.ico" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 

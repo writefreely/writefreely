@@ -356,6 +356,11 @@ func pageForReq(app *App, r *http.Request) page.StaticPage {
 		Version: "v" + softwareVer,
 	}
 
+	// Use custom style, if file exists
+	if _, err := os.Stat(filepath.Join(staticDir, "local", "custom.css")); err == nil {
+		p.CustomCSS = true
+	}
+
 	// Add user information, if given
 	var u *User
 	accessToken := r.FormValue("t")

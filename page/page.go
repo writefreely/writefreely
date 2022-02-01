@@ -21,6 +21,7 @@ type StaticPage struct {
 	config.AppCfg
 	Version   string
 	HeaderNav bool
+	CustomCSS bool
 
 	// Request values
 	Path          string
