@@ -42,7 +42,7 @@ h3 { font-weight: normal; }
 		<div class="option">
 			<h3>Username</h3>
 			<div class="section">
-				<input type="text" name="username" value="{{.Username}}" tabindex="1" />
+				<input type="text" name="username" value="{{.Username}}" />
 				<input type="submit" value="Update" style="margin-left: 1em;" />
 			</div>
 		</div>
@@ -57,11 +57,11 @@ h3 { font-weight: normal; }
 			<div class="section">
 				{{if and (not .HasPass) (not .IsLogOut)}}<div class="alert info"><p>Add a passphrase to easily log in to your account.</p></div>{{end}}
 				{{if .HasPass}}<p>Current passphrase</p>
-				<input type="password" name="current-pass" placeholder="Current passphrase" tabindex="1" /> <input class="show" type="checkbox" id="show-cur-pass" /><label for="show-cur-pass"> Show</label>
+				<input type="password" name="current-pass" placeholder="Current passphrase" /> <input class="show" type="checkbox" id="show-cur-pass" /><label for="show-cur-pass"> Show</label>
 				<p>New passphrase</p>
 				{{end}}
 				{{if .IsLogOut}}<input type="text" value="{{.Username}}" style="display:none" />{{end}}
-				<input type="password" name="new-pass" autocomplete="new-password" placeholder="New passphrase" tabindex="{{if .IsLogOut}}1{{else}}2{{end}}" /> <input class="show" type="checkbox" id="show-new-pass" /><label for="show-new-pass"> Show</label>
+				<input type="password" name="new-pass" autocomplete="new-password" placeholder="New passphrase" /> <input class="show" type="checkbox" id="show-new-pass" /><label for="show-new-pass"> Show</label>
 			</div>
 		</div>
 
@@ -73,12 +73,12 @@ h3 { font-weight: normal; }
 					<li>No-passphrase login</li>
 					<li>Account recovery if you forget your passphrase</li>
 				</ul></div>{{end}}
-				<input type="email" name="email" style="letter-spacing: 1px" placeholder="Email address" value="{{.Email}}" size="40" tabindex="{{if .IsLogOut}}2{{else}}3{{end}}" />
+				<input type="email" name="email" style="letter-spacing: 1px" placeholder="Email address" value="{{.Email}}" size="40" />
 			</div>
 		</div>
 
 		<div class="option" style="text-align: center;">
-			<input type="submit" value="Save changes" tabindex="4" />
+			<input type="submit" value="Save changes" />
 		</div>
 	</form>
 	{{end}}
