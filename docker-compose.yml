@@ -15,7 +15,7 @@ services:
   db:
     image: "mariadb:latest"
     volumes:
-      - db-data:/var/lib/mysql/data
+      - db-data:/var/lib/mysql/writefreely
     networks:
       - writefreely
     environment:
