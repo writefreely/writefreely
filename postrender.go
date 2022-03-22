@@ -73,6 +73,43 @@ func (p *Post) handleWebmonetizationPremiumContent(c *Collection, isOwner, postP
 	}
 }
 
+func (p *Post) handleUnlockProtocolPremiumContent(c *Collection, isOwner, postPage bool, cfg *config.Config) {
+	if c.UnlockProtocol != nil {
+		// Let's see if the user is logged in (2 options: query string include `code`, or cookie includes `code`)
+		// the `code` object includes the signed message + signature. Signed message includes timestamp
+		// Ethereum includes a "signer recovery" mechamism to "trust" the address
+		// if not, split and render login button
+		// if so, check if the user has a valid membership thru rpc endpoint
+		// For this we just call the right function on contract hasValidMembership(useraddress)
+		// if not, split and render purchase button
+		// if so, don't split and render full content (maybe show a "thank you for being a member")
+		spl := strings.Index(p.Content, shortCodePaid)
+		p.IsPaid = spl > -1
+		if postPage {
+			// We're viewing the individual post
+			if isOwner {
+				p.Content = strings.Replace(p.Content, shortCodePaid, "\n\n"+`<p class="split">Your subscriber content begins here.</p>`+"\n\n", 1)
+			} else {
+				if spl > -1 {
+					p.Content = p.Content[:spl+len(shortCodePaid)]
+					p.Content = strings.Replace(p.Content, shortCodePaid, "\n\n"+`<p class="split">Continue reading with a <strong>Coil</strong> membership.</p>`+"\n\n", 1)
+				}
+			}
+		} else {
+			// We've viewing the post on the collection landing
+			if spl > -1 {
+				baseURL := c.CanonicalURL()
+				if isOwner {
+					baseURL = "/" + c.Alias + "/"
+				}
+
+				p.Content = p.Content[:spl+len(shortCodePaid)]
+				p.HTMLExcerpt = template.HTML(applyMarkdown([]byte(p.Content[:spl]), baseURL, cfg))
+			}
+		}
+	}
+}
+
 func (p *Post) formatContent(cfg *config.Config, c *Collection, isOwner bool, isPostPage bool) {
 	baseURL := c.CanonicalURL()
 	// TODO: redundant
@@ -81,6 +118,7 @@ func (p *Post) formatContent(cfg *config.Config, c *Collection, isOwner bool, is
 	}
 
 	p.handleWebmonetizationPremiumContent(c, isOwner, isPostPage, cfg)
+	p.handleUnlockProtocolPremiumContent(c, isOwner, isPostPage, cfg)
 	p.Content = strings.Replace(p.Content, "&lt;!--paid-->", "<!--paid-->", 1)
 
 	p.HTMLTitle = template.HTML(applyBasicMarkdown([]byte(p.Title.String)))
