@@ -59,8 +59,16 @@ type (
 
 		Monetization string `json:"monetization_pointer,omitempty"`
 
+		UnlockProtocol *UnlockProtocol `json:"unlock_protocol,omitempty"`
+
 		db       *datastore
 		hostName string
+	}
+
+	UnlockProtocol struct {
+		RPCEndpoint string	`json:"rpc_endpoint" schema:"rpc_endpoint"`
+		ChainId		int 	`json:"chain_id" schema:"chain_id"`
+		LockAddress string	`json:"lock_address" schema:"lock_address"`
 	}
 	CollectionObj struct {
 		Collection
@@ -99,6 +107,8 @@ type (
 		Monetization *string         `schema:"monetization_pointer" json:"monetization_pointer"`
 		Visibility   *int            `schema:"visibility" json:"public"`
 		Format       *sql.NullString `schema:"format" json:"format"`
+
+		UnlockProtocol *UnlockProtocol `schema:"unlock_protocol" json:"unlock_protocol"`
 	}
 	CollectionFormat struct {
 		Format string
