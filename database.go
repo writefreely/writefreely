@@ -14,11 +14,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/writeas/web-core/silobridge"
-	wf_db "github.com/writefreely/writefreely/db"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/writeas/web-core/silobridge"
+	wf_db "github.com/writefreely/writefreely/db"
 
 	"github.com/guregu/null"
 	"github.com/guregu/null/zero"
@@ -815,6 +817,18 @@ func (db *datastore) GetCollectionBy(condition string, value interface{}) (*Coll
 	c.Public = c.IsPublic()
 	c.Monetization = db.GetCollectionAttribute(c.ID, "monetization_pointer")
 
+	RPCEndpoint := db.GetCollectionAttribute(c.ID, "unlock_protocol.rpc_endpoint")
+	if RPCEndpoint != "" {
+		c.UnlockProtocol = &UnlockProtocol{
+			RPCEndpoint: RPCEndpoint,
+		}
+		chainIdStr := db.GetCollectionAttribute(c.ID, "unlock_protocol.chain_id")
+		c.UnlockProtocol.ChainId, err = strconv.Atoi(chainIdStr)
+		c.UnlockProtocol.LockAddress = db.GetCollectionAttribute(c.ID, "unlock_protocol.lock_address")
+
+	}
+
+
 	c.db = db
 
 	return c, nil
@@ -929,6 +943,37 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 				log.Error("Unable to insert monetization_pointer value: %v", err)
 				return err
 			}
+		}
+	}
+
+	// Update Unlock Protocol value
+	if c.UnlockProtocol != nil {
+		skipUpdate := false
+		if c.UnlockProtocol.RPCEndpoint != "" {
+			// Strip away any excess spaces
+			c.UnlockProtocol.RPCEndpoint = strings.TrimSpace(c.UnlockProtocol.RPCEndpoint)
+		}
+		if c.UnlockProtocol.LockAddress != "" {
+			// Strip away any excess spaces
+			c.UnlockProtocol.LockAddress = strings.TrimSpace(c.UnlockProtocol.LockAddress)
+		}
+		if !skipUpdate {
+			_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) "+db.upsert("collection_id", "attribute")+" value = ?", collID, "unlock_protocol.rpc_endpoint", c.UnlockProtocol.RPCEndpoint, c.UnlockProtocol.RPCEndpoint)
+			if err != nil {
+				log.Error("Unable to insert unlock_protocol.rpc_endpoint value: %v", err)
+				return err
+			}
+			_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) "+db.upsert("collection_id", "attribute")+" value = ?", collID, "unlock_protocol.chain_id", c.UnlockProtocol.ChainId, c.UnlockProtocol.ChainId)
+			if err != nil {
+				log.Error("Unable to insert unlock_protocol.chain_id value: %v", err)
+				return err
+			}
+			_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) "+db.upsert("collection_id", "attribute")+" value = ?", collID, "unlock_protocol.lock_address", c.UnlockProtocol.LockAddress, c.UnlockProtocol.LockAddress)
+			if err != nil {
+				log.Error("Unable to insert unlock_protocol.lock_address value: %v", err)
+				return err
+			}
+
 		}
 	}
 

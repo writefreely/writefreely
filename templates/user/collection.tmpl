@@ -161,6 +161,26 @@ textarea.section.norm {
 			<input type="text" name="monetization_pointer" style="width:100%" value="{{.Collection.Monetization}}" placeholder="$wallet.example.com/alice" />
 		</div>
 	</div>
+
+	<div class="option">
+		<h2>Unlock Protocol</h2>
+		<div class="section">
+			<p class="explain">Blah! Provide some info aboit Unlock...</p>
+			<label>
+				RPC Endpoint:
+				<input type="text" name="unlock_protocol.rpc_endpoint" style="width:100%" value="{{.Collection.UnlockProtocol.RPCEndpoint}}" placeholder="https://rpc..." />
+			</label>
+			<label>
+				Chain ID:
+				<input type="text" name="unlock_protocol.chain_id" style="width:100%" value="{{.Collection.UnlockProtocol.ChainId}}" placeholder="4" />
+			</label>
+			<label>
+				Lock Address:
+				<input type="text" name="unlock_protocol.lock_address" style="width:100%" value="{{.Collection.UnlockProtocol.LockAddress}}" placeholder="0x...." />
+			</Label>
+		</div>
+	</div>
+
 	{{end}}
 
 	<div class="option" style="text-align: center; margin-top: 4em;">

@@ -115,7 +115,8 @@ func (app *App) FetchPublicPosts() (interface{}, error) {
 		}
 
 		p.extractData()
-		p.handlePremiumContent(c, false, false, app.cfg)
+		p.handleWebmonetizationPremiumContent(c, false, false, app.cfg)
+		p.handleUnlockProtocolPremiumContent(c, false, false, app.cfg)
 		p.HTMLContent = template.HTML(applyMarkdown([]byte(p.Content), "", app.cfg))
 		fp := p.processPost()
 		if isCollectionPost {
