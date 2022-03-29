@@ -1774,7 +1774,7 @@ func (db *datastore) GetTopPosts(u *User, alias string, hostName string) (*[]Pub
 		where = " AND alias = ?"
 		params = append(params, alias)
 	}
-	rows, err := db.Query("SELECT p.id, p.slug, p.view_count, p.title, c.alias, c.title, c.description, c.view_count FROM posts p LEFT JOIN collections c ON p.collection_id = c.id WHERE p.owner_id = ?"+where+" ORDER BY p.view_count DESC, created DESC LIMIT 25", params...)
+	rows, err := db.Query("SELECT p.id, p.slug, p.view_count, p.title, p.content, c.alias, c.title, c.description, c.view_count FROM posts p LEFT JOIN collections c ON p.collection_id = c.id WHERE p.owner_id = ?"+where+" ORDER BY p.view_count DESC, created DESC LIMIT 25", params...)
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve user top posts."}
@@ -1788,7 +1788,7 @@ func (db *datastore) GetTopPosts(u *User, alias string, hostName string) (*[]Pub
 		c := Collection{}
 		var alias, title, description sql.NullString
 		var views sql.NullInt64
-		err = rows.Scan(&p.ID, &p.Slug, &p.ViewCount, &p.Title, &alias, &title, &description, &views)
+		err = rows.Scan(&p.ID, &p.Slug, &p.ViewCount, &p.Title, &p.Content, &alias, &title, &description, &views)
 		if err != nil {
 			log.Error("Failed scanning User.getPosts() row: %v", err)
 			gotErr = true
