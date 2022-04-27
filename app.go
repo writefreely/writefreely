@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -503,9 +504,44 @@ requests. We recommend supplying a valid host name.`)
 			err = http.ListenAndServeTLS(fmt.Sprintf("%s:443", bindAddress), app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, r)
 		}
 	} else {
-		log.Info("Serving on http://%s:%d\n", bindAddress, app.cfg.Server.Port)
+		var network string
+		var protocol string
+
+		if strings.HasPrefix(bindAddress, "/") {
+			network = "unix"
+			protocol = "http+unix"
+
+			// old sockets will remain after server closes;
+			// we need to delete them in order to open new ones
+			removeSocketErr := os.Remove(bindAddress)
+			if removeSocketErr != nil && !os.IsNotExist(removeSocketErr) {
+				log.Error("%s already exists but could not be removed: %v", bindAddress, removeSocketErr)
+				os.Exit(1)
+			}
+		} else {
+			network = "tcp"
+			protocol = "http"
+			bindAddress = fmt.Sprintf("%s:%d", bindAddress, app.cfg.Server.Port)
+		}
+
+		log.Info("Serving on %s://%s", protocol, bindAddress)
 		log.Info("---")
-		err = http.ListenAndServe(fmt.Sprintf("%s:%d", bindAddress, app.cfg.Server.Port), r)
+		listener, listenErr := net.Listen(network, bindAddress)
+		if listenErr != nil {
+			log.Error("Could not bind to address: %v", listenErr)
+			os.Exit(1)
+		}
+
+		if network == "unix" {
+			chmodSocketErr := os.Chmod(bindAddress, 0o666)
+			if chmodSocketErr != nil {
+				log.Error("Could not update socket permissions: %v", chmodSocketErr)
+				os.Exit(1)
+			}
+		}
+
+		defer listener.Close()
+		err = http.Serve(listener, r)
 	}
 	if err != nil {
 		log.Error("Unable to start: %v", err)
