@@ -27,6 +27,7 @@ require (
 	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
 	github.com/stretchr/testify v1.7.0
+	github.com/urfave/cli/v2 v2.5.1
 	github.com/writeas/activity v0.1.2
 	github.com/writeas/activityserve v0.0.0-20200409150223-d7ab3eaa4481
 	github.com/writeas/go-strip-markdown/v2 v2.1.1
@@ -42,7 +43,7 @@ require (
 	github.com/writefreely/go-nodeinfo v1.2.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
-	gopkg.in/ini.v1 v1.62.0
+	gopkg.in/ini.v1 v1.66.4
 )
 
 go 1.15
