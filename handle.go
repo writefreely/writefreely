@@ -20,7 +20,7 @@ import (
 	"strings"
 	"time"
 
-	"git.mills.io/prologic/go-gopher"
+	"code.as/writefreely/go-gopher"
 	"github.com/gorilla/sessions"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"

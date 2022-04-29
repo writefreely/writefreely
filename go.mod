@@ -1,7 +1,7 @@
 module github.com/writefreely/writefreely
 
 require (
-	git.mills.io/prologic/go-gopher v0.0.0-20210712135410-b7ebb55feece
+	code.as/writefreely/go-gopher v0.0.0-20220429170830-8429778966a2
 	github.com/clbanning/mxj v1.8.4 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.10.0
@@ -28,7 +28,6 @@ require (
 	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
 	github.com/stretchr/testify v1.7.0
-	github.com/urfave/cli/v2 v2.3.0
 	github.com/writeas/activity v0.1.2
 	github.com/writeas/activityserve v0.0.0-20200409150223-d7ab3eaa4481
 	github.com/writeas/go-strip-markdown/v2 v2.1.1
