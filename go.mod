@@ -1,7 +1,6 @@
 module github.com/writefreely/writefreely
 
 require (
-	code.as/writefreely/go-gopher v0.0.0-20220429170830-8429778966a2
 	github.com/clbanning/mxj v1.8.4 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.10.0
@@ -39,6 +38,7 @@ require (
 	github.com/writeas/saturday v1.7.2-0.20200427193424-392b95a03320
 	github.com/writeas/slug v1.2.0
 	github.com/writeas/web-core v1.3.1-0.20210330164422-95a3a717ed8f
+	github.com/writefreely/go-gopher v0.0.0-20220429181814-40127126f83b
 	github.com/writefreely/go-nodeinfo v1.2.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381

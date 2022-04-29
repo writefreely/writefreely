@@ -1,7 +1,5 @@
 code.as/core/socks v1.0.0 h1:SPQXNp4SbEwjOAP9VzUahLHak8SDqy5n+9cm9tpjZOs=
 code.as/core/socks v1.0.0/go.mod h1:BAXBy5O9s2gmw6UxLqNJcVbWY7C/UPs+801CcSsfWOY=
-code.as/writefreely/go-gopher v0.0.0-20220429170830-8429778966a2 h1:v/M2sz9jP1eZS1RUR5OWJk6s/iFjjVXfESFqIG6MbI4=
-code.as/writefreely/go-gopher v0.0.0-20220429170830-8429778966a2/go.mod h1:CysP7mOJhL0GJO0afsDoTZfqH+nUqRcoBWdpBKdXcFc=
 github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
 github.com/beevik/etree v1.1.0 h1:T0xke/WvNtMoCqgzPhkX2r4rjY3GDZFi+FjpRZY2Jbs=
@@ -147,6 +145,8 @@ github.com/writeas/slug v1.2.0 h1:EMQ+cwLiOcA6EtFwUgyw3Ge18x9uflUnOnR6bp/J+/g=
 github.com/writeas/slug v1.2.0/go.mod h1:RE8shOqQP3YhsfsQe0L3RnuejfQ4Mk+JjY5YJQFubfQ=
 github.com/writeas/web-core v1.3.1-0.20210330164422-95a3a717ed8f h1:ItBZYzdIbBmmqn8BZGWww00MBFgcUKy5ei0gJrzRDFk=
 github.com/writeas/web-core v1.3.1-0.20210330164422-95a3a717ed8f/go.mod h1:DzNxa0YLV/wNeeWeHFPNa/nHmyJBFIIzXN/m9PpDm5c=
+github.com/writefreely/go-gopher v0.0.0-20220429181814-40127126f83b h1:h3NzB8OZ50NNi5k9yrFeyFszt3LyqyVK4+xUHFYY8B0=
+github.com/writefreely/go-gopher v0.0.0-20220429181814-40127126f83b/go.mod h1:T2UVVzt+R5KSSZe2xRSytnwc2M9AoDegi7foeIsik+M=
 github.com/writefreely/go-nodeinfo v1.2.0 h1:La+YbTCvmpTwFhBSlebWDDL81N88Qf/SCAvRLR7F8ss=
 github.com/writefreely/go-nodeinfo v1.2.0/go.mod h1:UTvE78KpcjYOlRHupZIiSEFcXHioTXuacCbHU+CAcPg=
 golang.org/x/crypto v0.0.0-20180527072434-ab813273cd59/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=

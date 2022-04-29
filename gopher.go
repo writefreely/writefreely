@@ -18,8 +18,8 @@ import (
 	"regexp"
 	"strings"
 
-	"code.as/writefreely/go-gopher"
 	"github.com/writeas/web-core/log"
+	"github.com/writefreely/go-gopher"
 )
 
 func initGopher(apper Apper) {

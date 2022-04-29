@@ -20,10 +20,10 @@ import (
 	"strings"
 	"time"
 
-	"code.as/writefreely/go-gopher"
 	"github.com/gorilla/sessions"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
+	"github.com/writefreely/go-gopher"
 	"github.com/writefreely/writefreely/config"
 	"github.com/writefreely/writefreely/page"
 )
