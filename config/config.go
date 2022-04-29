@@ -15,9 +15,9 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/go-ini/ini"
 	"github.com/writeas/web-core/log"
 	"golang.org/x/net/idna"
-	"gopkg.in/ini.v1"
 )
 
 const (

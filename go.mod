@@ -4,6 +4,7 @@ require (
 	github.com/clbanning/mxj v1.8.4 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.10.0
+	github.com/go-ini/ini v1.66.4
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/go-test/deep v1.0.1 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
@@ -43,7 +44,6 @@ require (
 	github.com/writefreely/go-nodeinfo v1.2.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
-	gopkg.in/ini.v1 v1.66.4
 )
 
 go 1.15
