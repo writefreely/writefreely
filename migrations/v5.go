@@ -26,39 +26,55 @@ func oauthSlack(db *datastore) error {
 		builders := []wf_db.SQLBuilder{
 			dialect.
 				AlterTable("oauth_client_states").
-				AddColumn(dialect.
-					Column(
+				AddColumn(wf_db.
+					NonNullableColumn(
 						"provider",
-						wf_db.ColumnTypeVarChar,
-						wf_db.OptionalInt{Set: true, Value: 24}).SetDefault("")),
+						wf_db.ColumnTypeString{
+							MaxChars:   24,
+							HasDefault: true,
+							DefaultVal: "",
+						})),
 			dialect.
 				AlterTable("oauth_client_states").
-				AddColumn(dialect.
-					Column(
+				AddColumn(wf_db.
+					NonNullableColumn(
 						"client_id",
-						wf_db.ColumnTypeVarChar,
-						wf_db.OptionalInt{Set: true, Value: 128}).SetDefault("")),
+						wf_db.ColumnTypeString{
+							MaxChars:   128,
+							HasDefault: true,
+							DefaultVal: "",
+						},
+					)),
 			dialect.
 				AlterTable("oauth_users").
-				AddColumn(dialect.
-					Column(
+				AddColumn(wf_db.
+					NonNullableColumn(
 						"provider",
-						wf_db.ColumnTypeVarChar,
-						wf_db.OptionalInt{Set: true, Value: 24}).SetDefault("")),
+						wf_db.ColumnTypeString{
+							MaxChars:   24,
+							HasDefault: true,
+							DefaultVal: "",
+						})),
 			dialect.
 				AlterTable("oauth_users").
-				AddColumn(dialect.
-					Column(
+				AddColumn(wf_db.
+					NonNullableColumn(
 						"client_id",
-						wf_db.ColumnTypeVarChar,
-						wf_db.OptionalInt{Set: true, Value: 128}).SetDefault("")),
+						wf_db.ColumnTypeString{
+							MaxChars:   128,
+							HasDefault: true,
+							DefaultVal: "",
+						})),
 			dialect.
 				AlterTable("oauth_users").
-				AddColumn(dialect.
-					Column(
+				AddColumn(wf_db.
+					NonNullableColumn(
 						"access_token",
-						wf_db.ColumnTypeVarChar,
-						wf_db.OptionalInt{Set: true, Value: 512}).SetDefault("")),
+						wf_db.ColumnTypeString{
+							MaxChars:   512,
+							HasDefault: true,
+							DefaultVal: "",
+						})),
 			dialect.CreateUniqueIndex("oauth_users_uk", "oauth_users", "user_id", "provider", "client_id"),
 		}
 
@@ -67,11 +83,12 @@ func oauthSlack(db *datastore) error {
 			builders = append(builders, dialect.
 				AlterTable("oauth_users").
 				ChangeColumn("remote_user_id",
-					dialect.
-						Column(
+					wf_db.
+						NonNullableColumn(
 							"remote_user_id",
-							wf_db.ColumnTypeVarChar,
-							wf_db.OptionalInt{Set: true, Value: 128})))
+							wf_db.ColumnTypeString{
+								MaxChars: 128,
+							})))
 		}
 
 		for _, builder := range builders {
