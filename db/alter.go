@@ -12,15 +12,15 @@ type AlterTableSqlBuilder struct {
 }
 
 func (b *AlterTableSqlBuilder) AddColumn(col *Column) *AlterTableSqlBuilder {
-	if colVal, err := col.ToSQL(b.Dialect); err == nil {
+	if colVal, err := col.CreateSQL(b.Dialect); err == nil {
 		b.Changes = append(b.Changes, fmt.Sprintf("ADD COLUMN %s", colVal))
 	}
 	return b
 }
 
 func (b *AlterTableSqlBuilder) ChangeColumn(name string, col *Column) *AlterTableSqlBuilder {
-	if colVal, err := col.ToSQL(b.Dialect); err == nil {
-		b.Changes = append(b.Changes, fmt.Sprintf("CHANGE COLUMN %s %s", name, colVal))
+	if colActions, err := col.AlterSQL(b.Dialect, name); err == nil {
+		b.Changes = append(b.Changes, colActions...)
 	}
 	return b
 }

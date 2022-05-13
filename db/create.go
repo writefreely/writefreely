@@ -64,7 +64,7 @@ func (b *CreateTableSqlBuilder) ToSQL() (string, error) {
 		if !ok {
 			return "", fmt.Errorf("column not found: %s", columnName)
 		}
-		columnStr, err := column.ToSQL(b.Dialect)
+		columnStr, err := column.CreateSQL(b.Dialect)
 		if err != nil {
 			return "", err
 		}

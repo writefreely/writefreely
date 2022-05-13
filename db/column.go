@@ -91,25 +91,35 @@ func (intCol ColumnTypeInt) Name(d DialectType) (string, error) {
 	case DialectSQLite:
 		return "INTEGER", nil
 
-	case DialectMySQL:
+	case DialectMySQL, DialectPostgreSQL:
 		var colName string
 		switch intCol.MaxBytes {
 		case 1:
-			colName = "TINYINT"
+			if d == DialectMySQL {
+				colName = "TINYINT"
+			} else {
+				colName = "SMALLINT"
+			}
 		case 2:
 			colName = "SMALLINT"
 		case 3:
-			colName = "MEDIUMINT"
+			if d == DialectMySQL {
+				colName = "MEDIUMINT"
+			} else {
+				colName = "INTEGER"
+			}
 		case 4:
-			colName = "INT"
+			colName = "INTEGER"
 		default:
 			colName = "BIGINT"
 		}
-		if intCol.MaxDigits > 0 {
-			colName = fmt.Sprintf("%s(%d)", colName, intCol.MaxDigits)
-		}
-		if !intCol.IsSigned {
-			colName += " UNSIGNED"
+		if d == DialectMySQL {
+			if intCol.MaxDigits > 0 {
+				colName = fmt.Sprintf("%s(%d)", colName, intCol.MaxDigits)
+			}
+			if !intCol.IsSigned {
+				colName += " UNSIGNED"
+			}
 		}
 		return colName, nil
 
@@ -119,15 +129,10 @@ func (intCol ColumnTypeInt) Name(d DialectType) (string, error) {
 }
 
 func (intCol ColumnTypeInt) Default(d DialectType) (string, error) {
-	switch d {
-	case DialectSQLite, DialectMySQL:
-		if intCol.HasDefault {
-			return fmt.Sprintf("%d", intCol.DefaultVal), nil
-		}
-		return "", nil
-	default:
-		return "", fmt.Errorf("dialect %d does not support defaulted integer columns", d)
+	if intCol.HasDefault {
+		return fmt.Sprintf("%d", intCol.DefaultVal), nil
 	}
+	return "", nil
 }
 
 func (strCol ColumnTypeString) Name(d DialectType) (string, error) {
@@ -135,7 +140,7 @@ func (strCol ColumnTypeString) Name(d DialectType) (string, error) {
 	case DialectSQLite:
 		return "TEXT", nil
 
-	case DialectMySQL:
+	case DialectMySQL, DialectPostgreSQL:
 		if strCol.IsFixedLength {
 			if strCol.MaxChars > 0 {
 				return fmt.Sprintf("CHAR(%d)", strCol.MaxChars), nil
@@ -157,22 +162,17 @@ func (strCol ColumnTypeString) Name(d DialectType) (string, error) {
 }
 
 func (strCol ColumnTypeString) Default(d DialectType) (string, error) {
-	switch d {
-	case DialectSQLite, DialectMySQL:
-		if strCol.HasDefault {
-			return EscapeSimple.SQLEscape(d, strCol.DefaultVal)
-		}
-		return "", nil
-	default:
-		return "", fmt.Errorf("dialect %d does not support defaulted string columns", d)
+	if strCol.HasDefault {
+		return EscapeSimple.SQLEscape(d, strCol.DefaultVal)
 	}
+	return "", nil
 }
 
 func (boolCol ColumnTypeBool) Name(d DialectType) (string, error) {
 	switch d {
 	case DialectSQLite:
 		return "INTEGER", nil
-	case DialectMySQL:
+	case DialectMySQL, DialectPostgreSQL:
 		return "BOOL", nil
 	default:
 		return "", fmt.Errorf("boolean column type not supported for dialect %d", d)
@@ -180,20 +180,15 @@ func (boolCol ColumnTypeBool) Name(d DialectType) (string, error) {
 }
 
 func (boolCol ColumnTypeBool) Default(d DialectType) (string, error) {
-	switch d {
-	case DialectSQLite, DialectMySQL:
-		switch boolCol.DefaultVal {
-		case NoDefault:
-			return "", nil
-		case DefaultFalse:
-			return "0", nil
-		case DefaultTrue:
-			return "1", nil
-		default:
-			return "", fmt.Errorf("boolean columns cannot default to %d for dialect %d", boolCol.DefaultVal, d)
-		}
+	switch boolCol.DefaultVal {
+	case NoDefault:
+		return "", nil
+	case DefaultFalse:
+		return "0", nil
+	case DefaultTrue:
+		return "1", nil
 	default:
-		return "", fmt.Errorf("dialect %d does not support defaulted boolean columns", d)
+		return "", fmt.Errorf("boolean columns cannot default to %d for dialect %d", boolCol.DefaultVal, d)
 	}
 }
 
@@ -201,6 +196,8 @@ func (dateTimeCol ColumnTypeDateTime) Name(d DialectType) (string, error) {
 	switch d {
 	case DialectSQLite, DialectMySQL:
 		return "DATETIME", nil
+	case DialectPostgreSQL:
+		return "TIMESTAMP", nil
 	default:
 		return "", fmt.Errorf("datetime column type not supported for dialect %d", d)
 	}
@@ -214,7 +211,7 @@ func (dateTimeCol ColumnTypeDateTime) Default(d DialectType) (string, error) {
 			return "", nil
 		case DefaultNow:
 			switch d {
-			case DialectSQLite:
+			case DialectSQLite, DialectPostgreSQL:
 				return "CURRENT_TIMESTAMP", nil
 			case DialectMySQL:
 				return "NOW()", nil
@@ -246,7 +243,58 @@ func (c *Column) SetType(t ColumnType) *Column {
 	return c
 }
 
-func (c *Column) ToSQL(d DialectType) (string, error) {
+func (c *Column) AlterSQL(d DialectType, oldName string) ([]string, error) {
+	var actions []string = make([]string, 0)
+
+	switch d {
+	// MySQL does all modifications at once
+	case DialectMySQL:
+		sql, err := c.CreateSQL(d)
+		if err != nil {
+			return make([]string, 0), err
+		}
+		actions = append(actions, fmt.Sprintf("CHANGE COLUMN %s %s", oldName, sql))
+
+	// PostgreSQL does modifications piece by piece
+	case DialectPostgreSQL:
+		if oldName != c.Name {
+			actions = append(actions, fmt.Sprintf("RENAME COLUMN %s TO %s", oldName, c.Name))
+		}
+
+		typeStr, err := c.Type.Name(d)
+		if err != nil {
+			return make([]string, 0), err
+		}
+
+		actions = append(actions, fmt.Sprintf("ALTER COLUMN %s TYPE %s", c.Name, typeStr))
+		var nullAction string
+		if c.Nullable {
+			nullAction = "DROP"
+		} else {
+			nullAction = "SET"
+		}
+		actions = append(actions, fmt.Sprintf("ALTER COLUMN %s %s NOT NULL", c.Name, nullAction))
+
+		defaultStr, err := c.Type.Default(d)
+		if err != nil {
+			return make([]string, 0), err
+		}
+		if len(defaultStr) > 0 {
+			actions = append(actions, fmt.Sprintf("ALTER COLUMN %s SET DEFAULT %s", c.Name, defaultStr))
+		}
+
+		if c.PrimaryKey {
+			actions = append(actions, fmt.Sprintf("ADD PRIMARY KEY (%s)", c.Name))
+		}
+
+	default:
+		return make([]string, 0), fmt.Errorf("dialect %d doesn't support altering column data type", d)
+	}
+
+	return actions, nil
+}
+
+func (c *Column) CreateSQL(d DialectType) (string, error) {
 	var str strings.Builder
 
 	str.WriteString(c.Name)

@@ -5,13 +5,14 @@ import "fmt"
 type DialectType int
 
 const (
-	DialectSQLite DialectType = iota
-	DialectMySQL  DialectType = iota
+	DialectSQLite     DialectType = iota
+	DialectMySQL      DialectType = iota
+	DialectPostgreSQL DialectType = iota
 )
 
 func (d DialectType) IsKnown() bool {
 	switch d {
-	case DialectSQLite, DialectMySQL:
+	case DialectSQLite, DialectMySQL, DialectPostgreSQL:
 		return true
 	default:
 		return false

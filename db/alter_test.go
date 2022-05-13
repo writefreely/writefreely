@@ -18,26 +18,41 @@ func TestAlterTableSqlBuilder_ToSQL(t *testing.T) {
 			name: "MySQL add int",
 			builder: DialectMySQL.
 				AlterTable("the_table").
-				AddColumn(DialectMySQL.Column("the_col", ColumnTypeInteger, UnsetSize)),
-			want:    "ALTER TABLE the_table ADD COLUMN the_col INT NOT NULL",
+				AddColumn(NonNullableColumn("the_col", ColumnTypeInt{MaxBytes: 4})),
+			want:    "ALTER TABLE the_table ADD COLUMN the_col INTEGER NOT NULL",
 			wantErr: false,
 		},
 		{
 			name: "MySQL add string",
 			builder: DialectMySQL.
 				AlterTable("the_table").
-				AddColumn(DialectMySQL.Column("the_col", ColumnTypeVarChar, OptionalInt{true, 128})),
+				AddColumn(NonNullableColumn("the_col", ColumnTypeString{MaxChars: 128})),
 			want:    "ALTER TABLE the_table ADD COLUMN the_col VARCHAR(128) NOT NULL",
 			wantErr: false,
 		},
-
 		{
 			name: "MySQL add int and string",
 			builder: DialectMySQL.
 				AlterTable("the_table").
-				AddColumn(DialectMySQL.Column("first_col", ColumnTypeInteger, UnsetSize)).
-				AddColumn(DialectMySQL.Column("second_col", ColumnTypeVarChar, OptionalInt{true, 128})),
+				AddColumn(NonNullableColumn("first_col", ColumnTypeInt{MaxBytes: 4})).
+				AddColumn(NonNullableColumn("second_col", ColumnTypeString{MaxChars: 128})),
 			want:    "ALTER TABLE the_table ADD COLUMN first_col INT NOT NULL, ADD COLUMN second_col VARCHAR(128) NOT NULL",
+			wantErr: false,
+		},
+		{
+			name: "MySQL change to string",
+			builder: DialectMySQL.
+				AlterTable("the_table").
+				ChangeColumn("old_col", NonNullableColumn("new_col", ColumnTypeString{})),
+			want:    "ALTER TABLE the_table RENAME COLUMN old_col TO new_col, MODIFY COLUMN new_col TEXT NOT NULL",
+			wantErr: false,
+		},
+		{
+			name: "PostgreSQL change to int",
+			builder: DialectMySQL.
+				AlterTable("the_table").
+				ChangeColumn("old_col", NullableColumn("new_col", ColumnTypeInt{MaxBytes: 4})),
+			want:    "ALTER TABLE the_table RENAME COLUMN old_col TO new_col, ALTER COLUMN new_col TYPE INTEGER, ALTER COLUMN new_col DROP NOT NULL",
 			wantErr: false,
 		},
 	}
