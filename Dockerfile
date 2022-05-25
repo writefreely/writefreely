@@ -1,5 +1,5 @@
 # Build image
-FROM golang:1.15-alpine as build
+FROM golang:1.18-alpine as build
 
 RUN apk add --update nodejs npm make g++ git
 RUN npm install -g less less-plugin-clean-css
@@ -24,7 +24,7 @@ RUN mkdir /stage && \
       /stage
 
 # Final image
-FROM alpine:3.12
+FROM alpine:3
 
 RUN apk add --no-cache openssl ca-certificates
 COPY --from=build --chown=daemon:daemon /stage /go
