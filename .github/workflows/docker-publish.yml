@@ -7,7 +7,7 @@ name: Build container image, publish as Github-package
 
 on:
   push:
-    branches: [ master, develop ]
+    branches: [ main, develop ]
     # Publish semver tags as releases.
     tags:
       - 'v*.*.*'
