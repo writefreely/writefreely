@@ -217,8 +217,14 @@ func TestViewOauthInit(t *testing.T) {
 func TestViewOauthCallback(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		app := &MockOAuthDatastoreProvider{}
+
+		// create a compatibile configuration for testing
+		config := app.Config()
+		config.App.SingleUser = false
+		config.App.OpenRegistration = true
+
 		h := oauthHandler{
-			Config:   app.Config(),
+			Config:   config,
 			DB:       app.DB(),
 			Store:    app.SessionStore(),
 			EmailKey: []byte{0xd, 0xe, 0xc, 0xa, 0xf, 0xf, 0xb, 0xa, 0xd},
@@ -251,11 +257,13 @@ func TestViewOauthCallback(t *testing.T) {
 				},
 			},
 		}
+
+		InitTemplates(config)
 		req, err := http.NewRequest("GET", "/oauth/callback", nil)
 		assert.NoError(t, err)
 		rr := httptest.NewRecorder()
-		err = h.viewOauthCallback(&App{cfg: app.Config(), sessionStore: app.SessionStore()}, rr, req)
+		err = h.viewOauthCallback(&App{cfg: config, sessionStore: app.SessionStore()}, rr, req)
 		assert.NoError(t, err)
-		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
+		assert.Equal(t, http.StatusOK, rr.Code)
 	})
 }
