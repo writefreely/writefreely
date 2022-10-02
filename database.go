@@ -656,7 +656,7 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 		}
 	}
 
-	created := time.Now()
+	created := time.Now().Truncate(time.Second)
 	if db.driverName == driverSQLite {
 		// SQLite stores datetimes in UTC, so convert time.Now() to it here
 		created = created.UTC()
@@ -665,7 +665,7 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 		created, err = time.Parse("2006-01-02T15:04:05Z", *post.Created)
 		if err != nil {
 			log.Error("Unable to parse Created time '%s': %v", *post.Created, err)
-			created = time.Now()
+			created = time.Now().Truncate(time.Second)
 			if db.driverName == driverSQLite {
 				// SQLite stores datetimes in UTC, so convert time.Now() to it here
 				created = created.UTC()
