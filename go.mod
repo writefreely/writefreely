@@ -5,7 +5,7 @@ require (
 	github.com/fatih/color v1.10.0
 	github.com/go-ini/ini v1.66.4
 	github.com/go-sql-driver/mysql v1.6.0
-	github.com/gorilla/csrf v1.7.0
+	github.com/gorilla/csrf v1.7.1
 	github.com/gorilla/feeds v1.1.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/schema v1.2.0
