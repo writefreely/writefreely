@@ -14,7 +14,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/ikeikeikeike/go-sitemap-generator/v2 v2.0.2
 	github.com/kylemcc/twitter-text-go v0.0.0-20180726194232-7f582f6736ec
-	github.com/manifoldco/promptui v0.8.0
+	github.com/manifoldco/promptui v0.9.0
 	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/microcosm-cc/bluemonday v1.0.21
 	github.com/mitchellh/go-wordwrap v1.0.1
@@ -58,8 +58,6 @@ require (
 	github.com/gorilla/securecookie v1.1.1 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
-	github.com/juju/ansiterm v0.0.0-20180109212912-720a0952cc2a // indirect
-	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5 // indirect
