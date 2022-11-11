@@ -151,8 +151,8 @@ github.com/writeas/saturday v1.7.2-0.20200427193424-392b95a03320 h1:PozPZ29CQ/xt
 github.com/writeas/saturday v1.7.2-0.20200427193424-392b95a03320/go.mod h1:ETE1EK6ogxptJpAgUbcJD0prAtX48bSloie80+tvnzQ=
 github.com/writeas/slug v1.2.0 h1:EMQ+cwLiOcA6EtFwUgyw3Ge18x9uflUnOnR6bp/J+/g=
 github.com/writeas/slug v1.2.0/go.mod h1:RE8shOqQP3YhsfsQe0L3RnuejfQ4Mk+JjY5YJQFubfQ=
-github.com/writeas/web-core v1.3.1-0.20210330164422-95a3a717ed8f h1:ItBZYzdIbBmmqn8BZGWww00MBFgcUKy5ei0gJrzRDFk=
-github.com/writeas/web-core v1.3.1-0.20210330164422-95a3a717ed8f/go.mod h1:DzNxa0YLV/wNeeWeHFPNa/nHmyJBFIIzXN/m9PpDm5c=
+github.com/writeas/web-core v1.4.1 h1:mdDwZepEyQb76j8gNUIPblV7SUIXi4WQ0h3Xl0ZwKT4=
+github.com/writeas/web-core v1.4.1/go.mod h1:MTWDZWikeG063S9IrI6ekvu3N2tJEVRpZuU4kAWg1DY=
 github.com/writefreely/go-gopher v0.0.0-20220429181814-40127126f83b h1:h3NzB8OZ50NNi5k9yrFeyFszt3LyqyVK4+xUHFYY8B0=
 github.com/writefreely/go-gopher v0.0.0-20220429181814-40127126f83b/go.mod h1:T2UVVzt+R5KSSZe2xRSytnwc2M9AoDegi7foeIsik+M=
 github.com/writefreely/go-nodeinfo v1.2.0 h1:La+YbTCvmpTwFhBSlebWDDL81N88Qf/SCAvRLR7F8ss=
