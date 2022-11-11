@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 A Bunch Tell LLC.
+ * Copyright © 2020 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -18,8 +18,8 @@ import (
 	"regexp"
 	"strings"
 
-	"git.mills.io/prologic/go-gopher"
 	"github.com/writeas/web-core/log"
+	"github.com/writefreely/go-gopher"
 )
 
 func initGopher(apper Apper) {

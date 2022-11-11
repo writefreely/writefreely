@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2021 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -20,10 +20,10 @@ import (
 	"strings"
 	"time"
 
-	"git.mills.io/prologic/go-gopher"
 	"github.com/gorilla/sessions"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
+	"github.com/writefreely/go-gopher"
 	"github.com/writefreely/writefreely/config"
 	"github.com/writefreely/writefreely/page"
 )

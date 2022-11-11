@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2021 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -661,7 +661,7 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 		// SQLite stores datetimes in UTC, so convert time.Now() to it here
 		created = created.UTC()
 	}
-	if post.Created != nil {
+	if post.Created != nil && *post.Created != "" {
 		created, err = time.Parse("2006-01-02T15:04:05Z", *post.Created)
 		if err != nil {
 			log.Error("Unable to parse Created time '%s': %v", *post.Created, err)
@@ -924,7 +924,7 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 			}
 		}
 		if !skipUpdate {
-			_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?", collID, "monetization_pointer", *c.Monetization, *c.Monetization)
+			_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) "+db.upsert("collection_id", "attribute")+" value = ?", collID, "monetization_pointer", *c.Monetization, *c.Monetization)
 			if err != nil {
 				log.Error("Unable to insert monetization_pointer value: %v", err)
 				return err
@@ -1688,7 +1688,7 @@ func (db *datastore) GetPublicCollections(hostName string) (*[]Collection, error
 	FROM collections c
 	LEFT JOIN users u ON u.id = c.owner_id
 	WHERE c.privacy = 1 AND u.status = 0
-	ORDER BY id ASC`)
+	ORDER BY title ASC`)
 	if err != nil {
 		log.Error("Failed selecting public collections: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve public collections."}
@@ -1833,7 +1833,7 @@ func (db *datastore) GetAnonymousPosts(u *User, page int) (*[]PublicPost, error)
 	if page > 0 {
 		limitStr = fmt.Sprintf(" LIMIT %d, %d", start, pagePosts)
 	}
-	rows, err := db.Query("SELECT id, view_count, title, created, updated, content FROM posts WHERE owner_id = ? AND collection_id IS NULL ORDER BY created DESC"+limitStr, u.ID)
+	rows, err := db.Query("SELECT id, view_count, title, language, created, updated, content FROM posts WHERE owner_id = ? AND collection_id IS NULL ORDER BY created DESC"+limitStr, u.ID)
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve user anonymous posts."}
@@ -1843,7 +1843,7 @@ func (db *datastore) GetAnonymousPosts(u *User, page int) (*[]PublicPost, error)
 	posts := []PublicPost{}
 	for rows.Next() {
 		p := Post{}
-		err = rows.Scan(&p.ID, &p.ViewCount, &p.Title, &p.Created, &p.Updated, &p.Content)
+		err = rows.Scan(&p.ID, &p.ViewCount, &p.Title, &p.Language, &p.Created, &p.Updated, &p.Content)
 		if err != nil {
 			log.Error("Failed scanning row: %v", err)
 			break
