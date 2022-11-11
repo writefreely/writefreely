@@ -10,7 +10,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/schema v1.2.0
 	github.com/gorilla/sessions v1.2.1
-	github.com/guregu/null v3.5.0+incompatible
+	github.com/guregu/null v4.0.0+incompatible
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/ikeikeikeike/go-sitemap-generator/v2 v2.0.2
 	github.com/kylemcc/twitter-text-go v0.0.0-20180726194232-7f582f6736ec
