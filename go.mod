@@ -2,7 +2,7 @@ module github.com/writefreely/writefreely
 
 require (
 	github.com/dustin/go-humanize v1.0.0
-	github.com/fatih/color v1.10.0
+	github.com/fatih/color v1.13.0
 	github.com/go-ini/ini v1.66.4
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gorilla/csrf v1.7.0
@@ -58,8 +58,8 @@ require (
 	github.com/gorilla/securecookie v1.1.1 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
-	github.com/mattn/go-colorable v0.1.8 // indirect
-	github.com/mattn/go-isatty v0.0.12 // indirect
+	github.com/mattn/go-colorable v0.1.9 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
