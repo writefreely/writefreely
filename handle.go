@@ -155,8 +155,14 @@ func (h *Handler) User(f userHandlerFunc) http.HandlerFunc {
 			err := f(h.app.App(), u, w, r)
 			if err == nil {
 				status = http.StatusOK
-			} else if err, ok := err.(impart.HTTPError); ok {
-				status = err.Status
+			} else if impErr, ok := err.(impart.HTTPError); ok {
+				status = impErr.Status
+				if impErr == ErrUserNotFound {
+					log.Info("Logged-in user not found. Logging out.")
+					sendRedirect(w, http.StatusFound, "/me/logout?to="+h.app.App().cfg.App.LandingPath())
+					// Reset err so handleHTTPError does nothing
+					err = nil
+				}
 			} else {
 				status = http.StatusInternalServerError
 			}

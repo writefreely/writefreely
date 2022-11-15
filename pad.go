@@ -55,6 +55,9 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 		appData.Silenced, err = app.db.IsUserSilenced(appData.User.ID)
 		if err != nil {
+			if err == ErrUserNotFound {
+				return err
+			}
 			log.Error("Unable to get user status for Pad: %v", err)
 		}
 	}

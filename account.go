@@ -787,6 +787,9 @@ func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 
 	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
+		if err == ErrUserNotFound {
+			return err
+		}
 		log.Error("view articles: %v", err)
 	}
 	d := struct {
@@ -822,7 +825,10 @@ func viewCollections(app *App, u *User, w http.ResponseWriter, r *http.Request) 
 
 	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
-		log.Error("view collections %v", err)
+		if err == ErrUserNotFound {
+			return err
+		}
+		log.Error("view collections: %v", err)
 		return fmt.Errorf("view collections: %v", err)
 	}
 	d := struct {
@@ -861,6 +867,9 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 
 	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
+		if err == ErrUserNotFound {
+			return err
+		}
 		log.Error("view edit collection %v", err)
 		return fmt.Errorf("view edit collection: %v", err)
 	}
@@ -1038,6 +1047,9 @@ func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error 
 
 	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
+		if err == ErrUserNotFound {
+			return err
+		}
 		log.Error("view stats: %v", err)
 		return err
 	}
@@ -1071,6 +1083,9 @@ func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error 
 func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	fullUser, err := app.db.GetUserByID(u.ID)
 	if err != nil {
+		if err == ErrUserNotFound {
+			return err
+		}
 		log.Error("Unable to get user for settings: %s", err)
 		return impart.HTTPError{http.StatusInternalServerError, "Unable to retrieve user data. The humans have been alerted."}
 	}
