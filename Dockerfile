@@ -24,7 +24,7 @@ RUN mkdir /stage && \
       /stage
 
 # Final image
-FROM alpine:3.12
+FROM alpine:3
 
 RUN apk add --no-cache openssl ca-certificates
 COPY --from=build --chown=daemon:daemon /stage /go

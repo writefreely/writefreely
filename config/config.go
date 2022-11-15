@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2021 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -15,9 +15,9 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/go-ini/ini"
 	"github.com/writeas/web-core/log"
 	"golang.org/x/net/idna"
-	"gopkg.in/ini.v1"
 )
 
 const (
