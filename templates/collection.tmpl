@@ -6,6 +6,7 @@
 		<title>{{.DisplayTitle}}{{if not .SingleUser}} &mdash; {{.SiteName}}{{end}}</title>
 		
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
+		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="canonical" href="{{.CanonicalURL}}">
 		{{if gt .CurrentPage 1}}<link rel="prev" href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">{{end}}
