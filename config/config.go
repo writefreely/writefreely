@@ -124,6 +124,7 @@ type (
 		SiteName string `ini:"site_name"`
 		SiteDesc string `ini:"site_description"`
 		Host     string `ini:"host"`
+		Lang 	 string `ini:"language"`
 
 		// Site appearance
 		Theme      string `ini:"theme"`

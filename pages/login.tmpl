@@ -3,11 +3,12 @@
 <meta itemprop="description" content="Log in to {{.SiteName}}.">
 <style>
 input{margin-bottom:0.5em;}
+::placeholder {text-transform:capitalize;}
 </style>
 {{end}}
 {{define "content"}}
 <div class="tight content-container">
-	<h1>Log in to {{.SiteName}}</h1>
+	<h1>{{call .Tr "Log in to %s" (variables .SiteName)}}</h1>
 
 	{{if .Flashes}}<ul class="errors">
 		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
@@ -17,18 +18,18 @@ input{margin-bottom:0.5em;}
 
 {{if not .DisablePasswordAuth}}
 	<form action="/auth/login" method="post" style="text-align: center;margin-top:1em;" onsubmit="disableSubmit()">
-		<input type="text" name="alias" placeholder="Username" value="{{.LoginUsername}}" {{if not .LoginUsername}}autofocus{{end}} /><br />
-		<input type="password" name="pass" placeholder="Password" {{if .LoginUsername}}autofocus{{end}} /><br />
+		<input type="text" name="alias" placeholder={{call .Tr "Username"}} value="{{.LoginUsername}}" {{if not .LoginUsername}}autofocus{{end}} /><br />
+		<input type="password" name="pass" placeholder={{call .Tr "password"}} {{if .LoginUsername}}autofocus{{end}} /><br />
 		{{if .To}}<input type="hidden" name="to" value="{{.To}}" />{{end}}
-		<input type="submit" id="btn-login" value="Login" />
+		<input type="submit" id="btn-login" value={{call .Tr "Log in"}} />
 	</form>
 
-	{{if and (not .SingleUser) .OpenRegistration}}<p style="text-align:center;font-size:0.9em;margin:3em auto;max-width:26em;">{{if .Message}}{{.Message}}{{else}}<em>No account yet?</em> <a href="{{.SignupPath}}">Sign up</a> to start a blog.{{end}}</p>{{end}}
+	{{if and (not .SingleUser) .OpenRegistration}}<p style="text-align:center;font-size:0.9em;margin:3em auto;max-width:26em;">{{if .Message}}{{.Message}}{{else}}{{call .Tr "_No account yet?_ %s to start a blog." true (variables "Sign up; .SignupPath")}}{{end}}</p>{{end}}
 
 	<script type="text/javascript">
 	function disableSubmit() {
 		var $btn = document.getElementById("btn-login");
-		$btn.value = "Logging in...";
+		$btn.value = {{call .Tr "Logging in..."}};
 		$btn.disabled = true;
 	}
 	</script>

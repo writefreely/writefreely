@@ -22,28 +22,28 @@ h3 { font-weight: normal; }
 	<div id="overlay"></div>
 
 	{{if .Silenced}}
-		{{template "user-silenced"}}
+		{{template "user-silenced" (dict "Tr" $.Tr)}}
 	{{end}}
-	<h1>{{if .IsLogOut}}Before you go...{{else}}Account Settings{{end}}</h1>
+	<h1>{{if .IsLogOut}}{{call .Tr "Before you go..."}}{{else}}{{call .Tr "Account Settings"}}{{end}}</h1>
 	{{if .Flashes}}<ul class="errors">
 		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 	</ul>{{end}}
 
 	{{ if .IsLogOut }}
 	<div class="alert info">
-		<p class="introduction">Please add an <strong>email address</strong> and/or <strong>passphrase</strong> so you can log in again later.</p>
+		<p class="introduction">{{call .Tr "Please add an **%s** and/or **%s** so you can log in again later." true (variables "email address" "passphrase")}}</p>
 	</div>
 	{{ else }}
 	<div>
-		<p>Change your account settings here.</p>
+		<p>{{call .Tr "Change your account settings here."}}</p>
 	</div>
 
 	<form method="post" action="/api/me/self" autocomplete="false">
 		<div class="option">
-			<h3>Username</h3>
+			<h3>{{call .Tr "Username"}}</h3>
 			<div class="section">
 				<input type="text" name="username" value="{{.Username}}" tabindex="1" />
-				<input type="submit" value="Update" style="margin-left: 1em;" />
+				<input type="submit" value="{{call .Tr "Update"}}" style="margin-left: 1em;" />
 			</div>
 		</div>
 	</form>
@@ -53,32 +53,32 @@ h3 { font-weight: normal; }
 	<form method="post" action="/api/me/self" autocomplete="false">
 		<input type="hidden" name="logout" value="{{.IsLogOut}}" />
 		<div class="option">
-			<h3>Passphrase</h3>
+			<h3>{{call .Tr "Passphrase"}}</h3>
 			<div class="section">
-				{{if and (not .HasPass) (not .IsLogOut)}}<div class="alert info"><p>Add a passphrase to easily log in to your account.</p></div>{{end}}
-				{{if .HasPass}}<p>Current passphrase</p>
-				<input type="password" name="current-pass" placeholder="Current passphrase" tabindex="1" /> <input class="show" type="checkbox" id="show-cur-pass" /><label for="show-cur-pass"> Show</label>
-				<p>New passphrase</p>
+				{{if and (not .HasPass) (not .IsLogOut)}}<div class="alert info"><p>{{call .Tr "Add a passphrase to easily log in to your account."}}</p></div>{{end}}
+				{{if .HasPass}}<p>{{call .Tr "Current passphrase"}}</p>
+				<input type="password" name="current-pass" placeholder="{{call .Tr "Current passphrase"}}" tabindex="1" /> <input class="show" type="checkbox" id="show-cur-pass" /><label for="show-cur-pass"> {{call .Tr "Show"}}</label>
+				<p>{{call .Tr "New passphrase"}}</p>
 				{{end}}
 				{{if .IsLogOut}}<input type="text" value="{{.Username}}" style="display:none" />{{end}}
-				<input type="password" name="new-pass" autocomplete="new-password" placeholder="New passphrase" tabindex="{{if .IsLogOut}}1{{else}}2{{end}}" /> <input class="show" type="checkbox" id="show-new-pass" /><label for="show-new-pass"> Show</label>
+				<input type="password" name="new-pass" autocomplete="new-password" placeholder="{{call .Tr "New passphrase"}}" tabindex="{{if .IsLogOut}}1{{else}}2{{end}}" /> <input class="show" type="checkbox" id="show-new-pass" /><label for="show-new-pass"> {{call .Tr "Show"}}</label>
 			</div>
 		</div>
 
 		<div class="option">
-			<h3>Email</h3>
+			<h3>{{call .Tr "Email"}}</h3>
 			<div class="section">
-				{{if and (not .Email) (not .IsLogOut)}}<div class="alert info"><p>Add your email to get:</p>
+				{{if and (not .Email) (not .IsLogOut)}}<div class="alert info"><p>{{call .Tr "Add your email to get:"}}</p>
 				<ul>
-					<li>No-passphrase login</li>
-					<li>Account recovery if you forget your passphrase</li>
+					<li>{{call .Tr "No-passphrase login"}}</li>
+					<li>{{call .Tr "Account recovery if you forget your passphrase"}}</li>
 				</ul></div>{{end}}
-				<input type="email" name="email" style="letter-spacing: 1px" placeholder="Email address" value="{{.Email}}" size="40" tabindex="{{if .IsLogOut}}2{{else}}3{{end}}" />
+				<input type="email" name="email" style="letter-spacing: 1px" placeholder="{{call .Tr "Email address"}}" value="{{.Email}}" size="40" tabindex="{{if .IsLogOut}}2{{else}}3{{end}}" />
 			</div>
 		</div>
 
 		<div class="option" style="text-align: center;">
-			<input type="submit" value="Save changes" tabindex="4" />
+			<input type="submit" value="{{call .Tr "Save changes"}}" tabindex="4" />
 		</div>
 	</form>
 	{{end}}
@@ -86,8 +86,8 @@ h3 { font-weight: normal; }
 	{{ if .OauthSection }}
 		{{ if .OauthAccounts }}
 		<div class="option">
-			<h2>Linked Accounts</h2>
-			<p>These are your linked external accounts.</p>
+			<h2>{{call .Tr "Linked Accounts"}}</h2>
+			<p>{{call .Tr "These are your linked external accounts."}}</p>
 			{{ range $oauth_account := .OauthAccounts }}
 				<form method="post" action="/api/me/oauth/remove" autocomplete="false">
 					<input type="hidden" name="provider" value="{{ $oauth_account.Provider }}" />
@@ -111,14 +111,14 @@ h3 { font-weight: normal; }
 		{{ end }}
 		{{ if or .OauthSlack .OauthWriteAs .OauthGitLab .OauthGeneric .OauthGitea }}
 		<div class="option">
-			<h2>Link External Accounts</h2>
-			<p>Connect additional accounts to enable logging in with those providers, instead of using your username and password.</p>
+			<h2>{{call .Tr "Link External Accounts"}}</h2>
+			<p>{{call .Tr "Connect additional accounts to enable logging in with those providers, instead of using your username and password."}}</p>
 			<div class="row signinbtns">
 			{{ if .OauthWriteAs }}
 				<div class="section oauth-provider">
 					<a class="btn cta loginbtn" id="writeas-login" href="/oauth/write.as?attach=t">
 						<img src="/img/mark/writeas-white.png" alt="Write.as" />
-						Link <strong>Write.as</strong>
+						{{call .Tr "ToLink"}} <strong>Write.as</strong>
 					</a>
 				</div>
 			{{ end }}
@@ -126,7 +126,7 @@ h3 { font-weight: normal; }
 				<div class="section oauth-provider">
 					<a class="btn cta loginbtn" id="slack-login" href="/oauth/slack?attach=t">
 						<img src="/img/mark/slack.png" alt="Slack" />
-						Link <strong>Slack</strong>
+						{{call .Tr "ToLink"}} <strong>Slack</strong>
 					</a>
 				</div>
 			{{ end }}
@@ -134,7 +134,7 @@ h3 { font-weight: normal; }
 				<div class="section oauth-provider">
 					<a class="btn cta loginbtn" id="gitlab-login" href="/oauth/gitlab?attach=t">
 						<img src="/img/mark/gitlab.png" alt="GitLab" />
-						Link <strong>{{.GitLabDisplayName}}</strong>
+						{{call .Tr "ToLink"}} <strong>{{.GitLabDisplayName}}</strong>
 					</a>
 				</div>
 			{{ end }}
@@ -142,14 +142,14 @@ h3 { font-weight: normal; }
 				<div class="section oauth-provider">
 					<a class="btn cta loginbtn" id="gitea-login" href="/oauth/gitea?attach=t">
 						<img src="/img/mark/gitea.png" alt="Gitea" />
-						Link <strong>{{.GiteaDisplayName}}</strong>
+						{{call .Tr "ToLink"}} <strong>{{.GiteaDisplayName}}</strong>
 					</a>
 				</div>
 			{{ end }}
 			{{ if .OauthGeneric }}
 				<div class="section oauth-provider">
 					<a class="btn cta loginbtn" id="generic-oauth-login" href="/oauth/generic?attach=t">
-						Link <strong>{{ .OauthGenericDisplayName }}</strong>
+						{{call .Tr "ToLink"}} <strong>{{ .OauthGenericDisplayName }}</strong>
 					</a>
 				</div>
 			{{ end }}
@@ -159,24 +159,24 @@ h3 { font-weight: normal; }
 	{{ end }}
 
 	{{ if and .OpenDeletion (not .IsAdmin) }}
-		<h2>Incinerator</h2>
+		<h2>{{call .Tr "Incinerator"}}</h2>
 		<div class="alert danger">
 			<div class="row">
 				<div>
-					<h3>Delete your account</h3>
-					<p>Permanently erase all your data, with no way to recover it.</p>
+					<h3>{{call .Tr "Delete your account"}}</h3>
+					<p>{{call .Tr "Permanently erase all your data, with no way to recover it."}}</p>
 				</div>
-				<button class="cta danger" onclick="prepareDeleteUser()">Delete your account...</button>
+				<button class="cta danger" onclick="prepareDeleteUser()">{{call .Tr "Delete your account"}}...</button>
 			</div>
 		</div>
 	{{end}}
 </div>
 
 <div id="modal-delete-user" class="modal">
-	<h2>Are you sure?</h2>
+	<h2>{{call .Tr "Are you sure?"}}</h2>
 	<div class="body">
-		<p style="text-align:left">This action <strong>cannot</strong> be undone. It will immediately and permanently erase your account, including your blogs and posts. Before continuing, you might want to <a href="/me/export">export your data</a>.</p>
-		<p>If you're sure, please type <strong>{{.Username}}</strong> to confirm.</p>
+		<p style="text-align:left">{{call .Tr "This action **cannot** be undone. It will immediately and permanently erase your account, including your blogs and posts. Before continuing, you might want to %s." true (variables "export your data;/me/export")}}</p>
+		<p>{{call .Tr "If you're sure, please type **%s** to confirm." true (variables .Username)}}</p>
 
 		<ul id="delete-errors" class="errors"></ul>
 
@@ -184,8 +184,8 @@ h3 { font-weight: normal; }
 			{{ .CSRFField }}
 			<input id="confirm-text" placeholder="{{.Username}}" type="text" class="confirm boxy" name="confirm-username" style="margin-top: 0.5em;" />
 			<div style="text-align:right; margin-top: 1em;">
-				<a id="cancel-delete" style="margin-right:2em" href="#">Cancel</a>
-				<input class="danger" type="submit" id="confirm-delete" value="Delete your account" disabled />
+				<a id="cancel-delete" style="margin-right:2em" href="#">{{call .Tr "Cancel"}}</a>
+				<input class="danger" type="submit" id="confirm-delete" value="{{call .Tr "Delete your account"}}" disabled />
 			</div>
 	</div>
 </div>
@@ -222,7 +222,7 @@ for (var i=0; i<showChecks.length; i++) {
 
 	function confirmDeletion() {
 		$confirmDelBtn.disabled = true
-		$confirmDelBtn.value = 'Deleting...'
+		$confirmDelBtn.value = '{{call .Tr "Deleting..."}}'
 	}
 {{ end }}
 </script>

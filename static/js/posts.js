@@ -4,6 +4,7 @@
  * Dependencies:
  *   h.js
  */
+
 function toggleTheme() {
 	var btns;
 	try {
@@ -34,14 +35,15 @@ if (H.get('padTheme', 'light') != 'light') {
 }
 
 var deleting = false;
-function delPost(e, id, owned) {
+function delPost(e, id, owned, loc) {
 	e.preventDefault();
 	if (deleting) {
 		return;
 	}
+	var loc = JSON.parse(loc);
 
 	// TODO: UNDO!
-	if (window.confirm('Are you sure you want to delete this post?')) {
+	if (window.confirm(loc['Are you sure you want to delete this post?'])) {
 		var token;
 		for (var i=0; i<posts.length; i++) {
 			if (posts[i].id == id) {

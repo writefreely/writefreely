@@ -102,7 +102,7 @@
 					<time class="dt-published" datetime="{{.Created8601}}" pubdate itemprop="datePublished" content="{{.Created}}"><a href="{{if .Collection}}{{.Collection.CanonicalURL}}{{.Slug.String}}{{else}}{{.CanonicalURL .Host}}.md{{end}}" itemprop="url" class="u-url">{{.DisplayDate}}</a></time>
 				</h2>
 			{{- end}}
-			<p class="source">{{if .Collection}}from <a href="{{.Collection.CanonicalURL}}">{{.Collection.DisplayTitle}}</a>{{else}}<em>Anonymous</em>{{end}}</p>
+			<p class="source">{{if .Collection}}{{call $.Tr "from"}} <a href="{{.Collection.CanonicalURL}}">{{.Collection.DisplayTitle}}</a>{{else}}<em>{{call $.Tr "Anonymous"}}</em>{{end}}</p>
 			{{if .Excerpt}}<div class="p-summary" {{if .Language}}lang="{{.Language.String}}"{{end}} dir="{{.Direction}}">{{.Excerpt}}</div>
 		
 			<a class="read-more" href="{{if .Collection}}{{.Collection.CanonicalURL}}{{.Slug.String}}{{else}}{{.CanonicalURL .Host}}.md{{end}}">{{localstr "Read more..." .Language.String}}</a>{{else}}<div class="e-content preview" {{if .Language}}lang="{{.Language.String}}"{{end}} dir="{{.Direction}}">{{ if not .HTMLContent }}<p id="post-body" class="e-content preview">{{.Content}}</p>{{ else }}{{.HTMLContent}}{{ end }}<div class="over">&nbsp;</div></div>
@@ -117,8 +117,8 @@
 		{{ end }}
 
 		{{if gt .TotalPages 1}}<nav id="paging" class="content-container clearfix">
-			{{if lt .CurrentPage .TotalPages}}<a href="{{.NextPageURL .CurrentPage}}">&#8672; Older</a>{{end}}
-			{{if gt .CurrentPage 1}}<a style="float:right;" href="{{.PrevPageURL .CurrentPage}}">Newer &#8674;</a>{{end}}
+			{{if lt .CurrentPage .TotalPages}}<a href="{{.NextPageURL .CurrentPage}}">&#8672; {{call .Tr "Older"}}</a>{{end}}
+			{{if gt .CurrentPage 1}}<a style="float:right;" href="{{.PrevPageURL .CurrentPage}}">{{call .Tr "Newer"}} &#8674;</a>{{end}}
 		</nav>{{end}}
 
 		</div>

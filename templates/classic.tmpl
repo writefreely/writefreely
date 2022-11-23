@@ -2,11 +2,10 @@
 <html>
 	<head>
 
-		<title>{{if .Editing}}Editing {{if .Post.Title}}{{.Post.Title}}{{else}}{{.Post.Id}}{{end}}{{else}}New Post{{end}} &mdash; {{.SiteName}}</title>
+		<title>{{if .Editing}}Editing {{if .Post.Title}}{{.Post.Title}}{{else}}{{.Post.Id}}{{end}}{{else}}{{call .Tr "New Post"}}{{end}} &mdash; {{.SiteName}}</title>
 		
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
 		<link rel="stylesheet" type="text/css" href="/css/prose.css" />
-		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 		<meta name="google" value="notranslate">
@@ -32,37 +31,38 @@
 						{{if .Editing}}<li>{{if .EditCollection}}<a href="{{.EditCollection.CanonicalURL}}">{{.EditCollection.Title}}</a>{{else}}<a>Draft</a>{{end}}</li>
 						{{else}}<li><a id="publish-to"><span id="target-name">Draft</span> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
 						<ul>
-							<li class="menu-heading">Publish to...</li>
+							<li class="menu-heading">{{call .Tr "Publish to..."}}</li>
 							{{if .Blogs}}{{range $idx, $el := .Blogs}}
 								<li class="target{{if eq $idx 0}} selected{{end}}" id="blog-{{$el.Alias}}"><a href="#{{$el.Alias}}"><i class="material-icons md-18">public</i> {{if $el.Title}}{{$el.Title}}{{else}}{{$el.Alias}}{{end}}</a></li>
 							{{end}}{{end}}
-							<li class="target" id="blog-anonymous"><a href="#anonymous"><i class="material-icons md-18">description</i> <em>Draft</em></a></li>
+							<li class="target" id="blog-anonymous"><a href="#anonymous"><i class="material-icons md-18">description</i> <em>{{call .Tr "Draft"}}</em></a></li>
 							<li id="user-separator" class="separator"><hr /></li>
 						{{ if .SingleUser }}
-							<li><a href="/"><i class="material-icons md-18">launch</i> View Blog</a></li>
-							<li><a href="/me/c/{{.Username}}"><i class="material-icons md-18">palette</i> Customize</a></li>
-							<li><a href="/me/c/{{.Username}}/stats"><i class="material-icons md-18">trending_up</i> Stats</a></li>
+							<li><a href="/"><i class="material-icons md-18">launch</i> {{call .Tr "View Blog"}}</a></li>
+							<li><a href="/me/c/{{.Username}}"><i class="material-icons md-18">palette</i> {{call .Tr "Customize"}}</a></li>
+							<li><a href="/me/c/{{.Username}}/stats"><i class="material-icons md-18">trending_up</i> {{call .Tr "Stats"}}</a></li>
 						{{ else }}
-							<li><a href="/me/c/"><i class="material-icons md-18">library_books</i> View Blogs</a></li>
+							<li><a href="/me/c/"><i class="material-icons md-18">library_books</i> {{call .Tr "View Blog2" 2}}</a></li>
 						{{ end }}
-							<li><a href="/me/posts/"><i class="material-icons md-18">view_list</i> View Drafts</a></li>
-							<li><a href="/me/logout"><i class="material-icons md-18">power_settings_new</i>  Log out</a></li>
+							<li><a href="/me/posts/"><i class="material-icons md-18">view_list</i> {{call .Tr "View Draft" 2}}</a></li>
+							<li><a href="/me/logout"><i class="material-icons md-18">power_settings_new</i>  {{call .Tr "Log out"}}</a></li>
 						</ul>
 					</li>{{end}}
 				</ul></nav>
 				<nav id="font-picker" class="if-room room-3 hidden" style="margin-left:-1em"><ul>
 						<li><a href="#" id="" onclick="return false"><img class="ic-24dp" src="/img/ic_font_dark@2x.png" /> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
 						<ul style="text-align: center">
-							<li class="menu-heading">Font</li>
+							<li class="menu-heading">{{call .Tr "Font"}}</li>
 							<li class="selected"><a class="font norm" href="#norm">Serif</a></li>
 							<li><a class="font sans" href="#sans">Sans-serif</a></li>
 							<li><a class="font wrap" href="#wrap">Monospace</a></li>
 						</ul>
 					</li>
 				</ul></nav>
-				<span id="wc" class="hidden if-room room-4">0 words</span>
+				{{ $N := 2 }}{{ if eq .AppCfg.Lang "eu_ES" }}{{ $N = 1}}{{ end }}
+				<span id="wc" class="hidden if-room room-4">0 {{call .Tr "words" $N}}</span>
 			</div>
-			<noscript style="margin-left: 2em;"><strong>NOTE</strong>: for now, you'll need Javascript enabled to post.</noscript>
+			<noscript style="margin-left: 2em;"><strong>{{call .Tr "NOTE"}}</strong>: {{call .Tr "for now, you'll need Javascript enabled to post."}}</noscript>
 			<div id="belt">
 				{{if .Editing}}<div class="tool hidden if-room"><a href="{{if .EditCollection}}{{.EditCollection.CanonicalURL}}{{.Post.Slug}}/edit/meta{{else}}/{{if .SingleUser}}d/{{end}}{{.Post.Id}}/meta{{end}}" title="Edit post metadata" id="edit-meta"><img class="ic-24dp" src="/img/ic_info_dark@2x.png" /></a></div>{{end}}
 				<div class="tool hidden if-room room-2"><a href="#theme" title="Toggle theme" id="toggle-theme"><img class="ic-24dp" src="/img/ic_brightness_dark@2x.png" /></a></div>
@@ -109,7 +109,10 @@
 			if (val != '') {
 				words += $title.el.value.trim().replace(/\s+/gi, ' ').split(' ').length;
 			}
-			$wc.el.innerText = words + " word" + (words != 1 ? "s" : "");
+			//$wc.el.innerText = words + " word" + (words != 1 ? "s" : "");
+
+			{{ $N := 2 }}{{ if eq .AppCfg.Lang "eu_ES" }}{{ $N = 1}}{{ end }} //don't need to pluralize for the basque language
+			$wc.el.innerText = words + " " + (words !=1 ? {{call .Tr "word" $N}} : {{call .Tr "word" 1}})
 		};
 		var setButtonStates = function() {
 			if (!canPublish) {
@@ -152,12 +155,12 @@
 		var silenced = {{.Silenced}};
 		var publish = function(title, content, font) {
 			if (silenced === true) {
-				alert("Your account is silenced, so you can't publish or update posts.");
+				alert({{call .Tr "Your account is silenced, so you can't publish or update posts."}});
 				return;
 			}
 			{{if and (and .Post.Id (not .Post.Slug)) (not .User)}}
 			if (!token) {
-				alert("You don't have permission to update this post.");
+				alert({{call .Tr "You don't have permission to update this post."}});
 				return;
 			}
 			if ($btnPublish.el.className == 'disabled') {
@@ -251,7 +254,7 @@
 						{{end}}
 					} else {
 						$btnPublish.el.children[0].textContent = 'send';
-						alert("Failed to post. Please try again.");
+						alert({{call .Tr "Failed to post. Please try again."}});
 					}
 				}
 			}

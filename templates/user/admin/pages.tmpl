@@ -10,18 +10,18 @@ table.classy.export .disabled, table.classy.export a {
 <div class="snug content-container">
 	{{template "admin-header" .}}
 
-	<h2 id="posts-header" style="display: flex; justify-content: space-between;">Pages</h2>
+	<h2 id="posts-header" style="display: flex; justify-content: space-between;">{{call .Tr "Page" 2}}</h2>
 
 	<table class="classy export" style="width:100%">
 		<tr>
-			<th>Page</th>
-			<th>Last Modified</th>
+			<th>{{call .Tr "Page"}}</th>
+			<th>{{call .Tr "last modified"}}</th>
 		</tr>
 		<tr>
-			<td colspan="2"><a href="/admin/page/landing">Home</a></td>
+			<td colspan="2"><a href="/admin/page/landing">{{call .Tr "Home"}}</a></td>
 		</tr>
 		{{if .LocalTimeline}}<tr>
-			<td colspan="2"><a href="/admin/page/reader">Reader</a></td>
+			<td colspan="2"><a href="/admin/page/reader">{{call .Tr "Reader"}}</a></td>
 		</tr>{{end}}
 		{{range .Pages}}
 		<tr>

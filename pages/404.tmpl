@@ -1,10 +1,11 @@
-{{define "head"}}<title>Post not found &mdash; {{.SiteName}}</title>{{end}}
+{{define "head"}}<title>{{call .Tr "Post not found"}} &mdash; {{.SiteName}}</title>{{end}}
 {{define "content"}}
 		<div class="error-page" style="max-width:30em">
-			<p class="msg">Post not found.</p>
+			<p class="msg">{{call .Tr "Post not found"}}.</p>
 			{{if and (not .SingleUser) .OpenRegistration}}
-			<p class="commentary" style="margin-top:2.5em">Why not share a thought of your own?</p>
-			<p><a href="/">Start a blog</a> and spread your ideas on <strong>{{.SiteName}}</strong>, a simple{{if .Federation}}, federated{{end}} blogging community.</p>
+			<p class="commentary" style="margin-top:2.5em">{{call .Tr "Why not share a thought of your own?"}}</p>
+			{{$str := print "a simple blogging community"}}{{if .Federation}}{{$str = print "a simple, federated blogging community"}}{{end}}
+			<p>{{call .Tr "%s and spread your ideas on **%s**, %s." true (variables "Start a blog;/" .SiteName $str)}}</p>
 			{{end}}
 		</div>
 {{end}}

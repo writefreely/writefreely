@@ -3,8 +3,9 @@
 {{end}}
 {{define "content"}}<div class="content-container snug">
 	<h1>{{.ContentTitle}}</h1>
-		<p style="font-style:italic">Last updated {{.Updated}}</p>
+		<p style="font-style:italic">{{call .Tr "Last updated"}}, <time datetime="{{.Updated}}" content="{{.Updated}}"></time></p>
 
 		{{.Content}}
 	</div>
+	<script src="/js/localdate.js"></script>
 {{end}}

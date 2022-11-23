@@ -1,7 +1,7 @@
-{{define "head"}}<title>Page not found &mdash; {{.SiteName}}</title>{{end}}
+{{define "head"}}<title>{{call .Tr "Page not found"}} &mdash; {{.SiteName}}</title>{{end}}
 {{define "content"}}
 		<div class="error-page">
-			<p class="msg">This page is missing.</p>
-			<p>Are you sure it was ever here?</p>
+			<p class="msg">{{call .Tr "This page is missing."}}</p>
+			<p>{{call .Tr "Are you sure it was ever here?"}}</p>
 		</div>
 {{end}}

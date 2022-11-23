@@ -9,7 +9,6 @@
 		<link rel="stylesheet" href="/css/lib/mono-blue.min.css">
 		{{end}}
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
-		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="canonical" href="{{.Host}}/{{if .SingleUser}}d/{{end}}{{.ID}}" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -39,19 +38,19 @@
 		<header>
 			<h1 dir="{{.Direction}}"><a href="/">{{.SiteName}}</a></h1>
 			<nav>
-				<span class="views{{if not .IsOwner}} owner-visible{{end}}" dir="ltr"><strong>{{largeNumFmt .Views}}</strong> {{pluralize "view" "views" .Views}}</span>
-				{{if .IsCode}}<a href="/{{.ID}}.txt" rel="noindex" dir="{{.Direction}}">View raw</a>{{end}}
+				<span class="views{{if not .IsOwner}} owner-visible{{end}}" dir="ltr"><strong>{{largeNumFmt .Views}}</strong> {{call .Tr "View" 2}}</span>
+				{{if .IsCode}}<a href="/{{.ID}}.txt" rel="noindex" dir="{{.Direction}}">{{call .Tr "View raw"}}</a>{{end}}
 				{{ if .Username }}
 				{{if .IsOwner}}
-				<a href="/{{if .SingleUser}}d/{{end}}{{.ID}}/edit" dir="{{.Direction}}">Edit</a>
+				<a href="/{{if .SingleUser}}d/{{end}}{{.ID}}/edit" dir="{{.Direction}}">{{call .Tr "Edit"}}</a>
 				{{end}}
-				<a class="xtra-feature dash-nav" href="/me/posts/" dir="{{.Direction}}">Drafts</a>
+				<a class="xtra-feature dash-nav" href="/me/posts/" dir="{{.Direction}}">{{call .Tr "Draft" 2}}</a>
 				{{ end }}
 			</nav>
 		</header>
 
 		{{if .Silenced}}
-			{{template "user-silenced"}}
+			{{template "user-silenced" (dict "Tr" $.Tr)}}
 		{{end}}
 		
 		<article class="{{.Font}} h-entry">{{if .Title}}<h2 id="title" class="p-name">{{.Title}}</h2>{{end}}{{ if .IsPlainText }}<p id="post-body" class="e-content">{{.Content}}</p>{{ else }}<div id="post-body" class="e-content">{{.HTMLContent}}</div>{{ end }}</article>
@@ -89,7 +88,7 @@
 		var $nav = document.getElementsByTagName('nav')[0];
 		for (var i=0; i<posts.length; i++) {
 			if (posts[i].id == "{{.ID}}") {
-				$nav.innerHTML = $nav.innerHTML + '<a class="xtra-feature" href="/edit/{{.ID}}" dir="{{.Direction}}">Edit</a>';
+				$nav.innerHTML = $nav.innerHTML + '<a class="xtra-feature" href="/edit/{{.ID}}" dir="{{.Direction}}">{{call .Tr "Edit"}}</a>';
 				var $ownerVis = document.querySelectorAll('.owner-visible');
 				for (var i=0; i<$ownerVis.length; i++) {
 					$ownerVis[i].classList.remove('owner-visible');

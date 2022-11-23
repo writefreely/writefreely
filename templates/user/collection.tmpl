@@ -20,14 +20,14 @@ textarea.section.norm {
 	<div id="overlay"></div>
 
 	{{if .Silenced}}
-		{{template "user-silenced"}}
+		{{template "user-silenced" (dict "Tr" $.Tr)}}
 	{{end}}
 
 	{{template "collection-breadcrumbs" .}}
 
-	<h1>Customize</h1>
+	<h1>{{(call .Tr "Customize")}}</h1>
 
-	{{template "collection-nav" (dict "Alias" .Alias "Path" .Path "SingleUser" .SingleUser)}}
+	{{template "collection-nav" (dict "Alias" .Alias "Path" .Path "SingleUser" .SingleUser "Tr" $.Tr)}}
 
 	{{if .Flashes}}<ul class="errors">
 		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
@@ -36,14 +36,14 @@ textarea.section.norm {
 <form name="customize-form" action="/api/collections/{{.Alias}}" method="post" onsubmit="return disableSubmit()">
 <div id="collection-options">
 	<div style="text-align:center">
-		<h1><input type="text" name="title" id="title" value="{{.DisplayTitle}}" placeholder="Title" /></h1>
-		<p><input type="text" name="description" id="description" value="{{.Description}}" placeholder="Description" /></p>
+		<h1><input type="text" name="title" id="title" value="{{.DisplayTitle}}" placeholder={{call .Tr "Title"}} /></h1>
+		<p><input type="text" name="description" id="description" value="{{.Description}}" placeholder={{call .Tr "Description"}} /></p>
 	</div>
 
 	<div class="option">
 		<h2><a name="preferred-url"></a>URL</h2>
 		<div class="section">
-			{{if eq .Alias .Username}}<p style="font-size: 0.8em">This blog uses your username in its URL{{if .Federation}} and fediverse handle{{end}}. You can change it in your <a href="/me/settings">Account Settings</a>.</p>{{end}}
+			{{if eq .Alias .Username}}<p style="font-size: 0.8em">{{if .Federation}}{{call .Tr "This blog uses your username in its URL and fediverse handle."}}{{else}}{{call .Tr "This blog uses your username in its URL."}}{{end}} {{call .Tr "You can change it in your %s." true (variables "Account Settings;/me/settings")}}</p>{{end}}
 			<ul style="list-style:none">
 				<li>
 					{{.FriendlyHost}}/<strong>{{.Alias}}</strong>/
@@ -56,34 +56,34 @@ textarea.section.norm {
 	</div>
 
 	<div class="option">
-		<h2>Publicity</h2>
+		<h2>{{call .Tr "Publicity"}}</h2>
 		<div class="section">
 			<ul style="list-style:none">
 				<li>
 					<label><input type="radio" name="visibility" id="visibility-unlisted" value="0" {{if .IsUnlisted}}checked="checked"{{end}} />
-						Unlisted
+						{{call .Tr "Unlisted"}}
 					</label>
-					<p>This blog is visible to {{if .Private}}any registered user on this instance{{else}}anyone with its link{{end}}.</p>
+					<p>{{if .Private}}{{call .Tr "This blog is visible to any registered user on this instance."}}{{else}}{{call .Tr "This blog is visible to anyone with its link."}}{{end}}</p>
 				</li>
 				<li>
 				<label class="option-text"><input type="radio" name="visibility" id="visibility-private" value="2" {{if .IsPrivate}}checked="checked"{{end}} />
-						Private
+						{{call .Tr "Private"}}
 					</label>
-					<p>Only you may read this blog (while you're logged in).</p>
+					<p>{{call .Tr "Only you may read this blog (while you're logged in)."}}</p>
 				</li>
 				<li>
 					<label class="option-text"><input type="radio" name="visibility" id="visibility-protected" value="4" {{if .IsProtected}}checked="checked"{{end}} />
-						Password-protected: <input type="password" class="low-profile" name="password" id="collection-pass" autocomplete="new-password" placeholder="{{if .IsProtected}}xxxxxxxxxxxxxxxx{{else}}a memorable password{{end}}" />
+						{{call .Tr "Password-protected:"}} <input type="password" class="low-profile" name="password" id="collection-pass" autocomplete="new-password" placeholder="{{if .IsProtected}}xxxxxxxxxxxxxxxx{{else}}{{call .Tr "a memorable password"}}{{end}}" />
 					</label>
-					<p>A password is required to read this blog.</p>
+					<p>{{call .Tr "A password is required to read this blog."}}</p>
 				</li>
 				{{if not .SingleUser}}
 				<li>
 					<label class="option-text{{if not .LocalTimeline}} disabled{{end}}"><input type="radio" name="visibility" id="visibility-public" value="1" {{if .IsPublic}}checked="checked"{{end}} {{if not .LocalTimeline}}disabled="disabled"{{end}} />
-						Public
+						{{call .Tr "Public"}}
 					</label>
-					{{if .LocalTimeline}}<p>This blog is displayed on the public <a href="/read">reader</a>, and is visible to {{if .Private}}any registered user on this instance{{else}}anyone with its link{{end}}.</p>
-					{{else}}<p>The public reader is currently turned off for this community.</p>{{end}}
+					{{if .LocalTimeline}}<p>{{if .Private}}{{call .Tr "This blog is displayed on the public %s, and is visible to any registered user on this instance." true (variables "Reader;/read")}}{{else}}{{call .Tr "This blog is displayed on the public %s, and is visible to any registered user on this instance." true (variables "Reader;/read")}}{{end}}</p>
+					{{else}}<p>{{call .Tr "The public reader is currently turned off for this community."}}</p>{{end}}
 				</li>
 				{{end}}
 			</ul>
@@ -91,37 +91,37 @@ textarea.section.norm {
 	</div>
 
 	<div class="option">
-		<h2>Display Format</h2>
+		<h2>{{call .Tr "Display Format"}}</h2>
 		<div class="section">
-			<p class="explain">Customize how your posts display on your page.
+			<p class="explain">{{call .Tr "Customize how your posts display on your page."}}
 			</p>
 			<ul style="list-style:none">
 				<li>
 					<label><input type="radio" name="format" id="format-blog" value="blog" {{if or (not .Format) (eq .Format "blog")}}checked="checked"{{end}} />
 						Blog
 					</label>
-					<p>Dates are shown. Latest posts listed first.</p>
+					<p>{{call .Tr "Dates are shown. Latest posts listed first."}}</p>
 				</li>
 				<li>
 					<label class="option-text"><input type="radio" name="format" id="format-novel" value="novel" {{if eq .Format "novel"}}checked="checked"{{end}} />
 						Novel
 					</label>
-					<p>No dates shown. Oldest posts first.</p>
+					<p>{{call .Tr "No dates shown. Oldest posts first."}}</p>
 				</li>
 				<li>
 					<label class="option-text"><input type="radio" name="format" id="format-notebook" value="notebook" {{if eq .Format "notebook"}}checked="checked"{{end}} />
 						Notebook
 					</label>
-					<p>No dates shown. Latest posts first.</p>
+					<p>{{call .Tr "No dates shown. Latest posts first."}}</p>
 				</li>
 			</ul>
 		</div>
 	</div>
 
 	<div class="option">
-		<h2>Text Rendering</h2>
+		<h2>{{call .Tr "Text Rendering"}}</h2>
 		<div class="section">
-			<p class="explain">Customize how plain text renders on your blog.</p>
+			<p class="explain">{{call .Tr "Customize how plain text renders on your blog."}}</p>
 			<ul style="list-style:none">
 				<li>
 					<label class="option-text disabled"><input type="checkbox" name="markdown" checked="checked" disabled />
@@ -138,52 +138,52 @@ textarea.section.norm {
 	</div>
 
 	<div class="option">
-		<h2>Custom CSS</h2>
+		<h2>{{call .Tr "Custom CSS"}}</h2>
 		<div class="section">
 			<textarea id="css-editor" class="section codable" name="style_sheet">{{.StyleSheet}}</textarea>
-			<p class="explain">See our guide on <a href="https://guides.write.as/customizing/#custom-css">customization</a>.</p>
+			<p class="explain">{{call .Tr "See our guide on %s." true (variables "customization;https://guides.write.as/customizing/#custom-css")}}</p>
 		</div>
 	</div>
 
 	<div class="option">
-		<h2>Post Signature</h2>
+		<h2>{{call .Tr "Post Signature"}}</h2>
 		<div class="section">
-			<p class="explain">This content will be added to the end of every post on this blog, as if it were part of the post itself. Markdown, HTML, and shortcodes are allowed.</p>
+			<p class="explain">{{call .Tr "This content will be added to the end of every post on this blog, as if it were part of the post itself. Markdown, HTML, and shortcodes are allowed."}}</p>
 			<textarea id="signature" class="section norm" name="signature">{{.Signature}}</textarea>
 		</div>
 	</div>
 
 	{{if .UserPage.StaticPage.AppCfg.Monetization}}
 	<div class="option">
-		<h2>Web Monetization</h2>
+		<h2>{{call .Tr "Web Monetization"}}</h2>
 		<div class="section">
-			<p class="explain">Web Monetization enables you to receive micropayments from readers that have a <a href="https://coil.com">Coil membership</a>. Add your payment pointer to enable Web Monetization on your blog.</p>
+			<p class="explain">{{call .Tr "Web Monetization enables you to receive micropayments from readers that have a %s. Add your payment pointer to enable Web Monetization on your blog." true (variables "Coil membership;https://coil.com")}}</p>
 			<input type="text" name="monetization_pointer" style="width:100%" value="{{.Collection.Monetization}}" placeholder="$wallet.example.com/alice" />
 		</div>
 	</div>
 	{{end}}
 
 	<div class="option" style="text-align: center; margin-top: 4em;">
-		<input type="submit" id="save-changes" value="Save changes" />
-		<p><a href="{{if .SingleUser}}/{{else}}/{{.Alias}}/{{end}}">View Blog</a></p>
-		{{if ne .Alias .Username}}<p><a class="danger" href="#modal-delete" onclick="promptDelete();">Delete Blog...</a></p>{{end}}
+		<input type="submit" id="save-changes" value="{{call .Tr "Save changes"}}" />
+		<p><a href="{{if .SingleUser}}/{{else}}/{{.Alias}}/{{end}}">{{call .Tr "View Blog"}}</a></p>
+		{{if ne .Alias .Username}}<p><a class="danger" href="#modal-delete" onclick="promptDelete();">{{call .Tr "Delete Blog..."}}</a></p>{{end}}
 	</div>
 </div>
 </form>
 </div>
 
 		<div id="modal-delete" class="modal">
-			<h2>Are you sure you want to delete this blog?</h2>
+			<h2>{{call .Tr "Are you sure you want to delete this blog?"}}</h2>
 			<div class="body short">
-				<p style="text-align:left">This will permanently erase <strong>{{.DisplayTitle}}</strong> ({{.FriendlyHost}}/{{.Alias}}) from the internet. Any posts on this blog will be saved and made into drafts (found on your <a href="/me/posts/">Drafts</a> page).</p>
-				<p>If you're sure you want to delete this blog, enter its name in the box below and press <strong>Delete</strong>.</p>
+				<p style="text-align:left">{{call .Tr "This will permanently erase <strong>{{.DisplayTitle}}</strong> ({{.FriendlyHost}}/{{.Alias}}) from the internet. Any posts on this blog will be saved and made into drafts (found on your %s page)." true (variables true "Draft;/me/posts/")}}</p>
+				<p>{{call .Tr "If you're sure you want to delete this blog, enter its name in the box below and press **%s**." true (variables "Delete")}}</p>
 
 				<ul id="delete-errors" class="errors"></ul>
 
 				<input id="confirm-text" placeholder="{{.Alias}}" type="text" class="boxy" style="margin-top: 0.5em;" />
 				<div style="text-align:right; margin-top: 1em;">
-					<a id="cancel-delete" style="margin-right:2em" href="#">Cancel</a>
-					<button id="btn-delete" class="danger" onclick="deleteBlog(); return false;">Delete</button>
+					<a id="cancel-delete" style="margin-right:2em" href="#">{{call .Tr "Cancel"}}</a>
+					<button id="btn-delete" class="danger" onclick="deleteBlog(); return false;">{{call .Tr "Delete"}}</button>
 				</div>
 			</div>
 		</div>
@@ -195,12 +195,12 @@ textarea.section.norm {
 H.getEl('cancel-delete').on('click', closeModals);
 var deleteBlog = function(e) {
 	if (document.getElementById('confirm-text').value != '{{.Alias}}') {
-		document.getElementById('delete-errors').innerHTML = '<li class="urgent">Enter <strong>{{.Alias}}</strong> in the box below.</li>';
+		document.getElementById('delete-errors').innerHTML = '<li class="urgent">{{call .Tr "Enter **%s** in the box below." true (variables .Alias)}}</li>';
 		return;
 	}
 	// Clear errors
 	document.getElementById('delete-errors').innerHTML = '';
-	document.getElementById('btn-delete').innerHTML = 'Deleting...';
+	document.getElementById('btn-delete').innerHTML = {{call .Tr "Deleting..."}};
 
 	var http = new XMLHttpRequest();
 	var url = "/api/collections/{{.Alias}}?web=1";
@@ -213,7 +213,7 @@ var deleteBlog = function(e) {
 			} else {
 				var data = JSON.parse(http.responseText);
 				document.getElementById('delete-errors').innerHTML = '<li class="urgent">'+data.error_msg+'</li>';
-				document.getElementById('btn-delete').innerHTML = 'Delete';
+				document.getElementById('btn-delete').innerHTML = {{call .Tr "Delete"}};
 			}
 		}
 	};
@@ -231,7 +231,7 @@ function disableSubmit() {
 	var $form = document.forms['customize-form'];
 	createHidden($form, 'style_sheet', cssEditor.getSession().getValue());
 	var $btn = document.getElementById("save-changes");
-	$btn.value = "Saving changes...";
+	$btn.value = {{call .Tr "Saving changes..."}};
 	$btn.disabled = true;
 	return true;
 }

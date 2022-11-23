@@ -16,30 +16,31 @@
 
 {{ if .UpdateChecks }}
 	{{if .CheckFailed}}
-		<p class="intro"><span class="ex failure">&times;</span> Automated update check failed.</p>
-		<p>Installed version: <strong>{{.Version}}</strong> (<a href="{{.CurReleaseNotesURL}}" target="changelog-wf">release notes</a>).</p>
-		<p>Learn about latest releases on the <a href="https://blog.writefreely.org/tag:release" target="changelog-wf">WriteFreely blog</a> or <a href="https://discuss.write.as/c/writefreely/updates" target="forum-wf">forum</a>.</p>
+		<p class="intro"><span class="ex failure">&times;</span> {{call .Tr "Automated update check failed."}}</p>
+		<p>{{call .Tr "Installed version: **%s** (%s)." true (variables .Version "release notes; .CurReleaseNotesURL") }}</p>
+		<p>{{call .Tr "Learn about latest releases on the %s or %s." true (variables "Writefreely blog;https://blog.writefreely.org/tag:release" "forum;https://discuss.write.as/c/writefreely/updates" )}}</p>
 	{{else if not .UpdateAvailable}}
-		<p class="intro"><span class="check">&check;</span> WriteFreely is <strong>up to date</strong>.</p>
-		<p>Installed version: <strong>{{.Version}}</strong> (<a href="{{.LatestReleaseNotesURL}}" target="changelog-wf">release notes</a>).</p>
+		<p class="intro"><span class="check">&check;</span>{{call .Tr "WriteFreely is **up to date**."}}</p>
+		<p>{{call .Tr "Installed version: **%s** (%s)." true (variables .Version "release notes; .CurReleaseNotesURL") }}</p>
     {{else}}
-		<p class="intro">A new version of WriteFreely is available! <a href="{{.LatestReleaseURL}}" target="download-wf" style="font-weight: bold;">Get {{.LatestVersion}}</a></p>
-		<p class="changelog">
-			<a href="{{.LatestReleaseNotesURL}}" target="changelog-wf">Read the release notes</a> for details on features, bug fixes, and notes on upgrading from your current version, <strong>{{.Version}}</strong>.
-		</p>
+    	{{ $link := print .LatestVersion ";" .LatestReleaseURL }}
+		<p class="intro">{{call .Tr "A new version of WriteFreely is available! **%s %s**" true (variables "Get" $link) }}</p>
+		{{ $link2 := print "release notes;" .LatestReleaseNotesURL }}
+		<p class="changelog">{{call .Tr "Read the %s for details on features, bug fixes, and notes on upgrading from your current version, **%s**." true (variables $link2 .Version) }}</p>
 	{{end}}
-	<p style="font-size: 0.86em;"><em>Last checked</em>: <time class="dt-published" datetime="{{.LastChecked8601}}">{{.LastChecked}}</time>. <a href="/admin/updates?check=now">Check now</a>.</p>
+	<p style="font-size: 0.86em;"><em>{{call .Tr "Last checked"}}</em>: <time class="dt-published" datetime="{{.LastChecked8601}}">{{.LastChecked}}</time>. <a href="/admin/updates?check=now">{{call .Tr "Check now"}}</a>.</p>
 
 	<script>
 	// Code modified from /js/localdate.js
-	var displayEl = document.querySelector("time");
-	var d = new Date(displayEl.getAttribute("datetime"));
-	displayEl.textContent = d.toLocaleDateString(navigator.language || "en-US", { dateStyle: 'long', timeStyle: 'short' });
+	//var displayEl = document.querySelector("time");
+	//var d = new Date(displayEl.getAttribute("datetime"));
+	//displayEl.textContent = d.toLocaleDateString(navigator.language || "en-US", { dateStyle: 'long', timeStyle: 'short' });
 	</script>
+	<script src="/js/localdate.js"></script>
 {{ else }}
-	<p class="intro disabled">Automated update checks are disabled.</p>
-	<p>Installed version: <strong>{{.Version}}</strong> (<a href="{{.CurReleaseNotesURL}}" target="changelog-wf">release notes</a>).</p>
-	<p>Learn about latest releases on the <a href="https://blog.writefreely.org/tag:release" target="changelog-wf">WriteFreely blog</a> or <a href="https://discuss.write.as/c/writefreely/updates" target="forum-wf">forum</a>.</p>
+	<p class="intro disabled">{{call .Tr "Automated update checks are disabled."}}</p>
+	<p>{{call .Tr "Installed version: **%s** (%s)." true (variables .Version "release notes; .CurReleaseNotesURL") }}</p>
+	<p>{{call .Tr "Learn about latest releases on the %s or %s." true (variables "Writefreely blog;https://blog.writefreely.org/tag:release" "forum;https://discuss.write.as/c/writefreely/updates" )}}</p>
 {{ end }}
 
 {{template "footer" .}}

@@ -31,6 +31,9 @@ type StaticPage struct {
 	CanViewReader bool
 	IsAdmin       bool
 	CanInvite     bool
+
+    Locales   string
+    Tr  func (str string, ParamsToTranslate ...interface{}) interface{}
 }
 
 // SanitizeHost alters the StaticPage to contain a real hostname. This is

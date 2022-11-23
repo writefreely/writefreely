@@ -14,7 +14,7 @@
 	</style>
 
 <div class="snug content-container">
-	<h1 id="import-header">Import posts</h1>
+	<h1 id="import-header">{{call .Tr "Import posts"}}</h1>
 	{{if .Message}}
 	<div class="alert {{if .InfoMsg}}info{{else}}success{{end}}">
 		<p>{{.Message}}</p>
@@ -25,20 +25,20 @@
 			{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 		</ul>
 	{{end}}
-	<p>Publish plain text or Markdown files to your account by uploading them below.</p>
+	<p>{{call .Tr "Publish plain text or Markdown files to your account by uploading them below."}}</p>
 	<div class="formContainer">
 		<form id="importPosts" class="prominent" enctype="multipart/form-data" action="/api/me/import" method="POST">
-			<label>Select some files to import:
+			<label>{{call .Tr "Select some files to import:"}}
 				<input id="fileInput" class="fileInput" name="files" type="file" multiple accept="text/*"/>
 			</label>
 			<input id="fileDates" name="fileDates" hidden/>
 			<label>
-				Import these posts to:
+				{{call .Tr "Import these posts to:"}}
 				<select name="collection">
 					{{range $i, $el := .Collections}}
 						<option value="{{.Alias}}" {{if eq $i 0}}selected{{end}}>{{.DisplayTitle}}</option>
 					{{end}}
-					<option value="">Drafts</option>
+					<option value="">{{call .Tr "Draft" 2}}</option>
 				</select>
 			</label>
 			<script>
@@ -56,7 +56,7 @@
 					fileDates.value = JSON.stringify(dateMap);
 				})
 			</script>
-			<input type="submit" value="Import" />
+			<input type="submit" value={{call .Tr "Import"}} />
 		</form>
 	</div>
 </div>

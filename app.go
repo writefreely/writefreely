@@ -25,6 +25,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"encoding/json"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
@@ -41,6 +42,7 @@ import (
 	"github.com/writefreely/writefreely/migrations"
 	"github.com/writefreely/writefreely/page"
 	"golang.org/x/crypto/acme/autocert"
+	"github.com/leonelquinteros/gotext"
 )
 
 const (
@@ -73,6 +75,8 @@ type App struct {
 	sessionStore sessions.Store
 	formDecoder  *schema.Decoder
 	updates      *updatesCache
+	locales 			string
+	tr 						func (str string, ParamsToTranslate ...interface{}) interface{}
 
 	timeline *localTimeline
 }
@@ -130,11 +134,15 @@ type Apper interface {
 
 	LoadKeys() error
 
+	LoadLocales() error
+
 	ReqLog(r *http.Request, status int, timeSince time.Duration) string
 }
 
 // App returns the App
 func (app *App) App() *App {
+	//softwareVer = "0.13.1"
+	//softwareVer = os.Getenv("VERSION")
 	return app
 }
 
@@ -154,6 +162,126 @@ func (app *App) LoadConfig() error {
 // SaveConfig saves the given Config to disk -- namely, to the App's cfgFile.
 func (app *App) SaveConfig(c *config.Config) error {
 	return config.Save(c, app.cfgFile)
+}
+
+// LoadLocales reads "json" locales file created from "po" locales.
+func (app *App) LoadLocales() error {
+	var err error
+	log.Info("Reading %s locales...", app.cfg.App.Lang)
+
+	//var setLang = localize(app.cfg.App.Lang)
+// ###############################################################################3
+type translator interface {}
+
+app.tr = func(str string, ParamsToTranslate ...interface{}) interface{} {
+	//var str string
+  n := 1
+	md := false
+	var res translator
+	var output []interface{}
+	var iString []interface{}
+
+	setLang := gotext.NewLocale("./locales", app.cfg.App.Lang);
+	setLang.AddDomain("base");
+
+	for _, item := range ParamsToTranslate {       
+		switch item.(type) {       
+			case int:		// n > 1 for plural       
+				n = item.(int) 
+			case bool:	// true for apply markdown   
+				md = item.(bool)      
+			case []interface{}:	// variables passed for combined translations
+					var s string
+					var arr []string
+					plural := false // true if passed variable needs to be pluralized
+					for _, vars := range item.([]interface{}) {
+						switch vars.(type) {
+							case bool:	// true if passed variable needs to be pluralized
+								plural = vars.(bool)
+							case int:           
+								iString = append(iString, vars.(int))
+							case int64:
+								iString = append(iString, int(vars.(int64)))
+							case string:           
+								s = vars.(string)
+								if(strings.Contains(s, ";")){ // links inside translation
+									var link [] string
+		    					for j:= 0; j<=strings.Count(s,";"); j++ {
+										link = append(link, strings.Split(s, ";")[j])
+									}
+									if(plural == true){
+										link[0] = setLang.GetN(link[0], link[0], 2)
+									}else{
+										link[0] = setLang.Get(link[0])
+									}						
+									iString = append(iString, "[" + link[0] + "](" + link[1] + ")")
+								}else{	// simple string
+									if(plural == true){
+										fmt.Println("PLURAL")
+										if(len(iString) == 0){
+											iString = append(iString, setLang.GetN(s, s, 2))
+										}else{
+											iString = append(iString, setLang.GetN(s, s, 2))
+										}
+									}else{
+										if(len(iString) == 0){
+											iString = append(iString, setLang.Get(s))
+										}else{
+											iString = append(iString, setLang.Get(s))
+										}
+									}				
+								}
+							case []string: // not used, templates don't support [] string type as function arguments
+								arr = vars.([]string)
+								iString = append(iString, "[" + arr[0] + "](" + arr[1] + ")")
+						}
+						output = iString
+					}  
+
+			default:           
+				fmt.Println("invalid parameters")       
+		}   
+	}
+
+	if(output != nil){  // if output for combined translations is not null
+		if(md == true){ 
+			res = template.HTML(applyBasicMarkdown([]byte(setLang.Get(str, output...))))
+		}else{
+			res = setLang.Get(str, output...)
+		}
+		return res
+	}
+	if(md == true){
+		res = template.HTML(applyBasicMarkdown([]byte(setLang.Get(str))))
+	}else if(n > 1){
+		res = setLang.GetN(str, str, n)
+	}else{
+		res = setLang.Get(str)
+	}
+	
+	return res
+
+}
+
+  //inputFile:= "eu_ES.json"
+  inputFile := "./static/js/"+app.cfg.App.Lang+".json"
+  file, err := ioutil.ReadFile(inputFile)
+  if err != nil {
+      log.Error(err.Error())
+      os.Exit(1)
+  }
+
+	var mfile map[string]interface{}
+	err = json.Unmarshal(file, &mfile)
+
+	var res []byte
+	res, err = json.Marshal(mfile[app.cfg.App.Lang])
+  if err != nil {
+      log.Error(err.Error())
+      os.Exit(1)
+  }
+  app.locales = string(res)
+  return nil
 }
 
 // LoadKeys reads all needed keys from disk into the App. In order to use the
@@ -308,8 +436,10 @@ func handleTemplatedPage(app *App, w http.ResponseWriter, r *http.Request, t *te
 		page.StaticPage
 		ContentTitle string
 		Content      template.HTML
+		ExtraContent template.HTML
 		PlainContent string
 		Updated      string
+		//BlogStats		 template.HTML
 
 		AboutStats *InstanceStats
 	}{
@@ -335,6 +465,8 @@ func handleTemplatedPage(app *App, w http.ResponseWriter, r *http.Request, t *te
 		}
 		p.ContentTitle = c.Title.String
 		p.Content = template.HTML(applyMarkdown([]byte(c.Content), "", app.cfg))
+		//p.ExtraContent = template.HTML(applyMarkdown([]byte(c.ExtraContent), "", app.cfg))
+		//p.BlogStats = template.HTML(applyMarkdown([]byte(c.BlogStats), "", app.cfg))
 		p.PlainContent = shortPostDescription(stripmd.Strip(c.Content))
 		if !c.Updated.IsZero() {
 			p.Updated = c.Updated.Format("January 2, 2006")
@@ -354,6 +486,7 @@ func pageForReq(app *App, r *http.Request) page.StaticPage {
 		AppCfg:  app.cfg.App,
 		Path:    r.URL.Path,
 		Version: "v" + softwareVer,
+		Tr: app.tr,
 	}
 
 	// Use custom style, if file exists
@@ -383,6 +516,8 @@ func pageForReq(app *App, r *http.Request) page.StaticPage {
 	}
 	p.CanViewReader = !app.cfg.App.Private || u != nil
 
+	p.Locales = app.locales
+
 	return p
 }
 
@@ -395,6 +530,10 @@ func Initialize(apper Apper, debug bool) (*App, error) {
 
 	apper.LoadConfig()
 
+	// Generate JSON format locales
+	apper.App().GenJsonFiles()
+	apper.LoadLocales()
+	
 	// Load templates
 	err := InitTemplates(apper.App().Config())
 	if err != nil {

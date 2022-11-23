@@ -25,16 +25,16 @@ input[type=text] {
 <div class="snug content-container">
 	{{template "admin-header" .}}
 
-	<h2 id="posts-header">{{if eq .Content.ID "landing"}}Home page{{else}}{{.Content.ID}} page{{end}}</h2>
+	<h2 id="posts-header">{{if eq .Content.ID "landing"}}{{call .Tr "Home"}} {{call .Tr "Page"}}{{else}}{{.Content.Title.String}} {{call .Tr "Page"}}{{end}}</h2>
 
 	{{if eq .Content.ID "about"}}
-	<p class="page-desc content-desc">Describe what your instance is <a href="/about" target="page">about</a>.</p>
+	<p class="page-desc content-desc">{{call .Tr "Describe what your instance is %s." true (variables "About;/about") }}</p>
 	{{else if eq .Content.ID "privacy"}}
-	<p class="page-desc content-desc">Outline your <a href="/privacy" target="page">privacy policy</a>.</p>
+	<p class="page-desc content-desc">{{call .Tr "Outline your %s." true (variables "Privacy Policy;/privacy") }}</p>
 	{{else if eq .Content.ID "reader"}}
-	<p class="page-desc content-desc">Customize your <a href="/read" target="page">Reader</a> page.</p>
+	<p class="page-desc content-desc">{{call .Tr "Customize your %s page." true (variables "Reader;/read") }}</p>
 	{{else if eq .Content.ID "landing"}}
-	<p class="page-desc content-desc">Customize your <a href="/?landing=1" target="page">home page</a>.</p>
+	<p class="page-desc content-desc">{{call .Tr "Customize your %s page." true (variables "Home;/landing=1") }}</p>
 	{{end}}
 
 	{{if .Message}}<p>{{.Message}}</p>{{end}}
@@ -42,25 +42,25 @@ input[type=text] {
 	<form method="post" action="/admin/update/{{.Content.ID}}" onsubmit="savePage(this)">
 		{{if .Banner}}
 		<label for="banner">
-			Banner
+			{{call .Tr "Banner"}}
 		</label>
 		<textarea id="banner" class="section codable norm edit-page" style="min-height: 5em; height: 5em;" name="banner">{{.Banner.Content}}</textarea>
-		<p class="content-desc">We suggest a header (e.g. <code># Welcome</code>), optionally followed by a small bit of text. Accepts Markdown and HTML.</p>
+		<p class="content-desc">{{call .Tr "We suggest a header (e.g. `# Welcome`), optionally followed by a small bit of text. Accepts Markdown and HTML." true}}</p>
 		{{else}}
 		<label for="title">
-			Title
+			{{call .Tr "Title"}}
 		</label>
 		<input type="text" name="title" id="title" value="{{.Content.Title.String}}" />
 		{{end}}
 		<label for="content">
-			{{if .Banner}}Body{{else}}Content{{end}}
+			{{if .Banner}}{{call .Tr "Body"}}{{else}}{{call .Tr "Content"}}{{end}}
 		</label>
 
 		<textarea id="content" class="section codable norm edit-page" name="content">{{.Content.Content}}</textarea>
 
-		<p class="content-desc">Accepts Markdown and HTML.</p>
+		<p class="content-desc">{{call .Tr "Accepts Markdown and HTML."}}</p>
 
-		<input type="submit" value="Save" />
+		<input type="submit" value="{{call .Tr "Save"}}" />
 	</form>
 
 </div>
@@ -68,7 +68,7 @@ input[type=text] {
 <script>
 function savePage(el) {
 	var $btn = el.querySelector('input[type=submit]');
-	$btn.value = 'Saving...';
+	$btn.value = '{{call .Tr "Saving..."}}';
 	$btn.disabled = true;
 }
 </script>

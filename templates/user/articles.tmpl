@@ -8,6 +8,9 @@
 	#move-tmpl {
 		display: none;
 	}
+	a.action {
+		text-transform: lowercase;
+	}
 </style>
 
 <div class="snug content-container">
@@ -16,49 +19,50 @@
 	{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 </ul>{{end}}
 {{if .Silenced}}
-	{{template "user-silenced"}}
+	{{template "user-silenced" (dict "Tr" $.Tr)}}
 {{end}}
 
-<h1 id="posts-header">Drafts</h1>
+<h1 id="posts-header">{{call .Tr "Draft" 2}}</h1>
 
 {{ if .AnonymousPosts }}
-	<p>These are your draft posts. You can share them individually (without a blog) or move them to your blog when you're ready.</p>
+	<p>{{call .Tr "These are your draft posts. You can share them individually (without a blog) or move them to your blog when you're ready."}}</p>
 
 	<div id="anon-posts" class="atoms posts">
 	{{ range $el := .AnonymousPosts }}<div id="post-{{.ID}}" class="post">
 		<h3><a href="/{{if $.SingleUser}}d/{{end}}{{.ID}}" itemprop="url">{{.DisplayTitle}}</a></h3>
 		<h4>
 			<date datetime="{{.Created}}" pubdate itemprop="datePublished" content="{{.Created}}">{{.DisplayDate}}</date>
-			<a class="action" href="/{{if $.SingleUser}}d/{{end}}{{.ID}}/edit">edit</a>
-			<a class="delete action" href="/{{.ID}}" onclick="delPost(event, '{{.ID}}', true)">delete</a>
+			<a class="action" href="/{{if $.SingleUser}}d/{{end}}{{.ID}}/edit">{{call $.Tr "Edit"}}</a>
+			<a class="delete action" href="/{{.ID}}" onclick="delPost(event, '{{.ID}}', true, {{$.Locales}})">{{call $.Tr "Delete"}}</a>
 			{{ if $.Collections }}
 			{{if gt (len $.Collections) 1}}<div class="action flat-select">
-				<select id="move-{{.ID}}" onchange="postActions.multiMove(this, '{{.ID}}', {{if $.SingleUser}}true{{else}}false{{end}})" title="Move this post to one of your blogs">
+				<select id="move-{{.ID}}" onchange="postActions.multiMove(this, '{{.ID}}', {{if $.SingleUser}}true{{else}}false{{end}})" title={{call .Tr "Move this post to one of your blogs"}}>
 					<option style="display:none"></option>
 					{{range $.Collections}}<option value="{{.Alias}}">{{.DisplayTitle}}</option>{{end}}
 				</select>
-				<label for="move-{{.ID}}">move to...</label>
+				<label for="move-{{.ID}}">{{call .Tr "move to..."}}</label>
 				<img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" />
 			</div>{{else}}
 			{{range $.Collections}}
-			<a class="action" href="/{{$el.ID}}" title="Publish this post to your blog '{{.DisplayTitle}}'" onclick="postActions.move(this, '{{$el.ID}}', '{{.Alias}}', {{if $.SingleUser}}true{{else}}false{{end}});return false">move to {{.DisplayTitle}}</a>
+			<a class="action" href="/{{$el.ID}}" title={{call $.Tr "Publish this post to your blog %s" true (variables .DisplayTitle)}} onclick="postActions.move(this, '{{$el.ID}}', '{{.Alias}}', {{if $.SingleUser}}true{{else}}false{{end}}, {{$.Locales}});return false">{{call $.Tr "move to %s" (variables .DisplayTitle)}}</a>
 			{{end}}
 			{{end}}
 			{{ end }}
 		</h4>
 		{{if .Summary}}<p>{{.SummaryHTML}}</p>{{end}}
 	</div>{{end}}
+	<script src="/js/localdate.js"></script>
 </div>
-{{if eq (len .AnonymousPosts) 10}}<p id="load-more-p"><a href="#load">Load more...</a></p>{{end}}
+{{if eq (len .AnonymousPosts) 10}}<p id="load-more-p"><a href="#load">{{call .Tr "Load more..."}}</a></p>{{end}}
 {{ else }}<div id="no-posts-published">
-	<p>Your anonymous and draft posts will show up here once you've published some. You'll be able to share them individually (without a blog) or move them to a blog when you're ready.</p>
-	{{if not .SingleUser}}<p>Alternatively, see your blogs and their posts on your <a href="/me/c/">Blogs</a> page.</p>{{end}}
+	<p>{{call .Tr "Your anonymous and draft posts will show up here once you've published some. You'll be able to share them individually (without a blog) or move them to a blog when you're ready."}}</p>
+	{{if not .SingleUser}}<p>{{call .Tr "Alternatively, see your blogs and their posts on your %s page." true (variables true "Blog;/me/c/")}}</p>{{end}}
 
-	<p class="text-cta"><a href="{{if .SingleUser}}/me/new{{else}}/{{end}}">Start writing</a></p></div>{{ end }}
+	<p class="text-cta"><a href="{{if .SingleUser}}/me/new{{else}}/{{end}}">{{call .Tr "Start writing"}}</a></p></div>{{ end }}
 
 <div id="moving"></div>
 
-<h2 id="unsynced-posts-header" style="display: none">unsynced posts</h2>
+<h2 id="unsynced-posts-header" style="display: none">{{call .Tr "unsynced posts"}}</h2>
 <div id="unsynced-posts-info" style="margin-top: 1em"></div>
 <div id="unsynced-posts" class="atoms"></div>
 
@@ -68,16 +72,16 @@
 	<div id="move-tmpl">
 		{{if gt (len .Collections) 1}}
 			<div class="action flat-select">
-				<select id="move-POST_ID" onchange="postActions.multiMove(this, 'POST_ID', {{if .SingleUser}}true{{else}}false{{end}})" title="Move this post to one of your blogs">
+				<select id="move-POST_ID" onchange="postActions.multiMove(this, 'POST_ID', {{if .SingleUser}}true{{else}}false{{end}}, {{$.Locales}})" title={{call .Tr "Move this post to one of your blogs"}}>
 					<option style="display:none"></option>
 					{{range .Collections}}<option value="{{.Alias}}">{{.DisplayTitle}}</option>{{end}}
 				</select>
-				<label for="move-POST_ID">move to...</label>
+				<label for="move-POST_ID">{{call .Tr "move to..."}}</label>
 				<img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" />
 			</div>
 		{{else}}
 			{{range .Collections}}
-				<a class="action" href="/POST_ID" title="Publish this post to your blog '{{.DisplayTitle}}'" onclick="postActions.move(this, 'POST_ID', '{{.Alias}}', {{if $.SingleUser}}true{{else}}false{{end}});return false">move to {{.DisplayTitle}}</a>
+				<a class="action" href="/POST_ID" title={{call $.Tr "Publish this post to your blog %s" (variables .DisplayTitle)}} onclick="postActions.move(this, 'POST_ID', '{{.Alias}}', {{if $.SingleUser}}true{{else}}false{{end}}, {{$.Locales}});return false">{{call $.Tr "move to %s" (variables .DisplayTitle)}}</a>
 			{{end}}
 		{{end}}
 	</div>

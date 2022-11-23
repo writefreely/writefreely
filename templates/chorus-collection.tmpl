@@ -6,7 +6,6 @@
 		<title>{{.DisplayTitle}}{{if not .SingleUser}} &mdash; {{.SiteName}}{{end}}</title>
 		
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
-		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="canonical" href="{{.CanonicalURL}}">
 		{{if gt .CurrentPage 1}}<link rel="prev" href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">{{end}}
@@ -64,7 +63,7 @@ body#collection header nav.tabs a:first-child {
 		{{template "user-navigation" .}}
 		
 		{{if .Silenced}}
-			{{template "user-silenced"}}
+			{{template "user-silenced" (dict "Tr" $.Tr)}}
 		{{end}}
 		<header>
 		<h1 dir="{{.Direction}}" id="blog-title"><a href="/{{if .IsTopLevel}}{{else}}{{.Prefix}}{{.Alias}}/{{end}}" class="h-card p-author u-url" rel="me author">{{.DisplayTitle}}</a></h1>
@@ -121,14 +120,16 @@ body#collection header nav.tabs a:first-child {
 	<script src="/js/postactions.js"></script>
 	<script type="text/javascript">
 var deleting = false;
-function delPost(e, id, owned) {
+function delPost(e, id, owned, loc) {
 	e.preventDefault();
 	if (deleting) {
 		return;
 	}
 
+	var loc = JSON.parse(loc);
+
 	// TODO: UNDO!
-	if (window.confirm('Are you sure you want to delete this post?')) {
+	if (window.confirm(loc['Are you sure you want to delete this post?'])) {
 		// AJAX
 		deletePost(id, "", function() {
 			// Remove post from list
@@ -169,12 +170,14 @@ var deletePost = function(postID, token, callback) {
 };
 
 var pinning = false;
-function pinPost(e, postID, slug, title) {
+function pinPost(e, postID, slug, title, loc) {
 	e.preventDefault();
 	if (pinning) {
 		return;
 	}
 	pinning = true;
+
+	var loc = JSON.parse(loc)
 
 	var callback = function() {
 		// Visibly remove post from collection
@@ -206,13 +209,14 @@ function pinPost(e, postID, slug, title) {
 				callback();
 			} else if (http.status == 409) {
 				$pinBtn.innerHTML = 'pin';
-				alert("Post is synced to another account. Delete the post from that account instead.");
+				alert(loc["Post is synced to another account. Delete the post from that account instead."]);
 				// TODO: show "remove" button instead of "delete" now
 				// Persist that state.
 				// Have it remove the post locally only.
 			} else {
 				$pinBtn.innerHTML = 'pin';
-				alert("Failed to pin." + (http.status>=500?" Please try again.":""));
+				//alert("Failed to pin." + (http.status>=500?" Please try again.":""));
+				alert(loc["Failed to pin."] + (http.status>=500?" " + loc["Please try again."]:""));
 			}
 		}
 	}

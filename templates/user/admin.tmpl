@@ -38,6 +38,7 @@ p.docs {
 .stats {
 	font-size: 1.2em;
 	margin: 1em 0;
+	text-transform: lowercase;
 }
 .num {
 	font-weight: bold;
@@ -51,9 +52,12 @@ p.docs {
 	{{if .Message}}<p>{{.Message}}</p>{{end}}
 
 	<div class="row stats">
-		<div><span class="num">{{largeNumFmt .UsersCount}}</span> {{pluralize "user" "users" .UsersCount}}</div>
-		<div><span class="num">{{largeNumFmt .CollectionsCount}}</span> {{pluralize "blog" "blogs" .CollectionsCount}}</div>
-		<div><span class="num">{{largeNumFmt .PostsCount}}</span> {{pluralize "post" "posts" .PostsCount}}</div>
+		{{ $N := .UsersCount }}{{ if eq .AppCfg.Lang "eu_ES" }}{{ $N = 1}}{{ end }}
+		{{ $C := .CollectionsCount }}{{ if eq .AppCfg.Lang "eu_ES" }}{{ $C = 1}}{{ end }}
+		{{ $P := .PostsCount }}{{ if eq .AppCfg.Lang "eu_ES" }}{{ $P = 1}}{{ end }}
+		<div><span class="num">{{largeNumFmt .UsersCount}}</span> {{call .Tr "User" $N}}</div>
+		<div><span class="num">{{largeNumFmt .CollectionsCount}}</span> {{call .Tr "Blog" $C}}</div>
+		<div><span class="num">{{largeNumFmt .PostsCount}}</span> {{call .Tr "post" $P}}</div>
 	</div>
 
 </div>
