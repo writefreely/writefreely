@@ -1,4 +1,4 @@
-{{define "head"}}<title>{{.SiteName}} Reader</title>
+{{define "head"}}<title>{{.SiteName}} {{call .Tr "Reader"}}</title>
 		
 		<link rel="alternate" type="application/rss+xml" title="{{.SiteName}} Reader" href="/read/feed/" />
 		{{if gt .CurrentPage 1}}<link rel="prev" href="{{.PrevPageURL .CurrentPage}}">{{end}}

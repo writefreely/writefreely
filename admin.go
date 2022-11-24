@@ -439,7 +439,7 @@ func handleViewAdminPages(app *App, u *User, w http.ResponseWriter, r *http.Requ
 		} else if c.ID == "privacy" {
 			hasPrivacy = true
 			if !c.Title.Valid {
-				p.Pages[i].Title = defaultPrivacyTitle()
+				p.Pages[i].Title = defaultPrivacyTitle(app.cfg)
 			}
 		}
 	}
@@ -454,7 +454,7 @@ func handleViewAdminPages(app *App, u *User, w http.ResponseWriter, r *http.Requ
 	if !hasPrivacy {
 		p.Pages = append(p.Pages, &instanceContent{
 			ID:      "privacy",
-			Title:   defaultPrivacyTitle(),
+			Title:   defaultPrivacyTitle(app.cfg),
 			Content: defaultPrivacyPolicy(app.cfg),
 			Updated: defaultPageUpdatedTime,
 		})

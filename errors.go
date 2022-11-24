@@ -16,6 +16,23 @@ import (
 	"github.com/writeas/impart"
 )
 
+func (app *App) GetLang() string{
+	//return app.cfg.App.Lang
+	return "eu_ES"
+}
+/*
+func Lang(cfg *config.Config) string {
+	return cfg.App.Lang
+}
+
+*/
+//var setLang = localize(AppCfg.Lang)
+//var setLang = localize(cfg.App.Lang)
+//var setLang = localize(app.cfg.Lang)
+//var setLang = localize(config.Config.AppCfg.Lang)
+var iLang = apper.App().GetLang()
+var setLang = localize(iLang)
+
 // Commonly returned HTTP errors
 var (
 	ErrBadFormData    = impart.HTTPError{http.StatusBadRequest, "Expected valid form data."}
@@ -47,7 +64,7 @@ var (
 	ErrPostUnpublished        = impart.HTTPError{Status: http.StatusGone, Message: "Post unpublished by author."}
 	ErrPostFetchError         = impart.HTTPError{Status: http.StatusInternalServerError, Message: "We encountered an error getting the post. The humans have been alerted."}
 
-	ErrUserNotFound       = impart.HTTPError{http.StatusNotFound, "User doesn't exist."}
+	ErrUserNotFound       = impart.HTTPError{http.StatusNotFound, setLang.Get("User doesn't exist.")}
 	ErrRemoteUserNotFound = impart.HTTPError{http.StatusNotFound, "Remote user not found."}
 	ErrUserNotFoundEmail  = impart.HTTPError{http.StatusNotFound, "Please enter your username instead of your email address."}
 

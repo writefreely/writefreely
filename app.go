@@ -436,10 +436,8 @@ func handleTemplatedPage(app *App, w http.ResponseWriter, r *http.Request, t *te
 		page.StaticPage
 		ContentTitle string
 		Content      template.HTML
-		ExtraContent template.HTML
 		PlainContent string
 		Updated      string
-		//BlogStats		 template.HTML
 
 		AboutStats *InstanceStats
 	}{
@@ -465,8 +463,6 @@ func handleTemplatedPage(app *App, w http.ResponseWriter, r *http.Request, t *te
 		}
 		p.ContentTitle = c.Title.String
 		p.Content = template.HTML(applyMarkdown([]byte(c.Content), "", app.cfg))
-		//p.ExtraContent = template.HTML(applyMarkdown([]byte(c.ExtraContent), "", app.cfg))
-		//p.BlogStats = template.HTML(applyMarkdown([]byte(c.BlogStats), "", app.cfg))
 		p.PlainContent = shortPostDescription(stripmd.Strip(c.Content))
 		if !c.Updated.IsZero() {
 			p.Updated = c.Updated.Format("January 2, 2006")
