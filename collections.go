@@ -698,6 +698,8 @@ func processCollectionPermissions(app *App, cr *collectionReq, u *User, w http.R
 				return nil, ErrCollectionNotFound
 			}
 
+			var setLang = localize(app.cfg.App.Lang)
+
 			// See if we've authorized this collection
 			cr.isAuthorized = isAuthorizedForCollection(app, c.Alias, r)
 
@@ -724,7 +726,7 @@ func processCollectionPermissions(app *App, cr *collectionReq, u *User, w http.R
 
 				flashes, _ := getSessionFlashes(app, w, r, nil)
 				for _, flash := range flashes {
-					p.Flashes = append(p.Flashes, template.HTML(flash))
+					p.Flashes = append(p.Flashes, template.HTML(setLang.Get(flash)))
 				}
 				err = templates["password-collection"].ExecuteTemplate(w, "password-collection", p)
 				if err != nil {

@@ -317,6 +317,8 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		log.Error("Unable to get session; ignoring: %v", err)
 	}
 
+	var setLang = localize(app.cfg.App.Lang)
+
 	p := &struct {
 		page.StaticPage
 		*OAuthButtons
@@ -340,7 +342,8 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 	// Display any error messages
 	flashes, _ := getSessionFlashes(app, w, r, session)
 	for _, flash := range flashes {
-		p.Flashes = append(p.Flashes, template.HTML(flash))
+		fmt.Printf("%T\\n", flash)
+		p.Flashes = append(p.Flashes, template.HTML(setLang.Get(flash)))
 	}
 	err = pages["login.tmpl"].ExecuteTemplate(w, "base", p)
 	if err != nil {

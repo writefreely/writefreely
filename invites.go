@@ -171,6 +171,8 @@ func handleViewInvite(app *App, w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
+	var setLang = localize(app.cfg.App.Lang)
+
 	p := struct {
 		page.StaticPage
 		*OAuthButtons
@@ -198,7 +200,7 @@ func handleViewInvite(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 	flashes, _ := getSessionFlashes(app, w, r, session)
 	for _, flash := range flashes {
-		p.Flashes = append(p.Flashes, template.HTML(flash))
+		p.Flashes = append(p.Flashes, template.HTML(setLang.Get(flash)))
 	}
 
 	// Show landing page

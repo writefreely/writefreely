@@ -1383,6 +1383,11 @@ msgid "# Start your blog in the fediverse"
 msgstr "# Start your blog in the fediverse"
 
 msgid ""
+"## Join the Fediverse\n\nThe fediverse is a large network of platforms that all speak a common language. Imagine if you could reply to _Instagram_ posts from _Twitter_, or interact with your favorite _Medium_ blogs from _Facebook_ -- federated alternatives like %s, %s, and WriteFreely enable you to do these types of things.\n\n"
+msgstr ""
+"## Join the Fediverse\n\nThe fediverse is a large network of platforms that all speak a common language. Imagine if you could reply to _Instagram_ posts from _Twitter_, or interact with your favorite _Medium_ blogs from _Facebook_ -- federated alternatives like %s, %s, and WriteFreely enable you to do these types of things.\n\n"
+
+msgid ""
 "## Write More Socially\n"
 "\n"
 "WriteFreely can communicate with other federated platforms like _Mastodon_, so people can follow your blogs, bookmark their favorite posts, and boost them to their followers. Sign up above to create a blog and join the fediverse."
@@ -1400,21 +1405,22 @@ msgstr "_%s_ is a place for you to write and publish, powered by %s."
 msgid "_%s_ is an interconnected place for you to write and publish, powered by %s."
 msgstr "_%s_ is an interconnected place for you to write and publish, powered by %s."
 
-msgid "_%s_ is home to %d articles across %d blogs."
-msgstr "_%s_ is home to %d articles across %d blogs."
+msgid "article"
+msgid_plural "articles"
+msgstr[0] "article"
+msgstr[1] "articles"
 
-msgid ""
-"## About WriteFreely\n"
-"\n"
-"%s is a self-hosted, decentralized blogging platform for publishing beautiful, simple blogs.\n"
-"\n"
-"It lets you publish a single blog, or host a community of writers who can create multiple blogs under one account. You can also enable federation, which allows people in the fediverse to follow your blog, bookmark your posts, and share them with others."
-msgstr ""
-"## About WriteFreely\n"
-"\n"
-"%s is a self-hosted, decentralized blogging platform for publishing beautiful, simple blogs.\n"
-"\n"
-"It lets you publish a single blog, or host a community of writers who can create multiple blogs under one account. You can also enable federation, which allows people in the fediverse to follow your blog, bookmark your posts, and share them with others."
+msgid "_%s_ is home to **%d** %s across **%d** %s."
+msgstr "_%s_ is home to **%d** %s across **%d** %s."
+
+msgid "About WriteFreely"
+msgstr "About WriteFreely"
+
+msgid "%s is a self-hosted, decentralized blogging platform for publishing beautiful, simple blogs."
+msgstr "%s is a self-hosted, decentralized blogging platform for publishing beautiful, simple blogs."
+
+msgid "It lets you publish a single blog, or host a community of writers who can create multiple blogs under one account. You can also enable federation, which allows people in the fediverse to follow your blog, bookmark your posts, and share them with others."
+msgstr "It lets you publish a single blog, or host a community of writers who can create multiple blogs under one account. You can also enable federation, which allows people in the fediverse to follow your blog, bookmark your posts, and share them with others."
 
 msgid "Start an instance"
 msgstr "Start an instance"
@@ -1579,3 +1585,88 @@ msgstr "Post was unpublished by the author."
 # 410.tmpl 5
 msgid "It might be back some day."
 msgstr "It might be back some day."
+
+# errors.go
+msgid "Expected valid form data."
+msgstr "Expected valid form data."
+
+msgid "Expected valid JSON object."
+msgstr "Expected valid JSON object."
+
+msgid "Expected valid JSON array."
+msgstr "Expected valid JSON array."
+
+msgid "Invalid access token."
+msgstr "Invalid access token."
+
+msgid "Authorization token required."
+msgstr "Authorization token required."
+
+msgid "Not logged in."
+msgstr "Not logged in."
+
+msgid "You don't have permission to add to this collection."
+msgstr "You don't have permission to add to this collection."
+
+msgid "Invalid editing credentials."
+msgstr "Invalid editing credentials."
+
+msgid "You don't have permission to do that."
+msgstr "You don't have permission to do that."
+
+msgid "Bad requested Content-Type."
+msgstr "Bad requested Content-Type."
+
+msgid "You don't have permission to access this collection."
+msgstr "You don't have permission to access this collection."
+
+msgid "Supply something to publish."
+msgstr "Supply something to publish."
+
+msgid "The humans messed something up. They've been notified."
+msgstr "The humans messed something up. They've been notified."
+
+msgid "Could not get cookie session."
+msgstr "Could not get cookie session."
+
+msgid "Service temporarily unavailable due to high load."
+msgstr "Service temporarily unavailable due to high load."
+
+msgid "Collection doesn't exist."
+msgstr "Collection doesn't exist."
+
+msgid "This blog was unpublished."
+msgstr "This blog was unpublished."
+
+msgid "Collection page doesn't exist."
+msgstr "Collection page doesn't exist."
+
+msgid "Post not found."
+msgstr "Post not found."
+
+msgid "Post removed."
+msgstr "Post removed."
+
+msgid "Post unpublished by author."
+msgstr "Post unpublished by author."
+
+msgid "We encountered an error getting the post. The humans have been alerted."
+msgstr "We encountered an error getting the post. The humans have been alerted."
+
+msgid "User doesn't exist."
+msgstr "User doesn't exist."
+
+msgid "Remote user not found."
+msgstr "Remote user not found."
+
+msgid "Please enter your username instead of your email address."
+msgstr "Please enter your username instead of your email address."
+
+msgid "Account is silenced."
+msgstr "Account is silenced."
+
+msgid "Password authentication is disabled."
+msgstr "Password authentication is disabled."
+
+msgid "Supply some properties to update."
+msgstr "Supply some properties to update."

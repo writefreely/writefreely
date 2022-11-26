@@ -169,7 +169,6 @@ func (app *App) LoadLocales() error {
 	var err error
 	log.Info("Reading %s locales...", app.cfg.App.Lang)
 
-	//var setLang = localize(app.cfg.App.Lang)
 // ###############################################################################3
 type translator interface {}
 
@@ -263,7 +262,6 @@ app.tr = func(str string, ParamsToTranslate ...interface{}) interface{} {
 
 }
 
-  //inputFile:= "eu_ES.json"
   inputFile := "./static/js/"+app.cfg.App.Lang+".json"
   file, err := ioutil.ReadFile(inputFile)
   if err != nil {
@@ -388,6 +386,8 @@ func handleViewHome(app *App, w http.ResponseWriter, r *http.Request) error {
 func handleViewLanding(app *App, w http.ResponseWriter, r *http.Request) error {
 	forceLanding := r.FormValue("landing") == "1"
 
+	var setLang = localize(app.cfg.App.Lang)
+
 	p := struct {
 		page.StaticPage
 		*OAuthButtons
@@ -424,7 +424,7 @@ func handleViewLanding(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 	flashes, _ := getSessionFlashes(app, w, r, session)
 	for _, flash := range flashes {
-		p.Flashes = append(p.Flashes, template.HTML(flash))
+		p.Flashes = append(p.Flashes, template.HTML(setLang.Get(flash)))
 	}
 
 	// Show landing page
