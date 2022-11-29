@@ -74,9 +74,11 @@
 		}
 		body#collection header nav.tabs a:first-child {
 			margin-left: 1em;
+			font-family: 'Sylexiad';
 		}
 		body#collection article {
 			max-width: 40em !important;
+		    font-family: 'Sylexiad';
 		}
 		</style>
 {{end}}
@@ -89,7 +91,7 @@
 		<div id="wrapper">
 		{{ if gt (len .Posts) 0 }}
 		<section itemscope itemtype="http://schema.org/Blog">
-			{{range .Posts}}<article class="{{.Font}} h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+			{{range .Posts}}<article itemscope itemtype="http://schema.org/BlogPosting">
 			{{if .Title.String -}}
 				<h2 class="post-title" itemprop="name" class="p-name">
 					{{- if .IsPaid}}{{template "paid-badge" .}}{{end -}}
