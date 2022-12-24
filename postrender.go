@@ -31,7 +31,6 @@ import (
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/stringmanip"
 	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 
 	"github.com/writefreely/writefreely/config"
@@ -172,12 +171,7 @@ func applyMarkdownSpecial(data []byte, skipNoFollow bool, baseURL string, cfg *c
 }
 
 func applyCommonmarkSpecial(data []byte, skipNoFollow bool, baseURL string, cfg *config.Config) string {
-	extensions := []goldmark.Extender{
-		extension.GFM,
-		extension.DefinitionList,
-		extension.Typographer,
-		// but no footnotes, see https://github.com/writefreely/writefreely/issues/338
-	}
+	extensions := cfg.App.RendererExtensions()
 	if baseURL != "" {
 		tagPrefix := baseURL + "tag:"
 		if cfg.App.Chorus {
@@ -188,11 +182,7 @@ func applyCommonmarkSpecial(data []byte, skipNoFollow bool, baseURL string, cfg 
 		})
 	}
 	md := goldmark.New(
-		goldmark.WithExtensions(
-			&hashtag.Extender{
-				Resolver: hashtagResolver{},
-			},
-		),
+		goldmark.WithExtensions(extensions...),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
 		),
@@ -258,18 +248,16 @@ func applySaturdaySpecial(data []byte, skipNoFollow bool, baseURL string, cfg *c
 
 func applyBasicMarkdown(data []byte, cfg *config.Config) string {
 	if cfg.App.MarkdownRenderer() == "goldmark" {
-		return applyBasicCommonmark(data)
+		return applyBasicCommonmark(data, cfg)
 	} else {
 		return applyBasicSaturday(data)
 	}
 }
 
-func applyBasicCommonmark(data []byte) string {
+func applyBasicCommonmark(data []byte, cfg *config.Config) string {
 	md := goldmark.New(
 		goldmark.WithExtensions(
-			extension.Strikethrough,
-			extension.Linkify,
-			extension.Typographer,
+			cfg.App.RendererExtensions()...,
 		),
 	)
 	var inbuf bytes.Buffer
@@ -395,12 +383,13 @@ func sanitizePost(content string) string {
 // choosing what to generate. In case a post has a title, this function will
 // fail, and logic should instead be implemented to skip this when there's no
 // title, like so:
-//    var desc string
-//    if title == "" {
-//        desc = postDescription(content, title, friendlyId)
-//    } else {
-//        desc = shortPostDescription(content)
-//    }
+//
+//	var desc string
+//	if title == "" {
+//	    desc = postDescription(content, title, friendlyId)
+//	} else {
+//	    desc = shortPostDescription(content)
+//	}
 func postDescription(content, title, friendlyId string) string {
 	maxLen := 140
 
