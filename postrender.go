@@ -198,6 +198,9 @@ func applyCommonmarkSpecial(data []byte, skipNoFollow bool, baseURL string, cfg 
 	}
 	// Strip out bad HTML
 	policy := getSanitizationPolicy()
+	// Enable GFM checkboxes for CommonMark
+	// Technically we could skip this if the
+	policy.AllowAttrs("type", "disabled", "checked").OnElements("input")
 	policy.RequireNoFollowOnLinks(!skipNoFollow)
 	outHTML := string(policy.SanitizeBytes(htm))
 	// Strip newlines on certain block elements that render with them
