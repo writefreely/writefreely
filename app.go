@@ -13,6 +13,7 @@ package writefreely
 import (
 	"crypto/tls"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -35,12 +36,13 @@ import (
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/converter"
 	"github.com/writeas/web-core/log"
+	"golang.org/x/crypto/acme/autocert"
+
 	"github.com/writefreely/writefreely/author"
 	"github.com/writefreely/writefreely/config"
 	"github.com/writefreely/writefreely/key"
 	"github.com/writefreely/writefreely/migrations"
 	"github.com/writefreely/writefreely/page"
-	"golang.org/x/crypto/acme/autocert"
 )
 
 const (
@@ -879,15 +881,18 @@ func CreateUser(apper Apper, username, password string, isAdmin bool) error {
 	return nil
 }
 
-func adminInitDatabase(app *App) error {
-	schemaFileName := "schema.sql"
-	if app.cfg.Database.Type == driverSQLite {
-		schemaFileName = "sqlite.sql"
-	}
+//go:embed schema.sql
+var schemaSql string
 
-	schema, err := Asset(schemaFileName)
-	if err != nil {
-		return fmt.Errorf("Unable to load schema file: %v", err)
+//go:embed sqlite.sql
+var sqliteSql string
+
+func adminInitDatabase(app *App) error {
+	var schema string
+	if app.cfg.Database.Type == driverSQLite {
+		schema = sqliteSql
+	} else {
+		schema = schemaSql
 	}
 
 	tblReg := regexp.MustCompile("CREATE TABLE (IF NOT EXISTS )?`([a-z_]+)`")
@@ -903,7 +908,7 @@ func adminInitDatabase(app *App) error {
 		} else {
 			log.Info("Creating table ??? (Weird query) No match in: %v", parts)
 		}
-		_, err = app.db.Exec(q)
+		_, err := app.db.Exec(q)
 		if err != nil {
 			log.Error("%s", err)
 		} else {
@@ -913,7 +918,7 @@ func adminInitDatabase(app *App) error {
 
 	// Set up migrations table
 	log.Info("Initializing appmigrations table...")
-	err = migrations.SetInitialMigrations(migrations.NewDatastore(app.db.DB, app.db.driverName))
+	err := migrations.SetInitialMigrations(migrations.NewDatastore(app.db.DB, app.db.driverName))
 	if err != nil {
 		return fmt.Errorf("Unable to set initial migrations: %v", err)
 	}
