@@ -23,6 +23,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/writeas/web-core/l10n"
 	"github.com/writeas/web-core/log"
+
 	"github.com/writefreely/writefreely/config"
 )
 
@@ -136,7 +137,7 @@ func InitTemplates(cfg *config.Config) error {
 	log.Info("Loading pages...")
 	// Initialize all static pages that use the base template
 	filepath.Walk(filepath.Join(cfg.Server.PagesParentDir, pagesDir), func(path string, i os.FileInfo, err error) error {
-		if !i.IsDir() && !strings.HasPrefix(i.Name(), ".") {
+		if i != nil && !i.IsDir() && !strings.HasPrefix(i.Name(), ".") {
 			key := i.Name()
 			initPage(cfg.Server.PagesParentDir, path, key)
 		}
