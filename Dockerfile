@@ -3,7 +3,6 @@ FROM golang:1.15-alpine as build
 
 RUN apk add --update nodejs npm make g++ git
 RUN npm install -g less less-plugin-clean-css
-RUN go get -u github.com/go-bindata/go-bindata/...
 
 RUN mkdir -p /go/src/github.com/writefreely/writefreely
 WORKDIR /go/src/github.com/writefreely/writefreely
