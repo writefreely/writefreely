@@ -27,7 +27,7 @@ msgstr "About"
 
 # base.tmpl 49
 # header.tmpl 58,65
-# footer.tmpl 9,27
+# include/footer.tmpl 9,27
 # user/include/footer.tmpl 12
 # app-settings.tmpl 108
 # pages.tmpl 24

@@ -13,6 +13,7 @@ package writefreely
 import (
 	"crypto/tls"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -36,12 +37,13 @@ import (
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/converter"
 	"github.com/writeas/web-core/log"
+	"golang.org/x/crypto/acme/autocert"
+
 	"github.com/writefreely/writefreely/author"
 	"github.com/writefreely/writefreely/config"
 	"github.com/writefreely/writefreely/key"
 	"github.com/writefreely/writefreely/migrations"
 	"github.com/writefreely/writefreely/page"
-	"golang.org/x/crypto/acme/autocert"
 	"github.com/leonelquinteros/gotext"
 )
 
