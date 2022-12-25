@@ -1,5 +1,5 @@
 # Build image
-FROM golang:1.16-alpine as build #golang version upgrade due to "make error: package embed is not in GOROOT (/usr/local/go/src/embed)"
+FROM golang:1.16-alpine as build
 
 RUN apk add --update nodejs npm make g++ git
 RUN npm install -g less less-plugin-clean-css
