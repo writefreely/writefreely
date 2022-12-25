@@ -15,18 +15,18 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 		<meta name="generator" content="WriteFreely">
-		<meta name="description" content="{{.Description}}">
+		<meta name="description" content="{{.PlainDescription}}">
 		<meta itemprop="name" content="{{.DisplayTitle}}">
-		<meta itemprop="description" content="{{.Description}}">
+		<meta itemprop="description" content="{{.PlainDescription}}">
 		<meta name="twitter:card" content="summary">
 		<meta name="twitter:title" content="{{.DisplayTitle}}">
 		<meta name="twitter:image" content="{{.AvatarURL}}">
-		<meta name="twitter:description" content="{{.Description}}">
+		<meta name="twitter:description" content="{{.PlainDescription}}">
 		<meta property="og:title" content="{{.DisplayTitle}}" />
 		<meta property="og:site_name" content="{{.DisplayTitle}}" />
 		<meta property="og:type" content="article" />
 		<meta property="og:url" content="{{.CanonicalURL}}" />
-		<meta property="og:description" content="{{.Description}}" />
+		<meta property="og:description" content="{{.PlainDescription}}" />
 		<meta property="og:image" content="{{.AvatarURL}}">
 		{{template "collection-meta" .}}
 		{{if .StyleSheet}}<style type="text/css">{{.StyleSheetDisplay}}</style>{{end}}
@@ -83,7 +83,7 @@
 			{{template "user-silenced"}}
 		{{end}}
 		<h1 dir="{{.Direction}}" id="blog-title">{{if .Posts}}{{else}}<span class="writeas-prefix"><a href="/">write.as</a></span> {{end}}<a href="/{{if .IsTopLevel}}{{else}}{{.Prefix}}{{.Alias}}/{{end}}" class="h-card p-author u-url" rel="me author">{{.DisplayTitle}}</a></h1>
-		{{if .Description}}<p class="description p-note">{{.Description}}</p>{{end}}
+		{{if .Description}}<p class="description p-note">{{.DisplayDescription}}</p>{{end}}
 		{{/*if not .Public/*}}
 			<!--p class="meta-note"><span>Private collection</span>. Only you can see this page.</p-->
 		{{/*end*/}}

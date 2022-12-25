@@ -31,7 +31,7 @@ require (
 	github.com/writeas/monday v0.0.0-20181024183321-54a7dd579219
 	github.com/writeas/saturday v1.7.2-0.20200427193424-392b95a03320
 	github.com/writeas/slug v1.2.0
-	github.com/writeas/web-core v1.4.1
+	github.com/writeas/web-core v1.4.1-0.20220118212728-0da0bcaf018e
 	github.com/writefreely/go-gopher v0.0.0-20220429181814-40127126f83b
 	github.com/writefreely/go-nodeinfo v1.2.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
