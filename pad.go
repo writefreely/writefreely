@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2021 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -55,6 +55,9 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 		appData.Silenced, err = app.db.IsUserSilenced(appData.User.ID)
 		if err != nil {
+			if err == ErrUserNotFound {
+				return err
+			}
 			log.Error("Unable to get user status for Pad: %v", err)
 		}
 	}

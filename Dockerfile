@@ -3,7 +3,6 @@ FROM golang:1.15-alpine as build
 
 RUN apk add --update nodejs npm make g++ git
 RUN npm install -g less less-plugin-clean-css
-RUN go get -u github.com/go-bindata/go-bindata/...
 
 RUN mkdir -p /go/src/github.com/writefreely/writefreely
 WORKDIR /go/src/github.com/writefreely/writefreely
@@ -24,7 +23,7 @@ RUN mkdir /stage && \
       /stage
 
 # Final image
-FROM alpine:3.12
+FROM alpine:3
 
 RUN apk add --no-cache openssl ca-certificates
 COPY --from=build --chown=daemon:daemon /stage /go

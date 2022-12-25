@@ -83,6 +83,14 @@ class ProseMirrorView {
         typingTimer = setTimeout(doneTyping, doneTypingInterval);
         this.updateState(newState);
       },
+      handleDOMEvents: {
+        drop: (view, event) => {
+          // If a file is dropped externally into the editor, do not insert anything. This will not trigger if an image has been inserted after upload and is dragged and dropped internally to change its position.
+          if (event.dataTransfer.files.length > 0) {
+            event.preventDefault();
+          }
+        }
+      },
     });
     // Editor is focused to the last position. This is a workaround for a bug:
     // 1. 1 type something in an existing entry

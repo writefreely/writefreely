@@ -86,4 +86,4 @@ Before contributing anything, please read our [Contributing Guide](https://githu
 
 ## License
 
-Copyright © 2018-2021 [A Bunch Tell LLC](https://abunchtell.com) and contributing authors. Licensed under the [AGPL](https://github.com/writefreely/writefreely/blob/develop/LICENSE).
+Copyright © 2018-2022 [Musing Studio LLC](https://musing.studio) and contributing authors. Licensed under the [AGPL](https://github.com/writefreely/writefreely/blob/develop/LICENSE).
