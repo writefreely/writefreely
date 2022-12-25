@@ -1,9 +1,8 @@
 # Build image
-FROM golang:1.15-alpine as build
+FROM golang:1.16-alpine as build #golang version upgrade due to "make error: package embed is not in GOROOT (/usr/local/go/src/embed)"
 
 RUN apk add --update nodejs npm make g++ git
 RUN npm install -g less less-plugin-clean-css
-RUN go get -u github.com/go-bindata/go-bindata/...
 
 RUN mkdir -p /go/src/github.com/writefreely/writefreely
 WORKDIR /go/src/github.com/writefreely/writefreely

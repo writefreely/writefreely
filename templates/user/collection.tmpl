@@ -37,7 +37,7 @@ textarea.section.norm {
 <div id="collection-options">
 	<div style="text-align:center">
 		<h1><input type="text" name="title" id="title" value="{{.DisplayTitle}}" placeholder={{call .Tr "Title"}} /></h1>
-		<p><input type="text" name="description" id="description" value="{{.Description}}" placeholder={{call .Tr "Description"}} /></p>
+		<p><input type="text" name="description" id="description" value="{{.Description}}" placeholder={{call .Tr "Description"}} maxlength="160" /></p>
 	</div>
 
 	<div class="option">
