@@ -836,7 +836,7 @@ func connectToDatabase(app *App) {
 			log.Error("SQLite database filename value in config.ini is empty.")
 			os.Exit(1)
 		}
-		db, err = sql.Open("sqlite3_with_regex", app.cfg.Database.FileName+"?parseTime=true&cached=shared")
+		db, err = sql.Open("sqlite", app.cfg.Database.FileName+"?parseTime=true&cached=shared")
 		db.SetMaxOpenConns(2)
 	} else {
 		log.Error("Invalid database type '%s'. Only 'mysql' and 'sqlite3' are supported right now.", app.cfg.Database.Type)

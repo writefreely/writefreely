@@ -14,30 +14,40 @@
 package writefreely
 
 import (
-	"database/sql"
-	"github.com/go-sql-driver/mysql"
-	"github.com/mattn/go-sqlite3"
-	"github.com/writeas/web-core/log"
+	"database/sql/driver"
+	"errors"
 	"regexp"
+
+	"github.com/go-sql-driver/mysql"
+	"github.com/writeas/web-core/log"
+	"modernc.org/sqlite"
+	sqlite3 "modernc.org/sqlite/lib"
 )
 
 func init() {
 	SQLiteEnabled = true
 
-	regex := func(re, s string) (bool, error) {
-		return regexp.MatchString(re, s)
+	sqlite_regex := func(ctx *sqlite.FunctionContext, args []driver.Value) (driver.Value, error) {
+		if len(args) < 2 {
+			return nil, errors.New("wrong number of arguments to SQLite regexp function")
+		}
+		res, ok := args[0].(string)
+		if !ok {
+			return nil, errors.New("bad argument 1 to SQLite regexp function, expected string")
+		}
+		val, ok := args[0].(string)
+		if !ok {
+			return nil, errors.New("bad argument 2 to SQLite regexp function, expected string")
+		}
+		return regexp.MatchString(res, val)
 	}
-	sql.Register("sqlite3_with_regex", &sqlite3.SQLiteDriver{
-		ConnectHook: func(conn *sqlite3.SQLiteConn) error {
-			return conn.RegisterFunc("regexp", regex, true)
-		},
-	})
+	sqlite.MustRegisterDeterministicScalarFunction("regexp", 2, sqlite_regex)
 }
 
 func (db *datastore) isDuplicateKeyErr(err error) bool {
 	if db.driverName == driverSQLite {
-		if err, ok := err.(sqlite3.Error); ok {
-			return err.Code == sqlite3.ErrConstraint
+		if err, ok := err.(*sqlite.Error); ok {
+			return err.Code() == sqlite3.SQLITE_CONSTRAINT
 		}
 	} else if db.driverName == driverMySQL {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
