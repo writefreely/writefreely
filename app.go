@@ -504,9 +504,8 @@ requests. We recommend supplying a valid host name.`)
 			err = http.ListenAndServeTLS(fmt.Sprintf("%s:443", bindAddress), app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, r)
 		}
 	} else {
-		var network string
-		var protocol string
-
+		network := "tcp"
+		protocol := "http"
 		if strings.HasPrefix(bindAddress, "/") {
 			network = "unix"
 			protocol = "http+unix"
@@ -519,8 +518,6 @@ requests. We recommend supplying a valid host name.`)
 				os.Exit(1)
 			}
 		} else {
-			network = "tcp"
-			protocol = "http"
 			bindAddress = fmt.Sprintf("%s:%d", bindAddress, app.cfg.Server.Port)
 		}
 
