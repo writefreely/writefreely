@@ -845,6 +845,16 @@ func connectToDatabase(app *App) {
 func shutdown(app *App) {
 	log.Info("Closing database connection...")
 	app.db.Close()
+	if strings.HasPrefix(app.cfg.Server.Bind, "/") {
+		// Clean up socket
+		log.Info("Removing socket file...")
+		err := os.Remove(app.cfg.Server.Bind)
+		if err != nil {
+			log.Error("Unable to remove socket: %s", err)
+			os.Exit(1)
+		}
+		log.Info("Success.")
+	}
 }
 
 // CreateUser creates a new admin or normal user from the given credentials.
