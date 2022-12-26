@@ -513,9 +513,9 @@ requests. We recommend supplying a valid host name.`)
 
 			// old sockets will remain after server closes;
 			// we need to delete them in order to open new ones
-			removeSocketErr := os.Remove(bindAddress)
-			if removeSocketErr != nil && !os.IsNotExist(removeSocketErr) {
-				log.Error("%s already exists but could not be removed: %v", bindAddress, removeSocketErr)
+			err = os.Remove(bindAddress)
+			if err != nil && !os.IsNotExist(err) {
+				log.Error("%s already exists but could not be removed: %v", bindAddress, err)
 				os.Exit(1)
 			}
 		} else {
@@ -526,16 +526,16 @@ requests. We recommend supplying a valid host name.`)
 
 		log.Info("Serving on %s://%s", protocol, bindAddress)
 		log.Info("---")
-		listener, listenErr := net.Listen(network, bindAddress)
-		if listenErr != nil {
-			log.Error("Could not bind to address: %v", listenErr)
+		listener, err := net.Listen(network, bindAddress)
+		if err != nil {
+			log.Error("Could not bind to address: %v", err)
 			os.Exit(1)
 		}
 
 		if network == "unix" {
-			chmodSocketErr := os.Chmod(bindAddress, 0o666)
-			if chmodSocketErr != nil {
-				log.Error("Could not update socket permissions: %v", chmodSocketErr)
+			err = os.Chmod(bindAddress, 0o666)
+			if err != nil {
+				log.Error("Could not update socket permissions: %v", err)
 				os.Exit(1)
 			}
 		}
