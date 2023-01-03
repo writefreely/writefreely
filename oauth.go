@@ -123,12 +123,13 @@ type callbackProxyClient struct {
 }
 
 type oauthHandler struct {
-	Config        *config.Config
-	DB            OAuthDatastore
-	Store         sessions.Store
-	EmailKey      []byte
-	oauthClient   oauthClient
-	callbackProxy *callbackProxyClient
+	Config            *config.Config
+	DB                OAuthDatastore
+	Store             sessions.Store
+	EmailKey          []byte
+	oauthClient       oauthClient
+	callbackProxy     *callbackProxyClient
+	AllowRegistration bool
 }
 
 func (h oauthHandler) viewOauthInit(app *App, w http.ResponseWriter, r *http.Request) error {
@@ -184,7 +185,7 @@ func configureSlackOauth(parentHandler *Handler, r *mux.Router, app *App) {
 			HttpClient:       config.DefaultHTTPClient(),
 			CallbackLocation: callbackLocation,
 		}
-		configureOauthRoutes(parentHandler, r, app, oauthClient, stateRegisterClient)
+		configureOauthRoutes(parentHandler, r, app, oauthClient, stateRegisterClient, app.Config().SlackOauth.AllowRegistration)
 	}
 }
 
@@ -211,7 +212,7 @@ func configureWriteAsOauth(parentHandler *Handler, r *mux.Router, app *App) {
 			HttpClient:       config.DefaultHTTPClient(),
 			CallbackLocation: callbackLocation,
 		}
-		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
+		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy, app.Config().App.OpenRegistration)
 	}
 }
 
@@ -239,7 +240,7 @@ func configureGitlabOauth(parentHandler *Handler, r *mux.Router, app *App) {
 			HttpClient:       config.DefaultHTTPClient(),
 			CallbackLocation: callbackLocation,
 		}
-		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
+		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy, app.Config().GitlabOauth.AllowRegistration)
 	}
 }
 
@@ -271,7 +272,7 @@ func configureGenericOauth(parentHandler *Handler, r *mux.Router, app *App) {
 			MapDisplayName:   config.OrDefaultString(app.Config().GenericOauth.MapDisplayName, "-"),
 			MapEmail:         config.OrDefaultString(app.Config().GenericOauth.MapEmail, "email"),
 		}
-		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
+		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy, app.Config().GenericOauth.AllowRegistration)
 	}
 }
 
@@ -303,18 +304,19 @@ func configureGiteaOauth(parentHandler *Handler, r *mux.Router, app *App) {
 			MapDisplayName:   "full_name",
 			MapEmail:         "email",
 		}
-		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
+		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy, app.Config().GiteaOauth.AllowRegistration)
 	}
 }
 
-func configureOauthRoutes(parentHandler *Handler, r *mux.Router, app *App, oauthClient oauthClient, callbackProxy *callbackProxyClient) {
+func configureOauthRoutes(parentHandler *Handler, r *mux.Router, app *App, oauthClient oauthClient, callbackProxy *callbackProxyClient, allowRegistration bool) {
 	handler := &oauthHandler{
-		Config:        app.Config(),
-		DB:            app.DB(),
-		Store:         app.SessionStore(),
-		oauthClient:   oauthClient,
-		EmailKey:      app.keys.EmailKey,
-		callbackProxy: callbackProxy,
+		Config:             app.Config(),
+		DB:                 app.DB(),
+		Store:              app.SessionStore(),
+		oauthClient:        oauthClient,
+		EmailKey:           app.keys.EmailKey,
+		callbackProxy:      callbackProxy,
+		AllowRegistration:  allowRegistration,
 	}
 	r.HandleFunc("/oauth/"+oauthClient.GetProvider(), parentHandler.OAuth(handler.viewOauthInit)).Methods("GET")
 	r.HandleFunc("/oauth/callback/"+oauthClient.GetProvider(), parentHandler.OAuth(handler.viewOauthCallback)).Methods("GET")
@@ -400,7 +402,7 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 		if !i.Active(app.db) {
 			return impart.HTTPError{http.StatusNotFound, "Invite link has expired."}
 		}
-	} else if !app.cfg.App.OpenRegistration {
+	} else if !app.cfg.App.OpenRegistration && !h.AllowRegistration {
 		addSessionFlash(app, w, r, ErrUserNotFound.Error(), nil)
 		return impart.HTTPError{http.StatusFound, "/login"}
 	}
