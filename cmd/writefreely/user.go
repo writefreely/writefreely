@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020-2021 A Bunch Tell LLC.
+ * Copyright © 2020-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *

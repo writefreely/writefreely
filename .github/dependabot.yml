@@ -5,3 +5,11 @@ updates:
     open-pull-requests-limit: 50
     schedule:
       interval: "monthly"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "docker"
+    directory: "/Dockerfile"
+    schedule:
+      interval: "daily"

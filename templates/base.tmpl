@@ -2,8 +2,9 @@
 <html>
 	<head>
 		{{ template "head" . }}
-		<link rel="stylesheet" type="text/css" href="{{.Host}}/css/{{.Theme}}.css" />
-		<link rel="shortcut icon" href="{{.Host}}/favicon.ico" />
+		<link rel="stylesheet" type="text/css" href="/css/{{.Theme}}.css" />
+		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
+		<link rel="shortcut icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 		<meta name="application-name" content="{{.SiteName}}">
@@ -86,7 +87,7 @@
 		{{end}}
 		</script>
 		{{else}}
-			{{if .WebFonts}}<link href="{{.Host}}/css/fonts.css" rel="stylesheet" type="text/css" />{{end}}
+			{{if .WebFonts}}<link href="/css/fonts.css" rel="stylesheet" type="text/css" />{{end}}
 		{{end}}
 	</body>
 </html>{{end}}

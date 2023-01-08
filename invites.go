@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2021 A Bunch Tell LLC.
+ * Copyright © 2019-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -78,6 +78,9 @@ func handleViewUserInvites(app *App, u *User, w http.ResponseWriter, r *http.Req
 
 	p.Silenced, err = app.db.IsUserSilenced(u.ID)
 	if err != nil {
+		if err == ErrUserNotFound {
+			return err
+		}
 		log.Error("view invites: %v", err)
 	}
 
