@@ -14,13 +14,13 @@ TMPBIN=./tmp
 
 all : build
 
-ci: deps
+ci: ci-assets deps
 	cd cmd/writefreely; $(GOBUILD) -v
 
-build: deps
+build: assets deps
 	cd cmd/writefreely; $(GOBUILD) -v -tags='sqlite'
 
-build-no-sqlite: deps-no-sqlite
+build-no-sqlite: assets-no-sqlite deps-no-sqlite
 	cd cmd/writefreely; $(GOBUILD) -v -o $(BINARY_NAME)
 
 build-linux: deps
@@ -65,7 +65,7 @@ build-docker :
 test:
 	$(GOTEST) -v ./...
 
-run:
+run: dev-assets
 	$(GOINSTALL) -tags='sqlite' ./...
 	$(BINARY_NAME) --debug
 
@@ -81,7 +81,7 @@ install : build
 	cmd/writefreely/$(BINARY_NAME) --init-db
 	cd less/; $(MAKE) install $(MFLAGS)
 
-release : clean ui
+release : clean ui assets
 	mkdir -p $(BUILDPATH)
 	cp -r templates $(BUILDPATH)
 	cp -r pages $(BUILDPATH)
@@ -133,11 +133,34 @@ ui : force_look
 	cd less/; $(MAKE) $(MFLAGS)
 	cd prose/; $(MAKE) $(MFLAGS)
 
+assets : generate
+	go-bindata -pkg writefreely -ignore=\\.gitignore -tags="!wflib" schema.sql sqlite.sql
+
+assets-no-sqlite: generate
+	go-bindata -pkg writefreely -ignore=\\.gitignore -tags="!wflib" schema.sql
+
+dev-assets : generate
+	go-bindata -pkg writefreely -ignore=\\.gitignore -debug -tags="!wflib" schema.sql sqlite.sql
+
+lib-assets : generate
+	go-bindata -pkg writefreely -ignore=\\.gitignore -o bindata-lib.go -tags="wflib" schema.sql
+
+generate :
+	@hash go-bindata > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+		$(GOGET) -u github.com/jteeuwen/go-bindata/go-bindata; \
+	fi
+
 $(TMPBIN):
 	mkdir -p $(TMPBIN)
 
+$(TMPBIN)/go-bindata: deps $(TMPBIN)
+	$(GOBUILD) -o $(TMPBIN)/go-bindata github.com/jteeuwen/go-bindata/go-bindata
+
 $(TMPBIN)/xgo: deps $(TMPBIN)
 	$(GOBUILD) -o $(TMPBIN)/xgo src.techknowlogick.com/xgo
+
+ci-assets : $(TMPBIN)/go-bindata
+	$(TMPBIN)/go-bindata -pkg writefreely -ignore=\\.gitignore -tags="!wflib" schema.sql sqlite.sql
 
 clean :
 	-rm -rf build
