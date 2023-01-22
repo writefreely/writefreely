@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"syscall"
 
 	"github.com/gorilla/mux"
 	"github.com/urfave/cli/v2"
@@ -22,6 +23,10 @@ import (
 )
 
 func main() {
+	if syscall.Getuid() == 0 {
+		log.Error("Running as root is insecure. Use setcap for privileged resource access")
+		os.Exit(1)
+	}
 	cli.VersionPrinter = func(c *cli.Context) {
 		fmt.Printf("%s\n", c.App.Version)
 	}
