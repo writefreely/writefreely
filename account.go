@@ -397,7 +397,7 @@ func login(app *App, w http.ResponseWriter, r *http.Request) error {
 		if app.cfg.App.SingleUser {
 			redirectTo = "/me/new"
 		} else {
-			redirectTo = "/"
+			redirectTo = "/new"
 		}
 	}
 
