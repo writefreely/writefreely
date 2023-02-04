@@ -3,7 +3,7 @@
 			<hr />
 			{{if or .SingleUser .WFModesty}}
 			<nav>
-				<a class="home" href="/">{{.SiteName}}</a>
+				<a class="home" href="/"><img class="ic-50dp" src="/logo.webp"></a>
 				{{if not .SingleUser}}
 					<a href="/about">about</a>
 					{{if and .LocalTimeline .CanViewReader}}<a href="/read">reader</a>{{end}}
@@ -21,7 +21,7 @@
 			<div class="marketing-section">
 				<div class="clearfix blurbs">
 					<div class="half">
-						<h3><a class="home" href="/">{{.SiteName}}</a></h3>
+						<h3><a class="home" href="/"><img class="ic-50dp" src="/logo.webp"></a></h3>
 						<ul>
 							<li><a href="/about">about</a></li>
 							{{if and (and (not .SingleUser) .LocalTimeline) .CanViewReader}}<a href="/read">reader</a>{{end}}
@@ -34,7 +34,7 @@
 							<li><a href="https://writefreely.org/guide/{{.OfficialVersion}}" target="guide">writer's guide</a></li>
 							<li><a href="https://developers.write.as/" title="Build on WriteFreely with our open developer API.">developers</a></li>
 							<li><a href="https://github.com/writefreely/writefreely">source code</a></li>
-							<li style="margin-top:0.8em">{{.Version}}</li>
+							<li><a href="https://github.com/allibragi/writefreely_ls">{{.Version}}.LS</a></li>
 						</ul>
 					</div>
 				</div>
