@@ -577,7 +577,7 @@ func getVerboseAuthUser(app *App, token string, u *User, verbose bool) *AuthUser
 		}
 		passIsSet, err := app.db.IsUserPassSet(u.ID)
 		if err != nil {
-			// TODO: correct error meesage
+			// TODO: correct error message
 			log.Error("Login: Unable to get user collections: %v", err)
 		}
 
