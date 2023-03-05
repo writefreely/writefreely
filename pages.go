@@ -75,7 +75,7 @@ func defaultPrivacyPolicy(cfg *config.Config) string {
 
 It retains as little data about you as possible, not even requiring an email address to sign up. However, if you _do_ give us your email address, it is stored encrypted in our database. We salt and hash your account's password.
 
-We store log files, or data about what happens on our servers. We also use cookies to keep you logged in to your account.
+We store log files, or data about what happens on our servers. We also use cookies to keep you logged into your account.
 
 Beyond this, it's important that you trust whoever runs **` + cfg.App.SiteName + `**. Software can only do so much to protect you -- your level of privacy protections will ultimately fall on the humans that run this particular service.`
 }

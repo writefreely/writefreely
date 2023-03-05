@@ -504,7 +504,7 @@ func login(app *App, w http.ResponseWriter, r *http.Request) error {
 			// User has no email set, so check if they haven't added a password, either,
 			// so we can return a more helpful error message.
 			if hasPass, _ := app.db.IsUserPassSet(u.ID); !hasPass {
-				log.Info("Tried logging in to %s, but no password or email.", signin.Alias)
+				log.Info("Tried logging into %s, but no password or email.", signin.Alias)
 				return impart.HTTPError{http.StatusPreconditionFailed, "This user never added a password or email address. Please contact us for help."}
 			}
 		}
