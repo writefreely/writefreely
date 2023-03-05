@@ -262,7 +262,7 @@ func apiAuth(app *App, r *http.Request) (*User, error) {
 	return u, nil
 }
 
-// optionaAPIAuth is used for endpoints that accept authenticated requests via
+// optionalAPIAuth is used for endpoints that accept authenticated requests via
 // Authorization header or cookie, unlike apiAuth. It returns a different err
 // in the case where no Authorization header is present.
 func optionalAPIAuth(app *App, r *http.Request) (*User, error) {
