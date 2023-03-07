@@ -146,8 +146,8 @@ github.com/writeas/monday v0.0.0-20181024183321-54a7dd579219/go.mod h1:NyM35aykn
 github.com/writeas/openssl-go v1.0.0 h1:YXM1tDXeYOlTyJjoMlYLQH1xOloUimSR1WMF8kjFc5o=
 github.com/writeas/openssl-go v1.0.0/go.mod h1:WsKeK5jYl0B5y8ggOmtVjbmb+3rEGqSD25TppjJnETA=
 github.com/writeas/saturday v1.7.1/go.mod h1:ETE1EK6ogxptJpAgUbcJD0prAtX48bSloie80+tvnzQ=
-github.com/writeas/saturday v1.7.2-0.20200427193424-392b95a03320 h1:PozPZ29CQ/xt6ym/+FvIz+KvKEObSSc5ye+95zbTjVU=
-github.com/writeas/saturday v1.7.2-0.20200427193424-392b95a03320/go.mod h1:ETE1EK6ogxptJpAgUbcJD0prAtX48bSloie80+tvnzQ=
+github.com/writeas/saturday v2.0.0+incompatible h1:YKdG8l62u26YM7PGP9SJ2Pff3Z0ueGZeo/gipZj5c7c=
+github.com/writeas/saturday v2.0.0+incompatible/go.mod h1:ETE1EK6ogxptJpAgUbcJD0prAtX48bSloie80+tvnzQ=
 github.com/writeas/slug v1.2.0 h1:EMQ+cwLiOcA6EtFwUgyw3Ge18x9uflUnOnR6bp/J+/g=
 github.com/writeas/slug v1.2.0/go.mod h1:RE8shOqQP3YhsfsQe0L3RnuejfQ4Mk+JjY5YJQFubfQ=
 github.com/writeas/web-core v1.4.1 h1:mdDwZepEyQb76j8gNUIPblV7SUIXi4WQ0h3Xl0ZwKT4=
