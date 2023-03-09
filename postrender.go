@@ -23,12 +23,16 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	hashtag "github.com/abhinav/goldmark-hashtag"
 	"github.com/microcosm-cc/bluemonday"
 	stripmd "github.com/writeas/go-strip-markdown/v2"
 	"github.com/writeas/impart"
 	blackfriday "github.com/writeas/saturday"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/stringmanip"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/parser"
+
 	"github.com/writefreely/writefreely/config"
 	"github.com/writefreely/writefreely/parse"
 )
@@ -83,7 +87,7 @@ func (p *Post) formatContent(cfg *config.Config, c *Collection, isOwner bool, is
 	p.handlePremiumContent(c, isOwner, isPostPage, cfg)
 	p.Content = strings.Replace(p.Content, "&lt;!--paid-->", "<!--paid-->", 1)
 
-	p.HTMLTitle = template.HTML(applyBasicMarkdown([]byte(p.Title.String)))
+	p.HTMLTitle = template.HTML(applyBasicMarkdown([]byte(p.Title.String), cfg))
 	p.HTMLContent = template.HTML(applyMarkdown([]byte(p.Content), baseURL, cfg))
 	if exc := strings.Index(string(p.Content), "<!--more-->"); exc > -1 {
 		p.HTMLExcerpt = template.HTML(applyMarkdown([]byte(p.Content[:exc]), baseURL, cfg))
@@ -120,7 +124,10 @@ func (p *PublicPost) augmentReadingDestination() {
 }
 
 func applyMarkdown(data []byte, baseURL string, cfg *config.Config) string {
-	return applyMarkdownSpecial(data, false, baseURL, cfg)
+	if cfg.App.MarkdownRenderer() == "goldmark" {
+		return applyCommonmarkSpecial(data, false, baseURL, cfg)
+	}
+	return applySaturdaySpecial(data, false, baseURL, cfg)
 }
 
 func disableYoutubeAutoplay(outHTML string) string {
@@ -142,7 +149,68 @@ func disableYoutubeAutoplay(outHTML string) string {
 	return outHTML
 }
 
+type hashtagResolver struct {
+	Prefix string
+}
+
+var _ hashtag.Resolver = hashtagResolver{}
+
+func (h hashtagResolver) ResolveHashtag(node *hashtag.Node) (destination []byte, err error) {
+	var buf bytes.Buffer
+	buf.WriteString(h.Prefix)
+	buf.Write(node.Tag)
+	return buf.Bytes(), nil
+}
+
 func applyMarkdownSpecial(data []byte, skipNoFollow bool, baseURL string, cfg *config.Config) string {
+	if cfg.App.MarkdownRenderer() == "goldmark" {
+		return applyCommonmarkSpecial(data, skipNoFollow, baseURL, cfg)
+	} else {
+		return applySaturdaySpecial(data, skipNoFollow, baseURL, cfg)
+	}
+}
+
+func applyCommonmarkSpecial(data []byte, skipNoFollow bool, baseURL string, cfg *config.Config) string {
+	extensions := cfg.App.RendererExtensions()
+	if baseURL != "" {
+		tagPrefix := baseURL + "tag:"
+		if cfg.App.Chorus {
+			tagPrefix = "/read/t"
+		}
+		extensions = append(extensions, &hashtag.Extender{
+			Resolver: hashtagResolver{Prefix: tagPrefix},
+		})
+	}
+	md := goldmark.New(
+		goldmark.WithExtensions(extensions...),
+		goldmark.WithParserOptions(
+			parser.WithAutoHeadingID(),
+		),
+	)
+	var buf bytes.Buffer
+	if err := md.Convert(data, &buf); err != nil {
+		log.Info("error rendering CommonMark: %v", err)
+	}
+	htm := buf.Bytes()
+	if baseURL != "" {
+		handlePrefix := cfg.App.Host + "/@/"
+		htm = []byte(mentionReg.ReplaceAll(htm, []byte("<a href=\""+handlePrefix+"$1$2\" class=\"u-url mention\">@<span>$1$2</span></a>")))
+	}
+	// Strip out bad HTML
+	policy := getSanitizationPolicy()
+	// Enable GFM checkboxes for CommonMark
+	// Technically we could skip this if the
+	policy.AllowAttrs("type", "disabled", "checked").OnElements("input")
+	policy.RequireNoFollowOnLinks(!skipNoFollow)
+	outHTML := string(policy.SanitizeBytes(htm))
+	// Strip newlines on certain block elements that render with them
+	outHTML = blockReg.ReplaceAllString(outHTML, "<$1>")
+	outHTML = endBlockReg.ReplaceAllString(outHTML, "</$1></$2>")
+	outHTML = disableYoutubeAutoplay(outHTML)
+	return outHTML
+}
+
+func applySaturdaySpecial(data []byte, skipNoFollow bool, baseURL string, cfg *config.Config) string {
 	mdExtensions := 0 |
 		blackfriday.EXTENSION_TABLES |
 		blackfriday.EXTENSION_FENCED_CODE |
@@ -181,7 +249,41 @@ func applyMarkdownSpecial(data []byte, skipNoFollow bool, baseURL string, cfg *c
 	return outHTML
 }
 
-func applyBasicMarkdown(data []byte) string {
+func applyBasicMarkdown(data []byte, cfg *config.Config) string {
+	if cfg.App.MarkdownRenderer() == "goldmark" {
+		return applyBasicCommonmark(data, cfg)
+	} else {
+		return applyBasicSaturday(data)
+	}
+}
+
+func applyBasicCommonmark(data []byte, cfg *config.Config) string {
+	md := goldmark.New(
+		goldmark.WithExtensions(
+			cfg.App.RendererExtensions()...,
+		),
+	)
+	var inbuf bytes.Buffer
+	inbuf.WriteString("# ")
+	inbuf.Write(data)
+	var outbuf bytes.Buffer
+	if err := md.Convert(inbuf.Bytes(), &outbuf); err != nil {
+		log.Info("error rendering basic CommonMark: %v", err)
+	}
+	htm := outbuf.Bytes()
+	htm = bytes.TrimSpace(htm)
+
+	htm = htm[len("<h1>") : len(htm)-len("</h1>")]
+	// Strip out bad HTML
+	policy := bluemonday.UGCPolicy()
+	policy.AllowAttrs("class", "id").Globally()
+	outHTML := string(policy.SanitizeBytes(htm))
+	outHTML = markeddownReg.ReplaceAllString(outHTML, "$1")
+	outHTML = strings.TrimRightFunc(outHTML, unicode.IsSpace)
+	return outHTML
+}
+
+func applyBasicSaturday(data []byte) string {
 	if len(bytes.TrimSpace(data)) == 0 {
 		return ""
 	}
@@ -284,12 +386,13 @@ func sanitizePost(content string) string {
 // choosing what to generate. In case a post has a title, this function will
 // fail, and logic should instead be implemented to skip this when there's no
 // title, like so:
-//    var desc string
-//    if title == "" {
-//        desc = postDescription(content, title, friendlyId)
-//    } else {
-//        desc = shortPostDescription(content)
-//    }
+//
+//	var desc string
+//	if title == "" {
+//	    desc = postDescription(content, title, friendlyId)
+//	} else {
+//	    desc = shortPostDescription(content)
+//	}
 func postDescription(content, title, friendlyId string) string {
 	maxLen := 140
 

@@ -17,6 +17,8 @@ import (
 
 	"github.com/go-ini/ini"
 	"github.com/writeas/web-core/log"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
 	"golang.org/x/net/idna"
 )
 
@@ -168,6 +170,14 @@ type (
 
 		// Disable password authentication if use only Oauth
 		DisablePasswordAuth bool `ini:"disable_password_auth"`
+
+		// Which Markdown renderer to use
+		Renderer string `ini:"markdown_renderer"`
+
+		// Options for the Goldmark renderer
+		RendererOptions string `ini:"markdown_options"`
+		// Conversion of options ready for the renderer
+		rendererExtensions []goldmark.Extender
 	}
 
 	// Config holds the complete configuration for running a writefreely instance
@@ -243,6 +253,45 @@ func (ac AppCfg) SignupPath() string {
 		return "/signup"
 	}
 	return "/"
+}
+
+func (ac AppCfg) MarkdownRenderer() string {
+	if strings.EqualFold(ac.Renderer, "goldmark") {
+		return "goldmark"
+	}
+	return "saturday"
+}
+
+func (ac AppCfg) RendererExtensions() []goldmark.Extender {
+	if ac.rendererExtensions != nil {
+		return ac.rendererExtensions
+	}
+	var extlist []goldmark.Extender
+	optlist := strings.FieldsFunc(ac.RendererOptions, func(r rune) bool {
+		return r == ' ' || r == '\t' || r == ','
+	})
+	for _, opt := range optlist {
+		switch opt {
+		case "table":
+			extlist = append(extlist, extension.Table)
+		case "strikethrough":
+			extlist = append(extlist, extension.Strikethrough)
+		case "linkify":
+			extlist = append(extlist, extension.Linkify)
+		case "tasklist":
+			extlist = append(extlist, extension.TaskList)
+		case "gfm":
+			extlist = append(extlist, extension.GFM)
+		case "definitionlist":
+			extlist = append(extlist, extension.DefinitionList)
+		case "typographer":
+			extlist = append(extlist, extension.Typographer)
+		case "cjk":
+			extlist = append(extlist, extension.CJK)
+		}
+	}
+	ac.rendererExtensions = extlist
+	return extlist
 }
 
 // Load reads the given configuration file, then parses and returns it as a Config.
