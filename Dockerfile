@@ -1,5 +1,5 @@
 # Build image
-FROM golang:1.16-alpine as build
+FROM golang:1.19-alpine as build
 
 RUN apk add --update nodejs npm make g++ git
 RUN npm install -g less less-plugin-clean-css
@@ -9,7 +9,10 @@ WORKDIR /go/src/github.com/writefreely/writefreely
 
 COPY . .
 
+RUN cat ossl_legacy.cnf > /etc/ssl/openssl.cnf
+
 ENV GO111MODULE=on
+ENV NODE_OPTIONS=--openssl-legacy-provider
 
 RUN make build \
   && make ui
@@ -35,3 +38,4 @@ EXPOSE 8080
 USER daemon
 
 ENTRYPOINT ["cmd/writefreely/writefreely"]
+
