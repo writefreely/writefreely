@@ -1,7 +1,7 @@
 module github.com/writefreely/writefreely
 
 require (
-	github.com/dustin/go-humanize v1.0.0
+	github.com/dustin/go-humanize v1.0.1
 	github.com/fatih/color v1.15.0
 	github.com/go-ini/ini v1.67.0
 	github.com/go-sql-driver/mysql v1.6.0
