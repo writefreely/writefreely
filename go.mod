@@ -4,7 +4,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fatih/color v1.15.0
 	github.com/go-ini/ini v1.67.0
-	github.com/go-sql-driver/mysql v1.7.0
+	github.com/go-sql-driver/mysql v1.7.1
 	github.com/gorilla/csrf v1.7.1
 	github.com/gorilla/feeds v1.1.1
 	github.com/gorilla/mux v1.8.0
