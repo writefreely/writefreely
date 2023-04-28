@@ -18,46 +18,46 @@ ci: deps
 	cd cmd/writefreely; $(GOBUILD) -v
 
 build: deps
-	cd cmd/writefreely; $(GOBUILD) -v -tags='sqlite'
+	cd cmd/writefreely; $(GOBUILD) -v -tags='netgo sqlite'
 
 build-no-sqlite: deps-no-sqlite
-	cd cmd/writefreely; $(GOBUILD) -v -o $(BINARY_NAME)
+	cd cmd/writefreely; $(GOBUILD) -v -tags='netgo' -o $(BINARY_NAME)
 
 build-linux: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=linux/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -go go-1.19.x -out writefreely -pkg ./cmd/writefreely .
+	xgo --targets=linux/amd64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.19.x -out writefreely -pkg ./cmd/writefreely .
 
 build-windows: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=windows/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -go go-1.19.x -out writefreely -pkg ./cmd/writefreely .
+	xgo --targets=windows/amd64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.19.x -out writefreely -pkg ./cmd/writefreely .
 
 build-darwin: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=darwin/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -go go-1.19.x -out writefreely -pkg ./cmd/writefreely .
+	xgo --targets=darwin/amd64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.19.x -out writefreely -pkg ./cmd/writefreely .
 
 build-arm6: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=linux/arm-6, -dest build/ $(LDFLAGS) -tags='sqlite' -go go-1.19.x -out writefreely -pkg ./cmd/writefreely .
+	xgo --targets=linux/arm-6, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.19.x -out writefreely -pkg ./cmd/writefreely .
 
 build-arm7: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=linux/arm-7, -dest build/ $(LDFLAGS) -tags='sqlite' -go go-1.19.x -out writefreely -pkg ./cmd/writefreely .
+	xgo --targets=linux/arm-7, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.19.x -out writefreely -pkg ./cmd/writefreely .
 
 build-arm64: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=linux/arm64, -dest build/ $(LDFLAGS) -tags='sqlite' -go go-1.19.x -out writefreely -pkg ./cmd/writefreely .
+	xgo --targets=linux/arm64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.19.x -out writefreely -pkg ./cmd/writefreely .
 
 build-docker :
 	$(DOCKERCMD) build -t $(IMAGE_NAME):latest -t $(IMAGE_NAME):$(GITREV) .
@@ -66,7 +66,7 @@ test:
 	$(GOTEST) -v ./...
 
 run:
-	$(GOINSTALL) -tags='sqlite' ./...
+	$(GOINSTALL) -tags='netgo sqlite' ./...
 	$(BINARY_NAME) --debug
 
 deps :
