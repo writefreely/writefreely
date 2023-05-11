@@ -55,14 +55,15 @@ type (
 
 	// DatabaseCfg holds values that determine how the application connects to a datastore
 	DatabaseCfg struct {
-		Type     string `ini:"type"`
-		FileName string `ini:"filename"`
-		User     string `ini:"username"`
-		Password string `ini:"password"`
-		Database string `ini:"database"`
-		Host     string `ini:"host"`
-		Port     int    `ini:"port"`
-		TLS      bool   `ini:"tls"`
+		Type       string `ini:"type"`
+		FileName   string `ini:"filename"`
+		User       string `ini:"username"`
+		Password   string `ini:"password"`
+		Database   string `ini:"database"`
+		Host       string `ini:"host"`
+		Port       int    `ini:"port"`
+		TLS        bool   `ini:"tls"`
+		UnixSocket string `ini:"unix_socket"`
 	}
 
 	WriteAsOauthCfg struct {

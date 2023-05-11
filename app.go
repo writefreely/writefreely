@@ -569,8 +569,10 @@ func (app *App) InitDecoder() {
 // tests the connection.
 func ConnectToDatabase(app *App) error {
 	// Check database configuration
-	if app.cfg.Database.Type == driverMySQL && (app.cfg.Database.User == "" || app.cfg.Database.Password == "") {
-		return fmt.Errorf("Database user or password not set.")
+	if app.cfg.Database.Type == driverMySQL {
+		if app.cfg.Database.User == "" && (app.cfg.Database.UnixSocket == "" || app.cfg.Database.Password == "") {
+			return fmt.Errorf("Database user or password not set.")
+		}
 	}
 	if app.cfg.Database.Host == "" {
 		app.cfg.Database.Host = "localhost"
@@ -824,8 +826,14 @@ func connectToDatabase(app *App) {
 
 	var db *sql.DB
 	var err error
+	var connStr string
 	if app.cfg.Database.Type == driverMySQL {
-		db, err = sql.Open(app.cfg.Database.Type, fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s&tls=%t", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String()), app.cfg.Database.TLS))
+		if app.cfg.Database.UnixSocket != "" {
+			connStr = fmt.Sprintf("%s@unix(%s)/%s?charset=utf8mb4&parseTime=true&loc=%s&tls=%t", app.cfg.Database.User, app.cfg.Database.UnixSocket, app.cfg.Database.Database, url.QueryEscape(time.Local.String()), app.cfg.Database.TLS)
+		} else {
+			connStr = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s&tls=%t", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String()), app.cfg.Database.TLS)
+		}
+		db, err = sql.Open(app.cfg.Database.Type, connStr)
 		db.SetMaxOpenConns(50)
 	} else if app.cfg.Database.Type == driverSQLite {
 		if !SQLiteEnabled {
