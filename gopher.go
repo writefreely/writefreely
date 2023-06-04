@@ -24,10 +24,13 @@ import (
 
 func initGopher(apper Apper) {
 	handler := NewWFHandler(apper)
-
 	gopher.HandleFunc("/", handler.Gopher(handleGopher))
 	log.Info("Serving on gopher://localhost:%d", apper.App().Config().Server.GopherPort)
-	gopher.ListenAndServe(fmt.Sprintf(":%d", apper.App().Config().Server.GopherPort), nil)
+	listener, err := Listen("tcp", fmt.Sprintf("%s:%d", apper.App().Config().Server.Bind, apper.App().Config().Server.GopherPort))
+	if err != nil {
+		panic(err)
+	}
+	gopher.Serve(listener, nil)
 }
 
 // Utility function to strip the URL from the hostname provided by app.cfg.App.Host
