@@ -432,6 +432,8 @@ func Initialize(apper Apper, debug bool) (*App, error) {
 	return apper.App(), nil
 }
 
+var Listen = net.Listen
+
 func Serve(app *App, r *mux.Router) {
 	log.Info("Going to serve...")
 
@@ -489,17 +491,23 @@ requests. We recommend supplying a valid host name.`)
 
 			go func() {
 				log.Info("Serving redirects on http://%s:80", bindAddress)
-				err = http.ListenAndServe(":80", m.HTTPHandler(nil))
+				listener, err := Listen("tcp", fmt.Sprintf("%s:80", bindAddress))
+				log.Error("Unable to listen on %s: %v", bindAddress, err)
+				err = http.Serve(listener, m.HTTPHandler(nil))
 				log.Error("Unable to start redirect server: %v", err)
 			}()
-
 			log.Info("Serving on https://%s:443", bindAddress)
 			log.Info("---")
-			err = s.ListenAndServeTLS("", "")
+			listener, err := Listen("tcp", fmt.Sprintf("%s:443", bindAddress))
+			log.Error("Unable to listen on %s: %v", bindAddress, err)
+			err = s.ServeTLS(listener, "", "")
+			log.Error("Unable to start https server: %v", err)
 		} else {
 			go func() {
+				listener, err := Listen("tcp", fmt.Sprintf("%s:80", bindAddress))
+				log.Error("Unable to listen on %s: %v", bindAddress, err)
 				log.Info("Serving redirects on http://%s:80", bindAddress)
-				err = http.ListenAndServe(fmt.Sprintf("%s:80", bindAddress), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				err = http.Serve(listener, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					http.Redirect(w, r, app.cfg.App.Host, http.StatusMovedPermanently)
 				}))
 				log.Error("Unable to start redirect server: %v", err)
@@ -508,7 +516,10 @@ requests. We recommend supplying a valid host name.`)
 			log.Info("Serving on https://%s:443", bindAddress)
 			log.Info("Using manual certificates")
 			log.Info("---")
-			err = http.ListenAndServeTLS(fmt.Sprintf("%s:443", bindAddress), app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, r)
+			listener, err := Listen("tcp", fmt.Sprintf("%s:443", bindAddress))
+			log.Error("Unable to listen on %s: %v", bindAddress, err)
+			err = http.ServeTLS(listener, r, app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath)
+			log.Error("Unable to start https server: %v", err)
 		}
 	} else {
 		network := "tcp"
@@ -530,7 +541,7 @@ requests. We recommend supplying a valid host name.`)
 
 		log.Info("Serving on %s://%s", protocol, bindAddress)
 		log.Info("---")
-		listener, err := net.Listen(network, bindAddress)
+		listener, err := Listen(network, bindAddress)
 		if err != nil {
 			log.Error("Could not bind to address: %v", err)
 			os.Exit(1)
@@ -546,6 +557,7 @@ requests. We recommend supplying a valid host name.`)
 
 		defer listener.Close()
 		err = http.Serve(listener, r)
+		log.Error("Unable to start http server: %v", err)
 	}
 	if err != nil {
 		log.Error("Unable to start: %v", err)
