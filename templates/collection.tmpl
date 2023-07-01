@@ -6,7 +6,6 @@
 		<title>{{.DisplayTitle}}{{if not .SingleUser}} &mdash; {{.SiteName}}{{end}}</title>
 		
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
-		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="canonical" href="{{.CanonicalURL}}">
 		{{if gt .CurrentPage 1}}<link rel="prev" href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">{{end}}
@@ -51,17 +50,17 @@
 							{{else}}
 							<li><a href="/#{{.Alias}}" class="write">{{.SiteName}}</a></li>
 							{{end}}
-							{{if .SimpleNav}}<li><a href="/new#{{.Alias}}">New Post</a></li>{{end}}
-							<li><a href="/me/c/{{.Alias}}">Customize</a></li>
-							<li><a href="/me/c/{{.Alias}}/stats">Stats</a></li>
+							{{if .SimpleNav}}<li><a href="/new#{{.Alias}}">{{call .Tr "New Post"}}</a></li>{{end}}
+							<li><a href="/me/c/{{.Alias}}">{{call .Tr "Customize"}}</a></li>
+							<li><a href="/me/c/{{.Alias}}/stats">{{call .Tr "Stats"}}</a></li>
 							<li class="separator"><hr /></li>
-							{{if not .SingleUser}}<li><a href="/me/c/"><img class="ic-18dp" src="/img/ic_blogs_dark@2x.png" /> View Blogs</a></li>{{end}}
-							<li><a href="/me/posts/"><img class="ic-18dp" src="/img/ic_list_dark@2x.png" /> View Drafts</a></li>
+							{{if not .SingleUser}}<li><a href="/me/c/"><img class="ic-18dp" src="/img/ic_blogs_dark@2x.png" /> {{call .Tr "View Blog" 2}}</a></li>{{end}}
+							<li><a href="/me/posts/"><img class="ic-18dp" src="/img/ic_list_dark@2x.png" /> {{call .Tr "View Draft" 2}}</a></li>
 						{{ else }}
 							<li><a href="/login">Log in{{if .IsProtected}} to {{.DisplayTitle}}{{end}}</a></li>
 							{{if .IsProtected}}
 								<li class="separator"><hr /></li>
-								<li><a href="/logout">Log out</a></li>
+								<li><a href="/logout">{{call .Tr "Log out"}}</a></li>
 							{{end}}
 						{{ end }}
 					</ul>
@@ -72,7 +71,7 @@
 				<li class="has-submenu"><a onclick="void(0)">&#9776; Menu</a>
 					<ul>
 						<li class="menu-heading" style="padding: .5rem .75rem; box-sizing: border-box;">{{.DisplayTitle}}</li>
-						<li><a href="{{.CanonicalURL}}logout">Log out</a></li>
+						<li><a href="{{.CanonicalURL}}logout">{{call .Tr "Log out"}}</a></li>
 					</ul>
 				</li>
 			</ul></nav>
@@ -80,7 +79,7 @@
 		
 		<header>
 		{{if .Silenced}}
-			{{template "user-silenced"}}
+			{{template "user-silenced" (dict "Tr" $.Tr)}}
 		{{end}}
 		<h1 dir="{{.Direction}}" id="blog-title">{{if .Posts}}{{else}}<span class="writeas-prefix"><a href="/">write.as</a></span> {{end}}<a href="/{{if .IsTopLevel}}{{else}}{{.Prefix}}{{.Alias}}/{{end}}" class="h-card p-author u-url" rel="me author">{{.DisplayTitle}}</a></h1>
 		{{if .Description}}<p class="description p-note">{{.DisplayDescription}}</p>{{end}}
@@ -137,14 +136,16 @@
 	<script type="text/javascript" src="/js/menu.js"></script>
 	<script type="text/javascript">
 var deleting = false;
-function delPost(e, id, owned) {
+function delPost(e, id, owned, loc) {
 	e.preventDefault();
 	if (deleting) {
 		return;
 	}
 
+	var loc = JSON.parse(loc);
+
 	// TODO: UNDO!
-	if (window.confirm('Are you sure you want to delete this post?')) {
+	if (window.confirm(loc['Are you sure you want to delete this post?'])) {
 		// AJAX
 		deletePost(id, "", function() {
 			// Remove post from list
@@ -155,7 +156,7 @@ function delPost(e, id, owned) {
 	}
 }
 
-var deletePost = function(postID, token, callback) {
+var deletePost = function(postID, token, loc, callback) {
 	deleting = true;
 
 	var $delBtn = document.getElementById('post-' + postID).getElementsByClassName('delete action')[0];
@@ -171,13 +172,13 @@ var deletePost = function(postID, token, callback) {
 				callback();
 			} else if (http.status == 409) {
 				$delBtn.innerHTML = 'delete';
-				alert("Post is synced to another account. Delete the post from that account instead.");
+				alert(loc["Post is synced to another account. Delete the post from that account instead."]);
 				// TODO: show "remove" button instead of "delete" now
 				// Persist that state.
 				// Have it remove the post locally only.
 			} else {
 				$delBtn.innerHTML = 'delete';
-				alert("Failed to delete." + (http.status>=500?" Please try again.":""));
+				alert(loc["Failed to delete."] + (http.status>=500?" " + loc["Please try again."]:""));
 			}
 		}
 	}
@@ -185,12 +186,14 @@ var deletePost = function(postID, token, callback) {
 };
 
 var pinning = false;
-function pinPost(e, postID, slug, title) {
+function pinPost(e, postID, slug, title, loc) {
 	e.preventDefault();
 	if (pinning) {
 		return;
 	}
 	pinning = true;
+		
+	var loc = JSON.parse(loc)
 
 	var callback = function() {
 		// Visibly remove post from collection
@@ -222,13 +225,13 @@ function pinPost(e, postID, slug, title) {
 				callback();
 			} else if (http.status == 409) {
 				$pinBtn.innerHTML = 'pin';
-				alert("Post is synced to another account. Delete the post from that account instead.");
+				alert(loc["Post is synced to another account. Delete the post from that account instead."]);
 				// TODO: show "remove" button instead of "delete" now
 				// Persist that state.
 				// Have it remove the post locally only.
 			} else {
 				$pinBtn.innerHTML = 'pin';
-				alert("Failed to pin." + (http.status>=500?" Please try again.":""));
+				alert(loc["Failed to pin."] + (http.status>=500?" " + loc["Please try again."]:""));
 			}
 		}
 	}

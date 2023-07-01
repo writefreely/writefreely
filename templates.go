@@ -19,11 +19,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
+	
 	"github.com/dustin/go-humanize"
 	"github.com/writeas/web-core/l10n"
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/writefreely/config"
+	"github.com/leonelquinteros/gotext"
 )
 
 var (
@@ -42,6 +43,9 @@ var (
 		"hasPrefix":   strings.HasPrefix,
 		"hasSuffix":   strings.HasSuffix,
 		"dict":        dict,
+
+		"localize":		localize,
+		"variables":	variables,
 	}
 )
 
@@ -206,13 +210,23 @@ func isRTL(d string) bool {
 func isLTR(d string) bool {
 	return d == "ltr" || d == "auto"
 }
-
+/*
 func localStr(term, lang string) string {
 	s := l10n.Strings(lang)[term]
 	if s == "" {
 		s = l10n.Strings("")[term]
 	}
 	return s
+}
+*/
+func localStr(term, lang string) string {
+	switch lang {
+		case "eu": lang = "eu_ES"
+		case "es": lang = "es_ES"
+		default: lang = "en_UK"
+	}
+	setLang := localize(lang);
+	return setLang.Get(term)
 }
 
 func localHTML(term, lang string) template.HTML {
@@ -238,4 +252,19 @@ func dict(values ...interface{}) (map[string]interface{}, error) {
 		dict[key] = values[i+1]
 	}
 	return dict, nil
+}
+
+func localize(lang string) (*gotext.Locale){
+	var language string = "en_UK"
+	if lang != "" {
+		language = lang
+	}
+	setLang := gotext.NewLocale("./locales", language);
+	setLang.AddDomain("base");
+	return setLang
+}
+
+func variables(Vars ...interface{}) interface{}{
+	res := Vars
+	return res
 }

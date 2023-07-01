@@ -56,7 +56,7 @@ form dd {
 {{end}}
 {{define "content"}}
 <div id="pricing" class="tight content-container">
-	<h1>Finish creating account</h1>
+	<h1>{{call .Tr "Finish creating account"}}</h1>
 
 	{{if .Flashes}}<ul class="errors">
 		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
@@ -76,22 +76,22 @@ form dd {
 
             <dl class="billing">
                 <label>
-                    <dt>Display Name</dt>
+                    <dt>{{call .Tr "Display Name"}}</dt>
                     <dd>
                         <input type="text" style="width: 100%; box-sizing: border-box;" name="alias" placeholder="Name"{{ if .Alias }} value="{{.Alias}}"{{ end }} />
                     </dd>
                 </label>
                 <label>
-                    <dt>Username</dt>
+                    <dt>{{call .Tr "Username"}}</dt>
 					<dd>
-		<input type="text" id="username" name="username" style="width: 100%; box-sizing: border-box;" placeholder="Username" value="{{.LoginUsername}}" /><br />
-		{{if .Federation}}<p id="alias-site" class="demo">@<strong>your-username</strong>@{{.FriendlyHost}}</p>{{else}}<p id="alias-site" class="demo">{{.FriendlyHost}}/<strong>your-username</strong></p>{{end}}
+		<input type="text" id="username" name="username" style="width: 100%; box-sizing: border-box;" placeholder={{call .Tr "Username"}} value="{{.LoginUsername}}" /><br />
+		{{if .Federation}}<p id="alias-site" class="demo">@<strong>{{call .Tr "your-username"}}</strong>@{{.FriendlyHost}}</p>{{else}}<p id="alias-site" class="demo">{{.FriendlyHost}}/<strong>{{call .Tr "your-username"}}</strong></p>{{end}}
                     </dd>
                 </label>
                 <label>
-                    <dt>Email</dt>
+                    <dt>{{call .Tr "Email"}}</dt>
                     <dd>
-<input type="text" name="email" style="width: 100%; box-sizing: border-box;" placeholder="Email"{{ if .Email }} value="{{.Email}}"{{ end }} />
+<input type="text" name="email" style="width: 100%; box-sizing: border-box;" placeholder={{call .Tr "Email"}}{{ if .Email }} value="{{.Email}}"{{ end }} />
                     </dd>
                 </label>
                 <dt>

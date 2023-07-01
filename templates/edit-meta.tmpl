@@ -2,7 +2,7 @@
 <html>
 	<head>
 
-		<title>Edit metadata: {{if .Post.Title}}{{.Post.Title}}{{else}}{{.Post.Id}}{{end}} &mdash; {{.SiteName}}</title>
+		<title>{{call .Tr "Edit metadata"}}: {{if .Post.Title}}{{.Post.Title}}{{else}}{{.Post.Id}}{{end}} &mdash; {{.SiteName}}</title>
 		
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
 		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
@@ -39,21 +39,21 @@
 		
 		<header id="tools">
 			<div id="clip">
-				<h1><a href="/me/c/" title="View blogs"><img class="ic-24dp" src="/img/ic_blogs_dark@2x.png" /></a></h1>
+				<h1><a href="/me/c/" title={{call .Tr "View blog" 2}}><img class="ic-24dp" src="/img/ic_blogs_dark@2x.png" /></a></h1>
 				<nav id="target" class=""><ul>
-						<li>{{if .EditCollection}}<a href="{{.EditCollection.CanonicalURL}}">{{.EditCollection.Title}}</a>{{else}}<a>Draft</a>{{end}}</li>
+						<li>{{if .EditCollection}}<a href="{{.EditCollection.CanonicalURL}}">{{.EditCollection.Title}}</a>{{else}}<a>{{call .Tr "Draft"}}</a>{{end}}</li>
 				</ul></nav>
 			</div>
 			<div id="belt">
-				<div class="tool if-room"><a href="{{if .EditCollection}}{{.EditCollection.CanonicalURL}}{{.Post.Slug}}/edit{{else}}/{{.Post.Id}}/edit{{end}}" title="Edit post" id="edit"><img class="ic-24dp" src="/img/ic_edit_dark@2x.png" /></a></div>
-				<div class="tool if-room room-2"><a href="#theme" title="Toggle theme" id="toggle-theme"><img class="ic-24dp" src="/img/ic_brightness_dark@2x.png" /></a></div>
-				<div class="tool if-room room-1"><a href="/me/posts/" title="View posts" id="view-posts"><img class="ic-24dp" src="/img/ic_list_dark@2x.png" /></a></div>
+				<div class="tool if-room"><a href="{{if .EditCollection}}{{.EditCollection.CanonicalURL}}{{.Post.Slug}}/edit{{else}}/{{.Post.Id}}/edit{{end}}" title={{call .Tr "Edit post"}} id="edit"><img class="ic-24dp" src="/img/ic_edit_dark@2x.png" /></a></div>
+				<div class="tool if-room room-2"><a href="#theme" title={{call .Tr "Toggle theme"}} id="toggle-theme"><img class="ic-24dp" src="/img/ic_brightness_dark@2x.png" /></a></div>
+				<div class="tool if-room room-1"><a href="/me/posts/" title={{call .Tr "View post" 2}} id="view-posts"><img class="ic-24dp" src="/img/ic_list_dark@2x.png" /></a></div>
 			</div>
 		</header>
 		
 		<div class="content-container tight">
 			<form action="/api/{{if .EditCollection}}collections/{{.EditCollection.Alias}}/{{end}}posts/{{.Post.Id}}" method="post" onsubmit="return updateMeta()">
-				<h2>Edit metadata: {{if .Post.Title}}{{.Post.Title}}{{else}}{{.Post.Id}}{{end}} <a href="/{{if .EditCollection}}{{if not .SingleUser}}{{.EditCollection.Alias}}/{{end}}{{.Post.Slug}}{{else}}{{if .SingleUser}}d/{{end}}{{.Post.Id}}{{end}}">view post</a></h2>
+				<h2>{{call .Tr "Edit metadata"}}: {{if .Post.Title}}{{.Post.Title}}{{else}}{{.Post.Id}}{{end}} <a href="/{{if .EditCollection}}{{if not .SingleUser}}{{.EditCollection.Alias}}/{{end}}{{.Post.Slug}}{{else}}{{if .SingleUser}}d/{{end}}{{.Post.Id}}{{end}}">{{call .Tr "View post"}}</a></h2>
 
 				{{if .Flashes}}<ul class="errors">
 					{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
@@ -61,10 +61,10 @@
 
 				<dl class="dl-horizontal">
 					{{if .EditCollection}}
-					<dt><label for="slug">Slug</label></dt>
+					<dt><label for="slug">{{call .Tr "Slug"}}</label></dt>
 					<dd><input type="text" id="slug" name="slug" value="{{.Post.Slug}}" /></dd>
 					{{end}}
-					<dt><label for="lang">Language</label></dt>
+					<dt><label for="lang">{{call .Tr "Language"}}</label></dt>
 					<dd>
 						<select name="lang" id="lang" dir="auto" class="inputform">
 							<option value=""></option>
@@ -254,14 +254,14 @@
 							<option value="zu"{{if eq "zu" .Post.Language.String}} selected="selected"{{end}}>isiZulu</option>
 						</select>
 					</dd>
-					<dt><label for="rtl">Direction</label></dt>
-					<dd><input type="checkbox" id="rtl" name="rtl" {{if .Post.IsRTL.Bool}}checked="checked"{{end}} /><label for="rtl"> right-to-left</label></dd>
-					<dt><label for="created">Created</label></dt>
+					<dt><label for="rtl">{{call .Tr "Direction"}}</label></dt>
+					<dd><input type="checkbox" id="rtl" name="rtl" {{if .Post.IsRTL.Bool}}checked="checked"{{end}} /><label for="rtl"> {{call .Tr "right-to-left"}}</label></dd>
+					<dt><label for="created">{{call .Tr "Created"}}</label></dt>
 					<dd>
-						<input type="text" id="created" name="created" value="{{.Post.UserFacingCreated}}" data-time="{{.Post.Created8601}}" placeholder="YYYY-MM-DD HH:MM:SS" maxlength="19" /> <span id="tz">UTC</span> <a href="#" id="set-now">now</a>
+						<input type="text" id="created" name="created" value="{{.Post.UserFacingCreated}}" data-time="{{.Post.Created8601}}" placeholder="YYYY-MM-DD HH:MM:SS" maxlength="19" /> <span id="tz">UTC</span> <a href="#" id="set-now">{{call .Tr "now"}}</a>
 						<p class="error" id="create-error">Date format should be: <span class="mono"><abbr title="The full year">YYYY</abbr>-<abbr title="The numeric month of the year, where January = 1, with a zero in front if less than 10">MM</abbr>-<abbr title="The day of the month, with a zero in front if less than 10">DD</abbr> <abbr title="The hour (00-23), with a zero in front if less than 10.">HH</abbr>:<abbr title="The minute of the hour (00-59), with a zero in front if less than 10.">MM</abbr>:<abbr title="The seconds (00-59), with a zero in front if less than 10.">SS</abbr></span></p>
 					</dd>
-					<dt>&nbsp;</dt><dd><input type="submit" value="Save changes" /></dd>
+					<dt>&nbsp;</dt><dd><input type="submit" value={{call .Tr "Save changes"}} /></dd>
 				</dl>
 				<input type="hidden" name="web" value="true" />
 			</form>

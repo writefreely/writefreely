@@ -1,15 +1,15 @@
 {{define "collection-breadcrumbs"}}
-    {{if and .Collection (not .SingleUser)}}<nav id="org-nav"><a href="/me/c/">Blogs</a> / <a class="coll-name" href="/{{.Collection.Alias}}/">{{.Collection.DisplayTitle}}</a></nav>{{end}}
+    {{if and .Collection (not .SingleUser)}}<nav id="org-nav"><a href="/me/c/">{{call .Tr "Blog" 2}}</a> / <a class="coll-name" href="/{{.Collection.Alias}}/">{{.Collection.DisplayTitle}}</a></nav>{{end}}
 {{end}}
 
 {{define "collection-nav"}}
     {{if not .SingleUser}}
     <header class="admin">
         <nav class="pager">
-            {{if .CanPost}}<a href="{{if .SingleUser}}/me/new{{else}}/#{{.Alias}}{{end}}" class="btn gentlecta">New Post</a>{{end}}
-            <a href="/me/c/{{.Alias}}" {{if and (hasPrefix .Path "/me/c/") (hasSuffix .Path .Alias)}}class="selected"{{end}}>Customize</a>
-            <a href="/me/c/{{.Alias}}/stats" {{if hasSuffix .Path "/stats"}}class="selected"{{end}}>Stats</a>
-            <a href="{{if .SingleUser}}/{{else}}/{{.Alias}}/{{end}}">View Blog &rarr;</a>
+            {{if .CanPost}}<a href="{{if .SingleUser}}/me/new{{else}}/#{{.Alias}}{{end}}" class="btn gentlecta">{{call .Tr "New Post"}}</a>{{end}}
+            <a href="/me/c/{{.Alias}}" {{if and (hasPrefix .Path "/me/c/") (hasSuffix .Path .Alias)}}class="selected"{{end}}>{{call .Tr "Customize"}}</a>
+            <a href="/me/c/{{.Alias}}/stats" {{if hasSuffix .Path "/stats"}}class="selected"{{end}}>{{call .Tr "Stats"}}</a>
+            <a href="{{if .SingleUser}}/{{else}}/{{.Alias}}/{{end}}">{{call .Tr "View Blog"}} &rarr;</a>
         </nav>
     </header>
     {{end}}

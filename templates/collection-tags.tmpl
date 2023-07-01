@@ -6,7 +6,6 @@
 		<title>{{.Tag}} &mdash; {{.Collection.DisplayTitle}}</title>
 		
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
-		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
 		<link rel="shortcut icon" href="/favicon.ico" />
 		{{if not .Collection.IsPrivate}}<link rel="alternate" type="application/rss+xml" title="{{.Tag}} posts on {{.DisplayTitle}}" href="{{.CanonicalURL}}tag:{{.Tag}}/feed/" />{{end}}
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -56,7 +55,7 @@
 		</header>
 		
 		{{if .Silenced}}
-			{{template "user-silenced"}}
+			{{template "user-silenced" (dict "Tr" $.Tr)}}
 		{{end}}
 		{{if .Posts}}<section id="wrapper" itemscope itemtype="http://schema.org/Blog">{{else}}<div id="wrapper">{{end}}
 			<h1>{{.Tag}}</h1>
@@ -85,16 +84,18 @@
 	<script type="text/javascript">
 {{if .IsOwner}}
 var deleting = false;
-function delPost(e, id, owned) {
+function delPost(e, id, owned, loc) {
 	e.preventDefault();
 	if (deleting) {
 		return;
 	}
 
+	var loc = JSON.parse(loc);
+
 	// TODO: UNDO!
-	if (window.confirm('Are you sure you want to delete this post?')) {
+	if (window.confirm(loc['Are you sure you want to delete this post?'])) {
 		// AJAX
-		deletePost(id, "", function() {
+		deletePost(id, "", loc, function() {
 			// Remove post from list
 			var $postEl = document.getElementById('post-' + id);
 			$postEl.parentNode.removeChild($postEl);
@@ -103,7 +104,7 @@ function delPost(e, id, owned) {
 	}
 }
 
-var deletePost = function(postID, token, callback) {
+var deletePost = function(postID, token, loc, callback) {
 	deleting = true;
 
 	var $delBtn = document.getElementById('post-' + postID).getElementsByClassName('delete action')[0];
@@ -119,13 +120,13 @@ var deletePost = function(postID, token, callback) {
 				callback();
 			} else if (http.status == 409) {
 				$delBtn.innerHTML = 'delete';
-				alert("Post is synced to another account. Delete the post from that account instead.");
+				alert(loc["Post is synced to another account. Delete the post from that account instead."]);
 				// TODO: show "remove" button instead of "delete" now
 				// Persist that state.
 				// Have it remove the post locally only.
 			} else {
 				$delBtn.innerHTML = 'delete';
-				alert("Failed to delete." + (http.status>=500?" Please try again.":""));
+				alert(loc["Failed to pin."] + (http.status>=500?" " + loc["Please try again."]:""));
 			}
 		}
 	}
@@ -133,12 +134,14 @@ var deletePost = function(postID, token, callback) {
 };
 
 var pinning = false;
-function pinPost(e, postID, slug, title) {
+function pinPost(e, postID, slug, title, loc) {
 	e.preventDefault();
 	if (pinning) {
 		return;
 	}
 	pinning = true;
+
+	var loc = JSON.parse(loc)
 
 	var callback = function() {
 		// Visibly remove post from collection
@@ -170,13 +173,13 @@ function pinPost(e, postID, slug, title) {
 				callback();
 			} else if (http.status == 409) {
 				$pinBtn.innerHTML = 'pin';
-				alert("Post is synced to another account. Delete the post from that account instead.");
+				alert(loc["Post is synced to another account. Delete the post from that account instead."]);
 				// TODO: show "remove" button instead of "delete" now
 				// Persist that state.
 				// Have it remove the post locally only.
 			} else {
 				$pinBtn.innerHTML = 'pin';
-				alert("Failed to pin." + (http.status>=500?" Please try again.":""));
+				alert(loc["Failed to pin."] + (http.status>=500?" " + loc["Please try again."]:""));
 			}
 		}
 	}

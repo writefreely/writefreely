@@ -1,10 +1,17 @@
 var postActions = function() {
 	var $container = He.get('moving');
-	var MultiMove = function(el, id, singleUser) {
+
+	var tr = function(term, str){
+		return term.replace("%s", str);
+	};
+	var MultiMove = function(el, id, singleUser, loc) {
 		var lbl = el.options[el.selectedIndex].textContent;
+		var loc = JSON.parse(loc);
 		var collAlias = el.options[el.selectedIndex].value;
 		var $lbl = He.$('label[for=move-'+id+']')[0];
-		$lbl.textContent = "moving to "+lbl+"...";
+		//$lbl.textContent = loc['moving to']+" "+lbl+"...";
+		$lbl.textContent = tr(loc['moving to %s...'],lbl);
+
 		var params;
 		if (collAlias == '|anonymous|') {
 			params = [id];
@@ -17,7 +24,8 @@ var postActions = function() {
 			if (code == 200) {
 				for (var i=0; i<resp.data.length; i++) {
 					if (resp.data[i].code == 200) {
-						$lbl.innerHTML = "moved to <strong>"+lbl+"</strong>";
+						//$lbl.innerHTML = loc["Moved to"]+" <strong>"+lbl+"</strong>";
+						$lbl.innerHTML = tr(loc["Moved to %s"], " <strong>"+lbl+"</strong>");
 						var pre = "/"+collAlias;
 						if (typeof singleUser !== 'undefined' && singleUser) {
 							pre = "";
@@ -35,13 +43,14 @@ var postActions = function() {
 								if (typeof singleUser !== 'undefined' && singleUser) {
 									draftPre = "d/";
 								}
-								$article.innerHTML = '<p><a href="/'+draftPre+resp.data[i].post.id+'">Unpublished post</a>.</p>';
+								$article.innerHTML = '<p><a href="/'+draftPre+resp.data[i].post.id+'">'+loc["Unpublished post"]+'</a>.</p>';
 							} else {
-								$article.innerHTML = '<p>Moved to <a style="font-weight:bold" href="'+newPostURL+'">'+lbl+'</a>.</p>';
+								//$article.innerHTML = '<p>'+loc["Moved to"]+' <a style="font-weight:bold" href="'+newPostURL+'">'+lbl+'</a>.</p>';
+								$article.innerHTML = '<p>'+ tr(loc["Moved to %s"], '<a style="font-weight:bold" href="'+newPostURL+'">'+lbl+'</a>')+'.</p>';
 							}
 						}
 					} else {
-						$lbl.innerHTML = "unable to move: "+resp.data[i].error_msg;
+						$lbl.innerHTML = loc['unable to move']+": "+resp.data[i].error_msg;
 					}
 				}
 			}
@@ -52,18 +61,28 @@ var postActions = function() {
 			He.postJSON("/api/collections/"+collAlias+"/collect", params, callback);
 		}
 	};
-	var Move = function(el, id, collAlias, singleUser) {
+	var Move = function(el, id, collAlias, singleUser, loc) {
 		var lbl = el.textContent;
+		var loc = JSON.parse(loc)
+
+		/*
 		try {
-			var m = lbl.match(/move to (.*)/);
+			//var m = lbl.match(/move to (.*)/);
+			var m = lbl.match(RegExp(loc['move to'] + "(.*)"));
 			lbl = m[1];
 		} catch (e) {
 			if (collAlias == '|anonymous|') {
 				lbl = "draft";
 			}
 		}
+		*/
+		if (collAlias == '|anonymous|'){
+			lbl = loc["draft"];
+		}else{
+			lbl = collAlias
+		}
 
-		el.textContent = "moving to "+lbl+"...";
+		el.textContent = tr(loc['moving to %s...'],lbl);
 		if (collAlias == '|anonymous|') {
 			params = [id];
 		} else {
@@ -75,7 +94,7 @@ var postActions = function() {
 			if (code == 200) {
 				for (var i=0; i<resp.data.length; i++) {
 					if (resp.data[i].code == 200) {
-						el.innerHTML = "moved to <strong>"+lbl+"</strong>";
+						el.innerHTML = tr(loc["Moved to %s"], " <strong>"+lbl+"</strong>");
 						el.onclick = null;
 						var pre = "/"+collAlias;
 						if (typeof singleUser !== 'undefined' && singleUser) {
@@ -83,7 +102,7 @@ var postActions = function() {
 						}
 						var newPostURL = pre+"/"+resp.data[i].post.slug;
 						el.href = newPostURL;
-						el.title = "View on "+lbl;
+						el.title = tr(loc["View on %s"], lbl)
 						try {
 							// Posts page
 							He.$('#post-'+resp.data[i].post.id+' > h3 > a')[0].href = newPostURL;
@@ -96,13 +115,13 @@ var postActions = function() {
 								if (typeof singleUser !== 'undefined' && singleUser) {
 									draftPre = "d/";
 								}
-								$article.innerHTML = '<p><a href="/'+draftPre+resp.data[i].post.id+'">Unpublished post</a>.</p>';
+								$article.innerHTML = '<p><a href="/'+draftPre+resp.data[i].post.id+'">'+loc["Unpublished post"]+'</a>.</p>';
 							} else {
-								$article.innerHTML = '<p>Moved to <a style="font-weight:bold" href="'+newPostURL+'">'+lbl+'</a>.</p>';
+								$article.innerHTML = '<p>'+ tr(loc["Moved to %s"], '<a style="font-weight:bold" href="'+newPostURL+'">'+lbl+'</a>')+'.</p>';
 							}
 						}
 					} else {
-						el.innerHTML = "unable to move: "+resp.data[i].error_msg;
+						el.innerHTML = loc['unable to move']+": "+resp.data[i].error_msg;
 					}
 				}
 			}
@@ -112,6 +131,7 @@ var postActions = function() {
 		} else {
 			He.postJSON("/api/collections/"+collAlias+"/collect", params, callback);
 		}
+
 	};
 
 	return {

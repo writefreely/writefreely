@@ -43,102 +43,102 @@ input.copy-text {
 
 	<h2 id="posts-header">{{.User.Username}}</h2>
 	{{if .NewPassword}}<div class="alert success">
-		<p>This user's password has been reset to:</p>
+		<p>{{call .Tr "This user's password has been reset to:"}}</p>
 		<p><input type="text" class="copy-text" value="{{.NewPassword}}" onfocus="if (this.select) this.select(); else this.setSelectionRange(0, this.value.length);" readonly /></p>
-		<p>They can use this new password to log in to their account. <strong>This will only be shown once</strong>, so be sure to copy it and send it to them now.</p>
-		{{if .ClearEmail}}<p>Their email address is: <a href="mailto:{{.ClearEmail}}">{{.ClearEmail}}</a></p>{{end}}
+		<p>{{call .Tr "They can use this new password to log in to their account. **This will only be shown once**, so be sure to copy it and send it to them now." true}}</p>
+		{{if .ClearEmail}}<p>{{call .Tr "Their email address is:"}} <a href="mailto:{{.ClearEmail}}">{{.ClearEmail}}</a></p>{{end}}
 		</div>
 	{{end}}
 	<table class="classy export">
 		<tr>
-			<th>No.</th>
+			<th>{{call .Tr "No."}}</th>
 			<td>{{.User.ID}}</td>
 		</tr>
 		<tr>
-			<th>Type</th>
-			<td>{{if .User.IsAdmin}}Admin{{else}}User{{end}}</td>
+			<th>{{call .Tr "type"}}</th>
+			<td>{{if .User.IsAdmin}}Admin{{else}}{{call .Tr "User"}}{{ if eq .AppCfg.Lang "eu_ES" }}a{{end}}{{end}}</td>
 		</tr>
 		<tr>
-			<th>Username</th>
+			<th>{{call .Tr "Username"}}</th>
 			<td>{{.User.Username}}</td>
 		</tr>
 		<tr>
-			<th>Joined</th>
-			<td>{{.User.CreatedFriendly}}</td>
+			<th>{{call .Tr "joined"}}</th>
+			<td><time datetime="{{.User.CreatedFriendly}}" content="{{.User.CreatedFriendly}}"></td>
 		</tr>
 		<tr>
-			<th>Total Posts</th>
+			<th>{{call .Tr "total posts"}}</th>
 			<td>{{.TotalPosts}}</td>
 		</tr>
 		<tr>
-			<th>Last Post</th>
-			<td>{{if .LastPost}}{{.LastPost}}{{else}}Never{{end}}</td>
+			<th>{{call .Tr "last post"}}</th>
+			<td>{{if .LastPost}}<time datetime="{{.LastPost}}" content="{{.LastPost}}">{{else}}{{call .Tr "Never"}}{{end}}</td>
 		</tr>
 		<tr>
 			<form action="/admin/user/{{.User.Username}}/status" method="POST" {{if not .User.IsSilenced}}onsubmit="return confirmSilence()"{{end}}>
-				<th><a id="status"></a>Status</th>
+				<th><a id="status"></a>{{call .Tr "status"}}</th>
 				<td class="active-silence">
 				{{if .User.IsSilenced}}
-					<p>Silenced</p>
-					<input type="submit" value="Unsilence"/>
+					<p>{{call .Tr "Silenced"}}</p>
+					<input type="submit" value="{{call .Tr "Unsilence"}}"/>
 				{{else}}
-					<p>Active</p>
-					<input class="danger" type="submit" value="Silence" {{if .User.IsAdmin}}disabled{{end}}/>
+					<p>{{call .Tr "Active"}}</p>
+					<input class="danger" type="submit" value="{{call .Tr "Silence"}}" {{if .User.IsAdmin}}{{call .Tr "disabled"}}{{end}}/>
 				{{end}}
 				</td>
 			</form>
 		</tr>
 		<tr>
-			<th>Password</th>
+			<th>{{call .Tr "Password"}}</th>
 			<td>
 				{{if ne .Username .User.Username}}
 				<form id="reset-form" action="/admin/user/{{.User.Username}}/passphrase" method="post" autocomplete="false">
 					<input type="hidden" name="user" value="{{.User.ID}}"/>
-					<button type="submit">Reset</button>
+					<button type="submit">{{call .Tr "Reset"}}</button>
 				</form>
 				{{else}}
-				<a href="/me/settings" title="Go to reset password page">Change your password</a>
+				<a href="/me/settings" title='{{call .Tr "Go to reset password page"}}'>{{call .Tr "Change your password"}}</a>
 				{{end}}
 			</td>
 		</tr>
 	</table>
 
-	<h2>Blogs</h2>
+	<h2>{{call .Tr "Blog" 2}}</h2>
 
 	{{range .Colls}}
 	<h3><a href="/{{.Alias}}/">{{.Title}}</a></h3>
 	<table class="classy export">
 		<tr>
-			<th>Alias</th>
+			<th>{{call $.Tr "Alias"}}</th>
 			<td>{{.Alias}}</td>
 		</tr>
 		<tr>
-			<th>Title</th>
+			<th>{{call $.Tr "Title"}}</th>
 			<td>{{.Title}}</td>
 		</tr>
 		<tr>
-			<th>Description</th>
+			<th>{{call $.Tr "Description"}}</th>
 			<td>{{.Description}}</td>
 		</tr>
 		<tr>
-			<th>Visibility</th>
-			<td>{{.FriendlyVisibility}}</td>
+			<th>{{call $.Tr "Visibility"}}</th>
+			<td>{{call $.Tr .FriendlyVisibility}}</td>
 		</tr>
 		<tr>
-			<th>Views</th>
+			<th>{{call $.Tr "View" 2}}</th>
 			<td>{{.Views}}</td>
 		</tr>
 		<tr>
-			<th>Posts</th>
+			<th>{{call $.Tr "Post" 2}}</th>
 			<td>{{.TotalPosts}}</td>
 		</tr>
 		<tr>
-			<th>Last Post</th>
-			<td>{{if .LastPost}}{{.LastPost}}{{else}}Never{{end}}</td>
+			<th>{{call $.Tr "last post"}}</th>
+			<td>{{if .LastPost}}<time datetime="{{.LastPost}}" content="{{.LastPost}}">{{else}}{{call .Tr "Never"}}{{end}}</td>
 		</tr>
 		{{if $.Config.Federation}}
 		<tr>
-			<th>Fediverse Followers</th>
+			<th>{{call $.Tr "Fediverse followers"}}</th>
 			<td>{{.Followers}}</td>
 		</tr>
 		{{end}}
@@ -146,38 +146,39 @@ input.copy-text {
 	{{end}}
 
 	{{ if not .User.IsAdmin }}
-	<h2>Incinerator</h2>
+	<h2>{{call .Tr "Incinerator"}}</h2>
 	<div class="alert danger">
 		<div class="row">
 			<div>
-				<h3>Delete this user</h3>
-				<p>Permanently erase all user data, with no way to recover it.</p>
+				<h3>{{call .Tr "Delete this user"}}</h3>
+				<p>{{call .Tr "Permanently erase all user data, with no way to recover it."}}</p>
 			</div>
-			<button class="cta danger" onclick="prepareDeleteUser()">Delete this user...</button>
+			<button class="cta danger" onclick="prepareDeleteUser()">{{call .Tr "Delete this user"}}...</button>
 		</div>
 	</div>
 	{{end}}
 </div>
 
 <div id="modal-delete-user" class="modal">
-	<h2>Are you sure?</h2>
+	<h2>{{call .Tr "Are you sure?"}}</h2>
 	<div class="body">
-		<p style="text-align:left">This action <strong>cannot</strong> be undone. It will permanently erase all traces of this user, <strong>{{.User.Username}}</strong>, including their account information, blogs, and posts.</p>
-		<p>Please type <strong>{{.User.Username}}</strong> to confirm.</p>
+		<p style="text-align:left">{{call .Tr "This action **cannot**be undone. It will permanently erase all traces of this user, **%s**, including their account information, blogs, and posts." true (variables .User.Username)}}</p>
+		<p>{{call .Tr "Please type **%s** to confirm." true (variables .User.Username)}}</p>
 
 		<ul id="delete-errors" class="errors"></ul>
 
 		<form action="/admin/user/{{.User.Username}}/delete" method="post" onsubmit="confirmDeletion()">
 			<input id="confirm-text" placeholder="{{.User.Username}}" type="text" class="confirm boxy" name="confirm-username" style="margin-top: 0.5em;" />
 			<div style="text-align:right; margin-top: 1em;">
-				<a id="cancel-delete" style="margin-right:2em" href="#">Cancel</a>
-				<input class="danger" type="submit" id="confirm-delete" value="Delete this user" disabled />
+				<a id="cancel-delete" style="margin-right:2em" href="#">{{call .Tr "Cancel"}}</a>
+				<input class="danger" type="submit" id="confirm-delete" value='{{call .Tr "Delete this user"}}' disabled />
 			</div>
 	</div>
 </div>
 
 <script src="/js/h.js"></script>
 <script src="/js/modals.js"></script>
+<script src="/js/localdate.js"></script>
 <script type="text/javascript">
 H.getEl('cancel-delete').on('click', closeModals);
 
@@ -195,17 +196,17 @@ function prepareDeleteUser() {
 
 function confirmDeletion() {
 	$confirmDelBtn.disabled = true
-	$confirmDelBtn.value = 'Deleting...'
+	$confirmDelBtn.value = {{call .Tr "Deleting..."}}
 }
 
 function confirmSilence() {
-	return confirm("Silence this user? They'll still be able to log in and access their posts, but no one else will be able to see them anymore. You can reverse this decision at any time.");
+	return confirm({{call .Tr "Silence this user? They'll still be able to log in and access their posts, but no one else will be able to see them anymore. You can reverse this decision at any time."}});
 }
 
 	form = document.getElementById("reset-form");
 	form.addEventListener('submit', function(e) {
 		e.preventDefault();
-		agreed = confirm("Reset this user's password? This will generate a new temporary password that you'll need to share with them, and invalidate their old one.");
+		agreed = confirm({{call .Tr "Reset this user's password? This will generate a new temporary password that you'll need to share with them, and invalidate their old one."}});
 		if (agreed === true) {
 			form.submit();
 		}

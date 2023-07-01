@@ -37,7 +37,9 @@ func getAboutPage(app *App) (*instanceContent, error) {
 }
 
 func defaultAboutTitle(cfg *config.Config) sql.NullString {
-	return sql.NullString{String: "About " + cfg.App.SiteName, Valid: true}
+	var setLang = localize(cfg.App.Lang)
+	title := setLang.Get("About %s", cfg.App.SiteName)
+	return sql.NullString{String: title, Valid: true}
 }
 
 func getPrivacyPage(app *App) (*instanceContent, error) {
@@ -54,30 +56,35 @@ func getPrivacyPage(app *App) (*instanceContent, error) {
 		}
 	}
 	if !c.Title.Valid {
-		c.Title = defaultPrivacyTitle()
+		c.Title = defaultPrivacyTitle(app.cfg)
 	}
 	return c, nil
 }
 
-func defaultPrivacyTitle() sql.NullString {
-	return sql.NullString{String: "Privacy Policy", Valid: true}
+func defaultPrivacyTitle(cfg *config.Config) sql.NullString {
+	var setLang = localize(cfg.App.Lang)	
+	title := setLang.Get("Privacy Policy");
+	return sql.NullString{String: title, Valid: true}
 }
 
 func defaultAboutPage(cfg *config.Config) string {
+	var setLang = localize(cfg.App.Lang)
+	wf_link := "[WriteFreely](https://writefreely.org)"
+	content := setLang.Get("_%s_ is a place for you to write and publish, powered by %s.", cfg.App.SiteName, wf_link)
 	if cfg.App.Federation {
-		return `_` + cfg.App.SiteName + `_ is an interconnected place for you to write and publish, powered by [WriteFreely](https://writefreely.org) and ActivityPub.`
+		content := setLang.Get("_%s_ is an interconnected place for you to write and publish, powered by %s.", cfg.App.SiteName, wf_link)
+		return content
 	}
-	return `_` + cfg.App.SiteName + `_ is a place for you to write and publish, powered by [WriteFreely](https://writefreely.org).`
+	return content
 }
 
 func defaultPrivacyPolicy(cfg *config.Config) string {
-	return `[WriteFreely](https://writefreely.org), the software that powers this site, is built to enforce your right to privacy by default.
+	var setLang = localize(cfg.App.Lang)
+	wf_link := "[WriteFreely](https://writefreely.org)"
+	bold_site_name := "**"+cfg.App.SiteName+"**"
 
-It retains as little data about you as possible, not even requiring an email address to sign up. However, if you _do_ give us your email address, it is stored encrypted in our database. We salt and hash your account's password.
-
-We store log files, or data about what happens on our servers. We also use cookies to keep you logged in to your account.
-
-Beyond this, it's important that you trust whoever runs **` + cfg.App.SiteName + `**. Software can only do so much to protect you -- your level of privacy protections will ultimately fall on the humans that run this particular service.`
+	DefPrivPolString := setLang.Get("%s, the software that powers this site, is built to enforce your right to privacy by default.\n\nIt retains as little data about you as possible, not even requiring an email address to sign up. However, if you _do_ give us your email address, it is stored encrypted in our database.\n\nWe salt and hash your account's password.We store log files, or data about what happens on our servers. We also use cookies to keep you logged in to your account.\n\nBeyond this, it's important that you trust whoever runs %s. Software can only do so much to protect you -- your level of privacy protections will ultimately fall on the humans that run this particular service.", wf_link, bold_site_name);
+	return DefPrivPolString
 }
 
 func getLandingBanner(app *App) (*instanceContent, error) {
@@ -113,25 +120,27 @@ func getLandingBody(app *App) (*instanceContent, error) {
 }
 
 func defaultLandingBanner(cfg *config.Config) string {
+	//var setLang = localize(cfg)
+	var setLang = localize(cfg.App.Lang)
+	banner := setLang.Get("# Start your blog")
 	if cfg.App.Federation {
-		return "# Start your blog in the fediverse"
+		banner := setLang.Get("# Start your blog in the fediverse")
+		return banner
 	}
-	return "# Start your blog"
+	return banner
 }
 
 func defaultLandingBody(cfg *config.Config) string {
+	var setLang = localize(cfg.App.Lang)
+	pixelfed := "[PixelFed](https://pixelfed.org)"
+	mastodon := "[Mastodon](https://joinmastodon.org)"
+	content1 := setLang.Get("## Join the Fediverse\n\nThe fediverse is a large network of platforms that all speak a common language. Imagine if you could reply to _Instagram_ posts from _Twitter_, or interact with your favorite _Medium_ blogs from _Facebook_ -- federated alternatives like %s, %s, and WriteFreely enable you to do these types of things.\n\n",pixelfed, mastodon)
+	iframe := `<div style="text-align:center">
+				<iframe style="width: 560px; height: 315px; max-width: 100%;" sandbox="allow-same-origin allow-scripts" src="https://video.writeas.org/videos/embed/cc55e615-d204-417c-9575-7b57674cc6f3" frameborder="0" allowfullscreen></iframe>
+			</div>`
+	content2 := setLang.Get("## Write More Socially\n\nWriteFreely can communicate with other federated platforms like _Mastodon_, so people can follow your blogs, bookmark their favorite posts, and boost them to their followers. Sign up above to create a blog and join the fediverse.")
 	if cfg.App.Federation {
-		return `## Join the Fediverse
-
-The fediverse is a large network of platforms that all speak a common language. Imagine if you could reply to Instagram posts from Twitter, or interact with your favorite Medium blogs from Facebook -- federated alternatives like [PixelFed](https://pixelfed.org), [Mastodon](https://joinmastodon.org), and WriteFreely enable you to do these types of things.
-
-<div style="text-align:center">
-	<iframe style="width: 560px; height: 315px; max-width: 100%;" sandbox="allow-same-origin allow-scripts" src="https://video.writeas.org/videos/embed/cc55e615-d204-417c-9575-7b57674cc6f3" frameborder="0" allowfullscreen></iframe>
-</div>
-
-## Write More Socially
-
-WriteFreely can communicate with other federated platforms like Mastodon, so people can follow your blogs, bookmark their favorite posts, and boost them to their followers. Sign up above to create a blog and join the fediverse.`
+		return content1 + "\n\n" + iframe + "\n\n" + content2
 	}
 	return ""
 }
@@ -156,9 +165,12 @@ func getReaderSection(app *App) (*instanceContent, error) {
 }
 
 func defaultReaderTitle(cfg *config.Config) sql.NullString {
-	return sql.NullString{String: "Reader", Valid: true}
+	var setLang = localize(cfg.App.Lang)
+	title := setLang.Get("Reader")
+	return sql.NullString{String: title, Valid: true}
 }
 
 func defaultReaderBanner(cfg *config.Config) string {
-	return "Read the latest posts from " + cfg.App.SiteName + "."
+	var setLang = localize(cfg.App.Lang)
+	return setLang.Get("Read the latest posts form %s.", cfg.App.SiteName)
 }

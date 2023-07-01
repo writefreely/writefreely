@@ -23,6 +23,7 @@ RUN mkdir /stage && \
       /go/src/github.com/writefreely/writefreely/pages \
       /go/src/github.com/writefreely/writefreely/keys \
       /go/src/github.com/writefreely/writefreely/cmd \
+      ./locales \
       /stage
 
 # Final image
@@ -37,3 +38,4 @@ EXPOSE 8080
 USER daemon
 
 ENTRYPOINT ["cmd/writefreely/writefreely"]
+

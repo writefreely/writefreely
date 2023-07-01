@@ -17,6 +17,7 @@ import (
 )
 
 // Commonly returned HTTP errors
+
 var (
 	ErrBadFormData    = impart.HTTPError{http.StatusBadRequest, "Expected valid form data."}
 	ErrBadJSON        = impart.HTTPError{http.StatusBadRequest, "Expected valid JSON object."}

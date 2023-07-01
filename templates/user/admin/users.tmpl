@@ -11,23 +11,24 @@
 		</p>
 	{{end}}
 	<div class="row admin-actions" style="justify-content: space-between;">
-		<span style="font-style: italic; font-size: 1.2em">{{.TotalUsers}} {{pluralize "user" "users" .TotalUsers}}</span>
-		<a class="btn cta" href="/me/invites">+ Invite people</a>
+		{{ $T := .TotalUsers }}{{ if eq .AppCfg.Lang "eu_ES" }}{{ $T = 1}}{{ end }}
+		<span style="font-style: italic; font-size: 1.2em">{{.TotalUsers}} {{call .Tr "User" $T}}</span>
+		<a class="btn cta" href="/me/invites">+ {{call .Tr "Invite people"}}</a>
 	</div>
 
 	<table class="classy export" style="width:100%">
 		<tr>
-			<th>User</th>
-			<th>Joined</th>
-			<th>Type</th>
-			<th>Status</th>
+			<th>{{call .Tr "User"}}{{ if eq .AppCfg.Lang "eu_ES" }}a{{end}}</th>
+			<th>{{call .Tr "joined"}}</th>
+			<th>{{call .Tr "type"}}</th>
+			<th>{{call .Tr "status"}}</th>
 		</tr>
 		{{range .Users}}
 		<tr>
 			<td><a href="/admin/user/{{.Username}}">{{.Username}}</a></td>
-			<td>{{.CreatedFriendly}}</td>
-			<td style="text-align:center">{{if .IsAdmin}}Admin{{else}}User{{end}}</td>
-			<td style="text-align:center">{{if .IsSilenced}}Silenced{{else}}Active{{end}}</td>
+			<td><time datetime="{{.CreatedFriendly}}" content="{{.CreatedFriendly}}"></td>
+			<td style="text-align:center">{{if .IsAdmin}}Admin{{else}}{{call $.Tr "User"}}{{ if eq $.AppCfg.Lang "eu_ES" }}a{{end}}{{end}}</td>
+			<td style="text-align:center">{{if .IsSilenced}}{{call $.Tr "Silenced"}}{{else}}{{call $.Tr "Active"}}{{end}}</td>
 		</tr>
 		{{end}}
 	</table>
@@ -37,6 +38,7 @@
 	</nav>
 
 </div>
+<script src="/js/localdate.js"></script>
 
 {{template "footer" .}}
 {{end}}

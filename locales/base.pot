@@ -1,0 +1,1672 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: GOtext\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: Aitzol Berasategi <aitzol@lainoa.eus>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
+"X-Generator: Poedit 2.4.2\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# base.tmpl 40
+# header.tmpl 49
+# pages.tmpl 21
+msgid "Home"
+msgstr "Home"
+
+# base.tmpl 42
+# header.tmpl 51
+# footer.tmpl 8,26
+# user/include/footer.tmpl 11
+msgid "About"
+msgstr "About"
+
+# base.tmpl 49
+# header.tmpl 58,65
+# footer.tmpl 9,27
+# user/include/footer.tmpl 12
+# app-settings.tmpl 108
+# pages.tmpl 24
+msgid "Reader"
+msgstr "Reader"
+
+# login.tmpl 21
+# password-collection.tmpl 33
+# base.tmpl 51
+# header.tmpl 60
+msgid "Log in"
+msgstr "Log in"
+
+# classic.tmpl 48
+# collection.tmpl 63,74
+# pad.tmpl 43
+# base.tmpl 33,51
+# header.tmpl 14,41,60
+msgid "Log out"
+msgstr "Log out"
+
+# base.tmpl 45
+# export.tmpl 19
+# collections.tmpl 13
+# user/collection.tmpl 105
+# admin.tmpl 59
+# nav.tmpl 2
+# header.tmpl 54,63
+# view-user 106
+msgid "Blog"
+msgid_plural "Blogs"
+msgstr[0] "Blog"
+msgstr[1] "Blogs"
+
+# bare.tmpl 33
+# export.tmpl 19
+# admin.tmpl 60
+# view-user 132
+msgid "Post"
+msgid_plural "Posts"
+msgstr[0] "Post"
+msgstr[1] "Posts"
+
+# bare.tmpl 26
+# header.tmpl 55
+msgid "My Posts"
+msgstr "My Posts"
+
+# classic.tmpl 38
+# edit-meta.tmpl 43
+# pad.tmpl 26,27,33
+# post.tmpl 47
+# base.tmpl 47
+# bare.tmpl 26
+# stats.tmpl 55
+# import.tmpl 41
+# articles.tmpl 25
+# header.tmpl 21,56,64
+# posts.tmpl 23,30,50,57
+msgid "Draft"
+msgid_plural "Drafts"
+msgstr[0] "Draft"
+msgstr[1] "Drafts"
+
+# login.tmpl 27
+# base.tmpl 50
+# header.tmpl 59
+msgid "Sign up"
+msgstr "Sign up"
+
+# classic.tmpl 5
+# collection.tmpl 53
+# pad.tmpl 5
+# base.tmpl 55
+# nav.tmpl 9
+# header.tmpl 25,71
+msgid "New Post"
+msgstr "New Post"
+
+# header.tmpl 29
+msgid "Return to editor"
+msgstr "Return to editor"
+
+# footer.tmpl 10,14,34
+# user/include/footer.tmpl 13
+msgid "writer's guide"
+msgstr "writer's guide"
+
+# footer.tmpl 15,35
+msgid "developers"
+msgstr "developers"
+
+# footer.tmpl 11,28
+# user/include/footer.tmpl 14
+msgid "privacy"
+msgstr "privacy"
+
+# footer.tmpl 16,36
+msgid "source code"
+msgstr "source code"
+
+# base.tmpl 28
+# header.tmpl 9,35
+msgid "Admin dashboard"
+msgstr "Admin dashboard"
+
+# base.tmpl 29
+# header.tmpl 10,36
+msgid "Account settings"
+msgstr "Account settings"
+
+# import.tmpl 17
+# header.tmpl 11,37
+msgid "Import posts"
+msgstr "Import posts"
+
+# base.tmpl 30
+# export.tmpl 5,10
+# header.tmpl 12,38
+msgid "Export"
+msgstr "Export"
+
+# header.tmpl 103
+msgid "Dashboard"
+msgstr "Dashboard"
+
+# header.tmpl 104
+msgid "Settings"
+msgstr "Settings"
+
+# export.tmpl 19
+# admin.tmpl 58
+# header.tmpl 106
+# view-user.tmpl 59
+# users.tmpl 15,21,30
+msgid "User"
+msgid_plural "Users"
+msgstr[0] "User"
+msgstr[1] "Users"
+
+# header.tmpl 107
+# pages.tmpl 13, 17
+msgid "Page"
+msgid_plural "Pages"
+msgstr[0] "Page"
+msgstr[1] "Pages"
+
+# post.tmpl 41
+# posts.tmpl 11,43,64,66
+# view-user 128
+msgid "View"
+msgid_plural "Views"
+msgstr[0] "View"
+msgstr[1] "Views"
+
+# posts.tmpl 11,43,64,66
+# view-user 128
+# edit-meta.tmpl 49,55
+# pad.tmpl 63
+msgid "View post"
+msgid_plural "View posts"
+msgstr[0] "View post"
+msgstr[1] "View posts"
+
+# classic.tmpl 41,45
+# collection.tmpl 57
+# header.tmpl 7
+# edit-meta.tmpl 41
+# pad.tmpl 24,36,40
+# nav.tmpl 12
+msgid "View Blog"
+msgid_plural "View Blogs"
+msgstr[0] "View Blog"
+msgstr[1] "View Blogs"
+
+# classic.tmpl 62
+# pad.tmpl 124
+msgid "word"
+msgid_plural "words"
+msgstr[0] "word"
+msgstr[1] "words"
+
+# pad.tmpl 64
+msgid "Publish"
+msgstr "Publish"
+
+# pad.tmpl 20
+# bare.tmpl 20
+msgid "This post has been updated elsewhere since you last published!"
+msgstr "This post has been updated elsewhere since you last published!"
+
+# pad.tmpl 20
+# bare.tmpl 20
+msgid "Delete draft and reload"
+msgstr "Delete draft and reload"
+
+msgid "Updates"
+msgstr "Updates"
+
+# classic.tmpl 42
+# pad.tmpl 37
+# user/collection.tmpl 32
+# collection.tmpl 54
+# nav.tmpl 10
+# header.tmpl 19
+msgid "Customize"
+msgstr "Customize"
+
+# classic.tmpl 43
+# collection.tmpl 55
+# pad.tmpl 38
+# stats.tmpl 26
+# nav.tmpl 11
+# header.tmpl 20
+msgid "Stats"
+msgstr "Stats"
+
+# classic.tmpl 47
+# collection.tmpl 58
+# pad.tmpl 42
+msgid "View Draft"
+msgid_plural "View Drafts"
+msgstr[0] "View Draft"
+msgstr[1] "View Drafts"
+
+# header.tmpl 111
+msgid "Monitor"
+msgstr "Monitor"
+
+# read.tmpl 108,110
+msgid "Read more..."
+msgstr "Read more..."
+
+# silenced.tmpl 3
+msgid "Your account has been silenced."
+msgstr "Your account has been silenced."
+
+# silenced.tmpl 3
+msgid "You can still access all of your posts and blogs, but no one else can currently see them."
+msgstr "You can still access all of your posts and blogs, but no one else can currently see them."
+
+# articles.tmpl 28
+msgid "These are your draft posts. You can share them individually (without a blog) or move them to your blog when you're ready."
+msgstr "These are your draft posts. You can share them individually (without a blog) or move them to your blog when you're ready."
+
+# articles.tmpl 57
+msgid "Your anonymous and draft posts will show up here once you've published some. You'll be able to share them individually (without a blog) or move them to a blog when you're ready."
+msgstr "Your anonymous and draft posts will show up here once you've published some. You'll be able to share them individually (without a blog) or move them to a blog when you're ready."
+
+# articles.tmpl 58
+msgid "Alternatively, see your blogs and their posts on your %s page."
+msgstr "Alternatively, see your blogs and their posts on your %s page."
+
+# articles.tmpl 60
+msgid "Start writing"
+msgstr "Start writing"
+
+# articles.tmpl 64
+# static/js/postactions.jsmsgid "unsynced posts"
+msgstr "unsynced posts"
+
+# articles.tmpl 64
+# collection.tmpl 43
+# view-page.tmpl 51
+# view-user 116
+msgid "Title"
+msgstr "Title"
+
+# user/collection.tmpl 44
+# view-user 120
+msgid "Description"
+msgstr "Description"
+
+# user/collection.tmpl 50
+msgid "This blog uses your username in its URL."
+msgstr "This blog uses your username in its URL."
+
+# user/collection.tmpl 50
+msgid "This blog uses your username in its URL and fediverse handle."
+msgstr "This blog uses your username in its URL and fediverse handle."
+
+# user/collection.tmpl 50
+msgid "You can change it in your %s."
+msgstr "You can change it in your %s."
+
+# user/collection.tmpl 63
+msgid "Publicity"
+msgstr "Publicity"
+
+# user/collection.tmpl 68
+# app-settings.tmpl 120
+msgid "Unlisted"
+msgstr "Unlisted"
+
+# user/collection.tmpl 87
+# app-settings.tmpl 121
+msgid "Public"
+msgstr "Public"
+
+# user/collection.tmpl 74
+# app-settings.tmpl 122
+msgid "Private"
+msgstr "Private"
+
+# user/collection.tmpl 70
+msgid "This blog is visible to any registered user on this instance."
+msgstr "This blog is visible to any registered user on this instance."
+
+# user/collection.tmpl 70
+msgid "This blog is visible to anyone with its link."
+msgstr "This blog is visible to anyone with its link."
+
+# user/collection.tmpl 76
+msgid "Only you may read this blog (while you're logged in)."
+msgstr "Only you may read this blog (while you're logged in)."
+
+# user/collection.tmpl 80
+msgid "Password-protected:"
+msgstr "Password-protected:"
+
+# user/collection.tmpl 80
+msgid "a memorable password"
+msgstr "a memorable password"
+
+# user/collection.tmpl 82
+msgid "A password is required to read this blog."
+msgstr "A password is required to read this blog."
+
+# user/collection.tmpl 89
+msgid "This blog is displayed on the public %s, and is visible to anyone with its link."
+msgstr "This blog is displayed on the public %s, and is visible to anyone with its link."
+
+# user/collection.tmpl 89
+msgid "This blog is displayed on the public %s, and is visible to any registered user on this instance."
+msgstr "This blog is displayed on the public %s, and is visible to any registered user on this instance."
+
+# user/collection.tmpl 90
+msgid "The public reader is currently turned off for this community."
+msgstr "The public reader is currently turned off for this community."
+
+# user/collection.tmpl 98
+msgid "Display Format"
+msgstr "Display Format"
+
+# user/collection.tmpl 100
+msgid "Customize how your posts display on your page."
+msgstr "Customize how your posts display on your page."
+
+# user/collection.tmpl 107
+msgid "Dates are shown. Latest posts listed first."
+msgstr "Dates are shown. Latest posts listed first."
+
+# user/collection.tmpl 113
+msgid "No dates shown. Oldest posts first."
+msgstr "No dates shown. Oldest posts first."
+
+# user/collection.tmpl 119
+msgid "No dates shown. Latest posts first."
+msgstr "No dates shown. Latest posts first."
+
+# user/collection.tmpl 126
+msgid "Text Rendering"
+msgstr "Text Rendering"
+
+# user/collection.tmpl 128
+msgid "Customize how plain text renders on your blog."
+msgstr "Customize how plain text renders on your blog."
+
+# user/collection.tmpl 145
+msgid "Custom CSS"
+msgstr "Custom CSS"
+
+# user/collection.tmpl 148
+msgid "customization"
+msgstr "customization"
+
+# user/collection.tmpl 148
+msgid "See our guide on %s."
+msgstr "See our guide on %s."
+
+# user/collection.tmpl 153
+msgid "Post Signature"
+msgstr "Post Signature"
+
+# user/collection.tmpl 155
+msgid "This content will be added to the end of every post on this blog, as if it were part of the post itself. Markdown, HTML, and shortcodes are allowed."
+msgstr "This content will be added to the end of every post on this blog, as if it were part of the post itself. Markdown, HTML, and shortcodes are allowed."
+
+# user/collection.tmpl 162
+msgid "Web Monetization"
+msgstr "Web Monetization"
+
+# user/collection.tmpl 164
+msgid "Web Monetization enables you to receive micropayments from readers that have a %s. Add your payment pointer to enable Web Monetization on your blog."
+msgstr "Web Monetization enables you to receive micropayments from readers that have a %s. Add your payment pointer to enable Web Monetization on your blog."
+
+# user/collection.tmpl 164
+msgid "Coil membership"
+msgstr "Coil membership"
+
+# edit-meta.tmpl 263
+# settings.tmpl 81
+# user/collection.tmpl 171
+msgid "Save changes"
+msgstr "Save changes"
+
+# user/collection.tmpl 173
+msgid "Delete Blog..."
+msgstr "Delete Blog..."
+
+# user/collection.tmpl 190,220
+# articles.tmpl 36
+# posts.tmpl 19,46
+msgid "Delete"
+msgstr "Delete"
+
+# settings.tmpl 187
+# user/collection.tmpl 189
+# view-user 173
+msgid "Cancel"
+msgstr "Cancel"
+
+# user/collection.tmpl 180
+msgid "Are you sure you want to delete this blog?"
+msgstr "Are you sure you want to delete this blog?"
+
+# posts.js 46,147
+# collection.tmpl 148
+# collection-tags.tmpl 96
+# chorus-collection.tmpl 132
+msgid "Are you sure you want to delete this post?"
+msgstr "Are you sure you want to delete this post?"
+
+# posts.js 302
+# collection.tmpl 175,226
+# collection-tags.tmpl 123,174
+# chorus-collection.tmpl 159,210
+msgid "Post is synced to another account. Delete the post from that account instead."
+msgstr "Post is synced to another account. Delete the post from that account instead."
+
+# posts.js 308
+# collection.tmpl 181
+# collection-tags.tmpl 129
+# chorus-collection.tmpl 165
+msgid "Failed to delete."
+msgstr "Failed to delete."
+
+# posts.js 308
+# collection.tmpl 181
+# collection-tags.tmpl 129
+# chorus-collection.tmpl 165
+msgid "Please try again."
+msgstr "Please try again."
+
+# user/collection.tmpl 182
+msgid "This will permanently erase **%s** (%s/%s) from the internet. Any posts on this blog will be saved and made into drafts (found on your %s page)."
+msgstr "This will permanently erase **%s** (%s/%s) from the internet. Any posts on this blog will be saved and made into drafts (found on your %s page)."
+
+# user/collection.tmpl 183
+msgid "If you're sure you want to delete this blog, enter its name in the box below and press **%s**."
+msgstr "If you're sure you want to delete this blog, enter its name in the box below and press **%s**."
+
+# user/collection.tmpl 202
+msgid "Enter **%s** in the box below."
+msgstr "Enter **%s** in the box below."
+
+# user/collection.tmpl 238
+msgid "Saving changes..."
+msgstr "Saving changes..."
+
+# collections.tmpl 72,75,84
+msgid "This name is taken."
+msgstr "This name is taken."
+
+# pad.tmpl 61
+msgid "Edit post metadata"
+msgstr "Edit post metadata"
+
+# edit-meta.tmpl 5,55
+msgid "Edit metadata"
+msgstr "Edit metadata"
+
+# edit-meta.tmpl 260
+msgid "now"
+msgstr "now"
+
+# edit-meta.tmpl 63
+msgid "Slug"
+msgstr "Slug"
+
+# edit-meta.tmpl 66
+msgid "Language"
+msgstr "Language"
+
+# edit-meta.tmpl 256
+msgid "Direction"
+msgstr "Direction"
+
+# edit-meta.tmpl 258
+msgid "Created"
+msgstr "Created"
+
+# edit-meta.tmpl 257
+msgid "right-to-left"
+msgstr "right-to-left"
+
+# edit-meta.tmpl 47
+msgid "Edit post"
+msgstr "Edit post"
+
+# edit-meta.tmpl 48
+# pad.tmpl 62
+msgid "Toggle theme"
+msgstr "Toggle theme"
+
+# collection-post.tmpl 66
+# posts.tmpl 8
+msgid "Scheduled"
+msgstr "Scheduled"
+
+# collection-post.tmpl 57
+# post.tmpl 45,91
+# articles.tmpl 35
+# posts.tmpl 17,44
+msgid "Edit"
+msgstr "Edit"
+
+# posts.tmpl 18,45
+msgid "Pin"
+msgstr "Pin"
+
+# collection-post.tmpl 58
+msgid "Unpin"
+msgstr "Unpin"
+
+# posts.tmpl 21,48
+msgid "Move this post to another blog"
+msgstr "Move this post to another blog"
+
+# posts.tmpl 30,57
+msgid "Change to a draft"
+msgstr "Change to a draft"
+
+# posts.tmpl 30,57
+msgid "change to _%s_"
+msgstr "change to _%s_"
+
+# articles.tmpl 43,78
+# posts.tmpl 26,53
+msgid "move to..."
+msgstr "move to..."
+
+# articles.tmpl 47,83
+msgid "move to %s"
+msgstr "move to %s"
+
+# post.tmpl 42
+msgid "View raw"
+msgstr "View raw"
+
+# articles.tmpl 47,83
+msgid "Publish this post to your blog %s"
+msgstr "Publish this post to your blog %s"
+
+# articles.tmpl 39,74
+msgid "Move this post to one of your blogs"
+msgstr "Move this post to one of your blogs"
+
+# articles.tmpl 55
+msgid "Load more..."
+msgstr "Load more..."
+
+# stats.tmpl 32
+msgid "Stats for all time."
+msgstr "Stats for all time."
+
+# stats.tmpl 35
+msgid "Fediverse stats"
+msgstr "Fediverse stats"
+
+# stats.tmpl 38
+msgid "Followers"
+msgstr "Followers"
+
+# stats.tmpl 46
+msgid "Top %d post"
+msgid_plural "Top %d posts"
+msgstr[0] "Top %d post"
+msgstr[1] "Top %d posts"
+
+# stats.tmpl 51
+msgid "Total Views"
+msgstr "Total Views"
+
+# settings.tmpl 27
+msgid "Before you go..."
+msgstr "Before you go..."
+
+# settings.tmpl 27
+msgid "Account Settings"
+msgstr "Account Settings"
+
+# settings.tmpl 38
+msgid "Change your account settings here."
+msgstr "Change your account settings here."
+
+# signup.tmpl 80
+# signup-oauth.tmpl 85,87
+# login.tmpl 21
+# landing.tmpl 92
+# settings.tmpl 43
+# view-user.tmpl 62
+msgid "Username"
+msgstr "Username"
+
+# settings.tmpl 46
+msgid "Update"
+msgstr "Update"
+
+# settings.tmpl 56
+msgid "Passphrase"
+msgstr "Passphrase"
+
+# settings.tmpl 58
+msgid "Add a passphrase to easily log in to your account."
+msgstr "Add a passphrase to easily log in to your account."
+
+# settings.tmpl 59,60
+msgid "Current passphrase"
+msgstr "Current passphrase"
+
+# settings.tmpl 61,64
+msgid "New passphrase"
+msgstr "New passphrase"
+
+# settings.tmpl 60,64
+msgid "Show"
+msgstr "Show"
+
+msgid "Account updated."
+msgstr "Account updated."
+
+# signup.tmpl 91
+# signup-oauth.tmpl 92,94
+# landing.tmpl 103
+# settings.tmpl 69
+msgid "Email"
+msgstr "Email"
+
+# settings.tmpl 76
+msgid "Email address"
+msgstr "Email address"
+
+# settings.tmpl 71
+msgid "Add your email to get:"
+msgstr "Add your email to get:"
+
+# settings.tmpl 34
+msgid "Please add an **%s** and/or **%s** so you can log in again later."
+msgstr "Please add an **%s** and/or **%s** so you can log in again later."
+
+# settings.tmpl 73
+msgid "No-passphrase login"
+msgstr "No-passphrase login"
+
+# settings.tmpl 74
+msgid "Account recovery if you forget your passphrase"
+msgstr "Account recovery if you forget your passphrase"
+
+# settings.tmpl 89
+msgid "Linked Accounts"
+msgstr "Linked Accounts"
+
+# settings.tmpl 90
+msgid "These are your linked external accounts."
+msgstr "These are your linked external accounts."
+
+# settings.tmpl 114
+msgid "Link External Accounts"
+msgstr "Link External Accounts"
+
+msgid "Connect additional accounts to enable logging in with those providers, instead of using your username and password."
+msgstr "Connect additional accounts to enable logging in with those providers, instead of using your username and password."
+
+# settings.tmpl 162
+# view-user 149
+msgid "Incinerator"
+msgstr "Incinerator"
+
+# settings.tmpl 166,169,188
+msgid "Delete your account"
+msgstr "Delete your account"
+
+# settings.tmpl 167
+msgid "Permanently erase all your data, with no way to recover it."
+msgstr "Permanently erase all your data, with no way to recover it."
+
+# settings.tmpl 176
+# view-user 163
+msgid "Are you sure?"
+msgstr "Are you sure?"
+
+# settings.tmpl 178
+msgid "export your data"
+msgstr "export your data"
+
+# settings.tmpl 178
+msgid "This action **cannot** be undone. It will immediately and permanently erase your account, including your blogs and posts. Before continuing, you might want to %s."
+msgstr "This action **cannot** be undone. It will immediately and permanently erase your account, including your blogs and posts. Before continuing, you might want to %s."
+
+# settings.tmpl 179
+msgid "If you're sure, please type **%s** to confirm."
+msgstr "If you're sure, please type **%s** to confirm."
+
+# invite-help.tmpl 13
+msgid "Invite to %s"
+msgstr "Invite to %s"
+
+# invite-help.tmpl 15
+msgid "This invite link is expired."
+msgstr "This invite link is expired."
+
+# invite-help.tmpl 21
+msgid "Only **one** user"
+msgstr "Only **one** user"
+
+# invite-help.tmpl 21
+msgid "Up to **%d** users"
+msgstr "Up to **%d** users"
+
+# invite-help.tmpl 21
+msgid "can sign up with this link."
+msgstr "can sign up with this link."
+
+# invite-help.tmpl 23
+msgid "It expires on **%s**."
+msgstr "It expires on **%s**."
+
+# invite-help.tmpl 25
+msgid "It can be used as many times as you like"
+msgstr "It can be used as many times as you like"
+
+# invite-help 25
+msgid "before **%s**, when it expires"
+msgstr "before **%s**, when it expires"
+
+msgid "person has"
+msgid_plural "person have"
+msgstr[0] "person has"
+msgstr[1] "person have"
+
+# invite-help.tmpl 21
+msgid "So far, **%d** %s used it."
+msgstr "So far, **%d** %s used it."
+
+# invite-help.tmpl 17
+msgid "Copy the link below and send it to anyone that you want to join *%s*. You could paste it into an email, instant message, text message, or write it down on paper. Anyone who navigates to this special page will be able to create an account."
+msgstr "Copy the link below and send it to anyone that you want to join *%s*. You could paste it into an email, instant message, text message, or write it down on paper. Anyone who navigates to this special page will be able to create an account."
+
+# IMPORT PAGE
+# import.tmpl 28
+msgid "Publish plain text or Markdown files to your account by uploading them below."
+msgstr "Publish plain text or Markdown files to your account by uploading them below."
+
+# import.tmpl 31
+msgid "Select some files to import:"
+msgstr "Select some files to import:"
+
+# import.tmpl 36
+msgid "Import these posts to:"
+msgstr "Import these posts to:"
+
+# import.tmpl 59
+msgid "Import"
+msgstr "Import"
+
+msgid "Import complete, %d post imported."
+msgid_plural "Import complete, %d posts imported."
+msgstr[0] "Import complete, %d post imported."
+msgstr[1] "Import complete, %d posts imported."
+
+msgid "%d of %d posts imported, see details below."
+msgid_plural "%d of %d posts imported, see details below."
+msgstr[0] "%d of %d posts imported, see details below."
+msgstr[1] "%d of %d posts imported, see details below."
+
+msgid "%s is not a supported post file"
+msgstr "%s is not a supported post file"
+
+# export.tmpl 6
+msgid "Your data on %s is always free. Download and back-up your work any time."
+msgstr "Your data on %s is always free. Download and back-up your work any time."
+
+# export.tmpl 11
+msgid "Format"
+msgstr "Format"
+
+# header.tmpl 101
+msgid "Admin"
+msgstr "Admin"
+
+# app-settings.tmpl 37
+msgid "Site Title"
+msgstr "Site Title"
+
+# app-settings.tmpl 38
+msgid "Your public site name."
+msgstr "Your public site name."
+
+# app-settings.tmpl 44
+msgid "Site Description"
+msgstr "Site Description"
+
+# app-settings.tmpl 45
+msgid "Describe your site — this shows in your site's metadata."
+msgstr "Describe your site — this shows in your site's metadata."
+
+# app-settings.tmpl 51
+msgid "Host"
+msgstr "Host"
+
+# app-settings.tmpl 52
+msgid "The public address where users will access your site, starting with `http://` or `https://`."
+msgstr "The public address where users will access your site, starting with `http://` or `https://`."
+
+# app-settings.tmpl 58
+msgid "Community Mode"
+msgstr "Community Mode"
+
+# app-settings.tmpl 59
+msgid "Whether your site is made for one person or many."
+msgstr "Whether your site is made for one person or many."
+
+# app-settings.tmpl 61
+msgid "Single user"
+msgstr "Single user"
+
+# app-settings.tmpl 61
+msgid "Multiple users"
+msgstr "Multiple users"
+
+# app-settings.tmpl 65
+msgid "Landing Page"
+msgstr "Landing Page"
+
+# app-settings.tmpl 66
+msgid "The page that logged-out visitors will see first. This should be an absolute path like: `/read`."
+msgstr "The page that logged-out visitors will see first. This should be an absolute path like: `/read`."
+
+# app-settings.tmpl 72
+msgid "Open Registrations"
+msgstr "Open Registrations"
+
+# app-settings.tmpl 73
+msgid "Allow anyone who visits the site to create an account."
+msgstr "Allow anyone who visits the site to create an account."
+
+# app-settings.tmpl 80
+msgid "Allow account deletion"
+msgstr "Allow account deletion"
+
+# app-settings.tmpl 81
+msgid "Allow all users to delete their account. Admins can always delete users."
+msgstr "Allow all users to delete their account. Admins can always delete users."
+
+# app-settings.tmpl 88
+msgid "Allow invitations from..."
+msgstr "Allow invitations from..."
+
+# app-settings.tmpl 89
+msgid "Choose who is allowed to invite new people."
+msgstr "Choose who is allowed to invite new people."
+
+# app-settings.tmpl 93
+msgid "No one"
+msgstr "No one"
+
+# app-settings.tmpl 94
+msgid "Only Admins"
+msgstr "Only Admins"
+
+# app-settings.tmpl 95
+msgid "All Users"
+msgstr "All Users"
+
+# app-settings.tmpl 101
+msgid "Private Instance"
+msgstr "Private Instance"
+
+# app-settings.tmpl 102
+msgid "Limit site access to people with an account."
+msgstr "Limit site access to people with an account."
+
+# app-settings.tmpl 109
+msgid "Show a feed of user posts for anyone who chooses to share there."
+msgstr "Show a feed of user posts for anyone who chooses to share there."
+
+# app-settings.tmpl 115
+msgid "Default blog visibility"
+msgstr "Default blog visibility"
+
+# app-settings.tmpl 116
+msgid "The default setting for new accounts and blogs."
+msgstr "The default setting for new accounts and blogs."
+
+# app-settings.tmpl 128
+msgid "Maximum Blogs per User"
+msgstr "Maximum Blogs per User"
+
+# app-settings.tmpl 129
+msgid "Keep things simple by setting this to **1**, unlimited by setting to **0**, or pick another amount."
+msgstr "Keep things simple by setting this to **1**, unlimited by setting to **0**, or pick another amount."
+
+# app-settings.tmpl 135
+msgid "Federation"
+msgstr "Federation"
+
+# app-settings.tmpl 136
+msgid "Enable accounts on this site to propagate their posts via the ActivityPub protocol."
+msgstr "Enable accounts on this site to propagate their posts via the ActivityPub protocol."
+
+# app-settings.tmpl 142
+msgid "Public Stats"
+msgstr "Public Stats"
+
+# app-settings.tmpl 143
+msgid "Publicly display the number of users and posts on your **%s** page."
+msgstr "Publicly display the number of users and posts on your **%s** page."
+
+# app-settings.tmpl 149
+msgid "Monetization"
+msgstr "Monetization"
+
+# app-settings.tmpl 150
+msgid "Enable blogs on this site to receive micropayments from readers via %s."
+msgstr "Enable blogs on this site to receive micropayments from readers via %s."
+
+# app-settings.tmpl 156
+msgid "Minimum Username Length"
+msgstr "Minimum Username Length"
+
+# app-settings.tmpl 157
+msgid "The minimum number of characters allowed in a username. (Recommended: 2 or more.)"
+msgstr "The minimum number of characters allowed in a username. (Recommended: 2 or more.)"
+
+# app-settings.tmpl 162
+msgid "Save Settings"
+msgstr "Save Settings"
+
+# app-settings.tmpl 166
+msgid "configuration docs"
+msgstr "configuration docs"
+
+# app-settings.tmpl 166
+msgid "Still have questions? Read more details in the %s."
+msgstr "Still have questions? Read more details in the %s."
+
+msgid "Configuration saved."
+msgstr "Configuration saved."
+
+# view-user.tmpl 66
+# users.tmpl 22
+msgid "joined"
+msgstr "joined"
+
+# users.tmpl 23
+msgid "type"
+msgstr "type"
+
+# users.tmpl 24
+# view-user.tmpl 79
+msgid "status"
+msgstr "status"
+
+# base.tmpl 31
+# header.tmpl 39
+# invite.tmpl 26
+# users.tmpl 16
+msgid "Invite people"
+msgstr "Invite people"
+
+# invite.tmpl 27
+msgid "Invite others to join *%s* by generating and sharing invite links below."
+msgstr "Invite others to join *%s* by generating and sharing invite links below."
+
+# invite.tmpl 31
+msgid "Maximum number of uses:"
+msgstr "Maximum number of uses:"
+
+# invite.tmpl 33
+msgid "No limit"
+msgstr "No limit"
+
+# invite.tmpl 34,35,36,37,38,39,64
+msgid "use"
+msgid_plural "uses"
+msgstr[0] "use"
+msgstr[1] "uses"
+
+# invite.tmpl 43
+msgid "Expire after:"
+msgstr "Expire after:"
+
+# invite.tmpl 46
+msgid "minute"
+msgid_plural "minutes"
+msgstr[0] "minute"
+msgstr[1] "minutes"
+
+# invite.tmpl 47,48,49
+msgid "hour"
+msgid_plural "hours"
+msgstr[0] "hour"
+msgstr[1] "hours"
+
+# invite.tmpl 50,51
+msgid "day"
+msgid_plural "days"
+msgstr[0] "day"
+msgstr[1] "days"
+
+# invite.tmpl 52
+msgid "week"
+msgid_plural "weeks"
+msgstr[0] "week"
+msgstr[1] "weeks"
+
+# invite.tmpl 57
+msgid "You cannot generate invites while your account is silenced."
+msgstr "You cannot generate invites while your account is silenced."
+
+# invite.tmpl 57
+msgid "Generate"
+msgstr "Generate"
+
+# invite.tmpl 63
+msgid "Link"
+msgstr "Link"
+
+# invite.tmpl 121,129,137,145,152
+msgid "ToLink"
+msgstr "Link"
+
+# invite.tmpl 65
+msgid "Expires"
+msgstr "Expires"
+
+# invite.tmpl 71
+msgid "Expired"
+msgstr "Expired"
+
+# invite.tmpl 75
+msgid "No invites generated yet."
+msgstr "No invites generated yet."
+
+# pages.tmpl 18
+msgid "last modified"
+msgstr "last modified"
+
+# view-user.tmpl 85
+# users.tmpl 31
+msgid "Active"
+msgstr "Active"
+
+# view-user.tmpl 82
+# users.tmpl 31
+msgid "Silenced"
+msgstr "Silenced"
+
+# view-user.tmpl 83
+msgid "Unsilence"
+msgstr "Unsilence"
+
+# view-user 86
+msgid "disabled"
+msgstr "disabled"
+
+# view-user 86
+msgid "Silence"
+msgstr "Silence"
+
+# view-user.tmpl 54
+msgid "No."
+msgstr "No."
+
+# view-user.tmpl 70
+msgid "total posts"
+msgstr "total posts"
+
+# view-user.tmpl 74,136
+msgid "last post"
+msgstr "last post"
+
+# signup.tmpl 87
+# login.tmpl 22
+# landing.tmpl 99
+# view-user 92
+msgid "password"
+msgstr "password"
+
+msgid "Change your password"
+msgstr "Change your password"
+
+# view-user 100
+msgid "Go to reset password page"
+msgstr "Go to reset password page"
+
+# view-user 141
+msgid "Fediverse followers"
+msgstr "Fediverse followers"
+
+# view-user 124
+msgid "Visibility"
+msgstr "Visibility"
+
+# view-user 112
+msgid "Alias"
+msgstr "Alias"
+
+# view-user.tmpl 75,137
+msgid "Never"
+msgstr "Never"
+
+# view-user 97
+msgid "Reset"
+msgstr "Reset"
+
+# view-user 153,156,174
+msgid "Delete this user"
+msgstr "Delete this user"
+
+# view-user 154
+msgid "Permanently erase all user data, with no way to recover it."
+msgstr "Permanently erase all user data, with no way to recover it."
+
+# view-user 165
+msgid "This action **cannot**be undone. It will permanently erase all traces of this user, **%s**, including their account information, blogs, and posts."
+msgstr "This action **cannot**be undone. It will permanently erase all traces of this user, **%s**, including their account information, blogs, and posts."
+
+# view-user 166
+msgid "Please type **%s** to confirm."
+msgstr "Please type **%s** to confirm."
+
+# view-user 202
+msgid "Silence this user? They'll still be able to log in and access their posts, but no one else will be able to see them anymore. You can reverse this decision at any time."
+msgstr "Silence this user? They'll still be able to log in and access their posts, but no one else will be able to see them anymore. You can reverse this decision at any time."
+
+# view-user 208
+msgid "Reset this user's password? This will generate a new temporary password that you'll need to share with them, and invalidate their old one."
+msgstr "Reset this user's password? This will generate a new temporary password that you'll need to share with them, and invalidate their old one."
+
+# settings.tmpl 225
+# user/collection.tmpl 207
+# view-user.tmpl 198
+msgid "Deleting..."
+msgstr "Deleting..."
+
+# view-user.tmpl 46
+msgid "This user's password has been reset to:"
+msgstr "This user's password has been reset to:"
+
+# view-user.tmpl 48
+msgid "They can use this new password to log in to their account. **This will only be shown once**, so be sure to copy it and send it to them now."
+msgstr "They can use this new password to log in to their account. **This will only be shown once**, so be sure to copy it and send it to them now."
+
+# view-user.tmpl 49
+msgid "Their email address is:"
+msgstr "Their email address is:"
+
+# app-updates.tmlp 19
+msgid "Automated update check failed."
+msgstr "Automated update check failed."
+
+# app-updates.tmlp 20, 24, 41
+msgid "Installed version: %s (%s)."
+msgstr "Installed version: %s (%s)."
+
+# app-updates.tmlp 21, 42
+msgid "Learn about latest releases on the %s or %s."
+msgstr "Learn about latest releases on the %s or %s."
+
+# app-updates.tmlp 23
+msgid "WriteFreely is **up to date**."
+msgstr "WriteFreely is **up to date**."
+
+# app-updates.tmlp 27
+msgid "Get"
+msgstr "Get"
+
+# app-updates.tmlp 27
+msgid "A new version of WriteFreely is available! **%s %s**"
+msgstr "A new version of WriteFreely is available! **%s %s**"
+
+# app-updates.tmlp 28
+msgid "release notes"
+msgstr "release notes"
+
+# app-updates.tmlp 29
+msgid "Read the %s for details on features, bug fixes, and notes on upgrading from your current version, **%s**."
+msgstr "Read the %s for details on features, bug fixes, and notes on upgrading from your current version, **%s**."
+
+# app-updates.tmlp 31
+msgid "Check now"
+msgstr "Check now"
+
+# app-updates.tmlp 31
+msgid "Last checked"
+msgstr "Last checked"
+
+# app-updates.tmlp 40
+msgid "Automated update checks are disabled."
+msgstr "Automated update checks are disabled."
+
+# ADMIN PAGES
+# view-page.tmpl 45
+msgid "Banner"
+msgstr "Banner"
+
+# view-page.tmpl 56
+msgid "Body"
+msgstr "Body"
+
+# view-page.tmpl 33
+msgid "Outline your %s."
+msgstr "Outline your %s."
+
+# view-page.tmpl 35,37
+msgid "Customize your %s page."
+msgstr "Customize your %s page."
+
+# view-page.tmpl 31
+msgid "Describe what your instance is %s."
+msgstr "Describe what your instance is %s."
+
+msgid "Accepts Markdown and HTML."
+msgstr "Accepts Markdown and HTML."
+
+# view-page.tmpl 56
+msgid "Content"
+msgstr "Content"
+
+# view-page.tmpl 63
+msgid "Save"
+msgstr "Save"
+
+# view-page.tmpl 71
+msgid "Saving..."
+msgstr "Saving..."
+
+# view-page.tmpl 48
+msgid "We suggest a header (e.g. `# Welcome`), optionally followed by a small bit of text. Accepts Markdown and HTML."
+msgstr "We suggest a header (e.g. `# Welcome`), optionally followed by a small bit of text. Accepts Markdown and HTML."
+
+# login.tmpl 11
+msgid "Log in to %s"
+msgstr "Log in to %s"
+
+# login.tmpl 32
+msgid "Logging in..."
+msgstr "Logging in..."
+
+# login.tmpl 27
+msgid "_No account yet?_ %s to start a blog."
+msgstr "_No account yet?_ %s to start a blog."
+
+msgid "Incorrect password."
+msgstr "Incorrect password."
+
+msgid "This user never set a password. Perhaps try logging in via OAuth?"
+msgstr "This user never set a password. Perhaps try logging in via OAuth?"
+
+msgid "This user never added a password or email address. Please contact us for help."
+msgstr "This user never added a password or email address. Please contact us for help."
+
+msgid "You're doing that too much."
+msgstr "You're doing that too much."
+
+msgid "Parameter `alias` required."
+msgstr "Parameter `alias` required."
+
+msgid "A username is required."
+msgstr "A username is required."
+
+msgid "Parameter `pass` required."
+msgstr "Parameter `pass` required."
+
+msgid "A password is required."
+msgstr "A password is required."
+
+msgid "Need a collection `alias` to read."
+msgstr "Need a collection `alias` to read."
+
+msgid "Please supply a password."
+msgstr "Please supply a password."
+
+msgid "Something went very wrong. The humans have been alerted."
+msgstr "Something went very wrong. The humans have been alerted."
+
+msgid "Logging out failed. Try clearing cookies for this site, instead."
+msgstr "Logging out failed. Try clearing cookies for this site, instead."
+
+# signup-oauth.tmpl 88
+# landing.tmpl 95,197
+msgid "your-username"
+msgstr "your-username"
+
+# signup.tmpl 91
+# landing.tmpl 103
+msgid "optional"
+msgstr "optional"
+
+# signup.tmpl 95
+# landing.tmpl 107
+msgid "Create blog"
+msgstr "Create blog"
+
+# signup-oauth.tmpl 59
+msgid "Finish creating account"
+msgstr "Finish creating account"
+
+# signup-oauth.tmpl 79
+msgid "Display Name"
+msgstr "Display Name"
+
+# oauth.tmpl 26
+msgid "or"
+msgstr "or"
+
+# oauth.tmpl 9,13,17,20
+msgid "Sign in with **%s**"
+msgstr "Sign in with **%s**"
+
+# landing.tmpl 77
+msgid "Learn more..."
+msgstr "Learn more..."
+
+# landing.tmpl 114
+msgid "Registration is currently closed."
+msgstr "Registration is currently closed."
+
+# landing.tmpl 115
+msgid "another instance"
+msgstr "another instance"
+
+# landing.tmpl 115
+msgid "You can always sign up on %s."
+msgstr "You can always sign up on %s."
+
+msgid "# Start your blog"
+msgstr "# Start your blog"
+
+msgid "# Start your blog in the fediverse"
+msgstr "# Start your blog in the fediverse"
+
+msgid ""
+"## Join the Fediverse\n\nThe fediverse is a large network of platforms that all speak a common language. Imagine if you could reply to _Instagram_ posts from _Twitter_, or interact with your favorite _Medium_ blogs from _Facebook_ -- federated alternatives like %s, %s, and WriteFreely enable you to do these types of things.\n\n"
+msgstr ""
+"## Join the Fediverse\n\nThe fediverse is a large network of platforms that all speak a common language. Imagine if you could reply to _Instagram_ posts from _Twitter_, or interact with your favorite _Medium_ blogs from _Facebook_ -- federated alternatives like %s, %s, and WriteFreely enable you to do these types of things.\n\n"
+
+msgid ""
+"## Write More Socially\n"
+"\n"
+"WriteFreely can communicate with other federated platforms like _Mastodon_, so people can follow your blogs, bookmark their favorite posts, and boost them to their followers. Sign up above to create a blog and join the fediverse."
+msgstr ""
+"## Write More Socially\n"
+"\n"
+"WriteFreely can communicate with other federated platforms like _Mastodon_, so people can follow your blogs, bookmark their favorite posts, and boost them to their followers. Sign up above to create a blog and join the fediverse."
+
+msgid "About %s"
+msgstr "About %s"
+
+msgid "_%s_ is a place for you to write and publish, powered by %s."
+msgstr "_%s_ is a place for you to write and publish, powered by %s."
+
+msgid "_%s_ is an interconnected place for you to write and publish, powered by %s."
+msgstr "_%s_ is an interconnected place for you to write and publish, powered by %s."
+
+msgid "article"
+msgid_plural "articles"
+msgstr[0] "article"
+msgstr[1] "articles"
+
+msgid "_%s_ is home to **%d** %s across **%d** %s."
+msgstr "_%s_ is home to **%d** %s across **%d** %s."
+
+msgid "About WriteFreely"
+msgstr "About WriteFreely"
+
+msgid "%s is a self-hosted, decentralized blogging platform for publishing beautiful, simple blogs."
+msgstr "%s is a self-hosted, decentralized blogging platform for publishing beautiful, simple blogs."
+
+msgid "It lets you publish a single blog, or host a community of writers who can create multiple blogs under one account. You can also enable federation, which allows people in the fediverse to follow your blog, bookmark your posts, and share them with others."
+msgstr "It lets you publish a single blog, or host a community of writers who can create multiple blogs under one account. You can also enable federation, which allows people in the fediverse to follow your blog, bookmark your posts, and share them with others."
+
+msgid "Start an instance"
+msgstr "Start an instance"
+
+msgid "Privacy Policy"
+msgstr "Privacy Policy"
+
+# privacy.tmpl 6
+msgid "Last updated"
+msgstr "Last updated"
+
+msgid "Read the latest posts form %s."
+msgstr "Read the latest posts form %s."
+
+# : pages.go:98
+msgid ""
+"%s, the software that powers this site, is built to enforce your right to privacy by default.\n"
+"\n"
+"It retains as little data about you as possible, not even requiring an email address to sign up. However, if you _do_ give us your email address, it is stored encrypted in our database.\n"
+"\n"
+"We salt and hash your account's password.We store log files, or data about what happens on our servers. We also use cookies to keep you logged in to your account.\n"
+"\n"
+"Beyond this, it's important that you trust whoever runs %s. Software can only do so much to protect you -- your level of privacy protections will ultimately fall on the humans that run this particular service."
+msgstr ""
+"%s, the software that powers this site, is built to enforce your right to privacy by default.\n"
+"\n"
+"It retains as little data about you as possible, not even requiring an email address to sign up. However, if you _do_ give us your email address, it is stored encrypted in our database.\n"
+"\n"
+"We salt and hash your account's password.We store log files, or data about what happens on our servers. We also use cookies to keep you logged in to your account.\n"
+"\n"
+"Beyond this, it's important that you trust whoever runs %s. Software can only do so much to protect you -- your level of privacy protections will ultimately fall on the humans that run this particular service."
+
+# static/js/postactions.js
+msgid "Unpublished post"
+msgstr "Unpublished post"
+
+msgid "Moved to %s"
+msgstr "Moved to %s"
+
+msgid "move to"
+msgstr "move to"
+
+msgid "moving to %s..."
+msgstr "moving to %s..."
+
+msgid "unable to move"
+msgstr "unable to move"
+
+msgid "View on %s"
+msgstr "View on %s"
+
+# classic.tmpl 64
+# pad.tmpl 59
+# bare.tmpl 30
+msgid "NOTE"
+msgstr "NOTE"
+
+# classic.tmpl 64
+# pad.tmpl 59
+# bare.tmpl 30
+msgid "for now, you'll need Javascript enabled to post."
+msgstr "for now, you'll need Javascript enabled to post."
+
+# classic.tmpl 158
+# pad.tmpl 174
+msgid "Your account is silenced, so you can't publish or update posts."
+msgstr "Your account is silenced, so you can't publish or update posts."
+
+# classic.tmpl 257
+# pad.tmpl 278
+msgid "Failed to post. Please try again."
+msgstr "Failed to post. Please try again."
+
+# classic.tmpl 163
+# pad.tmpl 179
+# bare.tmpl 99
+msgid "You don't have permission to update this post."
+msgstr "You don't have permission to update this post."
+
+# pad.tmpl 16
+msgid "Write..."
+msgstr "Write..."
+
+# classic.tmpl 34
+# pad.tmpl 29
+msgid "Publish to..."
+msgstr "Publish to..."
+
+# classic.tmpl 55
+# pad.tmpl 50
+msgid "Font"
+msgstr "Font"
+
+# read.tmpl 105
+msgid "from"
+msgstr "from"
+
+# read.tmpl 105
+msgid "Anonymous"
+msgstr "Anonymous"
+
+# read.tmpl 120
+msgid "Older"
+msgstr "Older"
+
+# read.tmpl 121
+msgid "Newer"
+msgstr "Newer"
+
+# password-collection.tmpl 31
+msgid "Menu"
+msgstr "Menu"
+
+# password-collection.tmpl 51
+msgid "This blog requires a password."
+msgstr "This blog requires a password."
+
+# 404-general.tmpl 1
+msgid "Page not found"
+msgstr "Page not found"
+
+# 404-general.tmpl 4
+msgid "This page is missing."
+msgstr "This page is missing."
+
+# 404-general.tmpl 5
+msgid "Are you sure it was ever here?"
+msgstr "Are you sure it was ever here?"
+
+#404.tmpl 1,4
+msgid "Post not found"
+msgstr "Post not found"
+
+#404.tmpl 
+msgid "Why not share a thought of your own?"
+msgstr "Why not share a thought of your own?"
+
+# 404.tmpl
+msgid "Start a blog"
+msgstr "Start a blog"
+
+#404.tmpl 
+msgid "%s and spread your ideas on **%s**, %s."
+msgstr "%s and spread your ideas on **%s**, %s."
+
+# 404.tmpl
+msgid "a simple blogging community"
+msgstr "a simple blogging community"
+
+# 404.tmpl
+msgid "a simple, federated blogging community"
+msgstr "a simple, federated blogging community"
+
+# 410.tmpl 1
+msgid "Unpublished"
+msgst "Unpublished"
+
+# 410.tmpl 4
+msgid "Post was unpublished by the author."
+msgstr "Post was unpublished by the author."
+
+# 410.tmpl 5
+msgid "It might be back some day."
+msgstr "It might be back some day."
+
+# errors.go
+msgid "Expected valid form data."
+msgstr "Expected valid form data."
+
+msgid "Expected valid JSON object."
+msgstr "Expected valid JSON object."
+
+msgid "Expected valid JSON array."
+msgstr "Expected valid JSON array."
+
+msgid "Invalid access token."
+msgstr "Invalid access token."
+
+msgid "Authorization token required."
+msgstr "Authorization token required."
+
+msgid "Not logged in."
+msgstr "Not logged in."
+
+msgid "You don't have permission to add to this collection."
+msgstr "You don't have permission to add to this collection."
+
+msgid "Invalid editing credentials."
+msgstr "Invalid editing credentials."
+
+msgid "You don't have permission to do that."
+msgstr "You don't have permission to do that."
+
+msgid "Bad requested Content-Type."
+msgstr "Bad requested Content-Type."
+
+msgid "You don't have permission to access this collection."
+msgstr "You don't have permission to access this collection."
+
+msgid "Supply something to publish."
+msgstr "Supply something to publish."
+
+msgid "The humans messed something up. They've been notified."
+msgstr "The humans messed something up. They've been notified."
+
+msgid "Could not get cookie session."
+msgstr "Could not get cookie session."
+
+msgid "Service temporarily unavailable due to high load."
+msgstr "Service temporarily unavailable due to high load."
+
+msgid "Collection doesn't exist."
+msgstr "Collection doesn't exist."
+
+msgid "This blog was unpublished."
+msgstr "This blog was unpublished."
+
+msgid "Collection page doesn't exist."
+msgstr "Collection page doesn't exist."
+
+msgid "Post not found."
+msgstr "Post not found."
+
+msgid "Post removed."
+msgstr "Post removed."
+
+msgid "Post unpublished by author."
+msgstr "Post unpublished by author."
+
+msgid "We encountered an error getting the post. The humans have been alerted."
+msgstr "We encountered an error getting the post. The humans have been alerted."
+
+msgid "User doesn't exist."
+msgstr "User doesn't exist."
+
+msgid "Remote user not found."
+msgstr "Remote user not found."
+
+msgid "Please enter your username instead of your email address."
+msgstr "Please enter your username instead of your email address."
+
+msgid "Account is silenced."
+msgstr "Account is silenced."
+
+msgid "Password authentication is disabled."
+msgstr "Password authentication is disabled."
+
+msgid "Supply some properties to update."
+msgstr "Supply some properties to update."

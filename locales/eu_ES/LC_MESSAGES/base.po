@@ -1,0 +1,1677 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: GOtext\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: Aitzol Berasategi <aitzol@lainoa.eus>\n"
+"Language-Team: Euskara-Basque\n"
+"Language: eu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.3\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# base.tmpl 40
+# header.tmpl 49
+# pages.tmpl 21
+msgid "Home"
+msgstr "Hasiera"
+
+# base.tmpl 42
+# header.tmpl 51
+# footer.tmpl 8,26
+# user/include/footer.tmpl 11
+msgid "About"
+msgstr "Honi buruz"
+
+# base.tmpl 49
+# header.tmpl 58,65
+# include/footer.tmpl 9,27
+# user/include/footer.tmpl 12
+# app-settings.tmpl 108
+# pages.tmpl 24
+msgid "Reader"
+msgstr "Irakurlea"
+
+# login.tmpl 21
+# password-collection.tmpl 33
+# base.tmpl 51
+# header.tmpl 60
+msgid "Log in"
+msgstr "Saioa hasi"
+
+# classic.tmpl 48
+# collection.tmpl 63,74
+# pad.tmpl 43
+# base.tmpl 33,51
+# header.tmpl 14,41,60
+msgid "Log out"
+msgstr "Saioa itxi"
+
+# base.tmpl 45
+# export.tmpl 19
+# collections.tmpl 13
+# user/collection.tmpl 105
+# admin.tmpl 59
+# nav.tmpl 2
+# header.tmpl 54,63
+# view-user 106
+msgid "Blog"
+msgid_plural "Blogs"
+msgstr[0] "Blog"
+msgstr[1] "Blogak"
+
+# bare.tmpl 33
+# export.tmpl 19
+# admin.tmpl 60
+# view-user 132
+msgid "Post"
+msgid_plural "Posts"
+msgstr[0] "Post"
+msgstr[1] "Postak"
+
+# bare.tmpl 26
+# header.tmpl 55
+msgid "My Posts"
+msgstr "Nire postak"
+
+# classic.tmpl 38
+# edit-meta.tmpl 43
+# pad.tmpl 26,27,33
+# post.tmpl 47
+# base.tmpl 47
+# bare.tmpl 26
+# stats.tmpl 55
+# import.tmpl 41
+# articles.tmpl 25
+# header.tmpl 21,56,64
+# posts.tmpl 23,30,50,57
+msgid "Draft"
+msgid_plural "Drafts"
+msgstr[0] "Zirriborro"
+msgstr[1] "Zirriborroak"
+
+# login.tmpl 27
+# base.tmpl 50
+# header.tmpl 59
+msgid "Sign up"
+msgstr "Erregistratu"
+
+# classic.tmpl 5
+# collection.tmpl 53
+# pad.tmpl 5
+# base.tmpl 55
+# nav.tmpl 9
+# header.tmpl 25,71
+msgid "New Post"
+msgstr "Post berria"
+
+# header.tmpl 29
+msgid "Return to editor"
+msgstr "Itzuli editorera"
+
+# footer.tmpl 10,14,34
+# user/include/footer.tmpl 13
+msgid "writer's guide"
+msgstr "idazlearen gida"
+
+# footer.tmpl 15,35
+msgid "developers"
+msgstr "garatzaileak"
+
+# footer.tmpl 11,28
+# user/include/footer.tmpl 14
+msgid "privacy"
+msgstr "pribatutasuna"
+
+# footer.tmpl 16,36
+msgid "source code"
+msgstr "iturburu kodea"
+
+# header.tmpl 9,35
+msgid "Admin dashboard"
+msgstr "Administrazio-panela"
+
+# header.tmpl 10,36
+msgid "Account settings"
+msgstr "Kontuaren ezarpenak"
+
+# import.tmpl 17
+# header.tmpl 11,37
+msgid "Import posts"
+msgstr "Postak inportatu"
+
+# base.tmpl 30
+# export.tmpl 5,10
+# header.tmpl 12,38
+msgid "Export"
+msgstr "Exportatu"
+
+# header.tmpl 103
+msgid "Dashboard"
+msgstr "Aginte-panela"
+
+# header.tmpl 104
+msgid "Settings"
+msgstr "Ezarpenak"
+
+# export.tmpl 19
+# admin.tmpl 58
+# header.tmpl 106
+# view-user.tmpl 59
+# users.tmpl 15,21,30
+msgid "User"
+msgid_plural "Users"
+msgstr[0] "Erabiltzaile"
+msgstr[1] "Erabiltzaileak"
+
+# header.tmpl 107
+# pages.tmpl 13, 17
+msgid "Page"
+msgid_plural "Pages"
+msgstr[0] "Orria"
+msgstr[1] "Orriak"
+
+# post.tmpl 41
+# posts.tmpl 11,43,64,66
+# view-user 128
+msgid "View"
+msgid_plural "Views"
+msgstr[0] "Ikustaldi"
+msgstr[1] "Ikustaldiak"
+
+# posts.tmpl 11,43,64,66
+# view-user 128
+# edit-meta.tmpl 49,55
+# pad.tmpl 63
+msgid "View post"
+msgid_plural "View posts"
+msgstr[0] "Posta ikusi"
+msgstr[1] "Postak ikusi"
+
+# classic.tmpl 41,45
+# collection.tmpl 57
+# header.tmpl 7
+# edit-meta.tmpl 41
+# pad.tmpl 24,36,40
+# nav.tmpl 12
+msgid "View Blog"
+msgid_plural "View Blogs"
+msgstr[0] "Bloga Ikusi"
+msgstr[1] "Blogak Ikusi"
+
+# classic.tmpl 62
+# pad.tmpl 124
+msgid "word"
+msgid_plural "words"
+msgstr[0] "hitz"
+msgstr[1] "hitzak"
+
+# pad.tmpl 64
+msgid "Publish"
+msgstr "Argitaratu"
+
+# pad.tmpl 20
+# bare.tmpl 20
+msgid "This post has been updated elsewhere since you last published!"
+msgstr "Post hau beste nonbait eguneratua izan da argitaratuz geroztik!"
+
+# pad.tmpl 20
+# bare.tmpl 20
+msgid "Delete draft and reload"
+msgstr "Zirriborroa ezabatu eta birkargatu"
+
+msgid "Updates"
+msgstr "Eguneraketak"
+
+# classic.tmpl 42
+# pad.tmpl 37
+# user/collection.tmpl 32
+# collection.tmpl 54
+# nav.tmpl 10
+# header.tmpl 19
+msgid "Customize"
+msgstr "Pertsonalizatu"
+
+# classic.tmpl 43
+# collection.tmpl 55
+# pad.tmpl 38
+# stats.tmpl 26
+# nav.tmpl 11
+# header.tmpl 20
+msgid "Stats"
+msgstr "Estatistikak"
+
+# classic.tmpl 47
+# collection.tmpl 58
+# pad.tmpl 42
+msgid "View Draft"
+msgid_plural "View Drafts"
+msgstr[0] "Zirriborroa Ikusi"
+msgstr[1] "Zirriborroak Ikusi"
+
+# header.tmpl 111
+msgid "Monitor"
+msgstr "Monitorea"
+
+# read.tmpl 108,110
+msgid "Read more..."
+msgstr "Irakurri gehiago..."
+
+# silenced.tmpl 3
+msgid "Your account has been silenced."
+msgstr "Zure kontua isilarazia izan da."
+
+# silenced.tmpl 3
+msgid "You can still access all of your posts and blogs, but no one else can currently see them."
+msgstr "Oraindik zure blog eta postak ikus ditzakezu, baina ez beste inork."
+
+# articles.tmpl 28
+msgid "These are your draft posts. You can share them individually (without a blog) or move them to your blog when you're ready."
+msgstr "Hauek zure zirriborroak dira. Bakarka partekatu ahal izango dituzu (blogik gabe), edo prest dituzunean blogera mugitu eta argitaratu."
+
+# articles.tmpl 57
+msgid "Your anonymous and draft posts will show up here once you've published some. You'll be able to share them individually (without a blog) or move them to a blog when you're ready."
+msgstr "Zure zirriborro eta sarrera anonimoak hemen agertuko dira. Bakarka partekatu ahal izango dituzu (blogik gabe), edo prest dituzunean blogera mugitu eta argitaratu."
+
+# articles.tmpl 58
+msgid "Alternatively, see your blogs and their posts on your %s page."
+msgstr "Bestela, blogak eta argitalpenak ikusi ditzakezu %s orrian."
+
+# articles.tmpl 60
+msgid "Start writing"
+msgstr "Idazten hasi"
+
+# articles.tmpl 64
+# static/js/postactions.js
+msgid "unsynced posts"
+msgstr "sinkronizatu gabeko posta"
+
+# articles.tmpl 64
+# collection.tmpl 43
+# view-page.tmpl 51
+# view-user 116
+msgid "Title"
+msgstr "Izenburua"
+
+# collection.tmpl 44
+# view-user 120
+msgid "Description"
+msgstr "Deskribapena"
+
+# collection.tmpl 50
+msgid "This blog uses your username in its URL."
+msgstr "Blog honek zure erabiltzaile izena darabil bere URL-an."
+
+# collection.tmpl 50
+msgid "This blog uses your username in its URL and fediverse handle."
+msgstr "Blog honek zure erabiltzaile izena darabil bere URL-an eta fedibertsoaren kudeaketan."
+
+# collection.tmpl 50
+msgid "You can change it in your %s."
+msgstr "Hori %s atalean alda dezakezu."
+
+# collection.tmpl 63
+msgid "Publicity"
+msgstr "Publikotasuna"
+
+# collection.tmpl 68
+# app-settings.tmpl 120
+#, fuzzy
+msgid "Unlisted"
+msgstr "Irekia"
+
+# user/collection.tmpl 87
+# app-settings.tmpl 121
+msgid "Public"
+msgstr "Publikoa"
+
+# user/collection.tmpl 74
+# app-settings.tmpl 122
+msgid "Private"
+msgstr "Pribatua"
+
+# user/collection.tmpl 70
+msgid "This blog is visible to any registered user on this instance."
+msgstr "Blog hau instantzia honetan erregistraturiko edonorentzat dago ikusgai."
+
+# user/collection.tmpl 70
+msgid "This blog is visible to anyone with its link."
+msgstr "Blog hau bere esteka duen edonorentzat dago ikusgai."
+
+# user/collection.tmpl 76
+msgid "Only you may read this blog (while you're logged in)."
+msgstr "Zuk bakarrik irakur dezakezu blog hau (saioa hasita duzun bitartean)."
+
+# user/collection.tmpl 80
+msgid "Password-protected:"
+msgstr "Pasahitzez-babestua:"
+
+# user/collection.tmpl 80
+msgid "a memorable password"
+msgstr "pasahitz gogoangarri bat"
+
+# user/collection.tmpl 82
+msgid "A password is required to read this blog."
+msgstr "Pasahitza behar da blog hau irakurtzeko."
+
+# user/collection.tmpl 89
+msgid "This blog is displayed on the public %s, and is visible to anyone with its link."
+msgstr "Blog hau %s atal publikoan bistaratzen da, eta esteka ezagutzen duen edonorentzat dago ikusgai."
+
+# user/collection.tmpl 89
+msgid "This blog is displayed on the public %s, and is visible to any registered user on this instance."
+msgstr "Blog hau %s atal publikoan bistaratzen da, eta instantzia honetan erregistraturiko edonorentzat dago ikusgai."
+
+# user/collection.tmpl 90
+msgid "The public reader is currently turned off for this community."
+msgstr "Irakurlea atal publikoa desgaituta dago une honetan komunitate honentzat."
+
+# user/collection.tmpl 98
+msgid "Display Format"
+msgstr "Bistaratzea"
+
+# user/collection.tmpl 100
+msgid "Customize how your posts display on your page."
+msgstr "Pertsonalizatu zure postak zure orrian bistaratzeko modua."
+
+# user/collection.tmpl 107
+msgid "Dates are shown. Latest posts listed first."
+msgstr "Datak erakusten dira. Post berrienak zerrendan lehenak."
+
+# user/collection.tmpl 113
+msgid "No dates shown. Oldest posts first."
+msgstr "Datarik ez da erakusten. Post zaharrenak zerrendan lehenak."
+
+# user/collection.tmpl 119
+msgid "No dates shown. Latest posts first."
+msgstr "Datarik ez da erakusten. Post berrienak lehenak."
+
+# user/collection.tmpl 126
+msgid "Text Rendering"
+msgstr "Testu Errendatzea"
+
+# user/collection.tmpl 128
+msgid "Customize how plain text renders on your blog."
+msgstr "Pertsonalizatu testu-laua zure blogean errendatzeko modua."
+
+# user/collection.tmpl 145
+msgid "Custom CSS"
+msgstr "CSS pertsonalizazioa"
+
+# user/collection.tmpl 148
+msgid "customization"
+msgstr "pertsonalizazio"
+
+# user/collection.tmpl 148
+msgid "See our guide on %s."
+msgstr "Ikusi gure %s gida."
+
+# user/collection.tmpl 153
+msgid "Post Signature"
+msgstr "Post Sinadura"
+
+# user/collection.tmpl 155
+msgid "This content will be added to the end of every post on this blog, as if it were part of the post itself. Markdown, HTML, and shortcodes are allowed."
+msgstr "Eduki hau blog honetako post bakoitzaren amaieran gehituko da, postarena balitz bezala. Markdown, HTML, eta azpikodeak onartzen dira."
+
+# user/collection.tmpl 162
+msgid "Web Monetization"
+msgstr "Web Monetizazioa"
+
+# user/collection.tmpl 164
+msgid "Web Monetization enables you to receive micropayments from readers that have a %s. Add your payment pointer to enable Web Monetization on your blog."
+msgstr "Web Monetizazioak mikro-ordainketak jasotzeko aukera eskaintzen dizu %s duten irakurleengandik. Gehitu zure ordainketa datuak Web Monetizazioa zure blogean gaitzeko."
+
+# user/collection.tmpl 164
+msgid "Coil membership"
+msgstr "Coil kontua"
+
+# edit-meta.tmpl 263
+# settings.tmpl 81
+# user/collection.tmpl 171
+msgid "Save changes"
+msgstr "Gorde aldaketak"
+
+# user/collection.tmpl 173
+msgid "Delete Blog..."
+msgstr "Bloga ezabatu..."
+
+# user/collection.tmpl 190,220
+# articles.tmpl 36
+# posts.tmpl 19,46
+msgid "Delete"
+msgstr "Ezabatu"
+
+# settings.tmpl 187
+# user/collection.tmpl 189
+# view-user 173
+msgid "Cancel"
+msgstr "Utzi"
+
+# user/collection.tmpl 180
+msgid "Are you sure you want to delete this blog?"
+msgstr "Ziur al zaude blog hau ezabatu nahi duzula?"
+
+# posts.js 46,147
+# collection.tmpl 148
+# collection-tags.tmpl 96
+# chorus-collection.tmpl 132
+msgid "Are you sure you want to delete this post?"
+msgstr "Ziur al zaude post hau ezabatu nahi duzula?"
+
+# posts.js 302
+# collection.tmpl 175,226
+# collection-tags.tmpl 123,174
+# chorus-collection.tmpl 159,210
+msgid "Post is synced to another account. Delete the post from that account instead."
+msgstr "Posta beste kontu batekin sinkronizatzen da. Ezaba ezazu kontu horretako posta."
+
+# posts.js 308
+# collection.tmpl 181
+# collection-tags.tmpl 129
+# chorus-collection.tmpl 165
+msgid "Failed to delete."
+msgstr "Ezabatzeak huts egin du."
+
+# posts.js 308
+# collection.tmpl 181
+# collection-tags.tmpl 129
+# chorus-collection.tmpl 165
+msgid "Please try again."
+msgstr "Saia zaitez berriro."
+
+# user/collection.tmpl 182
+msgid "This will permanently erase **%s** (%s/%s) from the internet. Any posts on this blog will be saved and made into drafts (found on your %s page)."
+msgstr "Honek **%s** (%s/%s) betirako ezabatuko du internetetik. Blog honetako post guztiak %s orrira igaroko dira."
+
+# user/collection.tmpl 183
+msgid "If you're sure you want to delete this blog, enter its name in the box below and press **%s**."
+msgstr "Blog hau ezabatu nahi duzula ziur bazaude, sartu bere izena beheko eremuan eta sakatu **%s**."
+
+# user/collection.tmpl 202
+msgid "Enter **%s** in the box below."
+msgstr "Sartu **%s** beheko eremuan."
+
+# collection.tmpl 238
+msgid "Saving changes..."
+msgstr "Aldaketak gordetzen..."
+
+# collections.tmpl 72,75,84
+msgid "This name is taken."
+msgstr "Izen hori erabilita dago."
+
+# pad.tmpl 61
+msgid "Edit post metadata"
+msgstr "Metadatuak editatu"
+
+# edit-meta.tmpl 5,55
+msgid "Edit metadata"
+msgstr "Metadatuak editatu"
+
+# edit-meta.tmpl 260
+msgid "now"
+msgstr "orain"
+
+# edit-meta.tmpl 63
+msgid "Slug"
+msgstr "Sluga"
+
+# edit-meta.tmpl 66
+msgid "Language"
+msgstr "Hizkuntza"
+
+# edit-meta.tmpl 256
+msgid "Direction"
+msgstr "Norabidea"
+
+# edit-meta.tmpl 258
+msgid "Created"
+msgstr "Sortze data"
+
+# edit-meta.tmpl 257
+msgid "right-to-left"
+msgstr "eskuinetik-ezkerrera"
+
+# edit-meta.tmpl 47
+msgid "Edit post"
+msgstr "Posta editatu"
+
+# edit-meta.tmpl 48
+# pad.tmpl 6
+msgid "Toggle theme"
+msgstr "Gaia aldatu"
+
+# collection-post.tmpl 66
+# posts.tmpl 8
+msgid "Scheduled"
+msgstr "Programatua"
+
+# collection-post.tmpl 57
+# post.tmpl 45,91
+# articles.tmpl 35
+# posts.tmpl 17,44
+msgid "Edit"
+msgstr "Editatu"
+
+# posts.tmpl 18,45
+msgid "Pin"
+msgstr "Finkatu"
+
+# collection-post.tmpl 58
+msgid "Unpin"
+msgstr "Askatu"
+
+# posts.tmpl 21,48
+msgid "Move this post to another blog"
+msgstr "Mugitu post hau beste blog batetara"
+
+# posts.tmpl 30,57
+msgid "Change to a draft"
+msgstr "Eraman zirriborroetara"
+
+# posts.tmpl 30,57
+msgid "change to _%s_"
+msgstr "bihurtu _%s_"
+
+# articles.tmpl 43,78
+# posts.tmpl 26,53
+msgid "move to..."
+msgstr "mugi hona..."
+
+# articles.tmpl 47,83
+msgid "move to %s"
+msgstr "eraman %s-ra"
+
+# post.tmpl 42
+msgid "View raw"
+msgstr "Raw-eran ikusi"
+
+# articles.tmpl 47,83
+msgid "Publish this post to your blog %s"
+msgstr "Argitaratu post hau zure %s blogean"
+
+# articles.tmpl 39,74
+msgid "Move this post to one of your blogs"
+msgstr "Mugitu post hau zure blogetako batetara"
+
+# articles.tmpl 55
+msgid "Load more..."
+msgstr "Kargatu gehiago..."
+
+# stats.tmpl 32
+msgid "Stats for all time."
+msgstr "Estatistika orokorrak."
+
+# stats.tmpl 35
+msgid "Fediverse stats"
+msgstr "Fedibertsoko estatistikak"
+
+# stats.tmpl 38
+msgid "Followers"
+msgstr "Jarraitzaileak"
+
+# stats.tmpl 46
+msgid "Top %d post"
+msgid_plural "Top %d posts"
+msgstr[0] "%d. posta"
+msgstr[1] "Lehen %d postak"
+
+# stats.tmpl 51
+msgid "Total Views"
+msgstr "Bistaratzeak"
+
+# settings.tmpl 27
+msgid "Before you go..."
+msgstr "Joan aurretik..."
+
+# settings.tmpl 27
+msgid "Account Settings"
+msgstr "Kontuaren Ezarpenak"
+
+# settings.tmpl 38
+msgid "Change your account settings here."
+msgstr "Aldatu hemen zure kontuaren ezarpenak."
+
+# signup.tmpl 80
+# signup-oauth.tmpl 85,87
+# login.tmpl 21
+# landing.tmpl 92
+# settings.tmpl 43
+# view-user.tmpl 62
+msgid "Username"
+msgstr "Erabiltzaile-izena"
+
+# settings.tmpl 46
+msgid "Update"
+msgstr "Eguneratu"
+
+# settings.tmpl 56
+msgid "Passphrase"
+msgstr "Pasaesaldia"
+
+# settings.tmpl 58
+msgid "Add a passphrase to easily log in to your account."
+msgstr "Gehitu pasaesaldia saioa erraztasunez hasteko."
+
+# settings.tmpl 59,60
+msgid "Current passphrase"
+msgstr "Uneko pasaesaldia"
+
+# settings.tmpl 61,64
+msgid "New passphrase"
+msgstr "Pasaesaldi berria"
+
+# settings.tmpl 60,64
+msgid "Show"
+msgstr "Erakutsi"
+
+msgid "Account updated."
+msgstr "Kontua eguneratu da."
+
+# signup.tmpl 91
+# signup-oauth.tmpl 92,94
+# landing.tmpl 103
+# settings.tmpl 69
+msgid "Email"
+msgstr "Emaila"
+
+# settings.tmpl 76
+msgid "Email address"
+msgstr "Email helbidea"
+
+# settings.tmpl 71
+msgid "Add your email to get:"
+msgstr "Gehitu zure emaila hauek eskuratzeko:"
+
+# settings.tmpl 34
+msgid "Please add an **%s** and/or **%s** so you can log in again later."
+msgstr "Mesedez gehitu saioa hasteko erabiliko dituzun **%s** edo/eta **%s**."
+
+# settings.tmpl 73
+msgid "No-passphrase login"
+msgstr "Pasaesaldi gabeko saio hasiera"
+
+# settings.tmpl 74
+msgid "Account recovery if you forget your passphrase"
+msgstr "Kontu berreskuratzea pasaesaldia ahaztuz gero"
+
+# settings.tmpl 89
+msgid "Linked Accounts"
+msgstr "Lotutako Kontuak"
+
+# settings.tmpl 90
+msgid "These are your linked external accounts."
+msgstr "Hauek dira lotutako zure kanpo-kontuak."
+
+# settings.tmpl 114
+msgid "Link External Accounts"
+msgstr "Kanpoko Kontuak Lotu"
+
+msgid "Connect additional accounts to enable logging in with those providers, instead of using your username and password."
+msgstr "Konektatu kontu gehigarriak hornitzaile horiekin saioa hasteko, zure erabiltzaile-izena eta pasahitza erabili beharrean."
+
+# settings.tmpl 162
+# view-user 149
+msgid "Incinerator"
+msgstr "Errauskailua"
+
+# settings.tmpl 166,169,188
+msgid "Delete your account"
+msgstr "Ezabatu zure kontua"
+
+# settings.tmpl 167
+msgid "Permanently erase all your data, with no way to recover it."
+msgstr "Ezabatu zure datu guztiak, berreskuratzeko modurik gabe."
+
+# settings.tmpl 176
+# view-user 163
+msgid "Are you sure?"
+msgstr "Ziur al zaude?"
+
+# settings.tmpl 178
+msgid "export your data"
+msgstr "zure datuak esportatu"
+
+# settings.tmpl 178
+msgid "This action **cannot** be undone. It will immediately and permanently erase your account, including your blogs and posts. Before continuing, you might want to %s."
+msgstr "Ekintza hau **ezin da** desegin. Honek berehala eta betirako ezabatuko du zure kontua, blogak eta argitalpenak barne. Jarraitu aurretik agian %s nahi zenituzke."
+
+# settings.tmpl 179
+msgid "If you're sure, please type **%s** to confirm."
+msgstr "Ziur baldin bazaude, idatzi **%s** berresteko."
+
+# invite-help.tmpl 13
+msgid "Invite to %s"
+msgstr "%s gonbidatu"
+
+# invite-help.tmpl 15
+msgid "This invite link is expired."
+msgstr "Esteka hau iraungita dago."
+
+# invite-help.tmpl 21
+msgid "Only **one** user"
+msgstr "Erabiltzaile **bakarrak**"
+
+# invite-help.tmpl 21
+msgid "Up to **%d** users"
+msgstr "**%d** erabiltzaileko kopuruak"
+
+# invite-help.tmpl 21
+msgid "can sign up with this link."
+msgstr "hasi dezake saioa esteka honekin."
+
+# invite-help.tmpl 23
+msgid "It expires on **%s**."
+msgstr "Iraungitze data: **%s**."
+
+# invite-help.tmpl 25
+msgid "It can be used as many times as you like"
+msgstr "Nahi duzun adina aldiz erabili daiteke"
+
+# invite-help 25
+msgid "before **%s**, when it expires"
+msgstr "**%s** baino lehen, iraungitzen denean alegia"
+
+msgid "person has"
+msgid_plural "person have"
+msgstr[0] "pertsonak"
+msgstr[1] "pertsonek"
+
+# invite-help.tmpl 21
+msgid "So far, **%d** %s used it."
+msgstr "Orain arte, **%d**  %s erabili dute."
+
+# invite-help.tmpl 21
+# So far, <strong>{{.Invite.Uses}}</strong> {{pluralize "person has" "people have" .Invite.Uses}} used it.
+# invite-help.tmpl 21
+# invite-help.tmpl 17
+msgid "Copy the link below and send it to anyone that you want to join *%s*. You could paste it into an email, instant message, text message, or write it down on paper. Anyone who navigates to this special page will be able to create an account."
+msgstr ""
+"Kopiatu ondorengo esteka eta *%s* gunera batzea nahi duzun lagunari bidali. Email batean erantsiz bidal dezakezu, mezularitza zerbitzu baten bidez, testu-mezu moduan edo paper zati batean idatziz. Helbide berezi honetara nabigatzen duen edonork izango du "
+"kontu bat sortzeko aukera."
+
+# IMPORT PAGE
+# import.tmpl 28
+msgid "Publish plain text or Markdown files to your account by uploading them below."
+msgstr "Argitaratu testu-lau edo Markdown fitxategiak zure kontura igoaz."
+
+# import.tmpl 31
+msgid "Select some files to import:"
+msgstr "Hautatu fitxategiak inportatzeko:"
+
+# import.tmpl 36
+msgid "Import these posts to:"
+msgstr "Inportatu postak hona:"
+
+# import.tmpl 59
+msgid "Import"
+msgstr "Inportatu"
+
+msgid "Import complete, %d post imported."
+msgid_plural "Import complete, %d posts imported."
+msgstr[0] "Import complete, %d post imported."
+msgstr[1] "Import complete, %d posts imported."
+
+msgid "%d of %d posts imported, see details below."
+msgid_plural "%d of %d posts imported, see details below."
+msgstr[0] "%d of %d posts imported, see details below."
+msgstr[1] "%d of %d posts imported, see details below."
+
+msgid "%s is not a supported post file"
+msgstr "%s post fitxategia ez da onartzen"
+
+# export.tmpl 6
+msgid "Your data on %s is always free. Download and back-up your work any time."
+msgstr "Zure datuen biltegiratzea doanekoa da %s webgunean. Deskargatu eta egin zure lanen babeskopia edonoiz."
+
+# export.tmpl 11
+msgid "Format"
+msgstr "Formatua"
+
+# header.tmpl 101
+msgid "Admin"
+msgstr "Admin"
+
+# app-settings.tmpl 37
+msgid "Site Title"
+msgstr "Gunearen Izenburua"
+
+# app-settings.tmpl 38
+msgid "Your public site name."
+msgstr "Gune publikoaren izena."
+
+# app-settings.tmpl 44
+msgid "Site Description"
+msgstr "Gunearen Deskribapena"
+
+# app-settings.tmpl 45
+msgid "Describe your site — this shows in your site's metadata."
+msgstr "Deskribatu zure gunea — hau gunearen metadatuetan erakutsiko da."
+
+# app-settings.tmpl 51
+msgid "Host"
+msgstr "Host"
+
+# app-settings.tmpl 52
+msgid "The public address where users will access your site, starting with `http://` or `https://`."
+msgstr "Erabiltzaileek gunean sartzeko erabiliko duten helbidea, hasieran `http://` edo `https://` protokoloa zehaztuz."
+
+# app-settings.tmpl 58
+msgid "Community Mode"
+msgstr "Komunitate Modua"
+
+# app-settings.tmpl 59
+msgid "Whether your site is made for one person or many."
+msgstr "Zure gunea pertsona bakarrarentzat edo askorentzat egina dagoen."
+
+# app-settings.tmpl 61
+msgid "Single user"
+msgstr "Erabiltzaile bakarra"
+
+# app-settings.tmpl 61
+msgid "Multiple users"
+msgstr "Erabiltzaile anitz"
+
+# app-settings.tmpl 65
+msgid "Landing Page"
+msgstr "Helburu-orria"
+
+# app-settings.tmpl 66
+msgid "The page that logged-out visitors will see first. This should be an absolute path like: `/read`."
+msgstr "Saioa hasi gabe duten erabiltzaileek hasieran ikusiko duten orria. Honen moduko bide absolutua izan beharko litzateke: `/read`."
+
+# app-settings.tmpl 72
+msgid "Open Registrations"
+msgstr "Erregistro Irekia"
+
+# app-settings.tmpl 73
+msgid "Allow anyone who visits the site to create an account."
+msgstr "Gunea bisitatzen duen edonori kontua sortzen utzi."
+
+# app-settings.tmpl 80
+msgid "Allow account deletion"
+msgstr "Kontua ezabatzen utzi"
+
+# app-settings.tmpl 81
+msgid "Allow all users to delete their account. Admins can always delete users."
+msgstr "Erabiltzaileei beraien kontua ezabatzen utzi. Administratzaileek beti ezabatu ditzakete erabiltzaileak."
+
+# app-settings.tmpl 88
+msgid "Allow invitations from..."
+msgstr "Gonbidapen onarpena"
+
+# app-settings.tmpl 89
+msgid "Choose who is allowed to invite new people."
+msgstr "Zehaztu nor dagoen baimenduta jende berria gonbidatzera."
+
+# app-settings.tmpl 93
+msgid "No one"
+msgstr "Inor ez"
+
+# app-settings.tmpl 94
+msgid "Only Admins"
+msgstr "Admin-ak soilik"
+
+# app-settings.tmpl 95
+msgid "All Users"
+msgstr "Erabiltzaile oro"
+
+# app-settings.tmpl 101
+msgid "Private Instance"
+msgstr "Instantzia Pribatua"
+
+# app-settings.tmpl 102
+msgid "Limit site access to people with an account."
+msgstr "Sarbidea mugatu kontua duten erabiltzaileei."
+
+# app-settings.tmpl 109
+msgid "Show a feed of user posts for anyone who chooses to share there."
+msgstr "Erabiltzailearen argitalpenen feed bat erakutsi bertan elkarbanatzea aukeratzen duen edonorentzat."
+
+# app-settings.tmpl 115
+msgid "Default blog visibility"
+msgstr "Blogaren ikusgarritasuna"
+
+# app-settings.tmpl 116
+msgid "The default setting for new accounts and blogs."
+msgstr "Kontu eta blog berrientzako lehenetsitako ezarpena."
+
+# app-settings.tmpl 128
+msgid "Maximum Blogs per User"
+msgstr "Blog Kopurua Erabiltzaileko"
+
+# app-settings.tmpl 129
+msgid "Keep things simple by setting this to **1**, unlimited by setting to **0**, or pick another amount."
+msgstr "Guztia modu sinplean mantentzeko sartu **1**, mugagabea **0** ezarriz, bestela gogoko kopurua zehaztu dezakezu."
+
+# app-settings.tmpl 135
+msgid "Federation"
+msgstr "Federazioa"
+
+# app-settings.tmpl 136
+msgid "Enable accounts on this site to propagate their posts via the ActivityPub protocol."
+msgstr "Gaitu gune honetako kontuek ActivityPub protokolo bidez postak zabaldu ditzaten."
+
+# app-settings.tmpl 142
+msgid "Public Stats"
+msgstr "Estatistika Publikoak"
+
+# app-settings.tmpl 143
+msgid "Publicly display the number of users and posts on your **%s** page."
+msgstr "Erakutsi publikoki erabiltzaile eta post kopurua **%s** orrian."
+
+# app-settings.tmpl 149
+msgid "Monetization"
+msgstr "Monetizazioa"
+
+# app-settings.tmpl 150
+msgid "Enable blogs on this site to receive micropayments from readers via %s."
+msgstr "Gaitu gune honetako blogak irakurleengandik mikro-ordainketak jaso ditzaten, %s-en bidez."
+
+# app-settings.tmpl 156
+msgid "Minimum Username Length"
+msgstr "Erabiltzaile-izenaren gutxieneko luzera"
+
+# app-settings.tmpl 157
+msgid "The minimum number of characters allowed in a username. (Recommended: 2 or more.)"
+msgstr "Erabiltzaile-izenean onarturiko gutxieneko karaktere kopurua. (Gomendatua: 2 edo gehiago.)"
+
+# app-settings.tmpl 162
+msgid "Save Settings"
+msgstr "Gorde Ezarpenak"
+
+# app-settings.tmpl 166
+msgid "configuration docs"
+msgstr "konfiguraketa dokumentuetan"
+
+# app-settings.tmpl 166
+msgid "Still have questions? Read more details in the %s."
+msgstr "Zalantzak dituzu oraindik? Irakurri xehetasun gehiago %s."
+
+msgid "Configuration saved."
+msgstr "Konfiguraketa gorde da."
+
+# view-user.tmpl 66
+# users.tmpl 22
+msgid "joined"
+msgstr "elkartua"
+
+# users.tmpl 23
+msgid "type"
+msgstr "mota"
+
+# users.tmpl 24
+# view-user.tmpl 79
+msgid "status"
+msgstr "egoera"
+
+# base.tmpl 31
+# header.tmpl 39
+# invite.tmpl 26
+# users.tmpl 16
+msgid "Invite people"
+msgstr "Jendea gonbidatu"
+
+# invite.tmpl 27
+msgid "Invite others to join *%s* by generating and sharing invite links below."
+msgstr "Gonbidatu lagunen bat *%s* gunera batu dadin gonbidapen esteka bat sortu eta berarekin elkarbanatuz."
+
+# invite.tmpl 31
+msgid "Maximum number of uses:"
+msgstr "Gehienezko erabilera kopurua:"
+
+# invite.tmpl 33
+msgid "No limit"
+msgstr "Mugagabea"
+
+# invite.tmpl 34,35,36,37,38,39,64
+msgid "use"
+msgid_plural "uses"
+msgstr[0] "use"
+msgstr[1] "uses"
+
+# invite.tmpl 43
+msgid "Expire after:"
+msgstr "Iraungitze data:"
+
+# invite.tmpl 46
+msgid "minute"
+msgid_plural "minutes"
+msgstr[0] "minute"
+msgstr[1] "minutes"
+
+# invite.tmpl 47,48,49
+msgid "hour"
+msgid_plural "hours"
+msgstr[0] "hour"
+msgstr[1] "hours"
+
+# invite.tmpl 50,51
+msgid "day"
+msgid_plural "days"
+msgstr[0] "day"
+msgstr[1] "days"
+
+# invite.tmpl 52
+msgid "week"
+msgid_plural "weeks"
+msgstr[0] "week"
+msgstr[1] "weeks"
+
+# invite.tmpl 57
+msgid "You cannot generate invites while your account is silenced."
+msgstr "Ezin duzu gonbidapenik sortu zure kontua isilarazirik dagoen bitartean."
+
+# invite.tmpl 57
+msgid "Generate"
+msgstr "Sortu"
+
+# invite.tmpl 63
+msgid "Link"
+msgstr "Lotura"
+
+# invite.tmpl 121,129,137,145,152
+msgid "ToLink"
+msgstr "Lotu"
+
+# invite.tmpl 65
+msgid "Expires"
+msgstr "Iraungitzea"
+
+# invite.tmpl 71
+msgid "Expired"
+msgstr "Iraungita"
+
+# invite.tmpl 75
+msgid "No invites generated yet."
+msgstr "Oraindik ez da gonbidapenik sortu."
+
+# pages.tmpl 18
+msgid "last modified"
+msgstr "azken aldaketa"
+
+# view-user.tmpl 85
+msgid "Active"
+msgstr "Aktibo"
+
+# view-user.tmpl 82
+msgid "Silenced"
+msgstr "Isilarazia"
+
+# view-user.tmpl 83
+msgid "Unsilence"
+msgstr "Ez-isilarazi"
+
+# view-user 86
+msgid "disabled"
+msgstr "desgaitua"
+
+# view-user 86
+msgid "Silence"
+msgstr "Isilarazi"
+
+# view-user.tmpl 54
+msgid "No."
+msgstr "Zkia."
+
+# view-user.tmpl 70
+msgid "total posts"
+msgstr "postak guztira"
+
+# view-user.tmpl 74,136
+msgid "last post"
+msgstr "azken posta"
+
+# signup.tmpl 87
+# login.tmpl 22
+# landing.tmpl 99
+# view-user 92
+msgid "password"
+msgstr "pasahitza"
+
+msgid "Change your password"
+msgstr "Aldatu zure pasahitza"
+
+# view-user 100
+msgid "Go to reset password page"
+msgstr "Pasahitza berrezartzeko orrira joan"
+
+# view-user 141
+msgid "Fediverse followers"
+msgstr "Fedibertsoko jarraitzaileak"
+
+# view-user 124
+msgid "Visibility"
+msgstr "Ikusgarritasuna"
+
+# view-user 112
+msgid "Alias"
+msgstr "Ezizena"
+
+# view-user.tmpl 75,137
+msgid "Never"
+msgstr "Inoiz ez"
+
+# view-user 97
+msgid "Reset"
+msgstr "Berrezarri"
+
+# view-user 153,156,174
+msgid "Delete this user"
+msgstr "Erabiltzailea ezabatu"
+
+# view-user 154
+msgid "Permanently erase all user data, with no way to recover it."
+msgstr "Betiko ezabatu erabiltzailearen datu guztiak, berreskuratzeko aukerarik gabe."
+
+# view-user 165
+msgid "This action **cannot**be undone. It will permanently erase all traces of this user, **%s**, including their account information, blogs, and posts."
+msgstr "Ekintza hau **ezingo da** desegin. Betiko ezabatuko ditu erabiltzaile honen aztarna guztiak, **%s**, bere kontuaren informazioa barne, blogak, eta postak."
+
+# view-user 166
+msgid "Please type **%s** to confirm."
+msgstr "Mesedez idatzi **%s** baieztatzeko."
+
+# view-user 202
+msgid "Silence this user? They'll still be able to log in and access their posts, but no one else will be able to see them anymore. You can reverse this decision at any time."
+msgstr "Erabiltzailea isilarazi? Isilarazitako erabiltzaileek sarbidea izaten jarraituko dute beraien idatzietara, baina ez ditu inork ikusiko. Erabaki hau edozein unetan alda dezakezu."
+
+# view-user 208
+msgid "Reset this user's password? This will generate a new temporary password that you'll need to share with them, and invalidate their old one."
+msgstr "Erabiltzailearen pasahitza berrezarri? Honek aldi baterako pasahitz berri bat sortuko du, beraiekin partekatu beharko duzuna eta zaharra baliogabetu."
+
+# settings.tmpl 225
+# collection.tmpl 207
+# view-user.tmpl 198
+msgid "Deleting..."
+msgstr "Ezabatzen..."
+
+# view-user.tmpl 46
+msgid "This user's password has been reset to:"
+msgstr "Erabiltzaile honen pasahitza hona berrezarri da:"
+
+# view-user.tmpl 48
+msgid "They can use this new password to log in to their account. **This will only be shown once**, so be sure to copy it and send it to them now."
+msgstr "Pasahitz berri hau kontuan saio hasteko erabili ahal izango da. **Behin bakarrik erakutsiko da**, beraz, ziurtatu kopiatu eta bidaltzeaz."
+
+# view-user.tmpl 49
+msgid "Their email address is:"
+msgstr "Email helbidea:"
+
+# app-updates.tmlp 19
+msgid "Automated update check failed."
+msgstr "Eguneratze automatizatuaren egiaztatzeak huts egin du."
+
+# app-updates.tmlp 20, 24, 41
+msgid "Installed version: %s (%s)."
+msgstr "Instalaturiko bertsioa: %s (%s)."
+
+# app-updates.tmlp 21, 42
+msgid "Learn about latest releases on the %s or %s."
+msgstr "Ezagutu azken bertsioen inguruan %s-ean edo %s-ean."
+
+# app-updates.tmlp 23
+msgid "WriteFreely is **up to date**."
+msgstr "WriteFreely **eguneratuta** dago."
+
+# app-updates.tmlp 27
+msgid "Get"
+msgstr "Lortu"
+
+# app-updates.tmlp 27
+msgid "A new version of WriteFreely is available! **%s %s**"
+msgstr "WriteFreely bertsio berri bat dago eskuragarri! **%s %s**"
+
+# app-updates.tmlp 28
+msgid "release notes"
+msgstr "bertsio oharrak"
+
+# app-updates.tmlp 29
+msgid "Read the %s for details on features, bug fixes, and notes on upgrading from your current version, **%s**."
+msgstr "Irakurri %s, **%s** bertsioaren ezaugarriei, akatsen zuzenketei eta eguneratze-oharrei buruzko xehetasunak ezagutzeko."
+
+# app-updates.tmlp 31
+msgid "Check now"
+msgstr "Egiaztatu orain"
+
+# app-updates.tmlp 31
+msgid "Last checked"
+msgstr "Azkenengoz egiaztatua"
+
+# app-updates.tmlp 40
+msgid "Automated update checks are disabled."
+msgstr "Eguneratze-kontrol automatizatuak desgaituta daude."
+
+# ADMIN PAGES
+# view-page.tmpl 45
+msgid "Banner"
+msgstr "Bannerra"
+
+# view-page.tmpl 56
+msgid "Body"
+msgstr "Body"
+
+# view-page.tmpl 33
+msgid "Outline your %s."
+msgstr "Azaldu zure %s."
+
+# view-page.tmpl 35,37
+msgid "Customize your %s page."
+msgstr "Pertsonalizatu zure %s orria."
+
+# view-page.tmpl 31
+msgid "Describe what your instance is %s."
+msgstr "Egin deskribapena instantzia %s."
+
+msgid "Accepts Markdown and HTML."
+msgstr "Markdown eta HTML erabili daitezke."
+
+# view-page.tmpl 56
+msgid "Content"
+msgstr "Edukia"
+
+# view-page.tmpl 63
+msgid "Save"
+msgstr "Gorde"
+
+# view-page.tmpl 71
+msgid "Saving..."
+msgstr "Gordetzen..."
+
+# view-page.tmpl 48
+msgid "We suggest a header (e.g. `# Welcome`), optionally followed by a small bit of text. Accepts Markdown and HTML."
+msgstr "Goiburu bat iradokitzen dugu (adib. ` # Ongi Etorri`), aukeran testu pixka batez jarraituz. Markdown eta HTML onartzen dira."
+
+# login.tmpl 11
+msgid "Log in to %s"
+msgstr "Hasi saioa %s gunean"
+
+# login.tmpl 32
+msgid "Logging in..."
+msgstr "Saioa hasten..."
+
+# login.tmpl 27
+msgid "_No account yet?_ %s to start a blog."
+msgstr "_Konturik ez oraindik?_ %s blog bat hasteko."
+
+msgid "Incorrect password."
+msgstr "Pasahitz okerra."
+
+msgid "This user never set a password. Perhaps try logging in via OAuth?"
+msgstr "Erabiltzaile honek ez du pasahitzik ezarririk. Beharbada OAuth bidez saiatu?"
+
+msgid "This user never added a password or email address. Please contact us for help."
+msgstr "Erabiltzaile honek ez du inoiz pasahitz edo emailik gehitu. Jarri gurekin harremanetan laguntza jasotzeko."
+
+msgid "You're doing that too much."
+msgstr "Gehiegitan ari zara hori egiten."
+
+msgid "Parameter `alias` required."
+msgstr "Sartu erabiltzaile izena."
+
+msgid "A username is required."
+msgstr "Sartu erabiltzaile izena."
+
+msgid "Parameter `pass` required."
+msgstr "Sartu ezazu pasahitza."
+
+msgid "A password is required."
+msgstr "Pasahitza beharrezkoa da."
+
+msgid "Need a collection `alias` to read."
+msgstr "Bilduma `ezizen` bat behar da irakurtzeko."
+
+msgid "Please supply a password."
+msgstr "Mesedez sartu pasahitz bat."
+
+msgid "Something went very wrong. The humans have been alerted."
+msgstr "Zeozer oso gaizki atera da. Gizakiak jakinaren gain jarriko dira."
+
+msgid "Logging out failed. Try clearing cookies for this site, instead."
+msgstr "Irtetzeak huts egin du. Horren ordez, saia zaitez cookieak garbitzen."
+
+msgid "your-username"
+msgstr "zure-erabiltzaile-izena"
+
+msgid "optional"
+msgstr "hautazkoa"
+
+msgid "Create blog"
+msgstr "Sortu bloga"
+
+# signup-oauth.tmpl 59
+msgid "Finish creating account"
+msgstr "Amaitu kontua sortzen"
+
+# signup-oauth.tmpl 79
+msgid "Display Name"
+msgstr "Bistaratze izena"
+
+# oauth.tmpl 26
+msgid "or"
+msgstr "edo"
+
+# oauth.tmpl 9,13,17,20
+msgid "Sign in with **%s**"
+msgstr "Hasi saioa **%s**-ekin"
+
+# landing.tmpl 77
+msgid "Learn more..."
+msgstr "Ikasi gehiago..."
+
+# landing.tmpl 114
+msgid "Registration is currently closed."
+msgstr "Izen-ematea itxita dago une honetan."
+
+# landing.tmpl 115
+msgid "another instance"
+msgstr "beste instantzia"
+
+# landing.tmpl 115
+msgid "You can always sign up on %s."
+msgstr "Beti hasi ahal izango saioa %s batean."
+
+msgid "# Start your blog"
+msgstr "# Hasi zure bloga"
+
+msgid "# Start your blog in the fediverse"
+msgstr "# Hasi zure bloga fedibertsoan"
+
+msgid ""
+"## Join the Fediverse\n"
+"\n"
+"The fediverse is a large network of platforms that all speak a common language. Imagine if you could reply to _Instagram_ posts from _Twitter_, or interact with your favorite _Medium_ blogs from _Facebook_ -- federated alternatives like %s, %s, and "
+"WriteFreely enable you to do these types of things.\n"
+"\n"
+msgstr ""
+"## Batu fedibertsora\n"
+"\n"
+"Fedibertsoa plataforma desberdinek osatzen duten sare zabal bat da, non guztiek hizkuntza bera erabiltzen duten. Imajina ezazu _Twitter_-etik _Instagram_-eko sarrera bat erantzuteko aukera izango bazenu, edo _Facebook_-etik _Medium_ blog plataforman "
+"jardutekoa. %s, %s eta WriteFreely bezalako alternatibek horrelako gauzak egitea ahalbidetzen dute.\n"
+"\n"
+
+msgid ""
+"## Write More Socially\n"
+"\n"
+"WriteFreely can communicate with other federated platforms like _Mastodon_, so people can follow your blogs, bookmark their favorite posts, and boost them to their followers. Sign up above to create a blog and join the fediverse."
+msgstr ""
+"## Idatzi sozialkiago\n"
+"\n"
+"WriteFreely _Mastodon_ bezalako beste edozein federatutako plataformarekin komunika daiteke, beraz jendeak zure bloga jarraitu ahal izango du, gogoko sarreren laster-markak egin, eta jarraitzaileekin elkarbanatu. Eman izena blog bat sortzeko eta batu "
+"fedibertsora."
+
+msgid "About %s"
+msgstr "%s-i buruz"
+
+msgid "_%s_ is a place for you to write and publish, powered by %s."
+msgstr "_%s_ idatzi eta argitaratzeko gune bat da, %s erabiliz."
+
+msgid "_%s_ is an interconnected place for you to write and publish, powered by %s."
+msgstr "_%s_ idatzi eta argitaratzeko gune bat da, %s erabiliz."
+
+msgid "article"
+msgid_plural "articles"
+msgstr[0] "artikulu"
+msgstr[1] "artikuluak"
+
+msgid "_%s_ is home to **%d** %s across **%d** %s."
+msgstr "_%s_ guneak **%d** %s ditu, eta **%d** %s."
+
+msgid "About WriteFreely"
+msgstr "WriteFreely-ri buruz"
+
+msgid "%s is a self-hosted, decentralized blogging platform for publishing beautiful, simple blogs."
+msgstr "%s blog eder eta sinpleak argitaratzeko norberak ostata dezakeen eta deszentralizaturikoa den blogintza plataforma bat da."
+
+msgid "It lets you publish a single blog, or host a community of writers who can create multiple blogs under one account. You can also enable federation, which allows people in the fediverse to follow your blog, bookmark your posts, and share them with others."
+msgstr ""
+"Blog bakar bat argitaratzeko aukera eskaintzen du, edo kontu bakarrean hainbat blog sor ditzakeen idazle komunitate bat ostatatzekoa. Federazioa ere gaitu daiteke, horrela, bertako pertsonek blogak jarraitu, posten laster-markak egin, eta besteekin partekatu "
+"ahal izango dituzte."
+
+msgid "Start an instance"
+msgstr "Hasi instantzia bat"
+
+msgid "Privacy Policy"
+msgstr "Pribatutasun Politika"
+
+msgid "Last updated"
+msgstr "Azken eguneraketa"
+
+msgid "Read the latest posts form %s."
+msgstr "Irakurri %s-en argitaratutako azken sarrerak."
+
+# : pages.go:98
+msgid ""
+"%s, the software that powers this site, is built to enforce your right to privacy by default.\n"
+"\n"
+"It retains as little data about you as possible, not even requiring an email address to sign up. However, if you _do_ give us your email address, it is stored encrypted in our database.\n"
+"\n"
+"We salt and hash your account's password.We store log files, or data about what happens on our servers. We also use cookies to keep you logged in to your account.\n"
+"\n"
+"Beyond this, it's important that you trust whoever runs %s. Software can only do so much to protect you -- your level of privacy protections will ultimately fall on the humans that run this particular service."
+msgstr ""
+"Gune hau ahalbidetzen duen softwareak, hau da, %s-k zure pribatutasun eskubidea bermatzea lehenesten du.\n"
+"\n"
+"Instantzia honetan zuri buruzko ahalik eta datu gutxien gordetzen da, erregistratzeko helbide elektronikorik ere ez da behar, baina ematen badiguzu ere, enkriptaturik gordeko da gure datu-basean. Zure pasahitza berriz salt eta hash bidez babesten da.\n"
+"\n"
+"Log fitxategiak ere gordetzen ditugu, gure zerbitzarietan gertatzen dena, alegia. Zure kontuan saioa hasita izan dezazun cookieak ere erabiltzen ditugu.\n"
+"\n"
+"Horrez gain, garrantzitsua da %s kudeatzen ari dena zure konfidantzazko norbait izatea. Softwareak asko egin dezake zu babesteko, baina zure pribatutasunaren babes-maila, azken batean, zerbitzu hau kudeatzen duten pertsonena da."
+
+# static/js/postactions.js
+msgid "Unpublished post"
+msgstr "Argitaratu gabeko posta"
+
+msgid "Moved to %s"
+msgstr "%s-(e)ra mugitua"
+
+msgid "move to"
+msgstr "eraman"
+
+msgid "moving to %s..."
+msgstr "%s-(e)ra mugitzen..."
+
+msgid "unable to move"
+msgstr "ezinezkoa mugitzea"
+
+msgid "View on %s"
+msgstr "Ikusi %s-(e)n"
+
+# classic.tmpl 64
+# pad.tmpl 59
+# bare.tmpl 30
+msgid "NOTE"
+msgstr "OHARRA"
+
+# classic.tmpl 64
+# pad.tmpl 59
+# bare.tmpl 30
+msgid "for now, you'll need Javascript enabled to post."
+msgstr "oraingoz, Javascript gaiturik behar duzu postak idazteko."
+
+# classic.tmpl 158
+# pad.tmpl 174
+msgid "Your account is silenced, so you can't publish or update posts."
+msgstr "Zure kontua isilarazi egin da, beraz ezin duzu postik argitaratu edo eguneratu."
+
+# classic.tmpl 257
+# pad.tmpl 278
+msgid "Failed to post. Please try again."
+msgstr "Huts argitaratzerakoan. Saia zaitez berriro."
+
+# classic.tmpl 163
+# pad.tmpl 179
+# bare.tmpl 99
+# errors.go
+msgid "You don't have permission to update this post."
+msgstr "Ez duzu baimenik post hau eguneratzeko."
+
+# pad.tmpl 16
+msgid "Write..."
+msgstr "Idatzi..."
+
+# classic.tmpl 34
+# pad.tmpl 29
+msgid "Publish to..."
+msgstr "Argitaratu..."
+
+# classic.tmpl 55
+# pad.tmpl 50
+msgid "Font"
+msgstr "Letra-tipoa"
+
+# read.tmpl 105
+msgid "from"
+msgstr "from"
+
+# read.tmpl 105
+msgid "Anonymous"
+msgstr "Anonimoa"
+
+# read.tmpl 120
+msgid "Older"
+msgstr "Zaharragoa"
+
+# read.tmpl 121
+msgid "Newer"
+msgstr "Berriagoa"
+
+# password-collection.tmpl 31
+msgid "Menu"
+msgstr "Menu"
+
+# password-collection.tmpl 51
+msgid "This blog requires a password."
+msgstr "Blog honek pasahitza behar du."
+
+# 404-general.tmpl 1
+msgid "Page not found"
+msgstr "Page not found"
+
+# 404-general.tmpl 4
+msgid "This page is missing."
+msgstr "Orri hori falta da."
+
+# 404-general.tmpl 5
+msgid "Are you sure it was ever here?"
+msgstr "Ziur al zaude hemen dagoela?"
+
+# 404.tmpl 1,4
+msgid "Post not found"
+msgstr "Ez da aurkitu posta"
+
+# 404.tmpl
+msgid "Why not share a thought of your own?"
+msgstr "Zergatik ez partekatu norberaren pentsamenduak?"
+
+# 404.tmpl
+msgid "Start a blog"
+msgstr "Hasi blog bat"
+
+# 404.tmpl
+msgid "%s and spread your ideas on **%s**, %s."
+msgstr "%s eta adierazi zure ideiak **%s** gunean, %s."
+
+# 404.tmpl
+msgid "a simple blogging community"
+msgstr "blogintza komunitate sinplea"
+
+# 404.tmpl
+msgid "a simple, federated blogging community"
+msgstr ",federaturiko blogintza komunitate sinplea"
+
+# 410.tmpl 1
+# 410.tmpl 4
+msgid "Post was unpublished by the author."
+msgstr "Egileak posta ezabatu du."
+
+# 410.tmpl 5
+msgid "It might be back some day."
+msgstr "Agian itzuliko da egunen batean."
+
+# errors.go
+msgid "Expected valid form data."
+msgstr "Baliozko datuak espero ziren galdetegian."
+
+msgid "Expected valid JSON object."
+msgstr "Baliozko JSON objetua espero zen."
+
+msgid "Expected valid JSON array."
+msgstr "Baliozko JSON matrizea espero zen."
+
+msgid "Invalid access token."
+msgstr "Baliogabeko sarbide token-a."
+
+msgid "Authorization token required."
+msgstr "Baimen tokena beharrezkoa da."
+
+msgid "Not logged in."
+msgstr "Saioa hasi gabe."
+
+msgid "You don't have permission to add to this collection."
+msgstr "Ez duzu baimenik bilduma honetara gehitzeko."
+
+msgid "Invalid editing credentials."
+msgstr "Editatzeko kredentzial baliogabeak."
+
+msgid "You don't have permission to do that."
+msgstr "Ez duzu hori egiteko baimenik."
+
+msgid "Bad requested Content-Type."
+msgstr "Content-Type eskaera okerra."
+
+msgid "You don't have permission to access this collection."
+msgstr "Ez duzu baimenik bilduma honetara sartzeko."
+
+msgid "Supply something to publish."
+msgstr "Eskaini argitaratzeko zeozer."
+
+msgid "The humans messed something up. They've been notified."
+msgstr "Gizakiek zerbait izorratu dute. Abisatuta daude."
+
+msgid "Could not get cookie session."
+msgstr "Ezin da cookie saioa eskuratu."
+
+msgid "Service temporarily unavailable due to high load."
+msgstr "Zerbitzua aldi baterako ez dago erabilgarri karga handia dela eta."
+
+msgid "Collection doesn't exist."
+msgstr "Bilduma ez da existitzen."
+
+msgid "This blog was unpublished."
+msgstr "Blog hau argitaratu gabe dago."
+
+msgid "Collection page doesn't exist."
+msgstr "Bildumaren orrialdea ez da existitzen."
+
+msgid "Post not found."
+msgstr "Ez da posta aurkitu."
+
+msgid "Post removed."
+msgstr "Posta ezabatua."
+
+msgid "Post unpublished by author."
+msgstr "Egileak argitaratu gabeko posta."
+
+msgid "We encountered an error getting the post. The humans have been alerted."
+msgstr "Errorea gertatu da posta eskuratzean. Gizakiak abisatuta daude."
+
+msgid "User doesn't exist."
+msgstr "Erabiltzailea ez da existitzen."
+
+msgid "Remote user not found."
+msgstr "Ez da urruneko erabiltzailea aurkitu."
+
+msgid "Please enter your username instead of your email address."
+msgstr "Idatzi zure erabiltzaile-izena e-posta helbidearen ordez."
+
+msgid "Account is silenced."
+msgstr "Kontua isilarazi egin da."
+
+msgid "Password authentication is disabled."
+msgstr "Pasahitz bidezko autentifikazioa desgaituta dago."
+
+msgid "Supply some properties to update."
+msgstr "Hornitu eguneatzeko zenbait propietate."

@@ -10,19 +10,19 @@
   }
 </style>
 <div class="snug content-container">
-	<h1>Invite to {{.SiteName}}</h1>
+	<h1>{{call .Tr "Invite to %s" (variables .SiteName)}}</h1>
 	{{ if .Expired }}
-		<p style="font-style: italic">This invite link is expired.</p>
+		<p style="font-style: italic">{{call .Tr "This invite link is expired."}}</p>
 	{{ else }}
-		<p>Copy the link below and send it to anyone that you want to join <em>{{ .SiteName }}</em>. You could paste it into an email, instant message, text message, or write it down on paper. Anyone who navigates to this special page will be able to create an account.</p>
+		<p>{{call .Tr "Copy the link below and send it to anyone that you want to join *%s*. You could paste it into an email, instant message, text message, or write it down on paper. Anyone who navigates to this special page will be able to create an account." true (variables .SiteName)}}</p>
 		<input class="copy-link" type="text" name="invite-url" value="{{$.Host}}/invite/{{.Invite.ID}}" onfocus="if (this.select) this.select(); else this.setSelectionRange(0, this.value.length);" readonly />
 		<p>
 			{{ if gt .Invite.MaxUses.Int64 0 }}
-				{{if eq .Invite.MaxUses.Int64 1}}Only <strong>one</strong> user{{else}}Up to <strong>{{.Invite.MaxUses.Int64}}</strong> users{{end}} can sign up with this link.
-				{{if gt .Invite.Uses 0}}So far, <strong>{{.Invite.Uses}}</strong> {{pluralize "person has" "people have" .Invite.Uses}} used it.{{end}}
-				{{if .Invite.Expires}}It expires on <strong>{{.Invite.ExpiresFriendly}}</strong>.{{end}}
+				{{if eq .Invite.MaxUses.Int64 1}}{{call .Tr "Only **one** user" true}}{{else}}{{call .Tr "Up to **%s** users" (variables .Invite.MaxUses.Int64)}}{{end}} {{call .Tr "can sign up with this link."}}
+				{{if gt .Invite.Uses 0}}{{$PLURAL:=false}}{{if gt .Invite.Uses 1}}{{$PLURAL = true}}{{end}}{{call .Tr "So far, **%d** %s used it." true (variables $PLURAL .Invite.Uses "person has")}}{{end}}
+				{{if .Invite.Expires}}{{call .Tr "It expires on **%s**." true (variables .Invite.ExpiresFriendly)}}{{end}}
 			{{ else }}
-				It can be used as many times as you like{{if .Invite.Expires}} before <strong>{{.Invite.ExpiresFriendly}}</strong>, when it expires{{end}}.
+				{{call .Tr "It can be used as many times as you like"}}{{if .Invite.Expires}} {{call .Tr "before **%s**, when it expires" true (variables .Invite.ExpiresFriendly)}}{{end}}.
 			{{ end }}
 		</p>
 	{{ end }}

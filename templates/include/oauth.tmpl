@@ -6,30 +6,24 @@
             {{ end }}
             {{ if .WriteAsEnabled }}
                 <a class="btn cta loginbtn" id="writeas-login" href="/oauth/write.as">
-                    <img src="/img/mark/writeas-white.png" />
-                    Sign in with <strong>Write.as</strong>
-                </a>
+                    <img src="/img/mark/writeas-white.png" />{{call .Tr "Sign in with **%s**" true (variables "Write.as")}}</a>
             {{ end }}
             {{ if .GitLabEnabled }}
                 <a class="btn cta loginbtn" id="gitlab-login" href="/oauth/gitlab">
-                    <img src="/img/mark/gitlab.png" />
-                    Sign in with <strong>{{.GitLabDisplayName}}</strong>
-                </a>
+                    <img src="/img/mark/gitlab.png" />{{call .Tr "Sign in with **%s**" true (variables .GitLabDisplayName)}}</a>
             {{ end }}
             {{ if .GiteaEnabled }}
-                <a class="btn cta loginbtn" id="gitea-login" href="/oauth/gitea">
-                    <img src="/img/mark/gitea.png" />
-                    Sign in with <strong>{{.GiteaDisplayName}}</strong>
-                </a>
+                <a class="btn cta loginbtn" id="gitea-login" href="/oauth/gitea">GitLabDisplayName
+                    <img src="/img/mark/gitea.png" />{{call .Tr "Sign in with **%s**" true (variables .GiteaDisplayName)}}</a>
             {{ end }}
             {{ if .GenericEnabled }}
-                <a class="btn cta loginbtn" id="generic-oauth-login" href="/oauth/generic">Sign in with <strong>{{.GenericDisplayName}}</strong></a>
+                <a class="btn cta loginbtn" id="generic-oauth-login" href="/oauth/generic">{{call .Tr "Sign in with **%s**" true (variables .GenericDisplayName)}}</a>
             {{ end }}
         </div>
 
         {{if not .DisablePasswordAuth}}
             <div class="or">
-                <p>or</p>
+                <p>{{call .Tr "or"}}</p>
                 <hr class="short" />
             </div>
         {{end}}

@@ -63,6 +63,9 @@ form dd {
 .or {
 	margin-bottom: 2.5em !important;
 }
+label{
+	text-transform: capitalize;
+}
 </style>
 {{end}}
 {{define "content"}}
@@ -71,7 +74,7 @@ form dd {
 <div class="row">
 	<div class="banner-container">
 		{{.Banner}}
-		<p><a href="{{if .Content}}#more{{else}}/about{{end}}">Learn more...</a></p>
+		<p><a href="{{if .Content}}#more{{else}}/about{{end}}">{{call .Tr "Learn more..."}}</a></p>
 	</div>
 
 	<div{{if not .OpenRegistration}} style="padding: 2em 0;"{{end}}>
@@ -86,30 +89,30 @@ form dd {
 			<form action="/auth/signup" method="POST" id="signup-form" onsubmit="return signup()">
 				<dl class="billing">
 					<label>
-						<dt>Username</dt>
+						<dt>{{call .Tr "Username"}}</dt>
 						<dd>
 							<input type="text" id="alias" name="alias" style="width: 100%; box-sizing: border-box;" tabindex="1" autofocus {{if .ForcedLanding}}disabled{{end}} />
-							{{if .Federation}}<p id="alias-site" class="demo">@<strong>your-username</strong>@{{.FriendlyHost}}</p>{{else}}<p id="alias-site" class="demo">{{.FriendlyHost}}/<strong>your-username</strong></p>{{end}}
+							{{if .Federation}}<p id="alias-site" class="demo">@<strong>{{call .Tr "your-username"}}</strong>@{{.FriendlyHost}}</p>{{else}}<p id="alias-site" class="demo">{{.FriendlyHost}}/<strong>{{call .Tr "your-username"}}</strong></p>{{end}}
 						</dd>
 					</label>
 					<label>
-						<dt>Password</dt>
+						<dt>{{call .Tr "password"}}</dt>
 						<dd><input type="password" id="password" name="pass" autocomplete="new-password" placeholder="" tabindex="2" style="width: 100%; box-sizing: border-box;" {{if .ForcedLanding}}disabled{{end}} /></dd>
 					</label>
 					<label>
-						<dt>Email (optional)</dt>
+						<dt>{{call .Tr "Email"}} ({{call .Tr "optional"}})</dt>
 						<dd><input type="email" name="email" id="email" style="letter-spacing: 1px; width: 100%; box-sizing: border-box;" placeholder="me@example.com" tabindex="3" {{if .ForcedLanding}}disabled{{end}} /></dd>
 					</label>
 					<dt>
-						<button id="btn-create" type="submit" style="margin-top: 0" {{if .ForcedLanding}}disabled{{end}}>Create blog</button>
+						<button id="btn-create" type="submit" style="margin-top: 0" {{if .ForcedLanding}}disabled{{end}}>{{call .Tr "Create blog"}}</button>
 					</dt>
 				</dl>
 			</form>
 		</div>
 		{{end}}
 		{{ else }}
-		<p style="font-size: 1.3em; margin: 1rem 0;">Registration is currently closed.</p>
-		<p>You can always sign up on <a href="https://writefreely.org/instances">another instance</a>.</p>
+		<p style="font-size: 1.3em; margin: 1rem 0;">{{call .Tr "Registration is currently closed."}}</p>
+		<p>{{call .Tr "You can always sign up on %s." true (variables "another instance;https://writefreely.org/instances")}}</p>
 		{{ end }}
 	</div>
 </div>
@@ -191,7 +194,7 @@ var doneTyping = function() {
 		http.send(JSON.stringify(params));
 	} else {
 		$aliasSite.className += ' demo';
-		$aliasSite.innerHTML = '{{ if .Federation }}@<strong>your-username</strong>@{{.FriendlyHost}}{{ else }}{{.FriendlyHost}}/<strong>your-username</strong>/{{ end }}';
+		$aliasSite.innerHTML = '{{ if .Federation }}@<strong>{{call .Tr "your-username"}}</strong>@{{.FriendlyHost}}{{ else }}{{.FriendlyHost}}/<strong>{{call .Tr "your-username"}}</strong>/{{ end }}';
 	}
 };
 $alias.on('keyup input', function() {
