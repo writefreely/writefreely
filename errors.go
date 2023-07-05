@@ -47,7 +47,8 @@ var (
 	ErrPostUnpublished        = impart.HTTPError{Status: http.StatusGone, Message: "Post unpublished by author."}
 	ErrPostFetchError         = impart.HTTPError{Status: http.StatusInternalServerError, Message: "We encountered an error getting the post. The humans have been alerted."}
 
-	ErrUserNotFound       = impart.HTTPError{http.StatusNotFound, "User doesn't exist."}
+	//ErrUserNotFound       = impart.HTTPError{http.StatusNotFound, "User doesn't exist."}
+	ErrUserNotFound       = impart.HTTPError{http.StatusNotFound, "L'utente non esiste, <a rel='me' href='https://livellosegreto.it/@log'>richiedi un invito per crearlo</a>.<br/> Se ne hai già uno, collegalo al tuo account LS da Account Settings, Linked Accounts.<br/><br/> User doesn't exist, <a rel='me' href='https://livellosegreto.it/@log'>request an invitation to create it.</a>.<br/> If you already have one, link it to your LS account from Account Settings, Linked Accounts."}
 	ErrRemoteUserNotFound = impart.HTTPError{http.StatusNotFound, "Remote user not found."}
 	ErrUserNotFoundEmail  = impart.HTTPError{http.StatusNotFound, "Please enter your username instead of your email address."}
 
