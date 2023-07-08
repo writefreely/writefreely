@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2019, 2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -12,7 +12,7 @@ package writefreely
 
 import (
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/key"
+	"github.com/writefreely/writefreely/key"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -26,6 +26,7 @@ var (
 	emailKeyPath      = filepath.Join(keysDir, "email.aes256")
 	cookieAuthKeyPath = filepath.Join(keysDir, "cookies_auth.aes256")
 	cookieKeyPath     = filepath.Join(keysDir, "cookies_enc.aes256")
+	csrfKeyPath       = filepath.Join(keysDir, "csrf.aes256")
 )
 
 // InitKeys loads encryption keys into memory via the given Apper interface
@@ -42,6 +43,7 @@ func initKeyPaths(app *App) {
 	emailKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, emailKeyPath)
 	cookieAuthKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, cookieAuthKeyPath)
 	cookieKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, cookieKeyPath)
+	csrfKeyPath = filepath.Join(app.cfg.Server.KeysParentDir, csrfKeyPath)
 }
 
 // generateKey generates a key at the given path used for the encryption of

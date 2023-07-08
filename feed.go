@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -15,9 +15,9 @@ import (
 	"net/http"
 	"time"
 
-	. "github.com/gorilla/feeds"
+	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
-	stripmd "github.com/writeas/go-strip-markdown"
+	stripmd "github.com/writeas/go-strip-markdown/v2"
 	"github.com/writeas/web-core/log"
 )
 
@@ -87,25 +87,29 @@ func ViewFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 		siteURL += "tag:" + tag
 	}
 
-	feed := &Feed{
+	feed := &feeds.Feed{
 		Title:       collectionTitle,
-		Link:        &Link{Href: siteURL},
+		Link:        &feeds.Link{Href: siteURL},
 		Description: coll.Description,
-		Author:      &Author{author, ""},
+		Author:      &feeds.Author{author, ""},
 		Created:     time.Now(),
 	}
 
 	var title, permalink string
 	for _, p := range *coll.Posts {
+		// Add necessary path back to the web browser for Web Monetization if needed
+		p.Collection = coll.CollectionObj // augmentReadingDestination requires a populated Collection field
+		p.augmentReadingDestination()
+		// Create the item for the feed
 		title = p.PlainDisplayTitle()
 		permalink = fmt.Sprintf("%s%s", baseUrl, p.Slug.String)
-		feed.Items = append(feed.Items, &Item{
+		feed.Items = append(feed.Items, &feeds.Item{
 			Id:          fmt.Sprintf("%s%s", basePermalinkUrl, p.Slug.String),
 			Title:       title,
-			Link:        &Link{Href: permalink},
+			Link:        &feeds.Link{Href: permalink},
 			Description: "<![CDATA[" + stripmd.Strip(p.Content) + "]]>",
-			Content:     applyMarkdown([]byte(p.Content), "", app.cfg),
-			Author:      &Author{author, ""},
+			Content:     string(p.HTMLContent),
+			Author:      &feeds.Author{author, ""},
 			Created:     p.Created,
 			Updated:     p.Updated,
 		})

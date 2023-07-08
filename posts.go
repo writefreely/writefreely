@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -26,7 +26,7 @@ import (
 	"github.com/guregu/null/zero"
 	"github.com/kylemcc/twitter-text-go/extract"
 	"github.com/microcosm-cc/bluemonday"
-	stripmd "github.com/writeas/go-strip-markdown"
+	stripmd "github.com/writeas/go-strip-markdown/v2"
 	"github.com/writeas/impart"
 	"github.com/writeas/monday"
 	"github.com/writeas/slug"
@@ -36,8 +36,8 @@ import (
 	"github.com/writeas/web-core/i18n"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/tags"
-	"github.com/writeas/writefreely/page"
-	"github.com/writeas/writefreely/parse"
+	"github.com/writefreely/writefreely/page"
+	"github.com/writefreely/writefreely/parse"
 )
 
 const (
@@ -48,6 +48,8 @@ const (
 	postIDLen     = 10
 
 	postMetaDateFormat = "2006-01-02 15:04:05"
+
+	shortCodePaid = "<!--paid-->"
 )
 
 type (
@@ -109,6 +111,7 @@ type (
 		HTMLExcerpt    template.HTML `db:"content" json:"-"`
 		Tags           []string      `json:"tags"`
 		Images         []string      `json:"images,omitempty"`
+		IsPaid         bool          `json:"paid"`
 
 		OwnerName string `json:"owner,omitempty"`
 	}
@@ -125,7 +128,25 @@ type (
 		Views       int64          `json:"views"`
 		Owner       *PublicUser    `json:"-"`
 		IsOwner     bool           `json:"-"`
+		URL         string         `json:"url,omitempty"`
 		Collection  *CollectionObj `json:"collection,omitempty"`
+	}
+
+	CollectionPostPage struct {
+		*PublicPost
+		page.StaticPage
+		IsOwner        bool
+		IsPinned       bool
+		IsCustomDomain bool
+		Monetization   string
+		PinnedPosts    *[]PublicPost
+		IsFound        bool
+		IsAdmin        bool
+		CanInvite      bool
+		Silenced       bool
+
+		// Helper field for Chorus mode
+		CollAlias string
 	}
 
 	RawPost struct {
@@ -213,7 +234,7 @@ func (p Post) Summary() string {
 	}
 	p.Content = stripHTMLWithoutEscaping(p.Content)
 	// and Markdown
-	p.Content = stripmd.Strip(p.Content)
+	p.Content = stripmd.StripOptions(p.Content, stripmd.Options{SkipImages: true})
 
 	title := p.Title.String
 	var desc string
@@ -266,6 +287,14 @@ func (p *Post) HasTitleLink() bool {
 	}
 	hasLink, _ := regexp.MatchString(`([^!]+|^)\[.+\]\(.+\)`, p.Title.String)
 	return hasLink
+}
+
+func (c CollectionPostPage) DisplayMonetization() string {
+	if c.Collection == nil {
+		log.Info("CollectionPostPage.DisplayMonetization: c.Collection is nil")
+		return ""
+	}
+	return displayMonetization(c.Monetization, c.Collection.Alias)
 }
 
 func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
@@ -396,7 +425,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// Check if post has been unpublished
-	if content == "" {
+	if title == "" && content == "" {
 		gone = true
 
 		if isJSON {
@@ -545,9 +574,14 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 			t := ""
 			p.Title = &t
 		}
-		if strings.TrimSpace(*(p.Content)) == "" {
+		if strings.TrimSpace(*(p.Title)) == "" && (p.Content == nil || strings.TrimSpace(*(p.Content)) == "") {
 			return ErrNoPublishableContent
 		}
+		if p.Content == nil {
+			c := ""
+			p.Content = &c
+		}
+
 	} else {
 		post := r.FormValue("body")
 		appearance := r.FormValue("font")
@@ -612,6 +646,7 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	newPost.extractData()
 	newPost.OwnerName = username
+	newPost.URL = newPost.CanonicalURL(app.cfg.App.Host)
 
 	// Write success now
 	response := impart.WriteSuccess(w, newPost, http.StatusCreated)
@@ -1124,14 +1159,19 @@ func (p *Post) processPost() PublicPost {
 
 func (p *PublicPost) CanonicalURL(hostName string) string {
 	if p.Collection == nil || p.Collection.Alias == "" {
-		return hostName + "/" + p.ID
+		return hostName + "/" + p.ID + ".md"
 	}
 	return p.Collection.CanonicalURL() + p.Slug.String
 }
 
 func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 	cfg := app.cfg
-	o := activitystreams.NewArticleObject()
+	var o *activitystreams.Object
+	if cfg.App.NotesOnly || strings.Index(p.Content, "\n\n") == -1 {
+		o = activitystreams.NewNoteObject()
+	} else {
+		o = activitystreams.NewArticleObject()
+	}
 	o.ID = p.Collection.FederatedAPIBase() + "api/posts/" + p.ID
 	o.Published = p.Created
 	o.URL = p.CanonicalURL(cfg.App.Host)
@@ -1142,7 +1182,8 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 	o.Name = p.DisplayTitle()
 	p.augmentContent()
 	if p.HTMLContent == template.HTML("") {
-		p.formatContent(cfg, false)
+		p.formatContent(cfg, false, false)
+		p.augmentReadingDestination()
 	}
 	o.Content = string(p.HTMLContent)
 	if p.Language.Valid {
@@ -1169,6 +1210,11 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 				HRef: tagBaseURL + t,
 				Name: "#" + t,
 			})
+		}
+	}
+	if len(p.Images) > 0 {
+		for _, i := range p.Images {
+			o.Attachment = append(o.Attachment, activitystreams.NewImageAttachment(i))
 		}
 	}
 	// Find mentioned users
@@ -1201,6 +1247,8 @@ func getSlug(title, lang string) string {
 
 func getSlugFromPost(title, body, lang string) string {
 	if title == "" {
+		// Remove Markdown, so e.g. link URLs and image alt text don't make it into the slug
+		body = strings.TrimSpace(stripmd.StripOptions(body, stripmd.Options{SkipImages: true}))
 		title = postTitle(body, body)
 	}
 	title = parse.PostLede(title, false)
@@ -1248,10 +1296,22 @@ func getRawPost(app *App, friendlyID string) *RawPost {
 	case err == sql.ErrNoRows:
 		return &RawPost{Content: "", Found: false, Gone: false}
 	case err != nil:
+		log.Error("Unable to fetch getRawPost: %s", err)
 		return &RawPost{Content: "", Found: true, Gone: false}
 	}
 
-	return &RawPost{Title: title, Content: content, Font: font, Created: created, Updated: updated, IsRTL: isRTL, Language: lang, OwnerID: ownerID.Int64, Found: true, Gone: content == ""}
+	return &RawPost{
+		Title:    title,
+		Content:  content,
+		Font:     font,
+		Created:  created,
+		Updated:  updated,
+		IsRTL:    isRTL,
+		Language: lang,
+		OwnerID:  ownerID.Int64,
+		Found:    true,
+		Gone:     content == "" && title == "",
+	}
 
 }
 
@@ -1274,6 +1334,7 @@ func getRawCollectionPost(app *App, slug, collAlias string) *RawPost {
 	case err == sql.ErrNoRows:
 		return &RawPost{Content: "", Found: false, Gone: false}
 	case err != nil:
+		log.Error("Unable to fetch getRawCollectionPost: %s", err)
 		return &RawPost{Content: "", Found: true, Gone: false}
 	}
 
@@ -1289,7 +1350,7 @@ func getRawCollectionPost(app *App, slug, collAlias string) *RawPost {
 		Language: lang,
 		OwnerID:  ownerID.Int64,
 		Found:    true,
-		Gone:     content == "",
+		Gone:     content == "" && title == "",
 		Views:    views,
 	}
 }
@@ -1402,7 +1463,7 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 			if slug == "feed" {
 				// User tried to access blog feed without a trailing slash, and
 				// there's no post with a slug "feed"
-				return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "/feed/"}
+				return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "feed/"}
 			}
 
 			po := &Post{
@@ -1420,13 +1481,17 @@ Are you sure it was ever here?`,
 			return err
 		}
 	}
-	p.IsOwner = owner != nil && p.OwnerID.Valid && owner.ID == p.OwnerID.Int64
+
+	// Check if the authenticated user is the post owner
+	p.IsOwner = u != nil && u.ID == p.OwnerID.Int64
 	p.Collection = coll
 	p.IsTopLevel = app.cfg.App.SingleUser
 
-	if !p.IsOwner && silenced {
+	// Only allow a post owner or admin to view a post for silenced collections
+	if silenced && !p.IsOwner && (u == nil || !u.IsAdmin()) {
 		return ErrPostNotFound
 	}
+
 	// Check if post has been unpublished
 	if p.Content == "" && p.Title.String == "" {
 		return impart.HTTPError{http.StatusGone, "Post was unpublished."}
@@ -1468,26 +1533,15 @@ Are you sure it was ever here?`,
 		p.extractData()
 		p.Content = strings.Replace(p.Content, "<!--more-->", "", 1)
 		// TODO: move this to function
-		p.formatContent(app.cfg, cr.isCollOwner)
-		tp := struct {
-			*PublicPost
-			page.StaticPage
-			IsOwner        bool
-			IsPinned       bool
-			IsCustomDomain bool
-			Monetization   string
-			PinnedPosts    *[]PublicPost
-			IsFound        bool
-			IsAdmin        bool
-			CanInvite      bool
-			Silenced       bool
-		}{
+		p.formatContent(app.cfg, cr.isCollOwner, true)
+		tp := CollectionPostPage{
 			PublicPost:     p,
 			StaticPage:     pageForReq(app, r),
 			IsOwner:        cr.isCollOwner,
 			IsCustomDomain: cr.isCustomDomain,
 			IsFound:        postFound,
 			Silenced:       silenced,
+			CollAlias:      c.Alias,
 		}
 		tp.IsAdmin = u != nil && u.IsAdmin()
 		tp.CanInvite = canUserInvite(app.cfg, tp.IsAdmin)
@@ -1503,7 +1557,7 @@ Are you sure it was ever here?`,
 			postTmpl = "chorus-collection-post"
 		}
 		if err := templates[postTmpl].ExecuteTemplate(w, "post", tp); err != nil {
-			log.Error("Error in collection-post template: %v", err)
+			log.Error("Error in %s template: %v", postTmpl, err)
 		}
 	}
 

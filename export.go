@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2019 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -110,7 +110,7 @@ func compileFullExport(app *App, u *User) *ExportUser {
 		log.Error("unable to fetch collections: %v", err)
 	}
 
-	posts, err := app.db.GetAnonymousPosts(u)
+	posts, err := app.db.GetAnonymousPosts(u, 0)
 	if err != nil {
 		log.Error("unable to fetch anon posts: %v", err)
 	}

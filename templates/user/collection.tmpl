@@ -1,7 +1,3 @@
-{{define "upgrade"}}
-<p><a href="/me/plan?to=/me/c/{{.Alias}}">Upgrade</a> for <span>$40 / year</span> to edit.</p>
-{{end}}
-
 {{define "collection"}}
 {{template "header" .}}
 
@@ -11,6 +7,12 @@ textarea.section.norm {
 	min-height: 10em;
 	max-height: 20em;
 	resize: vertical;
+}
+@media (pointer: coarse) {
+	.codable {
+		font-size: 0.75em !important;
+		height: 17em !important;
+	}
 }
 </style>
 
@@ -35,7 +37,7 @@ textarea.section.norm {
 <div id="collection-options">
 	<div style="text-align:center">
 		<h1><input type="text" name="title" id="title" value="{{.DisplayTitle}}" placeholder="Title" /></h1>
-		<p><input type="text" name="description" id="description" value="{{.Description}}" placeholder="Description" /></p>
+		<p><input type="text" name="description" id="description" value="{{.Description}}" placeholder="Description" maxlength="160" /></p>
 	</div>
 
 	<div class="option">
@@ -151,12 +153,12 @@ textarea.section.norm {
 		</div>
 	</div>
 
-	{{if .Monetization}}
+	{{if .UserPage.StaticPage.AppCfg.Monetization}}
 	<div class="option">
 		<h2>Web Monetization</h2>
 		<div class="section">
 			<p class="explain">Web Monetization enables you to receive micropayments from readers that have a <a href="https://coil.com">Coil membership</a>. Add your payment pointer to enable Web Monetization on your blog.</p>
-			<input type="text" name="monetization_pointer" style="width:100%" value="{{.MonetizationPointer}}" placeholder="$wallet.example.com/alice" />
+			<input type="text" name="monetization_pointer" style="width:100%" value="{{.Collection.Monetization}}" placeholder="$wallet.example.com/alice" />
 		</div>
 	</div>
 	{{end}}
@@ -187,25 +189,10 @@ textarea.section.norm {
 		</div>
 
 <script src="/js/h.js"></script>
+<script src="/js/modals.js"></script>
 <script src="/js/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
-// Begin shared modal code
-function showModal(id) {
-	document.getElementById('overlay').style.display = 'block';
-	document.getElementById('modal-'+id).style.display = 'block';
-}
-
-var closeModals = function(e) {
-	e.preventDefault();
-	document.getElementById('overlay').style.display = 'none';
-	var modals = document.querySelectorAll('.modal');
-	for (var i=0; i<modals.length; i++) {
-		modals[i].style.display = 'none'; 
-	}
-};
-H.getEl('overlay').on('click', closeModals);
 H.getEl('cancel-delete').on('click', closeModals);
-// end
 var deleteBlog = function(e) {
 	if (document.getElementById('confirm-text').value != '{{.Alias}}') {
 		document.getElementById('delete-errors').innerHTML = '<li class="urgent">Enter <strong>{{.Alias}}</strong> in the box below.</li>';
@@ -258,18 +245,21 @@ var $customDomain = document.getElementById('domain-alias');
 var $customHandleEnv = document.getElementById('custom-handle-env');
 var $normalHandleEnv = document.getElementById('normal-handle-env');
 
-var opt = {
-	showLineNumbers: false,
-	showPrintMargin: 0,
-	minLines: 10,
-	maxLines: 40,
-};
-var theme = "ace/theme/chrome";
-var cssEditor = ace.edit("css-editor");
-cssEditor.setTheme(theme);
-cssEditor.session.setMode("ace/mode/css");
-cssEditor.setOptions(opt);
-cssEditor.resize(true);
+if (matchMedia('(pointer:fine)').matches) {
+	// Only initialize Ace editor on devices with a mouse
+	var opt = {
+		showLineNumbers: false,
+		showPrintMargin: 0,
+		minLines: 10,
+		maxLines: 40,
+	};
+	var theme = "ace/theme/chrome";
+	var cssEditor = ace.edit("css-editor");
+	cssEditor.setTheme(theme);
+	cssEditor.session.setMode("ace/mode/css");
+	cssEditor.setOptions(opt);
+	cssEditor.resize(true);
+}
 </script>
 
 {{template "footer" .}}

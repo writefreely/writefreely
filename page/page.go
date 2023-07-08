@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019, 2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -12,7 +12,7 @@
 package page
 
 import (
-	"github.com/writeas/writefreely/config"
+	"github.com/writefreely/writefreely/config"
 	"strings"
 )
 
@@ -21,6 +21,7 @@ type StaticPage struct {
 	config.AppCfg
 	Version   string
 	HeaderNav bool
+	CustomCSS bool
 
 	// Request values
 	Path          string

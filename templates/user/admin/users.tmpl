@@ -4,6 +4,12 @@
 <div class="snug content-container">
 	{{template "admin-header" .}}
 
+	<!-- TODO: if other use for flashes use patern like account_import.go -->
+	{{if .Flashes}}
+		<p class="alert success">
+		{{range .Flashes}}{{.}}{{end}}
+		</p>
+	{{end}}
 	<div class="row admin-actions" style="justify-content: space-between;">
 		<span style="font-style: italic; font-size: 1.2em">{{.TotalUsers}} {{pluralize "user" "users" .TotalUsers}}</span>
 		<a class="btn cta" href="/me/invites">+ Invite people</a>

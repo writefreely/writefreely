@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -21,11 +21,11 @@ import (
 	"time"
 
 	"github.com/gorilla/sessions"
-	"github.com/prologic/go-gopher"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/go-gopher"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/page"
 )
 
 // UserLevel represents the required user level for accessing an endpoint
@@ -155,8 +155,14 @@ func (h *Handler) User(f userHandlerFunc) http.HandlerFunc {
 			err := f(h.app.App(), u, w, r)
 			if err == nil {
 				status = http.StatusOK
-			} else if err, ok := err.(impart.HTTPError); ok {
-				status = err.Status
+			} else if impErr, ok := err.(impart.HTTPError); ok {
+				status = impErr.Status
+				if impErr == ErrUserNotFound {
+					log.Info("Logged-in user not found. Logging out.")
+					sendRedirect(w, http.StatusFound, "/me/logout?to="+h.app.App().cfg.App.LandingPath())
+					// Reset err so handleHTTPError does nothing
+					err = nil
+				}
 			} else {
 				status = http.StatusInternalServerError
 			}
@@ -285,6 +291,26 @@ func webAuth(app *App, r *http.Request) (*User, error) {
 // This provides user-friendly HTML pages and actions that work in the browser.
 func (h *Handler) UserAPI(f userHandlerFunc) http.HandlerFunc {
 	return h.UserAll(false, f, apiAuth)
+}
+
+// UserWebAPI handles endpoints that accept a user authorized either via the web (cookies) or an Authorization header.
+func (h *Handler) UserWebAPI(f userHandlerFunc) http.HandlerFunc {
+	return h.UserAll(false, f, func(app *App, r *http.Request) (*User, error) {
+		// Authorize user via cookies
+		u := getUserSession(app, r)
+		if u != nil {
+			return u, nil
+		}
+
+		// Fall back to access token, since user isn't logged in via web
+		var err error
+		u, err = apiAuth(app, r)
+		if err != nil {
+			return nil, err
+		}
+
+		return u, nil
+	})
 }
 
 func (h *Handler) UserAll(web bool, f userHandlerFunc, a authFunc) http.HandlerFunc {
@@ -554,6 +580,38 @@ func (h *Handler) All(f handlerFunc) http.HandlerFunc {
 	}
 }
 
+func (h *Handler) PlainTextAPI(f handlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		h.handleTextError(w, r, func() error {
+			// TODO: return correct "success" status
+			status := 200
+			start := time.Now()
+
+			defer func() {
+				if e := recover(); e != nil {
+					log.Error("%s:\n%s", e, debug.Stack())
+					status = http.StatusInternalServerError
+					w.WriteHeader(status)
+					fmt.Fprintf(w, "Something didn't work quite right. The robots have alerted the humans.")
+				}
+
+				log.Info(fmt.Sprintf("\"%s %s\" %d %s \"%s\" \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent(), r.Host))
+			}()
+
+			err := f(h.app.App(), w, r)
+			if err != nil {
+				if err, ok := err.(impart.HTTPError); ok {
+					status = err.Status
+				} else {
+					status = http.StatusInternalServerError
+				}
+			}
+
+			return err
+		}())
+	}
+}
+
 func (h *Handler) OAuth(f handlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		h.handleOAuthError(w, r, func() error {
@@ -602,7 +660,7 @@ func (h *Handler) AllReader(f handlerFunc) http.HandlerFunc {
 			}()
 
 			// Allow any origin, as public endpoints are handled in here
-			w.Header().Set("Access-Control-Allow-Origin", "*");
+			w.Header().Set("Access-Control-Allow-Origin", "*")
 
 			if h.app.App().cfg.App.Private {
 				// This instance is private, so ensure it's being accessed by a valid user
@@ -820,6 +878,26 @@ func (h *Handler) handleError(w http.ResponseWriter, r *http.Request, err error)
 		return
 	}
 	h.errors.InternalServerError.ExecuteTemplate(w, "base", pageForReq(h.app.App(), r))
+}
+
+func (h *Handler) handleTextError(w http.ResponseWriter, r *http.Request, err error) {
+	if err == nil {
+		return
+	}
+
+	if err, ok := err.(impart.HTTPError); ok {
+		if err.Status >= 300 && err.Status < 400 {
+			sendRedirect(w, err.Status, err.Message)
+			return
+		}
+
+		w.WriteHeader(err.Status)
+		fmt.Fprintf(w, http.StatusText(err.Status))
+		return
+	}
+
+	w.WriteHeader(http.StatusInternalServerError)
+	fmt.Fprintf(w, "This is an unhelpful error message for a miscellaneous internal error.")
 }
 
 func (h *Handler) handleOAuthError(w http.ResponseWriter, r *http.Request, err error) {

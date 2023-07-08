@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 A Bunch Tell LLC.
+ * Copyright © 2019 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -12,6 +12,9 @@ package migrations
 
 func supportUserStatus(db *datastore) error {
 	t, err := db.Begin()
+	if err != nil {
+		return err
+	}
 
 	_, err = t.Exec(`ALTER TABLE users ADD COLUMN status ` + db.typeInt() + ` DEFAULT '0' NOT NULL`)
 	if err != nil {

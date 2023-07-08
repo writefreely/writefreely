@@ -5,6 +5,7 @@
 		<title>{{if .Editing}}Editing {{if .Post.Title}}{{.Post.Title}}{{else}}{{.Post.Id}}{{end}}{{else}}New Post{{end}} &mdash; {{.SiteName}}</title>
 		
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
+		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 		<meta name="google" value="notranslate">
@@ -105,15 +106,12 @@
 			$btnPublish.el.disabled = true;
 
 			var http = new XMLHttpRequest();
-			var lang = navigator.languages ? navigator.languages[0] : (navigator.language || navigator.userLanguage);
-			lang = lang.substring(0, 2);
 			var post = H.getTitleStrict(content);
 
 			var params = {
 				body: post.content,
 				title: post.title,
-				font: font,
-				lang: lang
+				font: font
 			};
 			{{ if .Post.Slug }}
 			var url = "/api/collections/{{.EditCollection.Alias}}/posts/{{.Post.Id}}";
@@ -124,6 +122,10 @@
 			}
 			params.token = token;
 			{{ else }}
+			var lang = navigator.languages ? navigator.languages[0] : (navigator.language || navigator.userLanguage);
+			lang = lang.substring(0, 2);
+			params.lang = lang;
+
 			var url = "/api/posts";
 			var postTarget = '{{if .Blogs}}{{$c := index .Blogs 0}}{{$c.Alias}}{{else}}anonymous{{end}}';
 			if (postTarget != 'anonymous') {

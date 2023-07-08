@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2022 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -24,15 +24,17 @@ import (
 	"unicode"
 
 	"github.com/gorilla/mux"
+	stripmd "github.com/writeas/go-strip-markdown/v2"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/activitystreams"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/bots"
 	"github.com/writeas/web-core/log"
-	waposts "github.com/writeas/web-core/posts"
-	"github.com/writeas/writefreely/author"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/page"
+	"github.com/writeas/web-core/posts"
+	"github.com/writefreely/writefreely/author"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/page"
+	"golang.org/x/net/idna"
 )
 
 type (
@@ -56,7 +58,7 @@ type (
 		PublicOwner bool           `datastore:"public_owner" json:"-"`
 		URL         string         `json:"url,omitempty"`
 
-		MonetizationPointer string `json:"monetization_pointer,omitempty"`
+		Monetization string `json:"monetization_pointer,omitempty"`
 
 		db       *datastore
 		hostName string
@@ -110,6 +112,8 @@ type (
 
 		// User-related fields
 		isCollOwner bool
+
+		isAuthorized bool
 	}
 )
 
@@ -180,6 +184,11 @@ func (c *Collection) NewFormat() *CollectionFormat {
 	return cf
 }
 
+func (c *Collection) IsInstanceColl() bool {
+	ur, _ := url.Parse(c.hostName)
+	return c.Alias == ur.Host
+}
+
 func (c *Collection) IsUnlisted() bool {
 	return c.Visibility == 0
 }
@@ -229,13 +238,17 @@ func (c *Collection) DisplayCanonicalURL() string {
 	if p == "/" {
 		p = ""
 	}
-	return u.Hostname() + p
+	d := u.Hostname()
+	d, _ = idna.ToUnicode(d)
+	return d + p
 }
 
+// RedirectingCanonicalURL returns the fully-qualified canonical URL for the Collection, with a trailing slash. The
+// hostName field needs to be populated for this to work correctly.
 func (c *Collection) RedirectingCanonicalURL(isRedir bool) string {
 	if c.hostName == "" {
 		// If this is true, the human programmers screwed up. So ask for a bug report and fail, fail, fail
-		log.Error("[PROGRAMMER ERROR] WARNING: Collection.hostName is empty! Federation and many other things will fail! If you're seeing this in the wild, please report this bug and let us know what you were doing just before this: https://github.com/writeas/writefreely/issues/new?template=bug_report.md")
+		log.Error("[PROGRAMMER ERROR] WARNING: Collection.hostName is empty! Federation and many other things will fail! If you're seeing this in the wild, please report this bug and let us know what you were doing just before this: https://github.com/writefreely/writefreely/issues/new?template=bug_report.md")
 	}
 	if isSingleUser {
 		return c.hostName + "/"
@@ -341,6 +354,37 @@ func (c *Collection) FederatedAccount() string {
 
 func (c *Collection) RenderMathJax() bool {
 	return c.db.CollectionHasAttribute(c.ID, "render_mathjax")
+}
+
+func (c *Collection) MonetizationURL() string {
+	if c.Monetization == "" {
+		return ""
+	}
+	return strings.Replace(c.Monetization, "$", "https://", 1)
+}
+
+// DisplayDescription returns the description with rendered Markdown and HTML.
+func (c *Collection) DisplayDescription() *template.HTML {
+	if c.Description == "" {
+		s := template.HTML("")
+		return &s
+	}
+	t := template.HTML(posts.ApplyBasicAccessibleMarkdown([]byte(c.Description)))
+	return &t
+}
+
+// PlainDescription returns the description with all Markdown and HTML removed.
+func (c *Collection) PlainDescription() string {
+	if c.Description == "" {
+		return ""
+	}
+	desc := stripHTMLWithoutEscaping(c.Description)
+	desc = stripmd.Strip(desc)
+	return desc
+}
+
+func (c CollectionPage) DisplayMonetization() string {
+	return displayMonetization(c.Monetization, c.Alias)
 }
 
 func newCollection(app *App, w http.ResponseWriter, r *http.Request) error {
@@ -528,11 +572,11 @@ func fetchCollectionPosts(app *App, w http.ResponseWriter, r *http.Request) erro
 		}
 	}
 
-	posts, err := app.db.GetPosts(app.cfg, c, page, isCollOwner, false, false)
+	ps, err := app.db.GetPosts(app.cfg, c, page, isCollOwner, false, false)
 	if err != nil {
 		return err
 	}
-	coll := &CollectionObj{Collection: *c, Posts: posts}
+	coll := &CollectionObj{Collection: *c, Posts: ps}
 	app.db.GetPostsCount(coll, isCollOwner)
 	// Strip non-public information
 	coll.Collection.ForPublic()
@@ -540,7 +584,7 @@ func fetchCollectionPosts(app *App, w http.ResponseWriter, r *http.Request) erro
 	// Transform post bodies if needed
 	if r.FormValue("body") == "html" {
 		for _, p := range *coll.Posts {
-			p.Content = waposts.ApplyMarkdown([]byte(p.Content))
+			p.Content = posts.ApplyMarkdown([]byte(p.Content))
 		}
 	}
 
@@ -553,6 +597,7 @@ type CollectionPage struct {
 	IsCustomDomain bool
 	IsWelcome      bool
 	IsOwner        bool
+	IsCollLoggedIn bool
 	CanPin         bool
 	Username       string
 	Monetization   string
@@ -560,6 +605,9 @@ type CollectionPage struct {
 	PinnedPosts    *[]PublicPost
 	IsAdmin        bool
 	CanInvite      bool
+
+	// Helper field for Chorus mode
+	CollAlias string
 }
 
 type TagCollectionPage struct {
@@ -696,9 +744,9 @@ func processCollectionPermissions(app *App, cr *collectionReq, u *User, w http.R
 			}
 
 			// See if we've authorized this collection
-			authd := isAuthorizedForCollection(app, c.Alias, r)
+			cr.isAuthorized = isAuthorizedForCollection(app, c.Alias, r)
 
-			if !authd {
+			if !cr.isAuthorized {
 				p := struct {
 					page.StaticPage
 					*CollectionObj
@@ -816,9 +864,11 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 	// Serve collection
 	displayPage := CollectionPage{
 		DisplayCollection: coll,
+		IsCollLoggedIn:    cr.isAuthorized,
 		StaticPage:        pageForReq(app, r),
 		IsCustomDomain:    cr.isCustomDomain,
 		IsWelcome:         r.FormValue("greeting") != "",
+		CollAlias:         c.Alias,
 	}
 	displayPage.IsAdmin = u != nil && u.IsAdmin()
 	displayPage.CanInvite = canUserInvite(app.cfg, displayPage.IsAdmin)
@@ -1187,4 +1237,44 @@ func isAuthorizedForCollection(app *App, alias string, r *http.Request) bool {
 		_, authd = session.Values[alias]
 	}
 	return authd
+}
+
+func logOutCollection(app *App, alias string, w http.ResponseWriter, r *http.Request) error {
+	session, err := app.sessionStore.Get(r, blogPassCookieName)
+	if err != nil {
+		return err
+	}
+
+	// Remove this from map of blogs logged into
+	delete(session.Values, alias)
+
+	// If not auth'd with any blog, delete entire cookie
+	if len(session.Values) == 0 {
+		session.Options.MaxAge = -1
+	}
+	return session.Save(r, w)
+}
+
+func handleLogOutCollection(app *App, w http.ResponseWriter, r *http.Request) error {
+	alias := collectionAliasFromReq(r)
+	var c *Collection
+	var err error
+	if app.cfg.App.SingleUser {
+		c, err = app.db.GetCollectionByID(1)
+	} else {
+		c, err = app.db.GetCollection(alias)
+	}
+	if err != nil {
+		return err
+	}
+	if !c.IsProtected() {
+		// Invalid to log out of this collection
+		return ErrCollectionPageNotFound
+	}
+
+	err = logOutCollection(app, c.Alias, w, r)
+	if err != nil {
+		addSessionFlash(app, w, r, "Logging out failed. Try clearing cookies for this site, instead.", nil)
+	}
+	return impart.HTTPError{http.StatusFound, c.CanonicalURL()}
 }

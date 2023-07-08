@@ -6,6 +6,7 @@
 		<title>{{.PlainDisplayTitle}} {{localhtml "title dash" .Language.String}} {{.Collection.DisplayTitle}}</title>
 		
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
+		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="canonical" href="{{.CanonicalURL .Host}}" />
@@ -142,4 +143,13 @@ function unpinPost(e, postID) {
 	  })();
 	} catch (e) { /* ¯\_(ツ)_/¯ */ }
 	</script>
+
+    {{if and .Monetization (not .IsOwner)}}
+		<script src="/js/webmonetization.js"></script>
+		<script>
+            window.collAlias = '{{.Collection.Alias}}'
+            window.postSlug = '{{.Slug.String}}'
+            initMonetization()
+		</script>
+    {{end}}
 </html>{{end}}

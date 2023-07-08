@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -12,9 +12,12 @@
 package config
 
 import (
+	"net/url"
 	"strings"
 
-	"gopkg.in/ini.v1"
+	"github.com/go-ini/ini"
+	"github.com/writeas/web-core/log"
+	"golang.org/x/net/idna"
 )
 
 const (
@@ -110,6 +113,10 @@ type (
 		AuthEndpoint     string `ini:"auth_endpoint"`
 		Scope            string `ini:"scope"`
 		AllowDisconnect  bool   `ini:"allow_disconnect"`
+		MapUserID        string `ini:"map_user_id"`
+		MapUsername      string `ini:"map_username"`
+		MapDisplayName   string `ini:"map_display_name"`
+		MapEmail         string `ini:"map_email"`
 	}
 
 	// AppCfg holds values that affect how the application functions
@@ -135,6 +142,7 @@ type (
 		// Users
 		SingleUser       bool `ini:"single_user"`
 		OpenRegistration bool `ini:"open_registration"`
+		OpenDeletion     bool `ini:"open_deletion"`
 		MinUsernameLen   int  `ini:"min_username_len"`
 		MaxBlogs         int  `ini:"max_blogs"`
 
@@ -143,6 +151,7 @@ type (
 		Federation   bool `ini:"federation"`
 		PublicStats  bool `ini:"public_stats"`
 		Monetization bool `ini:"monetization"`
+		NotesOnly    bool `ini:"notes_only"`
 
 		// Access
 		Private bool `ini:"private"`
@@ -252,6 +261,22 @@ func Load(fname string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Do any transformations
+	u, err := url.Parse(uc.App.Host)
+	if err != nil {
+		return nil, err
+	}
+	d, err := idna.ToASCII(u.Hostname())
+	if err != nil {
+		log.Error("idna.ToASCII for %s: %s", u.Hostname(), err)
+		return nil, err
+	}
+	uc.App.Host = u.Scheme + "://" + d
+	if u.Port() != "" {
+		uc.App.Host += ":" + u.Port()
+	}
+
 	return uc, nil
 }
 

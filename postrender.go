@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -11,6 +11,7 @@
 package writefreely
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html"
@@ -23,13 +24,13 @@ import (
 	"unicode/utf8"
 
 	"github.com/microcosm-cc/bluemonday"
-	stripmd "github.com/writeas/go-strip-markdown"
+	stripmd "github.com/writeas/go-strip-markdown/v2"
 	"github.com/writeas/impart"
 	blackfriday "github.com/writeas/saturday"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/stringmanip"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/parse"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/parse"
 )
 
 var (
@@ -42,12 +43,46 @@ var (
 	mentionReg      = regexp.MustCompile(`@([A-Za-z0-9._%+-]+)(@[A-Za-z0-9.-]+\.[A-Za-z]+)\b`)
 )
 
-func (p *Post) formatContent(cfg *config.Config, c *Collection, isOwner bool) {
+func (p *Post) handlePremiumContent(c *Collection, isOwner, postPage bool, cfg *config.Config) {
+	if c.Monetization != "" {
+		// User has Web Monetization enabled, so split content if it exists
+		spl := strings.Index(p.Content, shortCodePaid)
+		p.IsPaid = spl > -1
+		if postPage {
+			// We're viewing the individual post
+			if isOwner {
+				p.Content = strings.Replace(p.Content, shortCodePaid, "\n\n"+`<p class="split">Your subscriber content begins here.</p>`+"\n\n", 1)
+			} else {
+				if spl > -1 {
+					p.Content = p.Content[:spl+len(shortCodePaid)]
+					p.Content = strings.Replace(p.Content, shortCodePaid, "\n\n"+`<p class="split">Continue reading with a <strong>Coil</strong> membership.</p>`+"\n\n", 1)
+				}
+			}
+		} else {
+			// We've viewing the post on the collection landing
+			if spl > -1 {
+				baseURL := c.CanonicalURL()
+				if isOwner {
+					baseURL = "/" + c.Alias + "/"
+				}
+
+				p.Content = p.Content[:spl+len(shortCodePaid)]
+				p.HTMLExcerpt = template.HTML(applyMarkdown([]byte(p.Content[:spl]), baseURL, cfg))
+			}
+		}
+	}
+}
+
+func (p *Post) formatContent(cfg *config.Config, c *Collection, isOwner bool, isPostPage bool) {
 	baseURL := c.CanonicalURL()
 	// TODO: redundant
 	if !isSingleUser {
 		baseURL = "/" + c.Alias + "/"
 	}
+
+	p.handlePremiumContent(c, isOwner, isPostPage, cfg)
+	p.Content = strings.Replace(p.Content, "&lt;!--paid-->", "<!--paid-->", 1)
+
 	p.HTMLTitle = template.HTML(applyBasicMarkdown([]byte(p.Title.String)))
 	p.HTMLContent = template.HTML(applyMarkdown([]byte(p.Content), baseURL, cfg))
 	if exc := strings.Index(string(p.Content), "<!--more-->"); exc > -1 {
@@ -55,11 +90,19 @@ func (p *Post) formatContent(cfg *config.Config, c *Collection, isOwner bool) {
 	}
 }
 
-func (p *PublicPost) formatContent(cfg *config.Config, isOwner bool) {
-	p.Post.formatContent(cfg, &p.Collection.Collection, isOwner)
+func (p *PublicPost) formatContent(cfg *config.Config, isOwner bool, isPostPage bool) {
+	p.Post.formatContent(cfg, &p.Collection.Collection, isOwner, isPostPage)
 }
 
 func (p *Post) augmentContent(c *Collection) {
+	if p.PinnedPosition.Valid {
+		// Don't augment posts that are pinned
+		return
+	}
+	if strings.Index(p.Content, "<!--nosig-->") > -1 {
+		// Don't augment posts with the special "nosig" shortcode
+		return
+	}
 	// Add post signatures
 	if c.Signature != "" {
 		p.Content += "\n\n" + c.Signature
@@ -68,6 +111,12 @@ func (p *Post) augmentContent(c *Collection) {
 
 func (p *PublicPost) augmentContent() {
 	p.Post.augmentContent(&p.Collection.Collection)
+}
+
+func (p *PublicPost) augmentReadingDestination() {
+	if p.IsPaid {
+		p.HTMLContent += template.HTML("\n\n" + `<p><a class="read-more" href="` + p.Collection.CanonicalURL() + p.Slug.String + `">` + localStr("Read more...", p.Language.String) + `</a> ($)</p>`)
+	}
 }
 
 func applyMarkdown(data []byte, baseURL string, cfg *config.Config) string {
@@ -133,6 +182,10 @@ func applyMarkdownSpecial(data []byte, skipNoFollow bool, baseURL string, cfg *c
 }
 
 func applyBasicMarkdown(data []byte) string {
+	if len(bytes.TrimSpace(data)) == 0 {
+		return ""
+	}
+
 	mdExtensions := 0 |
 		blackfriday.EXTENSION_STRIKETHROUGH |
 		blackfriday.EXTENSION_SPACE_HEADERS |
@@ -143,7 +196,15 @@ func applyBasicMarkdown(data []byte) string {
 		blackfriday.HTML_SMARTYPANTS_DASHES
 
 	// Generate Markdown
-	md := blackfriday.Markdown([]byte(data), blackfriday.HtmlRenderer(htmlFlags, "", ""), mdExtensions)
+	// This passes the supplied title into blackfriday.Markdown() as an H1 header, so we only render HTML that
+	// belongs in an H1.
+	md := blackfriday.Markdown(append([]byte("# "), data...), blackfriday.HtmlRenderer(htmlFlags, "", ""), mdExtensions)
+	// Remove H1 markup
+	md = bytes.TrimSpace(md) // blackfriday.Markdown adds a newline at the end of the <h1>
+	if len(md) == 0 {
+		return ""
+	}
+	md = md[len("<h1>") : len(md)-len("</h1>")]
 	// Strip out bad HTML
 	policy := bluemonday.UGCPolicy()
 	policy.AllowAttrs("class", "id").Globally()
@@ -209,6 +270,7 @@ func getSanitizationPolicy() *bluemonday.Policy {
 	policy.AllowAttrs("target").OnElements("a")
 	policy.AllowAttrs("title").OnElements("abbr")
 	policy.AllowAttrs("style", "class", "id").Globally()
+	policy.AllowAttrs("alt").OnElements("img")
 	policy.AllowElements("header", "footer")
 	policy.AllowURLSchemes("http", "https", "mailto", "xmpp")
 	return policy
@@ -223,12 +285,13 @@ func sanitizePost(content string) string {
 // choosing what to generate. In case a post has a title, this function will
 // fail, and logic should instead be implemented to skip this when there's no
 // title, like so:
-//    var desc string
-//    if title == "" {
-//        desc = postDescription(content, title, friendlyId)
-//    } else {
-//        desc = shortPostDescription(content)
-//    }
+//
+//	var desc string
+//	if title == "" {
+//	    desc = postDescription(content, title, friendlyId)
+//	} else {
+//	    desc = shortPostDescription(content)
+//	}
 func postDescription(content, title, friendlyId string) string {
 	maxLen := 140
 

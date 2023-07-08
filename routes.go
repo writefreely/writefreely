@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -12,9 +12,11 @@ package writefreely
 
 import (
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"github.com/writeas/go-webfinger"
 	"github.com/writeas/web-core/log"
@@ -97,6 +99,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	me.HandleFunc("/c/", handler.User(viewCollections)).Methods("GET")
 	me.HandleFunc("/c/{collection}", handler.User(viewEditCollection)).Methods("GET")
 	me.HandleFunc("/c/{collection}/stats", handler.User(viewStats)).Methods("GET")
+	me.Path("/delete").Handler(csrf.Protect(apper.App().keys.CSRFKey)(handler.User(handleUserDelete))).Methods("POST")
 	me.HandleFunc("/posts", handler.Redirect("/me/posts/", UserLevelUser)).Methods("GET")
 	me.HandleFunc("/posts/", handler.User(viewArticles)).Methods("GET")
 	me.HandleFunc("/posts/export.csv", handler.Download(viewExportPosts, UserLevelUser)).Methods("GET")
@@ -105,14 +108,14 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	me.HandleFunc("/export", handler.User(viewExportOptions)).Methods("GET")
 	me.HandleFunc("/export.json", handler.Download(viewExportFull, UserLevelUser)).Methods("GET")
 	me.HandleFunc("/import", handler.User(viewImport)).Methods("GET")
-	me.HandleFunc("/settings", handler.User(viewSettings)).Methods("GET")
+	me.Path("/settings").Handler(csrf.Protect(apper.App().keys.CSRFKey)(handler.User(viewSettings))).Methods("GET")
 	me.HandleFunc("/invites", handler.User(handleViewUserInvites)).Methods("GET")
 	me.HandleFunc("/logout", handler.Web(viewLogout, UserLevelNone)).Methods("GET")
 
 	write.HandleFunc("/api/me", handler.All(viewMeAPI)).Methods("GET")
 	apiMe := write.PathPrefix("/api/me/").Subrouter()
 	apiMe.HandleFunc("/", handler.All(viewMeAPI)).Methods("GET")
-	apiMe.HandleFunc("/posts", handler.UserAPI(viewMyPostsAPI)).Methods("GET")
+	apiMe.HandleFunc("/posts", handler.UserWebAPI(viewMyPostsAPI)).Methods("GET")
 	apiMe.HandleFunc("/collections", handler.UserAPI(viewMyCollectionsAPI)).Methods("GET")
 	apiMe.HandleFunc("/password", handler.All(updatePassphrase)).Methods("POST")
 	apiMe.HandleFunc("/self", handler.All(updateSettings)).Methods("POST")
@@ -125,15 +128,21 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 
 	write.HandleFunc("/api/markdown", handler.All(handleRenderMarkdown)).Methods("POST")
 
+	instanceURL, _ := url.Parse(apper.App().Config().App.Host)
+	host := instanceURL.Host
+
 	// Handle collections
 	write.HandleFunc("/api/collections", handler.All(newCollection)).Methods("POST")
 	apiColls := write.PathPrefix("/api/collections/").Subrouter()
+	apiColls.HandleFunc("/monetization-pointer", handler.PlainTextAPI(handleSPSPEndpoint)).Methods("GET")
+	apiColls.HandleFunc("/"+host, handler.AllReader(fetchCollection)).Methods("GET")
 	apiColls.HandleFunc("/{alias:[0-9a-zA-Z\\-]+}", handler.AllReader(fetchCollection)).Methods("GET")
 	apiColls.HandleFunc("/{alias:[0-9a-zA-Z\\-]+}", handler.All(existingCollection)).Methods("POST", "DELETE")
 	apiColls.HandleFunc("/{alias}/posts", handler.AllReader(fetchCollectionPosts)).Methods("GET")
 	apiColls.HandleFunc("/{alias}/posts", handler.All(newPost)).Methods("POST")
 	apiColls.HandleFunc("/{alias}/posts/{post}", handler.AllReader(fetchPost)).Methods("GET")
 	apiColls.HandleFunc("/{alias}/posts/{post:[a-zA-Z0-9]{10}}", handler.All(existingPost)).Methods("POST")
+	apiColls.HandleFunc("/{alias}/posts/{post}/splitcontent", handler.AllReader(handleGetSplitContent)).Methods("GET", "POST")
 	apiColls.HandleFunc("/{alias}/posts/{post}/{property}", handler.AllReader(fetchPostProperty)).Methods("GET")
 	apiColls.HandleFunc("/{alias}/collect", handler.All(addPost)).Methods("POST")
 	apiColls.HandleFunc("/{alias}/pin", handler.All(pinPost)).Methods("POST")
@@ -161,6 +170,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	write.HandleFunc("/admin/settings", handler.Admin(handleViewAdminSettings)).Methods("GET")
 	write.HandleFunc("/admin/users", handler.Admin(handleViewAdminUsers)).Methods("GET")
 	write.HandleFunc("/admin/user/{username}", handler.Admin(handleViewAdminUser)).Methods("GET")
+	write.HandleFunc("/admin/user/{username}/delete", handler.Admin(handleAdminDeleteUser)).Methods("POST")
 	write.HandleFunc("/admin/user/{username}/status", handler.Admin(handleAdminToggleUserStatus)).Methods("POST")
 	write.HandleFunc("/admin/user/{username}/passphrase", handler.Admin(handleAdminResetUserPass)).Methods("POST")
 	write.HandleFunc("/admin/pages", handler.Admin(handleViewAdminPages)).Methods("GET")
@@ -204,6 +214,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 }
 
 func RouteCollections(handler *Handler, r *mux.Router) {
+	r.HandleFunc("/logout", handler.Web(handleLogOutCollection, UserLevelOptional))
 	r.HandleFunc("/page/{page:[0-9]+}", handler.Web(handleViewCollection, UserLevelReader))
 	r.HandleFunc("/tag:{tag}", handler.Web(handleViewCollectionTag, UserLevelReader))
 	r.HandleFunc("/tag:{tag}/page/{page:[0-9]+}", handler.Web(handleViewCollectionTag, UserLevelReader))

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2019, 2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -16,7 +16,7 @@ import (
 	"github.com/guregu/null/zero"
 	"github.com/writeas/web-core/data"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/key"
+	"github.com/writefreely/writefreely/key"
 )
 
 type UserStatus int
@@ -43,6 +43,10 @@ type (
 		Honeypot   string `json:"fullname" schema:"fullname"`
 		Normalize  bool   `json:"normalize" schema:"normalize"`
 		Signup     bool   `json:"signup" schema:"signup"`
+
+		// Feature fields
+		Description  string `json:"description" schema:"description"`
+		Monetization string `json:"monetization" schema:"monetization"`
 	}
 
 	// AuthUser contains information for a newly authenticated user (either

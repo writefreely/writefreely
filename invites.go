@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2020 A Bunch Tell LLC.
+ * Copyright © 2019-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -19,9 +19,9 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
-	"github.com/writeas/nerds/store"
+	"github.com/writeas/web-core/id"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/page"
 )
 
 type Invite struct {
@@ -78,6 +78,9 @@ func handleViewUserInvites(app *App, u *User, w http.ResponseWriter, r *http.Req
 
 	p.Silenced, err = app.db.IsUserSilenced(u.ID)
 	if err != nil {
+		if err == ErrUserNotFound {
+			return err
+		}
 		log.Error("view invites: %v", err)
 	}
 
@@ -121,7 +124,7 @@ func handleCreateUserInvite(app *App, u *User, w http.ResponseWriter, r *http.Re
 		expDate = &ed
 	}
 
-	inviteID := store.GenerateRandomString("0123456789BCDFGHJKLMNPQRSTVWXYZbcdfghjklmnpqrstvwxyz", 6)
+	inviteID := id.GenerateRandomString("0123456789BCDFGHJKLMNPQRSTVWXYZbcdfghjklmnpqrstvwxyz", 6)
 	err = app.db.CreateUserInvite(inviteID, u.ID, maxUses, expDate)
 	if err != nil {
 		return err

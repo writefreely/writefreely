@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -23,7 +23,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/writeas/web-core/l10n"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/config"
+	"github.com/writefreely/writefreely/config"
 )
 
 var (
@@ -71,7 +71,7 @@ func initTemplate(parentDir, name string) {
 		filepath.Join(parentDir, templatesDir, "base.tmpl"),
 		filepath.Join(parentDir, templatesDir, "user", "include", "silenced.tmpl"),
 	}
-	if name == "collection" || name == "collection-tags" || name == "chorus-collection" {
+	if name == "collection" || name == "collection-tags" || name == "chorus-collection" || name == "read" {
 		// These pages list out collection posts, so we also parse templatesDir + "include/posts.tmpl"
 		files = append(files, filepath.Join(parentDir, templatesDir, "include", "posts.tmpl"))
 	}
@@ -135,7 +135,10 @@ func InitTemplates(cfg *config.Config) error {
 
 	log.Info("Loading pages...")
 	// Initialize all static pages that use the base template
-	filepath.Walk(filepath.Join(cfg.Server.PagesParentDir, pagesDir), func(path string, i os.FileInfo, err error) error {
+	err = filepath.Walk(filepath.Join(cfg.Server.PagesParentDir, pagesDir), func(path string, i os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 		if !i.IsDir() && !strings.HasPrefix(i.Name(), ".") {
 			key := i.Name()
 			initPage(cfg.Server.PagesParentDir, path, key)
@@ -143,10 +146,16 @@ func InitTemplates(cfg *config.Config) error {
 
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
 	log.Info("Loading user pages...")
 	// Initialize all user pages that use base templates
-	filepath.Walk(filepath.Join(cfg.Server.TemplatesParentDir, templatesDir, "user"), func(path string, f os.FileInfo, err error) error {
+	err = filepath.Walk(filepath.Join(cfg.Server.TemplatesParentDir, templatesDir, "user"), func(path string, f os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 		if !f.IsDir() && !strings.HasPrefix(f.Name(), ".") {
 			corePath := path
 			if cfg.Server.TemplatesParentDir != "" {
@@ -162,6 +171,9 @@ func InitTemplates(cfg *config.Config) error {
 
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -1,3 +1,13 @@
+/*
+ * Copyright © 2019-2021 Musing Studio LLC.
+ *
+ * This file is part of WriteFreely.
+ *
+ * WriteFreely is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License, included
+ * in the LICENSE file in this source code package.
+ */
+
 package writefreely
 
 import (
@@ -6,8 +16,8 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/stretchr/testify/assert"
 	"github.com/writeas/impart"
-	"github.com/writeas/nerds/store"
-	"github.com/writeas/writefreely/config"
+	"github.com/writeas/web-core/id"
+	"github.com/writefreely/writefreely/config"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -100,7 +110,7 @@ func (m *MockOAuthDatastore) GetIDForRemoteUser(ctx context.Context, remoteUserI
 	return -1, nil
 }
 
-func (m *MockOAuthDatastore) CreateUser(cfg *config.Config, u *User, username string) error {
+func (m *MockOAuthDatastore) CreateUser(cfg *config.Config, u *User, username, description string) error {
 	if m.DoCreateUser != nil {
 		return m.DoCreateUser(cfg, u, username)
 	}
@@ -127,7 +137,7 @@ func (m *MockOAuthDatastore) GenerateOAuthState(ctx context.Context, provider st
 	if m.DoGenerateOAuthState != nil {
 		return m.DoGenerateOAuthState(ctx, provider, clientID, attachUserID, inviteCode)
 	}
-	return store.Generate62RandomString(14), nil
+	return id.Generate62RandomString(14), nil
 }
 
 func TestViewOauthInit(t *testing.T) {

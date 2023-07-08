@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 A Bunch Tell LLC.
+ * Copyright © 2019 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -87,6 +87,9 @@ func Migrate(db *datastore) error {
 	var err error
 	if db.tableExists("appmigrations") {
 		err = db.QueryRow("SELECT MAX(version) FROM appmigrations").Scan(&version)
+		if err != nil {
+			return err
+		}
 	} else {
 		log.Info("Initializing appmigrations table...")
 		version = 0

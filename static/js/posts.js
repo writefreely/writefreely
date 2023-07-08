@@ -181,9 +181,17 @@ var localPosts = function() {
 		undoDelete: UndoDelete,
 	};
 }();
-var createPostEl = function(post) {
+var movePostHTML = function(postID) {
+	let $tmpl = document.getElementById('move-tmpl');
+	if ($tmpl === null) {
+		return "";
+	}
+	return $tmpl.innerHTML.replace(/POST_ID/g, postID);
+}
+var createPostEl = function(post, owned) {
 	var $post = document.createElement('div');
-	var title = (post.title || post.id);
+	let p = H.createPost(post.id, "", post.body)
+	var title = (post.title || p.title || post.id);
 	title = title.replace(/</g, "&lt;");
 	$post.id = 'post-' + post.id;
 	$post.className = 'post';
@@ -194,13 +202,22 @@ var createPostEl = function(post) {
 		posted = getFormattedDate(new Date(post.created))
 	}
 	var hasDraft = H.exists('draft' + post.id);
-	$post.innerHTML += '<h4><date>' + posted + '</date> <a class="action" href="/pad/' + post.id + '">edit' + (hasDraft ? 'ed' : '') + '</a> <a class="delete action" href="/' + post.id + '" onclick="delPost(event, \'' + post.id + '\')">delete</a></h4>';
+	$post.innerHTML += '<h4><date>' + posted + '</date> <a class="action" href="/pad/' + post.id + '">edit' + (hasDraft ? 'ed' : '') + '</a> <a class="delete action" href="/' + post.id + '" onclick="delPost(event, \'' + post.id + '\'' + (owned === true ? ', true' : '') + ')">delete</a> '+movePostHTML(post.id)+'</h4>';
 
 	if (post.error) {
 		$post.innerHTML += '<p class="error"><strong>Sync error:</strong> ' + post.error + ' <nav><a href="#" onclick="localPosts.dismissError(event, this)">dismiss</a> <a href="#" onclick="localPosts.deletePost(event, this, \''+post.id+'\')">remove post</a></nav></p>';
 	}
 	if (post.summary) {
+		// TODO: switch to using p.summary, after ensuring it matches summary generated on the backend.
 		$post.innerHTML += '<p>' + post.summary.replace(/</g, "&lt;") + '</p>';
+	} else if (post.body) {
+		var preview;
+		if (post.body.length > 140) {
+			preview = post.body.substr(0, 140) + '...';
+		} else {
+			preview = post.body;
+		}
+		$post.innerHTML += '<p>' + preview.replace(/</g, "&lt;") + '</p>';
 	}
 	return $post;
 };

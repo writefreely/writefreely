@@ -17,7 +17,7 @@ Then [download an archive](https://github.com/highlightjs/highlight.js/releases)
 
 version=9.13.1
 
-cd $GOPATH/src/github.com/writeas/writefreely/static/js/highlightjs
+cd $GOPATH/src/github.com/writefreely/writefreely/static/js/highlightjs
 for f in $(ls ~/Downloads/highlight.js/src/languages); do
 	# Use minified versions
 	f=$(echo $f | sed 's/\.js/.min.js/')

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 A Bunch Tell LLC.
+ * Copyright © 2020-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -17,7 +17,7 @@ import (
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/page"
 	"html/template"
 	"net/http"
 	"strings"
@@ -127,7 +127,7 @@ func (h oauthHandler) viewOauthSignup(app *App, w http.ResponseWriter, r *http.R
 		displayName = r.FormValue(oauthParamUsername)
 	}
 
-	err = h.DB.CreateUser(h.Config, newUser, displayName)
+	err = h.DB.CreateUser(h.Config, newUser, displayName, "")
 	if err != nil {
 		return h.showOauthSignupPage(app, w, r, tp, err)
 	}

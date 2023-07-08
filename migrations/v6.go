@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2020 A Bunch Tell LLC.
+ * Copyright © 2019-2020 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -12,6 +12,9 @@ package migrations
 
 func supportActivityPubMentions(db *datastore) error {
 	t, err := db.Begin()
+	if err != nil {
+		return err
+	}
 
 	_, err = t.Exec(`ALTER TABLE remoteusers ADD COLUMN handle ` + db.typeVarChar(255) + ` NULL`)
 	if err != nil {

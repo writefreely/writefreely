@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -15,7 +15,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/writeas/web-core/silobridge"
-	wf_db "github.com/writeas/writefreely/db"
+	wf_db "github.com/writefreely/writefreely/db"
 	"net/http"
 	"strings"
 	"time"
@@ -25,16 +25,15 @@ import (
 	uuid "github.com/nu7hatch/gouuid"
 	"github.com/writeas/activityserve"
 	"github.com/writeas/impart"
-	"github.com/writeas/nerds/store"
 	"github.com/writeas/web-core/activitypub"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/data"
 	"github.com/writeas/web-core/id"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/query"
-	"github.com/writeas/writefreely/author"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/key"
+	"github.com/writefreely/writefreely/author"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/key"
 )
 
 const (
@@ -52,7 +51,7 @@ var (
 )
 
 type writestore interface {
-	CreateUser(*config.Config, *User, string) error
+	CreateUser(*config.Config, *User, string, string) error
 	UpdateUserEmail(keys *key.Keychain, userID int64, email string) error
 	UpdateEncryptedUserEmail(int64, []byte) error
 	GetUserByID(int64) (*User, error)
@@ -77,8 +76,8 @@ type writestore interface {
 	GetMeStats(u *User) userMeStats
 	GetTotalCollections() (int64, error)
 	GetTotalPosts() (int64, error)
-	GetTopPosts(u *User, alias string) (*[]PublicPost, error)
-	GetAnonymousPosts(u *User) (*[]PublicPost, error)
+	GetTopPosts(u *User, alias string, hostName string) (*[]PublicPost, error)
+	GetAnonymousPosts(u *User, page int) (*[]PublicPost, error)
 	GetUserPosts(u *User) (*[]PublicPost, error)
 
 	CreateOwnedPost(post *SubmittedPost, accessToken, collAlias, hostName string) (*PublicPost, error)
@@ -180,7 +179,7 @@ func (db *datastore) dateSub(l int, unit string) string {
 }
 
 // CreateUser creates a new user in the database from the given User, UPDATING it in the process with the user's ID.
-func (db *datastore) CreateUser(cfg *config.Config, u *User, collectionTitle string) error {
+func (db *datastore) CreateUser(cfg *config.Config, u *User, collectionTitle string, collectionDesc string) error {
 	if db.PostIDExists(u.Username) {
 		return impart.HTTPError{http.StatusConflict, "Invalid collection name."}
 	}
@@ -214,7 +213,7 @@ func (db *datastore) CreateUser(cfg *config.Config, u *User, collectionTitle str
 	if collectionTitle == "" {
 		collectionTitle = u.Username
 	}
-	res, err = t.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", u.Username, collectionTitle, "", defaultVisibility(cfg), u.ID, 0)
+	res, err = t.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", u.Username, collectionTitle, collectionDesc, defaultVisibility(cfg), u.ID, 0)
 	if err != nil {
 		t.Rollback()
 		if db.isDuplicateKeyErr(err) {
@@ -333,7 +332,7 @@ func (db *datastore) IsUserSilenced(id int64) (bool, error) {
 	err := db.QueryRow("SELECT status FROM users WHERE id = ?", id).Scan(&u.Status)
 	switch {
 	case err == sql.ErrNoRows:
-		return false, fmt.Errorf("is user silenced: %v", ErrUserNotFound)
+		return false, ErrUserNotFound
 	case err != nil:
 		log.Error("Couldn't SELECT user status: %v", err)
 		return false, fmt.Errorf("is user silenced: %v", err)
@@ -613,7 +612,7 @@ func (db *datastore) CreateOwnedPost(post *SubmittedPost, accessToken, collAlias
 
 func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Post, error) {
 	idLen := postIDLen
-	friendlyID := store.GenerateFriendlyRandomString(idLen)
+	friendlyID := id.GenerateFriendlyRandomString(idLen)
 
 	// Handle appearance / font face
 	appearance := post.Font
@@ -638,13 +637,17 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 			ownerCollID.Int64 = collID
 			ownerCollID.Valid = true
 			var slugVal string
-			if post.Title != nil && *post.Title != "" {
-				slugVal = getSlug(*post.Title, post.Language.String)
-				if slugVal == "" {
+			if post.Slug != nil && *post.Slug != "" {
+				slugVal = *post.Slug
+			} else {
+				if post.Title != nil && *post.Title != "" {
+					slugVal = getSlug(*post.Title, post.Language.String)
+					if slugVal == "" {
+						slugVal = getSlug(*post.Content, post.Language.String)
+					}
+				} else {
 					slugVal = getSlug(*post.Content, post.Language.String)
 				}
-			} else {
-				slugVal = getSlug(*post.Content, post.Language.String)
 			}
 			if slugVal == "" {
 				slugVal = friendlyID
@@ -658,7 +661,7 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 		// SQLite stores datetimes in UTC, so convert time.Now() to it here
 		created = created.UTC()
 	}
-	if post.Created != nil {
+	if post.Created != nil && *post.Created != "" {
 		created, err = time.Parse("2006-01-02T15:04:05Z", *post.Created)
 		if err != nil {
 			log.Error("Unable to parse Created time '%s': %v", *post.Created, err)
@@ -810,6 +813,7 @@ func (db *datastore) GetCollectionBy(condition string, value interface{}) (*Coll
 	c.Signature = signature.String
 	c.Format = format.String
 	c.Public = c.IsPublic()
+	c.Monetization = db.GetCollectionAttribute(c.ID, "monetization_pointer")
 
 	c.db = db
 
@@ -872,7 +876,7 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 	// WHERE values
 	q.Where("alias = ? AND owner_id = ?", alias, c.OwnerID)
 
-	if q.Updates == "" {
+	if q.Updates == "" && c.Monetization == nil {
 		return ErrPostNoUpdatableVals
 	}
 
@@ -920,7 +924,7 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 			}
 		}
 		if !skipUpdate {
-			_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?", collID, "monetization_pointer", *c.Monetization, *c.Monetization)
+			_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) "+db.upsert("collection_id", "attribute")+" value = ?", collID, "monetization_pointer", *c.Monetization, *c.Monetization)
 			if err != nil {
 				log.Error("Unable to insert monetization_pointer value: %v", err)
 				return err
@@ -929,10 +933,12 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 	}
 
 	// Update rest of the collection data
-	res, err = db.Exec("UPDATE collections SET "+q.Updates+" WHERE "+q.Conditions, q.Params...)
-	if err != nil {
-		log.Error("Unable to update collection: %v", err)
-		return err
+	if q.Updates != "" {
+		res, err = db.Exec("UPDATE collections SET "+q.Updates+" WHERE "+q.Conditions, q.Params...)
+		if err != nil {
+			log.Error("Unable to update collection: %v", err)
+			return err
+		}
 	}
 
 	rowsAffected, _ = res.RowsAffected()
@@ -1177,7 +1183,7 @@ func (db *datastore) GetPosts(cfg *config.Config, c *Collection, page int, inclu
 		}
 		p.extractData()
 		p.augmentContent(c)
-		p.formatContent(cfg, c, includeFuture)
+		p.formatContent(cfg, c, includeFuture, false)
 
 		posts = append(posts, p.processPost())
 	}
@@ -1242,7 +1248,7 @@ func (db *datastore) GetPostsTagged(cfg *config.Config, c *Collection, tag strin
 		}
 		p.extractData()
 		p.augmentContent(c)
-		p.formatContent(cfg, c, includeFuture)
+		p.formatContent(cfg, c, includeFuture, false)
 
 		posts = append(posts, p.processPost())
 	}
@@ -1647,6 +1653,14 @@ func (db *datastore) GetCollections(u *User, hostName string) (*[]Collection, er
 		c.URL = c.CanonicalURL()
 		c.Public = c.IsPublic()
 
+		/*
+			// NOTE: future functionality
+			if visibility != nil { // TODO: && visibility == CollPublic {
+				// Add Monetization info when retrieving all public collections
+				c.Monetization = db.GetCollectionAttribute(c.ID, "monetization_pointer")
+			}
+		*/
+
 		colls = append(colls, c)
 	}
 	err = rows.Err()
@@ -1674,7 +1688,7 @@ func (db *datastore) GetPublicCollections(hostName string) (*[]Collection, error
 	FROM collections c
 	LEFT JOIN users u ON u.id = c.owner_id
 	WHERE c.privacy = 1 AND u.status = 0
-	ORDER BY id ASC`)
+	ORDER BY title ASC`)
 	if err != nil {
 		log.Error("Failed selecting public collections: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve public collections."}
@@ -1692,6 +1706,9 @@ func (db *datastore) GetPublicCollections(hostName string) (*[]Collection, error
 		c.hostName = hostName
 		c.URL = c.CanonicalURL()
 		c.Public = c.IsPublic()
+
+		// Add Monetization information
+		c.Monetization = db.GetCollectionAttribute(c.ID, "monetization_pointer")
 
 		colls = append(colls, c)
 	}
@@ -1750,14 +1767,14 @@ func (db *datastore) GetTotalPosts() (postCount int64, err error) {
 	return
 }
 
-func (db *datastore) GetTopPosts(u *User, alias string) (*[]PublicPost, error) {
+func (db *datastore) GetTopPosts(u *User, alias string, hostName string) (*[]PublicPost, error) {
 	params := []interface{}{u.ID}
 	where := ""
 	if alias != "" {
 		where = " AND alias = ?"
 		params = append(params, alias)
 	}
-	rows, err := db.Query("SELECT p.id, p.slug, p.view_count, p.title, c.alias, c.title, c.description, c.view_count FROM posts p LEFT JOIN collections c ON p.collection_id = c.id WHERE p.owner_id = ?"+where+" ORDER BY p.view_count DESC, created DESC LIMIT 25", params...)
+	rows, err := db.Query("SELECT p.id, p.slug, p.view_count, p.title, p.content, c.alias, c.title, c.description, c.view_count FROM posts p LEFT JOIN collections c ON p.collection_id = c.id WHERE p.owner_id = ?"+where+" ORDER BY p.view_count DESC, created DESC LIMIT 25", params...)
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve user top posts."}
@@ -1771,7 +1788,7 @@ func (db *datastore) GetTopPosts(u *User, alias string) (*[]PublicPost, error) {
 		c := Collection{}
 		var alias, title, description sql.NullString
 		var views sql.NullInt64
-		err = rows.Scan(&p.ID, &p.Slug, &p.ViewCount, &p.Title, &alias, &title, &description, &views)
+		err = rows.Scan(&p.ID, &p.Slug, &p.ViewCount, &p.Title, &p.Content, &alias, &title, &description, &views)
 		if err != nil {
 			log.Error("Failed scanning User.getPosts() row: %v", err)
 			gotErr = true
@@ -1785,6 +1802,7 @@ func (db *datastore) GetTopPosts(u *User, alias string) (*[]PublicPost, error) {
 			c.Title = title.String
 			c.Description = description.String
 			c.Views = views.Int64
+			c.hostName = hostName
 			pubPost.Collection = &CollectionObj{Collection: c}
 		}
 
@@ -1803,8 +1821,19 @@ func (db *datastore) GetTopPosts(u *User, alias string) (*[]PublicPost, error) {
 	return &posts, nil
 }
 
-func (db *datastore) GetAnonymousPosts(u *User) (*[]PublicPost, error) {
-	rows, err := db.Query("SELECT id, view_count, title, created, updated, content FROM posts WHERE owner_id = ? AND collection_id IS NULL ORDER BY created DESC", u.ID)
+func (db *datastore) GetAnonymousPosts(u *User, page int) (*[]PublicPost, error) {
+	pagePosts := 10
+	start := page*pagePosts - pagePosts
+	if page == 0 {
+		start = 0
+		pagePosts = 1000
+	}
+
+	limitStr := ""
+	if page > 0 {
+		limitStr = fmt.Sprintf(" LIMIT %d, %d", start, pagePosts)
+	}
+	rows, err := db.Query("SELECT id, view_count, title, language, created, updated, content FROM posts WHERE owner_id = ? AND collection_id IS NULL ORDER BY created DESC"+limitStr, u.ID)
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve user anonymous posts."}
@@ -1814,7 +1843,7 @@ func (db *datastore) GetAnonymousPosts(u *User) (*[]PublicPost, error) {
 	posts := []PublicPost{}
 	for rows.Next() {
 		p := Post{}
-		err = rows.Scan(&p.ID, &p.ViewCount, &p.Title, &p.Created, &p.Updated, &p.Content)
+		err = rows.Scan(&p.ID, &p.ViewCount, &p.Title, &p.Language, &p.Created, &p.Updated, &p.Content)
 		if err != nil {
 			log.Error("Failed scanning row: %v", err)
 			break
@@ -2603,7 +2632,7 @@ func (db *datastore) GetCollectionLastPostTime(id int64) (*time.Time, error) {
 }
 
 func (db *datastore) GenerateOAuthState(ctx context.Context, provider string, clientID string, attachUser int64, inviteCode string) (string, error) {
-	state := store.Generate62RandomString(24)
+	state := id.Generate62RandomString(24)
 	attachUserVal := sql.NullInt64{Valid: attachUser > 0, Int64: attachUser}
 	inviteCodeVal := sql.NullString{Valid: inviteCode != "", String: inviteCode}
 	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_states (state, provider, client_id, used, created_at, attach_user_id, invite_code) VALUES (?, ?, ?, FALSE, "+db.now()+", ?, ?)", state, provider, clientID, attachUserVal, inviteCodeVal)

@@ -6,6 +6,7 @@
 		<title>{{.DisplayTitle}}{{if not .SingleUser}} &mdash; {{.SiteName}}{{end}}</title>
 		
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
+		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="canonical" href="{{.CanonicalURL}}">
 		{{if gt .CurrentPage 1}}<link rel="prev" href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">{{end}}
@@ -14,18 +15,18 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 		<meta name="generator" content="WriteFreely">
-		<meta name="description" content="{{.Description}}">
+		<meta name="description" content="{{.PlainDescription}}">
 		<meta itemprop="name" content="{{.DisplayTitle}}">
-		<meta itemprop="description" content="{{.Description}}">
+		<meta itemprop="description" content="{{.PlainDescription}}">
 		<meta name="twitter:card" content="summary">
 		<meta name="twitter:title" content="{{.DisplayTitle}}">
 		<meta name="twitter:image" content="{{.AvatarURL}}">
-		<meta name="twitter:description" content="{{.Description}}">
+		<meta name="twitter:description" content="{{.PlainDescription}}">
 		<meta property="og:title" content="{{.DisplayTitle}}" />
 		<meta property="og:site_name" content="{{.DisplayTitle}}" />
 		<meta property="og:type" content="article" />
 		<meta property="og:url" content="{{.CanonicalURL}}" />
-		<meta property="og:description" content="{{.Description}}" />
+		<meta property="og:description" content="{{.PlainDescription}}" />
 		<meta property="og:image" content="{{.AvatarURL}}">
 		{{template "collection-meta" .}}
 		{{if .StyleSheet}}<style type="text/css">{{.StyleSheetDisplay}}</style>{{end}}
@@ -40,34 +41,49 @@
 
 	</head>
 	<body id="collection" itemscope itemtype="http://schema.org/WebPage">
-		{{if or .IsOwner .SingleUser}}<nav id="manage"><ul>
-			<li class="has-submenu"><a onclick="void(0)">&#9776; Menu</a>
-				<ul>
-					{{ if .IsOwner }}
-					{{if .SingleUser}}
-					<li><a href="/me/new">New Post</a></li>
-					{{else}}
-					<li><a href="/#{{.Alias}}" class="write">{{.SiteName}}</a></li>
-					{{end}}
-					{{if .SimpleNav}}<li><a href="/new#{{.Alias}}">New Post</a></li>{{end}}
-					<li><a href="/me/c/{{.Alias}}">Customize</a></li>
-					<li><a href="/me/c/{{.Alias}}/stats">Stats</a></li>
-					<li class="separator"><hr /></li>
-					{{if not .SingleUser}}<li><a href="/me/c/"><img class="ic-18dp" src="/img/ic_blogs_dark@2x.png" /> View Blogs</a></li>{{end}}
-					<li><a href="/me/posts/"><img class="ic-18dp" src="/img/ic_list_dark@2x.png" /> View Drafts</a></li>
-					{{ else }}
-					<li><a href="/login">Log in</a></li>
-					{{ end }}
-				</ul>
-			</li>
-		</ul></nav>{{end}}
+		{{if or .IsOwner .SingleUser}}
+			<nav id="manage"><ul>
+				<li class="has-submenu"><a onclick="void(0)">&#9776; Menu</a>
+					<ul>
+						{{ if .IsOwner }}
+							{{if .SingleUser}}
+							<li><a href="/me/new">New Post</a></li>
+							{{else}}
+							<li><a href="/#{{.Alias}}" class="write">{{.SiteName}}</a></li>
+							{{end}}
+							{{if .SimpleNav}}<li><a href="/new#{{.Alias}}">New Post</a></li>{{end}}
+							<li><a href="/me/c/{{.Alias}}">Customize</a></li>
+							<li><a href="/me/c/{{.Alias}}/stats">Stats</a></li>
+							<li class="separator"><hr /></li>
+							{{if not .SingleUser}}<li><a href="/me/c/"><img class="ic-18dp" src="/img/ic_blogs_dark@2x.png" /> View Blogs</a></li>{{end}}
+							<li><a href="/me/posts/"><img class="ic-18dp" src="/img/ic_list_dark@2x.png" /> View Drafts</a></li>
+						{{ else }}
+							<li><a href="/login">Log in{{if .IsProtected}} to {{.DisplayTitle}}{{end}}</a></li>
+							{{if .IsProtected}}
+								<li class="separator"><hr /></li>
+								<li><a href="/logout">Log out</a></li>
+							{{end}}
+						{{ end }}
+					</ul>
+				</li>
+			</ul></nav>
+		{{else if .IsCollLoggedIn}}
+			<nav id="manage" class="shiny"><ul>
+				<li class="has-submenu"><a onclick="void(0)">&#9776; Menu</a>
+					<ul>
+						<li class="menu-heading" style="padding: .5rem .75rem; box-sizing: border-box;">{{.DisplayTitle}}</li>
+						<li><a href="{{.CanonicalURL}}logout">Log out</a></li>
+					</ul>
+				</li>
+			</ul></nav>
+		{{end}}
 		
 		<header>
 		{{if .Silenced}}
 			{{template "user-silenced"}}
 		{{end}}
 		<h1 dir="{{.Direction}}" id="blog-title">{{if .Posts}}{{else}}<span class="writeas-prefix"><a href="/">write.as</a></span> {{end}}<a href="/{{if .IsTopLevel}}{{else}}{{.Prefix}}{{.Alias}}/{{end}}" class="h-card p-author u-url" rel="me author">{{.DisplayTitle}}</a></h1>
-		{{if .Description}}<p class="description p-note">{{.Description}}</p>{{end}}
+		{{if .Description}}<p class="description p-note">{{.DisplayDescription}}</p>{{end}}
 		{{/*if not .Public/*}}
 			<!--p class="meta-note"><span>Private collection</span>. Only you can see this page.</p-->
 		{{/*end*/}}

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -16,10 +16,12 @@ import (
 	"html/template"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/guregu/null/zero"
@@ -27,10 +29,9 @@ import (
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/data"
 	"github.com/writeas/web-core/log"
-
-	"github.com/writeas/writefreely/author"
-	"github.com/writeas/writefreely/config"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/author"
+	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/page"
 )
 
 type (
@@ -166,7 +167,7 @@ func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWr
 	}
 
 	// Create actual user
-	if err := app.db.CreateUser(app.cfg, u, desiredUsername); err != nil {
+	if err := app.db.CreateUser(app.cfg, u, desiredUsername, signup.Description); err != nil {
 		return nil, err
 	}
 
@@ -192,9 +193,27 @@ func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWr
 	}
 	resUser.Collections = &[]Collection{
 		{
-			Alias: signup.Alias,
-			Title: title,
+			Alias:       signup.Alias,
+			Title:       title,
+			Description: signup.Description,
 		},
+	}
+
+	var coll *Collection
+	if signup.Monetization != "" {
+		if coll == nil {
+			coll, err = app.db.GetCollection(signup.Alias)
+			if err != nil {
+				log.Error("Unable to get new collection '%s' for monetization on signup: %v", signup.Alias, err)
+				return nil, err
+			}
+		}
+		err = app.db.SetCollectionAttribute(coll.ID, "monetization_pointer", signup.Monetization)
+		if err != nil {
+			log.Error("Unable to add monetization on signup: %v", err)
+			return nil, err
+		}
+		coll.Monetization = signup.Monetization
 	}
 
 	var token string
@@ -691,6 +710,22 @@ func viewMyPostsAPI(app *App, u *User, w http.ResponseWriter, r *http.Request) e
 		return ErrBadRequestedType
 	}
 
+	isAnonPosts := r.FormValue("anonymous") == "1"
+	if isAnonPosts {
+		pageStr := r.FormValue("page")
+		pg, err := strconv.Atoi(pageStr)
+		if err != nil {
+			log.Error("Error parsing page parameter '%s': %s", pageStr, err)
+			pg = 1
+		}
+
+		p, err := app.db.GetAnonymousPosts(u, pg)
+		if err != nil {
+			return err
+		}
+		return impart.WriteSuccess(w, p, http.StatusOK)
+	}
+
 	var err error
 	p := GetPostsCache(u.ID)
 	if p == nil {
@@ -731,7 +766,7 @@ func viewMyCollectionsAPI(app *App, u *User, w http.ResponseWriter, r *http.Requ
 }
 
 func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
-	p, err := app.db.GetAnonymousPosts(u)
+	p, err := app.db.GetAnonymousPosts(u, 1)
 	if err != nil {
 		log.Error("unable to fetch anon posts: %v", err)
 	}
@@ -752,6 +787,9 @@ func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 
 	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
+		if err == ErrUserNotFound {
+			return err
+		}
 		log.Error("view articles: %v", err)
 	}
 	d := struct {
@@ -787,7 +825,10 @@ func viewCollections(app *App, u *User, w http.ResponseWriter, r *http.Request) 
 
 	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
-		log.Error("view collections %v", err)
+		if err == ErrUserNotFound {
+			return err
+		}
+		log.Error("view collections: %v", err)
 		return fmt.Errorf("view collections: %v", err)
 	}
 	d := struct {
@@ -822,10 +863,13 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 	}
 
 	// Add collection properties
-	c.MonetizationPointer = app.db.GetCollectionAttribute(c.ID, "monetization_pointer")
+	c.Monetization = app.db.GetCollectionAttribute(c.ID, "monetization_pointer")
 
 	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
+		if err == ErrUserNotFound {
+			return err
+		}
 		log.Error("view edit collection %v", err)
 		return fmt.Errorf("view edit collection: %v", err)
 	}
@@ -986,9 +1030,10 @@ func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error 
 		if c.OwnerID != u.ID {
 			return ErrCollectionNotFound
 		}
+		c.hostName = app.cfg.App.Host
 	}
 
-	topPosts, err := app.db.GetTopPosts(u, alias)
+	topPosts, err := app.db.GetTopPosts(u, alias, c.hostName)
 	if err != nil {
 		log.Error("Unable to get top posts: %v", err)
 		return err
@@ -1002,6 +1047,9 @@ func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error 
 
 	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
+		if err == ErrUserNotFound {
+			return err
+		}
 		log.Error("view stats: %v", err)
 		return err
 	}
@@ -1035,6 +1083,9 @@ func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error 
 func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	fullUser, err := app.db.GetUserByID(u.ID)
 	if err != nil {
+		if err == ErrUserNotFound {
+			return err
+		}
 		log.Error("Unable to get user for settings: %s", err)
 		return impart.HTTPError{http.StatusInternalServerError, "Unable to retrieve user data. The humans have been alerted."}
 	}
@@ -1083,6 +1134,7 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		HasPass                 bool
 		IsLogOut                bool
 		Silenced                bool
+		CSRFField               template.HTML
 		OauthSection            bool
 		OauthAccounts           []oauthAccountInfo
 		OauthSlack              bool
@@ -1099,6 +1151,7 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		HasPass:                 passIsSet,
 		IsLogOut:                r.FormValue("logout") == "1",
 		Silenced:                fullUser.IsSilenced(),
+		CSRFField:               csrf.TemplateField(r),
 		OauthSection:            displayOauthSection,
 		OauthAccounts:           oauthAccounts,
 		OauthSlack:              enableOauthSlack,
@@ -1153,6 +1206,32 @@ func getTempInfo(app *App, key string, r *http.Request, w http.ResponseWriter) s
 	return s
 }
 
+func handleUserDelete(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	if !app.cfg.App.OpenDeletion {
+		return impart.HTTPError{http.StatusForbidden, "Open account deletion is disabled on this instance."}
+	}
+
+	confirmUsername := r.PostFormValue("confirm-username")
+	if u.Username != confirmUsername {
+		return impart.HTTPError{http.StatusBadRequest, "Confirmation username must match your username exactly."}
+	}
+
+	// Check for account deletion safeguards in place
+	if u.IsAdmin() {
+		return impart.HTTPError{http.StatusForbidden, "Cannot delete admin."}
+	}
+
+	err := app.db.DeleteAccount(u.ID)
+	if err != nil {
+		log.Error("user delete account: %v", err)
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not delete account: %v", err)}
+	}
+
+	// FIXME: This doesn't ever appear to the user, as (I believe) the value is erased when the session cookie is reset
+	_ = addSessionFlash(app, w, r, "Thanks for writing with us! You account was deleted successfully.", nil)
+	return impart.HTTPError{http.StatusFound, "/me/logout"}
+}
+
 func removeOauth(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	provider := r.FormValue("provider")
 	clientID := r.FormValue("client_id")
@@ -1174,6 +1253,7 @@ func prepareUserEmail(input string, emailKey []byte) zero.String {
 			log.Error("Unable to encrypt email: %s\n", err)
 		} else {
 			email.String = string(encEmail)
+
 		}
 	}
 	return email

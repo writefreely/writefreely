@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -24,8 +24,8 @@ import (
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/passgen"
-	"github.com/writeas/writefreely/appstats"
-	"github.com/writeas/writefreely/config"
+	"github.com/writefreely/writefreely/appstats"
+	"github.com/writefreely/writefreely/config"
 )
 
 var (
@@ -189,6 +189,7 @@ func handleViewAdminUsers(app *App, u *User, w http.ResponseWriter, r *http.Requ
 		*AdminPage
 		Config  config.AppCfg
 		Message string
+		Flashes []string
 
 		Users      *[]User
 		CurPage    int
@@ -201,6 +202,7 @@ func handleViewAdminUsers(app *App, u *User, w http.ResponseWriter, r *http.Requ
 		Message:   r.FormValue("m"),
 	}
 
+	p.Flashes, _ = getSessionFlashes(app, w, r, nil)
 	p.TotalUsers = app.db.GetAllUsersCount()
 	ttlPages := p.TotalUsers / adminUsersPerPage
 	p.TotalPages = []int{}
@@ -312,6 +314,37 @@ func handleViewAdminUser(app *App, u *User, w http.ResponseWriter, r *http.Reque
 	return nil
 }
 
+func handleAdminDeleteUser(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	if !u.IsAdmin() {
+		return impart.HTTPError{http.StatusForbidden, "Administrator privileges required for this action"}
+	}
+
+	vars := mux.Vars(r)
+	username := vars["username"]
+	confirmUsername := r.PostFormValue("confirm-username")
+
+	if confirmUsername != username {
+		return impart.HTTPError{http.StatusBadRequest, "Username was not confirmed"}
+	}
+
+	user, err := app.db.GetUserForAuth(username)
+	if err == ErrUserNotFound {
+		return impart.HTTPError{http.StatusNotFound, fmt.Sprintf("User '%s' was not found", username)}
+	} else if err != nil {
+		log.Error("get user for deletion: %v", err)
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get user with username '%s': %v", username, err)}
+	}
+
+	err = app.db.DeleteAccount(user.ID)
+	if err != nil {
+		log.Error("delete user %s: %v", user.Username, err)
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not delete user account for '%s': %v", username, err)}
+	}
+
+	_ = addSessionFlash(app, w, r, fmt.Sprintf("User \"%s\" was deleted successfully.", username), nil)
+	return impart.HTTPError{http.StatusFound, "/admin/users"}
+}
+
 func handleAdminToggleUserStatus(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	username := vars["username"]
@@ -328,6 +361,9 @@ func handleAdminToggleUserStatus(app *App, u *User, w http.ResponseWriter, r *ht
 		err = app.db.SetUserStatus(user.ID, UserActive)
 	} else {
 		err = app.db.SetUserStatus(user.ID, UserSilenced)
+
+		// reset the cache to removed silence user posts
+		updateTimelineCache(app.timeline, true)
 	}
 	if err != nil {
 		log.Error("toggle user silenced: %v", err)
@@ -519,6 +555,7 @@ func handleAdminUpdateConfig(apper Apper, u *User, w http.ResponseWriter, r *htt
 	apper.App().cfg.App.SiteDesc = r.FormValue("site_desc")
 	apper.App().cfg.App.Landing = r.FormValue("landing")
 	apper.App().cfg.App.OpenRegistration = r.FormValue("open_registration") == "on"
+	apper.App().cfg.App.OpenDeletion = r.FormValue("open_deletion") == "on"
 	mul, err := strconv.Atoi(r.FormValue("min_username_len"))
 	if err == nil {
 		apper.App().cfg.App.MinUsernameLen = mul

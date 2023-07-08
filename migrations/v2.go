@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 A Bunch Tell LLC.
+ * Copyright © 2019 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -12,6 +12,9 @@ package migrations
 
 func supportInstancePages(db *datastore) error {
 	t, err := db.Begin()
+	if err != nil {
+		return err
+	}
 
 	_, err = t.Exec(`ALTER TABLE appcontent ADD COLUMN title ` + db.typeVarChar(255) + db.collateMultiByte() + ` NULL`)
 	if err != nil {

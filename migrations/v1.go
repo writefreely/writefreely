@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 A Bunch Tell LLC.
+ * Copyright © 2019 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -12,6 +12,9 @@ package migrations
 
 func supportUserInvites(db *datastore) error {
 	t, err := db.Begin()
+	if err != nil {
+		return err
+	}
 	_, err = t.Exec(`CREATE TABLE userinvites (
 		  id ` + db.typeChar(6) + ` NOT NULL ,
 		  owner_id ` + db.typeInt() + ` NOT NULL ,

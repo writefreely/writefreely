@@ -23,4 +23,3 @@ func RunTransactionWithOptions(ctx context.Context, db *sql.DB, txOpts *sql.TxOp
 	}
 	return tx.Commit()
 }
-

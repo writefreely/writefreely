@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -11,7 +11,8 @@
 package author
 
 import (
-	"github.com/writeas/writefreely/config"
+	"github.com/writeas/web-core/log"
+	"github.com/writefreely/writefreely/config"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -113,10 +114,17 @@ func IsValidUsername(cfg *config.Config, username string) bool {
 	// Username is invalid if page with the same name exists. So traverse
 	// available pages, adding them to reservedUsernames map that'll be checked
 	// later.
-	filepath.Walk(filepath.Join(cfg.Server.PagesParentDir, "pages"), func(path string, i os.FileInfo, err error) error {
+	err := filepath.Walk(filepath.Join(cfg.Server.PagesParentDir, "pages"), func(path string, i os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 		reservedUsernames[i.Name()] = true
 		return nil
 	})
+	if err != nil {
+		log.Error("[IMPORTANT WARNING]: Could not determine IsValidUsername! %s", err)
+		return false
+	}
 
 	// Username is invalid if it is reserved!
 	if _, reserved := reservedUsernames[username]; reserved {

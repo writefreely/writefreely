@@ -1,5 +1,14 @@
 {{define "articles"}}
 {{template "header" .}}
+<style type="text/css">
+	a.loading {
+		font-style: italic;
+		color: #666;
+	}
+	#move-tmpl {
+		display: none;
+	}
+</style>
 
 <div class="snug content-container">
 
@@ -15,7 +24,7 @@
 {{ if .AnonymousPosts }}
 	<p>These are your draft posts. You can share them individually (without a blog) or move them to your blog when you're ready.</p>
 
-	<div class="atoms posts">
+	<div id="anon-posts" class="atoms posts">
 	{{ range $el := .AnonymousPosts }}<div id="post-{{.ID}}" class="post">
 		<h3><a href="/{{if $.SingleUser}}d/{{end}}{{.ID}}" itemprop="url">{{.DisplayTitle}}</a></h3>
 		<h4>
@@ -39,9 +48,12 @@
 		</h4>
 		{{if .Summary}}<p>{{.SummaryHTML}}</p>{{end}}
 	</div>{{end}}
-</div>{{ else }}<div id="no-posts-published">
+</div>
+{{if eq (len .AnonymousPosts) 10}}<p id="load-more-p"><a href="#load">Load more...</a></p>{{end}}
+{{ else }}<div id="no-posts-published">
 	<p>Your anonymous and draft posts will show up here once you've published some. You'll be able to share them individually (without a blog) or move them to a blog when you're ready.</p>
 	{{if not .SingleUser}}<p>Alternatively, see your blogs and their posts on your <a href="/me/c/">Blogs</a> page.</p>{{end}}
+
 	<p class="text-cta"><a href="{{if .SingleUser}}/me/new{{else}}/{{end}}">Start writing</a></p></div>{{ end }}
 
 <div id="moving"></div>
@@ -51,6 +63,25 @@
 <div id="unsynced-posts" class="atoms"></div>
 
 </div>
+
+{{ if .Collections }}
+	<div id="move-tmpl">
+		{{if gt (len .Collections) 1}}
+			<div class="action flat-select">
+				<select id="move-POST_ID" onchange="postActions.multiMove(this, 'POST_ID', {{if .SingleUser}}true{{else}}false{{end}})" title="Move this post to one of your blogs">
+					<option style="display:none"></option>
+					{{range .Collections}}<option value="{{.Alias}}">{{.DisplayTitle}}</option>{{end}}
+				</select>
+				<label for="move-POST_ID">move to...</label>
+				<img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" />
+			</div>
+		{{else}}
+			{{range .Collections}}
+				<a class="action" href="/POST_ID" title="Publish this post to your blog '{{.DisplayTitle}}'" onclick="postActions.move(this, 'POST_ID', '{{.Alias}}', {{if $.SingleUser}}true{{else}}false{{end}});return false">move to {{.DisplayTitle}}</a>
+			{{end}}
+		{{end}}
+	</div>
+{{ end }}
 
 <script src="/js/h.js"></script>
 <script src="/js/postactions.js"></script>
@@ -145,6 +176,50 @@ function postsLoaded(n) {
 		syncing = true;
 	});
 }
+
+var $loadMore = H.getEl("load-more-p");
+var curPage = 1;
+var isLoadingMore = false;
+function loadMorePosts() {
+	if (isLoadingMore === true) {
+		return;
+	}
+	var $link = this;
+	isLoadingMore = true;
+
+	$link.className = 'loading';
+	$link.textContent = 'Loading posts...';
+
+	var $posts = H.getEl("anon-posts");
+
+	curPage++;
+
+	var http = new XMLHttpRequest();
+	var url = "/api/me/posts?anonymous=1&page=" + curPage;
+	http.open("GET", url, true);
+	http.setRequestHeader("Content-type", "application/json");
+	http.onreadystatechange = function() {
+		if (http.readyState == 4) {
+			if (http.status == 200) {
+				var data = JSON.parse(http.responseText);
+				for (var i=0; i<data.data.length; i++) {
+					$posts.el.appendChild(createPostEl(data.data[i], true));
+				}
+				if (data.data.length < 10) {
+					$loadMore.el.parentNode.removeChild($loadMore.el);
+				}
+			} else {
+				alert("Failed to load more posts. Please try again.");
+				curPage--;
+			}
+			isLoadingMore = false;
+			$link.className = '';
+			$link.textContent = 'Load more...';
+		}
+	}
+	http.send();
+}
+$loadMore.el.querySelector('a').addEventListener('click', loadMorePosts);
 </script>
 <script src="/js/posts.js"></script>
 

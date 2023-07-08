@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -17,7 +17,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
-	"github.com/writeas/writefreely/page"
+	"github.com/writefreely/writefreely/page"
 )
 
 func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
@@ -55,6 +55,9 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 		appData.Silenced, err = app.db.IsUserSilenced(appData.User.ID)
 		if err != nil {
+			if err == ErrUserNotFound {
+				return err
+			}
 			log.Error("Unable to get user status for Pad: %v", err)
 		}
 	}
@@ -90,6 +93,7 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 		appData.EditCollection, err = app.db.GetCollectionForPad(collAlias)
 		if err != nil {
+			log.Error("Unable to GetCollectionForPad: %s", err)
 			return err
 		}
 		appData.EditCollection.hostName = app.cfg.App.Host
@@ -101,9 +105,10 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	if appData.Post.Gone {
 		return ErrPostUnpublished
-	} else if appData.Post.Found && appData.Post.Content != "" {
+	} else if appData.Post.Found && (appData.Post.Title != "" || appData.Post.Content != "") {
 		// Got the post
 	} else if appData.Post.Found {
+		log.Error("Found post, but other conditions failed.")
 		return ErrPostFetchError
 	} else {
 		return ErrPostNotFound
