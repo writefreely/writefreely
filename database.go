@@ -113,6 +113,7 @@ type writestore interface {
 
 	GetPostsCount(c *CollectionObj, includeFuture bool)
 	GetPosts(cfg *config.Config, c *Collection, page int, includeFuture, forceRecentFirst, includePinned bool) (*[]PublicPost, error)
+	GetAllPostsTaggedIDs(c *Collection, tag string, includeFuture bool) ([]string, error)
 	GetPostsTagged(cfg *config.Config, c *Collection, tag string, page int, includeFuture bool) (*[]PublicPost, error)
 
 	GetAPFollowers(c *Collection) (*[]RemoteUser, error)
@@ -1193,6 +1194,51 @@ func (db *datastore) GetPosts(cfg *config.Config, c *Collection, page int, inclu
 	}
 
 	return &posts, nil
+}
+
+func (db *datastore) GetAllPostsTaggedIDs(c *Collection, tag string, includeFuture bool) ([]string, error) {
+	collID := c.ID
+
+	cf := c.NewFormat()
+	order := "DESC"
+	if cf.Ascending() {
+		order = "ASC"
+	}
+
+	timeCondition := ""
+	if !includeFuture {
+		timeCondition = "AND created <= NOW()"
+	}
+	var rows *sql.Rows
+	var err error
+	if db.driverName == driverSQLite {
+		rows, err = db.Query("SELECT id FROM posts WHERE collection_id = ? AND LOWER(content) regexp ? "+timeCondition+" ORDER BY created "+order, collID, `.*#`+strings.ToLower(tag)+`\b.*`)
+	} else {
+		rows, err = db.Query("SELECT id FROM posts WHERE collection_id = ? AND LOWER(content) RLIKE ? "+timeCondition+" ORDER BY created "+order, collID, "#"+strings.ToLower(tag)+"[[:>:]]")
+	}
+	if err != nil {
+		log.Error("Failed selecting tagged posts: %v", err)
+		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve tagged collection posts."}
+	}
+	defer rows.Close()
+
+	ids := []string{}
+	for rows.Next() {
+		var id string
+		err = rows.Scan(&id)
+		if err != nil {
+			log.Error("Failed scanning row: %v", err)
+			break
+		}
+
+		ids = append(ids, id)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Error("Error after Next() on rows: %v", err)
+	}
+
+	return ids, nil
 }
 
 // GetPostsTagged retrieves all posts on the given Collection that contain the
