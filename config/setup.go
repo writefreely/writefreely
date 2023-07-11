@@ -57,7 +57,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 		Success: "{{ . | bold | faint }}: ",
 	}
 	selTmpls := &promptui.SelectTemplates{
-		Selected: fmt.Sprintf(`{{.Label}} {{ . | faint }}`),
+		Selected: `{{.Label}} {{ . | faint }}`,
 	}
 
 	var selPrompt promptui.Select
