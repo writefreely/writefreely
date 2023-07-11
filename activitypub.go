@@ -644,10 +644,7 @@ func deleteFederatedPost(app *App, p *PublicPost, collID int64) error {
 
 	for si, instFolls := range inboxes {
 		na.CC = []string{}
-		for _, f := range instFolls {
-			na.CC = append(na.CC, f)
-		}
-
+		na.CC = append(na.CC, instFolls...)
 		da := activitystreams.NewDeleteActivity(na)
 		// Make the ID unique to ensure it works in Pleroma
 		// See: https://git.pleroma.social/pleroma/pleroma/issues/1481
@@ -713,9 +710,7 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 		// add all followers from that instance
 		// to the CC field
 		na.CC = []string{}
-		for _, f := range instFolls {
-			na.CC = append(na.CC, f)
-		}
+		na.CC = append(na.CC, instFolls...)
 		// create a new "Create" activity
 		// with our article as object
 		if isUpdate {
