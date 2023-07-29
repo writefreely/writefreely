@@ -48,6 +48,7 @@ import (
 
 const (
 	staticDir       = "static"
+	mediaDir        = "media"
 	assumedTitleLen = 80
 	postsPerPage    = 10
 

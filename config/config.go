@@ -43,6 +43,7 @@ type (
 
 		TemplatesParentDir string `ini:"templates_parent_dir"`
 		StaticParentDir    string `ini:"static_parent_dir"`
+		MediaParentDir     string `ini:"media_parent_dir"`
 		PagesParentDir     string `ini:"pages_parent_dir"`
 		KeysParentDir      string `ini:"keys_parent_dir"`
 
@@ -168,6 +169,9 @@ type (
 
 		// Disable password authentication if use only Oauth
 		DisablePasswordAuth bool `ini:"disable_password_auth"`
+
+		AllowUploadMedia bool   `ini:"allow_upload_media"`
+		MediaMaxSize     int64  `ini:"media_max_size"`
 	}
 
 	// Config holds the complete configuration for running a writefreely instance
@@ -197,8 +201,10 @@ func New() *Config {
 			SingleUser:     true,
 			MinUsernameLen: 3,
 			MaxBlogs:       1,
+			MediaMaxSize:   10,
 			Federation:     true,
 			PublicStats:    true,
+			AllowUploadMedia: false,
 		},
 	}
 	c.UseMySQL(true)

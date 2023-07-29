@@ -161,6 +161,7 @@ type (
 		Language     sql.NullString
 		OwnerID      int64
 		CollectionID sql.NullInt64
+		MediaFilesList    []string
 
 		Found bool
 		Gone  bool

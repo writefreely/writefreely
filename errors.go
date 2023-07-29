@@ -43,6 +43,7 @@ var (
 	ErrCollectionGone         = impart.HTTPError{http.StatusGone, "This blog was unpublished."}
 	ErrCollectionPageNotFound = impart.HTTPError{http.StatusNotFound, "Collection page doesn't exist."}
 	ErrPostNotFound           = impart.HTTPError{Status: http.StatusNotFound, Message: "Post not found."}
+	ErrFileNotFound           = impart.HTTPError{Status: http.StatusNotFound, Message: "File not found."}
 	ErrPostBanned             = impart.HTTPError{Status: http.StatusGone, Message: "Post removed."}
 	ErrPostUnpublished        = impart.HTTPError{Status: http.StatusGone, Message: "Post unpublished by author."}
 	ErrPostFetchError         = impart.HTTPError{Status: http.StatusInternalServerError, Message: "We encountered an error getting the post. The humans have been alerted."}
