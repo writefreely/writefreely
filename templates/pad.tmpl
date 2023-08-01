@@ -14,7 +14,7 @@
 
 		<div id="overlay"></div>
 		
-		<textarea id="writer" placeholder="Write..." class="{{.Post.Font}}" autofocus>{{if .Post.Title}}# {{.Post.Title}}
+		<textarea id="writer" placeholder="Write..." class="{{.Post.Font}}" dir="{{if .Post.IsRTL.Bool}}rtl{{end}}" autofocus>{{if .Post.Title}}# {{.Post.Title}}
 
 {{end}}{{.Post.Content}}</textarea>
 
