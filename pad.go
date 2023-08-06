@@ -337,6 +337,24 @@ func handleGetFile(app *App, w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+func calculateDirectoryTotalSize(dirPath string) (int64, error) {
+	var totalSize int64
+
+	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !info.IsDir() {
+			totalSize += info.Size()
+		}
+
+		return nil
+	})
+
+	return totalSize, err
+}
+
 func handleUploadMedia(app *App, w http.ResponseWriter, r *http.Request) error {
 	maxUploadSize := app.cfg.App.MediaMaxSize * 1024 * 1024
 	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize)
@@ -346,6 +364,8 @@ func handleUploadMedia(app *App, w http.ResponseWriter, r *http.Request) error {
 		http.Error(w, errMsg, http.StatusBadRequest)
 		return nil
 	}
+
+	fileSize := r.ContentLength
 
 	if err := okToEdit(app, w, r); err != nil {
 		 return err
@@ -372,8 +392,17 @@ func handleUploadMedia(app *App, w http.ResponseWriter, r *http.Request) error {
 	err = os.MkdirAll(mediaDirectoryPath, 0755)
 	if err != nil {
 		return err
-	} else {
 	}
+
+	totalSize, err := calculateDirectoryTotalSize(mediaDirectoryPath)
+	totalMediaSpace := app.cfg.App.TotalMediaSpace * 1024 * 1024
+	if totalSize + fileSize > totalMediaSpace {
+		errMsg := fmt.Sprintf("Your upload space limit has been exceeded. Your limit is: %d MB",
+					app.cfg.App.TotalMediaSpace)
+		http.Error(w, errMsg, http.StatusBadRequest)
+		return nil
+	}
+
 	newFileName, _ := getNewFileName(mediaDirectoryPath, handler.Filename)
 	newFilePath := filepath.Join(mediaDirectoryPath, newFileName)
 	dst, err := os.Create(newFilePath)
