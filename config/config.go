@@ -172,6 +172,7 @@ type (
 
 		AllowUploadMedia bool   `ini:"allow_upload_media"`
 		MediaMaxSize     int64  `ini:"media_max_size"`
+		TotalMediaSpace  int64  `ini:"total_media_size"`
 	}
 
 	// Config holds the complete configuration for running a writefreely instance
@@ -202,6 +203,7 @@ func New() *Config {
 			MinUsernameLen: 3,
 			MaxBlogs:       1,
 			MediaMaxSize:   10,
+			TotalMediaSpace: 100,
 			Federation:     true,
 			PublicStats:    true,
 			AllowUploadMedia: false,
