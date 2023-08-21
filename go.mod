@@ -15,8 +15,7 @@ require (
 	github.com/ikeikeikeike/go-sitemap-generator/v2 v2.0.2
 	github.com/kylemcc/twitter-text-go v0.0.0-20180726194232-7f582f6736ec
 	github.com/manifoldco/promptui v0.9.0
-	github.com/mattn/go-sqlite3 v1.14.17
-	github.com/microcosm-cc/bluemonday v1.0.25
+	github.com/microcosm-cc/bluemonday v1.0.21
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/stretchr/testify v1.8.4
@@ -36,6 +35,7 @@ require (
 	github.com/writefreely/go-nodeinfo v1.2.0
 	golang.org/x/crypto v0.11.0
 	golang.org/x/net v0.13.0
+	modernc.org/sqlite v1.20.0
 )
 
 require (
@@ -53,6 +53,7 @@ require (
 	github.com/go-test/deep v1.0.1 // indirect
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
 	github.com/gologme/log v1.2.0 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect
@@ -64,6 +65,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
+	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
@@ -76,6 +78,15 @@ require (
 	golang.org/x/text v0.11.0 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	lukechampine.com/uint128 v1.2.0 // indirect
+	modernc.org/cc/v3 v3.40.0 // indirect
+	modernc.org/ccgo/v3 v3.16.13 // indirect
+	modernc.org/libc v1.21.5 // indirect
+	modernc.org/mathutil v1.5.0 // indirect
+	modernc.org/memory v1.4.0 // indirect
+	modernc.org/opt v0.1.3 // indirect
+	modernc.org/strutil v1.1.3 // indirect
+	modernc.org/token v1.0.1 // indirect
 )
 
 go 1.19
