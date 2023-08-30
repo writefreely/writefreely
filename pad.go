@@ -372,10 +372,17 @@ func handleUploadMedia(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 	vars := mux.Vars(r)
 	slug := vars["slug"]
-	user := getUserSession(app, r)
 
 	if slug == "" {
-		return ErrPostNotFound
+		actionId := vars["action"]
+		if actionId == "" {
+			return ErrPostNotFound
+		}
+		var err error
+		slug, err = getSlugFromActionId(app, actionId)
+		if slug == "" || err != nil {
+			return ErrPostNotFound
+		}
 	}
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -387,6 +394,7 @@ func handleUploadMedia(app *App, w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 	defer file.Close()
+	user := getUserSession(app, r)
 	mediaDirectoryPath := filepath.Join(app.cfg.Server.MediaParentDir, mediaDir,
 					user.Username, slug)
 	err = os.MkdirAll(mediaDirectoryPath, 0755)

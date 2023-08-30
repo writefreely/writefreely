@@ -13,6 +13,7 @@ package writefreely
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -1283,6 +1284,18 @@ func (p *SubmittedPost) isFontValid() bool {
 
 	_, valid := validFonts[p.Font]
 	return valid
+}
+
+func getSlugFromActionId(app *App, actionID string) (string, error) {
+	var slug string
+	err := app.db.QueryRow("SELECT slug FROM posts WHERE id = ?", actionID).Scan(&slug)
+	switch {
+	case err == sql.ErrNoRows:
+		return "", errors.New("Post not found")
+	case err != nil:
+		return "", errors.New("Unable to fetch post")
+	}
+	return slug, nil
 }
 
 func getRawPost(app *App, friendlyID string) *RawPost {
