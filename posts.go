@@ -635,6 +635,8 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 			}
 			collID = coll.ID
 		}
+		slug := getSlugFromPost(*p.Title, *p.Content, p.Language.String)
+		p.Slug = &slug
 		// TODO: return PublicPost from createPost
 		newPost.Post, err = app.db.CreatePost(userID, collID, p)
 	}
