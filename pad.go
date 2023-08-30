@@ -278,6 +278,11 @@ func handleViewMeta(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 	appData.Flashes, _ = getSessionFlashes(app, w, r, nil)
 	user := getUserSession(app, r)
+
+	if slug == "" {
+		slug, _ = getSlugFromActionId(app, action)
+	}
+
 	mediaDirectoryPath := filepath.Join(app.cfg.Server.MediaParentDir, mediaDir,
 						user.Username, slug)
 	appData.Post.MediaFilesList, _ = getFilesListInPath(mediaDirectoryPath)
