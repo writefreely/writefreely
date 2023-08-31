@@ -13,6 +13,7 @@ package writefreely
 import (
 	"database/sql"
 	"encoding/json"
+	"path/filepath"
 	"errors"
 	"fmt"
 	"html/template"
@@ -21,6 +22,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/guregu/null"
@@ -799,6 +801,13 @@ func deletePost(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	friendlyID := vars["post"]
 	editToken := r.FormValue("token")
+	var err error
+
+	user := getUserSession(app, r)
+	slug, err := getSlugFromActionId(app, friendlyID)
+	if err == nil {
+		deleteMediaFilesOfPost(app, user.Username, slug)
+	}
 
 	var ownerID int64
 	var u *User
@@ -812,7 +821,6 @@ func deletePost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	var res sql.Result
 	var t *sql.Tx
-	var err error
 	var collID sql.NullInt64
 	var coll *Collection
 	var pp *PublicPost
@@ -909,6 +917,15 @@ func deletePost(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return impart.HTTPError{Status: http.StatusNoContent}
+}
+
+func deleteMediaFilesOfPost(app *App, username, slug string) {
+	mediaDirectoryPath := filepath.Join(app.cfg.Server.MediaParentDir, mediaDir,
+						username, slug)
+	err := os.RemoveAll(mediaDirectoryPath)
+	if err != nil {
+		log.Error("Deleting media directory of %s failed: %v", username, err)
+	}
 }
 
 // addPost associates a post with the authenticated user.
