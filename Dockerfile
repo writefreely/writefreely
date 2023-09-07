@@ -1,6 +1,9 @@
 # Build image
 FROM golang:1.19-alpine as build
 
+LABEL org.opencontainers.image.source=https://github.com/writefreely/writefreely
+LABEL org.opencontainers.image.description="WriteFreely is a clean, minimalist publishing platform made for writers. Start a blog, share knowledge within your organization, or build a community around the shared act of writing."
+
 RUN apk add --update nodejs npm make g++ git
 RUN npm install -g less less-plugin-clean-css
 
