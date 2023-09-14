@@ -12,6 +12,7 @@ package writefreely
 
 import (
 	"errors"
+	"fmt"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -119,8 +120,21 @@ func initUserPage(parentDir, path, key string) {
 
 // InitTemplates loads all template files from the configured parent dir.
 func InitTemplates(cfg *config.Config) error {
+
+	var templatesPath string = filepath.Join(cfg.Server.TemplatesParentDir, templatesDir)
+	if _, err := os.Stat(templatesPath); os.IsNotExist(err) {
+		var path string = templatesPath
+
+		s, err := filepath.Abs(templatesPath)
+		if nil == err {
+			path = s
+		}
+
+		return fmt.Errorf("the directory for the 'templates/' templates does not exist — should have been at %q", path)
+	}
+
 	log.Info("Loading templates...")
-	tmplFiles, err := ioutil.ReadDir(filepath.Join(cfg.Server.TemplatesParentDir, templatesDir))
+	tmplFiles, err := ioutil.ReadDir(templatesPath)
 	if err != nil {
 		return err
 	}
@@ -133,11 +147,23 @@ func InitTemplates(cfg *config.Config) error {
 		}
 	}
 
+	var pagesPath string = filepath.Join(cfg.Server.PagesParentDir, pagesDir)
+	if _, err := os.Stat(pagesPath); os.IsNotExist(err) {
+		var path string = pagesPath
+
+		s, err := filepath.Abs(pagesPath)
+		if nil == err {
+			path = s
+		}
+
+		return fmt.Errorf("the directory for the 'pages/' templates does not exist — should have been at %q", path)
+	}
+
 	log.Info("Loading pages...")
 	// Initialize all static pages that use the base template
-	err = filepath.Walk(filepath.Join(cfg.Server.PagesParentDir, pagesDir), func(path string, i os.FileInfo, err error) error {
+	err = filepath.Walk(pagesPath, func(path string, i os.FileInfo, err error) error {
 		if err != nil {
-			return err
+			return fmt.Errorf("problem loading template from %q: %w", path, err)
 		}
 		if !i.IsDir() && !strings.HasPrefix(i.Name(), ".") {
 			key := i.Name()
