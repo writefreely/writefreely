@@ -1,7 +1,13 @@
-# WriteFreely Contributors
+# PostFreely Contributing Authors
 
-WriteFreely is built by [Matt Baer](https://github.com/thebaer), with contributions from:
+PostFreely is a fork of WriteFreely.
 
+Thank you [Matt Baer](https://github.com/thebaer) for creating WriteFreely and releasing it as open-source software.
+
+These are the people who indirectly contributed to PostFreely, by contributing to WriteFreely:
+
+* [Musing Studio LLC](https://musing.studio)
+* [Matt Baer](https://github.com/thebaer)
 * [Jean-Francois Arseneau](https://github.com/TheJF)
 * [Ben Overmyer](https://github.com/BenOvermyer)
 * [Marcel van der Boom](https://github.com/mrvdb)
