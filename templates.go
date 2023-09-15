@@ -15,9 +15,8 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"io/ioutil"
-	"net/http"
 	"os"
+	"net/http"
 	"path/filepath"
 	"strings"
 
@@ -134,7 +133,7 @@ func InitTemplates(cfg *config.Config) error {
 	}
 
 	log.Info("Loading templates...")
-	tmplFiles, err := ioutil.ReadDir(templatesPath)
+	tmplFiles, err := os.ReadDir(templatesPath)
 	if err != nil {
 		return err
 	}

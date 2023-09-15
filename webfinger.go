@@ -12,7 +12,7 @@ package writefreely
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -110,7 +110,7 @@ func RemoteLookup(handle string) string {
 		return ""
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Error("Error on webfinger response: %v", err)
 		return ""
