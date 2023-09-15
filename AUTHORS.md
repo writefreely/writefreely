@@ -15,3 +15,7 @@ These are the people who indirectly contributed to PostFreely, by contributing t
 * [kaiyou](https://github.com/kaiyou)
 * [Aaron Ogle](https://github.com/geekgonecrazy)
 * [Norman](https://github.com/nkoehring)
+
+These are the people who indirectly contributed to PostFreely, by creating (unmerged) pull-requests for WriteFreely:
+
+* [testwill](https://github.com/testwill)
