@@ -15,7 +15,16 @@ Built on a plain, auto-saving editor, PostFreely gives you a distraction-free wr
 
 ### A connected community
 
-Start writing together, publicly or privately. Connect with other communities, whether running PostFreely, [Plume](https://joinplu.me/), or other ActivityPub-powered software. And bring members on board from your existing platforms, thanks to our OAuth 2.0 support.
+Start writing together, publicly or privately.
+Connect with other communities, whether running PostFreely,
+[Mastodon](https://joinmastodon.org/),
+[Firefish](https://joinfirefish.org/),
+[Friendica](https://friendi.ca/),
+[Misskey](https://misskey-hub.net/),
+[Pixelfed](https://pixelfed.org/),
+[Plume](https://joinplu.me/),
+or any other ActivityPub-powered software.
+And bring members on board from your existing platforms, thanks to our OAuth 2.0 support.
 
 ### Intuitive organization
 
