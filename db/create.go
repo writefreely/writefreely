@@ -247,10 +247,7 @@ func (b *CreateTableSqlBuilder) ToSQL() (string, error) {
 		}
 		things = append(things, columnStr)
 	}
-	for _, constraint := range b.Constraints {
-		things = append(things, constraint)
-	}
-
+	things = append(things, b.Constraints...)
 	if thingLen := len(things); thingLen > 0 {
 		str.WriteString(" ( ")
 		for i, thing := range things {
