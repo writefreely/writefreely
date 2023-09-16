@@ -23,6 +23,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/writeas/web-core/l10n"
 	"github.com/writeas/web-core/log"
+
 	"github.com/writefreely/writefreely/config"
 )
 
@@ -164,7 +165,8 @@ func InitTemplates(cfg *config.Config) error {
 		if err != nil {
 			return fmt.Errorf("problem loading template from %q: %w", path, err)
 		}
-		if !i.IsDir() && !strings.HasPrefix(i.Name(), ".") {
+
+		if i != nil && !i.IsDir() && !strings.HasPrefix(i.Name(), ".") {
 			key := i.Name()
 			initPage(cfg.Server.PagesParentDir, path, key)
 		}

@@ -10,7 +10,11 @@
 
 package writefreely
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/writefreely/writefreely/config"
+)
 
 func TestApplyBasicMarkdown(t *testing.T) {
 	tests := []struct {
@@ -32,12 +36,19 @@ func TestApplyBasicMarkdown(t *testing.T) {
 		{"date", "12. April", `12. April`},
 		{"table", "| Hi | There |", `| Hi | There |`},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			res := applyBasicMarkdown([]byte(test.in))
-			if res != test.result {
-				t.Errorf("%s: wanted %s, got %s", test.name, test.result, res)
-			}
-		})
+	for _, renderer := range []string{"saturday", "goldmark"} {
+		cfg := &config.Config{
+			App: config.AppCfg{
+				Renderer: renderer,
+			},
+		}
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				res := applyBasicMarkdown([]byte(test.in), cfg)
+				if res != test.result {
+					t.Errorf("%s: wanted %s, got %s", test.name, test.result, res)
+				}
+			})
+		}
 	}
 }
