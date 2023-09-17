@@ -1,13 +1,13 @@
 {{define "head"}}<title>Log in &mdash; {{.SiteName}}</title>
-<meta name="description" content="Log in to {{.SiteName}}.">
-<meta itemprop="description" content="Log in to {{.SiteName}}.">
+<meta name="description" content="Log into {{.SiteName}}.">
+<meta itemprop="description" content="Log into {{.SiteName}}.">
 <style>
 input{margin-bottom:0.5em;}
 </style>
 {{end}}
 {{define "content"}}
 <div class="tight content-container">
-	<h1>Log in to {{.SiteName}}</h1>
+	<h1>Log into {{.SiteName}}</h1>
 
 	{{if .Flashes}}<ul class="errors">
 		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}

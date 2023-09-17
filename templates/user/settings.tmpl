@@ -55,7 +55,7 @@ h3 { font-weight: normal; }
 		<div class="option">
 			<h3>Passphrase</h3>
 			<div class="section">
-				{{if and (not .HasPass) (not .IsLogOut)}}<div class="alert info"><p>Add a passphrase to easily log in to your account.</p></div>{{end}}
+				{{if and (not .HasPass) (not .IsLogOut)}}<div class="alert info"><p>Add a passphrase to easily log into your account.</p></div>{{end}}
 				{{if .HasPass}}<p>Current passphrase</p>
 				<input type="password" name="current-pass" placeholder="Current passphrase" tabindex="1" /> <input class="show" type="checkbox" id="show-cur-pass" /><label for="show-cur-pass"> Show</label>
 				<p>New passphrase</p>

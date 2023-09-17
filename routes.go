@@ -82,7 +82,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	configureGenericOauth(handler, write, apper.App())
 	configureGiteaOauth(handler, write, apper.App())
 
-	// Set up dyamic page handlers
+	// Set up dynamic page handlers
 	// Handle auth
 	auth := write.PathPrefix("/api/auth/").Subrouter()
 	if apper.App().cfg.App.OpenRegistration {

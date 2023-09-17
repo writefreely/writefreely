@@ -51,7 +51,7 @@ func initKeyPaths(app *App) {
 func generateKey(path string) error {
 	// Check if key file exists
 	if _, err := os.Stat(path); err == nil {
-		log.Info("%s already exists. rm the file if you understand the consquences.", path)
+		log.Info("%s already exists. rm the file if you understand the consequences.", path)
 		return nil
 	} else if !os.IsNotExist(err) {
 		log.Error("%s", err)
