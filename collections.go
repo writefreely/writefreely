@@ -13,6 +13,7 @@ package writefreely
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"math"
@@ -31,10 +32,11 @@ import (
 	"github.com/writeas/web-core/bots"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/posts"
+	"golang.org/x/net/idna"
+
 	"github.com/writefreely/writefreely/author"
 	"github.com/writefreely/writefreely/config"
 	"github.com/writefreely/writefreely/page"
-	"golang.org/x/net/idna"
 )
 
 type (
@@ -1172,7 +1174,7 @@ func handleWebCollectionUnlock(app *App, w http.ResponseWriter, r *http.Request)
 	var collHashedPass []byte
 	err := app.db.QueryRow("SELECT password FROM collectionpasswords INNER JOIN collections ON id = collection_id WHERE alias = ?", readReq.Alias).Scan(&collHashedPass)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			log.Error("No collectionpassword found when trying to read collection %s", readReq.Alias)
 			return impart.HTTPError{http.StatusInternalServerError, "Something went very wrong. The humans have been alerted."}
 		}

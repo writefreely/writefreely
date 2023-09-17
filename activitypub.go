@@ -16,6 +16,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -762,7 +763,7 @@ func getRemoteUser(app *App, actorID string) (*RemoteUser, error) {
 	var handle sql.NullString
 	err := app.db.QueryRow("SELECT id, inbox, shared_inbox, handle FROM remoteusers WHERE actor_id = ?", actorID).Scan(&u.ID, &u.Inbox, &u.SharedInbox, &handle)
 	switch {
-	case err == sql.ErrNoRows:
+	case errors.Is(err, sql.ErrNoRows):
 		return nil, impart.HTTPError{http.StatusNotFound, "No remote user with that ID."}
 	case err != nil:
 		log.Error("Couldn't get remote user %s: %v", actorID, err)
@@ -780,7 +781,7 @@ func getRemoteUserFromHandle(app *App, handle string) (*RemoteUser, error) {
 	u := RemoteUser{Handle: handle}
 	err := app.db.QueryRow("SELECT id, actor_id, inbox, shared_inbox FROM remoteusers WHERE handle = ?", handle).Scan(&u.ID, &u.ActorID, &u.Inbox, &u.SharedInbox)
 	switch {
-	case err == sql.ErrNoRows:
+	case errors.Is(err, sql.ErrNoRows):
 		return nil, ErrRemoteUserNotFound
 	case err != nil:
 		log.Error("Couldn't get remote user %s: %v", handle, err)

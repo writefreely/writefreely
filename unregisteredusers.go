@@ -13,6 +13,7 @@ package writefreely
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/writeas/impart"
@@ -105,7 +106,7 @@ func handleUsernameCheck(app *App, w http.ResponseWriter, r *http.Request) error
 	var un string
 	err := app.db.QueryRow("SELECT username FROM users WHERE username = ?", finalUsername).Scan(&un)
 	switch {
-	case err == sql.ErrNoRows:
+	case errors.Is(err, sql.ErrNoRows):
 		return impart.WriteSuccess(w, finalUsername, http.StatusOK)
 	case err != nil:
 		log.Error("Couldn't SELECT username: %v", err)
@@ -136,7 +137,7 @@ func getValidUsername(app *App, reqName, prevName string) (string, *impart.HTTPE
 	var un string
 	err := app.db.QueryRow("SELECT username FROM users WHERE username = ?", finalUsername).Scan(&un)
 	switch {
-	case err == sql.ErrNoRows:
+	case errors.Is(err, sql.ErrNoRows):
 		return finalUsername, nil
 	case err != nil:
 		log.Error("Couldn't SELECT username: %v", err)
