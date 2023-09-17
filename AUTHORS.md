@@ -18,5 +18,6 @@ These are the people who indirectly contributed to PostFreely, by contributing t
 
 These are the people who indirectly contributed to PostFreely, by creating (unmerged) pull-requests for WriteFreely:
 
+* [Josh Soref](https://github.com/jsoref)
 * [Mathew](https://github.com/lpar)
 * [testwill](https://github.com/testwill)
