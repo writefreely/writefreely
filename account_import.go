@@ -2,6 +2,7 @@ package writefreely
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -128,11 +129,11 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		}
 
 		post, err := wfimport.FromFile(filepath.Join(os.TempDir(), fname))
-		if err == wfimport.ErrEmptyFile {
+		if errors.Is(err, wfimport.ErrEmptyFile) {
 			// not a real error so don't log
 			_ = addSessionFlash(app, w, r, fmt.Sprintf("%s was empty, import skipped", formFile.Filename), nil)
 			continue
-		} else if err == wfimport.ErrInvalidContentType {
+		} else if errors.Is(err, wfimport.ErrInvalidContentType) {
 			// same as above
 			_ = addSessionFlash(app, w, r, fmt.Sprintf("%s is not a supported post file", formFile.Filename), nil)
 			continue

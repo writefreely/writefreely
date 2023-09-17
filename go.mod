@@ -1,7 +1,8 @@
 module github.com/writefreely/writefreely
 
+go 1.19
+
 require (
-	git.mills.io/prologic/go-gopher v0.0.0-20210712135410-b7ebb55feece
 	github.com/clbanning/mxj v1.8.4 // indirect
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fatih/color v1.15.0
@@ -17,7 +18,7 @@ require (
 	github.com/ikeikeikeike/go-sitemap-generator/v2 v2.0.2
 	github.com/kylemcc/twitter-text-go v0.0.0-20180726194232-7f582f6736ec
 	github.com/manifoldco/promptui v0.9.0
-	github.com/microcosm-cc/bluemonday v1.0.23
+	github.com/microcosm-cc/bluemonday v1.0.25
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/stretchr/testify v1.8.4
@@ -38,9 +39,8 @@ require (
 	golang.org/x/crypto v0.13.0
 	golang.org/x/net v0.15.0
 	modernc.org/sqlite v1.20.0
-)
-
-require (
+	github.com/yuin/goldmark v1.5.6
+	go.abhg.dev/goldmark/hashtag v0.3.1
 	code.as/core/socks v1.0.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beevik/etree v1.1.0 // indirect
@@ -78,8 +78,6 @@ require (
 	github.com/writeas/go-writeas/v2 v2.0.2 // indirect
 	github.com/writeas/openssl-go v1.0.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
-	github.com/yuin/goldmark v1.5.6 // indirect
-	go.abhg.dev/goldmark/hashtag v0.3.1 // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
@@ -96,5 +94,3 @@ require (
 	modernc.org/strutil v1.1.3 // indirect
 	modernc.org/token v1.0.1 // indirect
 )
-
-go 1.19

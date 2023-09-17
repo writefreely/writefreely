@@ -13,6 +13,7 @@ package writefreely
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -36,6 +37,7 @@ import (
 	"github.com/writeas/web-core/i18n"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/tags"
+
 	"github.com/writefreely/writefreely/page"
 	"github.com/writefreely/writefreely/parse"
 )
@@ -356,7 +358,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	err := app.db.QueryRow("SELECT owner_id, title, content, text_appearance, view_count, language, rtl FROM posts WHERE id = ?", friendlyID).Scan(&ownerID, &title, &content, &font, &views, &language, &rtl)
 	switch {
-	case err == sql.ErrNoRows:
+	case errors.Is(err, sql.ErrNoRows):
 		found = false
 
 		// Output the error in the correct format
@@ -516,8 +518,10 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 // newPost creates a new post with or without an owning Collection.
 //
 // Endpoints:
-//   /posts
-//   /posts?collection={alias}
+//
+//	/posts
+//	/posts?collection={alias}
+//
 // ? /collections/{alias}/posts
 func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r)
@@ -817,12 +821,12 @@ func deletePost(app *App, w http.ResponseWriter, r *http.Request) error {
 		var dummy int64
 		err = app.db.QueryRow("SELECT 1 FROM posts WHERE id = ?", friendlyID).Scan(&dummy)
 		switch {
-		case err == sql.ErrNoRows:
+		case errors.Is(err, sql.ErrNoRows):
 			return impart.HTTPError{http.StatusNotFound, "Post not found."}
 		}
 		err = app.db.QueryRow("SELECT 1 FROM posts WHERE id = ? AND owner_id IS NULL", friendlyID).Scan(&dummy)
 		switch {
-		case err == sql.ErrNoRows:
+		case errors.Is(err, sql.ErrNoRows):
 			// Post already has an owner. This could provide a bad experience
 			// for the user, but it's more important to ensure data isn't lost
 			// unexpectedly. So prevent deletion via token.
@@ -1293,7 +1297,7 @@ func getRawPost(app *App, friendlyID string) *RawPost {
 
 	err := app.db.QueryRow("SELECT title, content, text_appearance, language, rtl, created, updated, owner_id FROM posts WHERE id = ?", friendlyID).Scan(&title, &content, &font, &lang, &isRTL, &created, &updated, &ownerID)
 	switch {
-	case err == sql.ErrNoRows:
+	case errors.Is(err, sql.ErrNoRows):
 		return &RawPost{Content: "", Found: false, Gone: false}
 	case err != nil:
 		log.Error("Unable to fetch getRawPost: %s", err)
@@ -1331,7 +1335,7 @@ func getRawCollectionPost(app *App, slug, collAlias string) *RawPost {
 		err = app.db.QueryRow("SELECT id, title, content, text_appearance, language, rtl, view_count, created, updated, owner_id FROM posts WHERE slug = ? AND collection_id = (SELECT id FROM collections WHERE alias = ?)", slug, collAlias).Scan(&id, &title, &content, &font, &lang, &isRTL, &views, &created, &updated, &ownerID)
 	}
 	switch {
-	case err == sql.ErrNoRows:
+	case errors.Is(err, sql.ErrNoRows):
 		return &RawPost{Content: "", Found: false, Gone: false}
 	case err != nil:
 		log.Error("Unable to fetch getRawCollectionPost: %s", err)
