@@ -59,6 +59,7 @@ type (
 		URL         string         `json:"url,omitempty"`
 
 		Monetization string `json:"monetization_pointer,omitempty"`
+		Verification string `json:"verification_link"`
 
 		db       *datastore
 		hostName string
@@ -98,6 +99,7 @@ type (
 		Script       *sql.NullString `schema:"script" json:"script"`
 		Signature    *sql.NullString `schema:"signature" json:"signature"`
 		Monetization *string         `schema:"monetization_pointer" json:"monetization_pointer"`
+		Verification *string         `schema:"verification_link" json:"verification_link"`
 		Visibility   *int            `schema:"visibility" json:"public"`
 		Format       *sql.NullString `schema:"format" json:"format"`
 	}
@@ -1132,7 +1134,7 @@ func existingCollection(app *App, w http.ResponseWriter, r *http.Request) error 
 		}
 	}
 
-	err = app.db.UpdateCollection(&c, collAlias)
+	err = app.db.UpdateCollection(app, &c, collAlias)
 	if err != nil {
 		if err, ok := err.(impart.HTTPError); ok {
 			if reqJSON {

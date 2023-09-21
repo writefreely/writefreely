@@ -3,6 +3,9 @@
 	{{if .Monetization -}}
 		<meta name="monetization" content="{{.DisplayMonetization}}" />
 	{{- end}}
+	{{if .Verification -}}
+		<link rel="me" href="{{.Verification}}" />
+	{{- end}}
 {{end}}
 
 {{define "highlighting"}}

@@ -153,6 +153,15 @@ textarea.section.norm {
 		</div>
 	</div>
 
+	<div class="option">
+		<h2>Verification</h2>
+		<div class="section">
+			<p class="explain">Verify that you own another site on the open web, fediverse, etc. For example, enter your Mastodon profile address here, then on Mastodon add a link back to this blog &mdash; it will show up as <a href="https://joinmastodon.org/verification" target="mastoverified">verified</a> there.</p>
+			<input type="text" name="verification_link" style="width:100%" value="{{.Verification}}" placeholder="https://writing.exchange/@writefreely" />
+			<p class="explain">This adds a <code>rel="me"</code> code in your blog's <code>&lt;head&gt;</code>.</p>
+		</div>
+	</div>
+
 	{{if .UserPage.StaticPage.AppCfg.Monetization}}
 	<div class="option">
 		<h2>Web Monetization</h2>
