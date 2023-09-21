@@ -1155,7 +1155,11 @@ func handleViewCollectionLang(app *App, w http.ResponseWriter, r *http.Request) 
 	displayPage.PinnedPosts, _ = app.db.GetPinnedPosts(coll.CollectionObj, isOwner)
 	displayPage.Monetization = app.db.GetCollectionAttribute(coll.ID, "monetization_pointer")
 
-	err = templates["collection"].ExecuteTemplate(w, "collection", displayPage)
+	collTmpl := "collection"
+	if app.cfg.App.Chorus {
+		collTmpl = "chorus-collection"
+	}
+	err = templates[collTmpl].ExecuteTemplate(w, "collection", displayPage)
 	if err != nil {
 		log.Error("Unable to render collection lang page: %v", err)
 	}
