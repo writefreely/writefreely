@@ -496,8 +496,7 @@ func apiCheckCollectionPermissions(app *App, r *http.Request, c *Collection) (in
 
 // fetchCollection handles the API endpoint for retrieving collection data.
 func fetchCollection(app *App, w http.ResponseWriter, r *http.Request) error {
-	accept := r.Header.Get("Accept")
-	if strings.Contains(accept, "application/activity+json") {
+	if IsActivityPubRequest(r) {
 		return handleFetchCollectionActivities(app, w, r)
 	}
 
