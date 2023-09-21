@@ -12,12 +12,13 @@ package config
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	"github.com/mitchellh/go-wordwrap"
 	"github.com/writeas/web-core/auth"
-	"strconv"
-	"strings"
 )
 
 type SetupData struct {
@@ -171,6 +172,13 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 			// Configure for MySQL
 			data.Config.UseMySQL(isNewCfg)
 
+			selPrompt = promptui.Select{
+				Templates: selTmpls,
+				Label:     "Connection type",
+				Items:     []string{"TCP/IP", "Unix socket"},
+			}
+			connSel, _, err := selPrompt.Run()
+
 			prompt = promptui.Prompt{
 				Templates: tmpls,
 				Label:     "Username",
@@ -182,16 +190,57 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 				return data, err
 			}
 
-			prompt = promptui.Prompt{
-				Templates: tmpls,
-				Label:     "Password",
-				Validate:  validateNonEmpty,
-				Default:   data.Config.Database.Password,
-				Mask:      '*',
-			}
-			data.Config.Database.Password, err = prompt.Run()
-			if err != nil {
-				return data, err
+			if connSel == 0 {
+				prompt = promptui.Prompt{
+					Templates: tmpls,
+					Label:     "Password",
+					Validate:  validateNonEmpty,
+					Default:   data.Config.Database.Password,
+					Mask:      '*',
+				}
+				data.Config.Database.Password, err = prompt.Run()
+				if err != nil {
+					return data, err
+				}
+
+				prompt = promptui.Prompt{
+					Templates: tmpls,
+					Label:     "Host",
+					Validate:  validateNonEmpty,
+					Default:   data.Config.Database.Host,
+				}
+				data.Config.Database.Host, err = prompt.Run()
+				if err != nil {
+					return data, err
+				}
+
+				prompt = promptui.Prompt{
+					Templates: tmpls,
+					Label:     "Port",
+					Validate:  validatePort,
+					Default:   fmt.Sprintf("%d", data.Config.Database.Port),
+				}
+				dbPort, err := prompt.Run()
+				if err != nil {
+					return data, err
+				}
+				data.Config.Database.Port, _ = strconv.Atoi(dbPort) // Ignore error, as we've already validated number
+			} else {
+				defaultSocketPath := "/var/run/mysqld/mysqld.sock"
+				if data.Config.Database.UnixSocket != "" {
+					defaultSocketPath = data.Config.Database.UnixSocket
+				}
+
+				prompt = promptui.Prompt{
+					Templates: tmpls,
+					Label:     "Unix socket path",
+					Default:   defaultSocketPath,
+				}
+				unixSocket, err := prompt.Run()
+				if err != nil {
+					return data, err
+				}
+				data.Config.Database.UnixSocket = unixSocket
 			}
 
 			prompt = promptui.Prompt{
@@ -205,28 +254,6 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 				return data, err
 			}
 
-			prompt = promptui.Prompt{
-				Templates: tmpls,
-				Label:     "Host",
-				Validate:  validateNonEmpty,
-				Default:   data.Config.Database.Host,
-			}
-			data.Config.Database.Host, err = prompt.Run()
-			if err != nil {
-				return data, err
-			}
-
-			prompt = promptui.Prompt{
-				Templates: tmpls,
-				Label:     "Port",
-				Validate:  validatePort,
-				Default:   fmt.Sprintf("%d", data.Config.Database.Port),
-			}
-			dbPort, err := prompt.Run()
-			if err != nil {
-				return data, err
-			}
-			data.Config.Database.Port, _ = strconv.Atoi(dbPort) // Ignore error, as we've already validated number
 		} else if sel == 1 {
 			// Configure for SQLite
 			data.Config.UseSQLite(isNewCfg)
