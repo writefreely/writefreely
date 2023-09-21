@@ -1,5 +1,5 @@
 GITREV=`git describe | cut -c 2-`
-LDFLAGS=-ldflags="-X 'github.com/writefreely/writefreely.softwareVer=$(GITREV)'"
+LDFLAGS=-ldflags="-s -w -X 'github.com/writefreely/writefreely.softwareVer=$(GITREV)'"
 
 GOCMD=go
 GOINSTALL=$(GOCMD) install $(LDFLAGS)
@@ -14,50 +14,50 @@ TMPBIN=./tmp
 
 all : build
 
-ci: ci-assets deps
+ci: deps
 	cd cmd/writefreely; $(GOBUILD) -v
 
-build: assets deps
-	cd cmd/writefreely; $(GOBUILD) -v -tags='sqlite'
+build: deps
+	cd cmd/writefreely; $(GOBUILD) -v -tags='netgo sqlite'
 
-build-no-sqlite: assets-no-sqlite deps-no-sqlite
-	cd cmd/writefreely; $(GOBUILD) -v -o $(BINARY_NAME)
+build-no-sqlite: deps-no-sqlite
+	cd cmd/writefreely; $(GOBUILD) -v -tags='netgo' -o $(BINARY_NAME)
 
 build-linux: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u src.techknowlogick.com/xgo; \
+		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=linux/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -go go-1.15.x -out writefreely ./cmd/writefreely
+	xgo --targets=linux/amd64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.19.x -out writefreely -pkg ./cmd/writefreely .
 
 build-windows: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u src.techknowlogick.com/xgo; \
+		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=windows/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -go go-1.15.x -out writefreely ./cmd/writefreely
+	xgo --targets=windows/amd64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.19.x -out writefreely -pkg ./cmd/writefreely .
 
 build-darwin: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u src.techknowlogick.com/xgo; \
+		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=darwin/amd64, -dest build/ $(LDFLAGS) -tags='sqlite' -go go-1.15.x -out writefreely ./cmd/writefreely
+	xgo --targets=darwin/amd64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.19.x -out writefreely -pkg ./cmd/writefreely .
 
 build-arm6: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u src.techknowlogick.com/xgo; \
+		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=linux/arm-6, -dest build/ $(LDFLAGS) -tags='sqlite' -go go-1.15.x -out writefreely ./cmd/writefreely
+	xgo --targets=linux/arm-6, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.19.x -out writefreely -pkg ./cmd/writefreely .
 
 build-arm7: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u src.techknowlogick.com/xgo; \
+		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=linux/arm-7, -dest build/ $(LDFLAGS) -tags='sqlite' -go go-1.15.x -out writefreely ./cmd/writefreely
+	xgo --targets=linux/arm-7, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.19.x -out writefreely -pkg ./cmd/writefreely .
 
 build-arm64: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u src.techknowlogick.com/xgo; \
+		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=linux/arm64, -dest build/ $(LDFLAGS) -tags='sqlite' -go go-1.15.x -out writefreely ./cmd/writefreely
+	xgo --targets=linux/arm64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.19.x -out writefreely -pkg ./cmd/writefreely .
 
 build-docker :
 	$(DOCKERCMD) build -t $(IMAGE_NAME):latest -t $(IMAGE_NAME):$(GITREV) .
@@ -65,8 +65,8 @@ build-docker :
 test:
 	$(GOTEST) -v ./...
 
-run: dev-assets
-	$(GOINSTALL) -tags='sqlite' ./...
+run:
+	$(GOINSTALL) -tags='netgo sqlite' ./...
 	$(BINARY_NAME) --debug
 
 deps :
@@ -81,7 +81,7 @@ install : build
 	cmd/writefreely/$(BINARY_NAME) --init-db
 	cd less/; $(MAKE) install $(MFLAGS)
 
-release : clean ui assets
+release : clean ui
 	mkdir -p $(BUILDPATH)
 	cp -r templates $(BUILDPATH)
 	cp -r pages $(BUILDPATH)
@@ -133,34 +133,11 @@ ui : force_look
 	cd less/; $(MAKE) $(MFLAGS)
 	cd prose/; $(MAKE) $(MFLAGS)
 
-assets : generate
-	go-bindata -pkg writefreely -ignore=\\.gitignore -tags="!wflib" schema.sql sqlite.sql
-
-assets-no-sqlite: generate
-	go-bindata -pkg writefreely -ignore=\\.gitignore -tags="!wflib" schema.sql
-
-dev-assets : generate
-	go-bindata -pkg writefreely -ignore=\\.gitignore -debug -tags="!wflib" schema.sql sqlite.sql
-
-lib-assets : generate
-	go-bindata -pkg writefreely -ignore=\\.gitignore -o bindata-lib.go -tags="wflib" schema.sql
-
-generate :
-	@hash go-bindata > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u github.com/jteeuwen/go-bindata/go-bindata; \
-	fi
-
 $(TMPBIN):
 	mkdir -p $(TMPBIN)
 
-$(TMPBIN)/go-bindata: deps $(TMPBIN)
-	$(GOBUILD) -o $(TMPBIN)/go-bindata github.com/jteeuwen/go-bindata/go-bindata
-
 $(TMPBIN)/xgo: deps $(TMPBIN)
 	$(GOBUILD) -o $(TMPBIN)/xgo src.techknowlogick.com/xgo
-
-ci-assets : $(TMPBIN)/go-bindata
-	$(TMPBIN)/go-bindata -pkg writefreely -ignore=\\.gitignore -tags="!wflib" schema.sql sqlite.sql
 
 clean :
 	-rm -rf build

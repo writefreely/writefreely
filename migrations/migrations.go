@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 A Bunch Tell LLC.
+ * Copyright © 2019 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -66,6 +66,7 @@ var migrations = []Migration{
 	New("support oauth via invite", oauthInvites),                   // V7 -> V8 (v0.12.0)
 	New("optimize drafts retrieval", optimizeDrafts),                // V8 -> V9
 	New("support post signatures", supportPostSignatures),           // V9 -> V10
+	New("Widen oauth_users.access_token", widenOauthAcceesToken),    // V10 -> V11
 }
 
 // CurrentVer returns the current migration version the application is on

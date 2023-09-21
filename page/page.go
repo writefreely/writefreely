@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019, 2021 A Bunch Tell LLC.
+ * Copyright © 2018-2019, 2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -21,6 +21,7 @@ type StaticPage struct {
 	config.AppCfg
 	Version   string
 	HeaderNav bool
+	CustomCSS bool
 
 	// Request values
 	Path          string

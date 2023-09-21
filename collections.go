@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2021 A Bunch Tell LLC.
+ * Copyright © 2018-2022 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -24,13 +24,14 @@ import (
 	"unicode"
 
 	"github.com/gorilla/mux"
+	stripmd "github.com/writeas/go-strip-markdown/v2"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/activitystreams"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/bots"
 	"github.com/writeas/web-core/i18n"
 	"github.com/writeas/web-core/log"
-	waposts "github.com/writeas/web-core/posts"
+	"github.com/writeas/web-core/posts"
 	"github.com/writefreely/writefreely/author"
 	"github.com/writefreely/writefreely/config"
 	"github.com/writefreely/writefreely/page"
@@ -363,6 +364,26 @@ func (c *Collection) MonetizationURL() string {
 	return strings.Replace(c.Monetization, "$", "https://", 1)
 }
 
+// DisplayDescription returns the description with rendered Markdown and HTML.
+func (c *Collection) DisplayDescription() *template.HTML {
+	if c.Description == "" {
+		s := template.HTML("")
+		return &s
+	}
+	t := template.HTML(posts.ApplyBasicAccessibleMarkdown([]byte(c.Description)))
+	return &t
+}
+
+// PlainDescription returns the description with all Markdown and HTML removed.
+func (c *Collection) PlainDescription() string {
+	if c.Description == "" {
+		return ""
+	}
+	desc := stripHTMLWithoutEscaping(c.Description)
+	desc = stripmd.Strip(desc)
+	return desc
+}
+
 func (c CollectionPage) DisplayMonetization() string {
 	return displayMonetization(c.Monetization, c.Alias)
 }
@@ -562,11 +583,11 @@ func fetchCollectionPosts(app *App, w http.ResponseWriter, r *http.Request) erro
 		}
 	}
 
-	posts, err := app.db.GetPosts(app.cfg, c, page, isCollOwner, false, false)
+	ps, err := app.db.GetPosts(app.cfg, c, page, isCollOwner, false, false)
 	if err != nil {
 		return err
 	}
-	coll := &CollectionObj{Collection: *c, Posts: posts}
+	coll := &CollectionObj{Collection: *c, Posts: ps}
 	app.db.GetPostsCount(coll, isCollOwner)
 	// Strip non-public information
 	coll.Collection.ForPublic()
@@ -574,7 +595,7 @@ func fetchCollectionPosts(app *App, w http.ResponseWriter, r *http.Request) erro
 	// Transform post bodies if needed
 	if r.FormValue("body") == "html" {
 		for _, p := range *coll.Posts {
-			p.Content = waposts.ApplyMarkdown([]byte(p.Content))
+			p.Content = posts.ApplyMarkdown([]byte(p.Content))
 		}
 	}
 
@@ -598,6 +619,30 @@ type CollectionPage struct {
 
 	// Helper field for Chorus mode
 	CollAlias string
+}
+
+type TagCollectionPage struct {
+	CollectionPage
+	Tag string
+}
+
+func (tcp TagCollectionPage) PrevPageURL(prefix string, n int, tl bool) string {
+	u := fmt.Sprintf("/tag:%s", tcp.Tag)
+	if n > 2 {
+		u += fmt.Sprintf("/page/%d", n-1)
+	}
+	if tl {
+		return u
+	}
+	return "/" + prefix + tcp.Alias + u
+
+}
+
+func (tcp TagCollectionPage) NextPageURL(prefix string, n int, tl bool) string {
+	if tl {
+		return fmt.Sprintf("/tag:%s/page/%d", tcp.Tag, n+1)
+	}
+	return fmt.Sprintf("/%s%s/tag:%s/page/%d", prefix, tcp.Alias, tcp.Tag, n+1)
 }
 
 func NewCollectionObj(c *Collection) *CollectionObj {
@@ -941,16 +986,29 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 
 	coll := newDisplayCollection(c, cr, page)
 
+	taggedPostIDs, err := app.db.GetAllPostsTaggedIDs(c, tag, cr.isCollOwner)
+	if err != nil {
+		return err
+	}
+
+	ttlPosts := len(taggedPostIDs)
+	pagePosts := coll.Format.PostsPerPage()
+	coll.TotalPages = int(math.Ceil(float64(ttlPosts) / float64(pagePosts)))
+	if coll.TotalPages > 0 && page > coll.TotalPages {
+		redirURL := fmt.Sprintf("/page/%d", coll.TotalPages)
+		if !app.cfg.App.SingleUser {
+			redirURL = fmt.Sprintf("/%s%s%s", cr.prefix, coll.Alias, redirURL)
+		}
+		return impart.HTTPError{http.StatusFound, redirURL}
+	}
+
 	coll.Posts, _ = app.db.GetPostsTagged(app.cfg, c, tag, page, cr.isCollOwner)
 	if coll.Posts != nil && len(*coll.Posts) == 0 {
 		return ErrCollectionPageNotFound
 	}
 
 	// Serve collection
-	displayPage := struct {
-		CollectionPage
-		Tag string
-	}{
+	displayPage := TagCollectionPage{
 		CollectionPage: CollectionPage{
 			DisplayCollection: coll,
 			StaticPage:        pageForReq(app, r),
