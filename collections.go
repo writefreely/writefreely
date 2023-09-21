@@ -74,6 +74,7 @@ type (
 	DisplayCollection struct {
 		*CollectionObj
 		Prefix      string
+		NavSuffix   string
 		IsTopLevel  bool
 		CurrentPage int
 		TotalPages  int
@@ -260,16 +261,16 @@ func (c *Collection) RedirectingCanonicalURL(isRedir bool) string {
 
 // PrevPageURL provides a full URL for the previous page of collection posts,
 // returning a /page/N result for pages >1
-func (c *Collection) PrevPageURL(prefix string, n int, tl bool) string {
+func (c *Collection) PrevPageURL(prefix, navSuffix string, n int, tl bool) string {
 	u := ""
 	if n == 2 {
 		// Previous page is 1; no need for /page/ prefix
 		if prefix == "" {
-			u = "/"
+			u = navSuffix + "/"
 		}
 		// Else leave off trailing slash
 	} else {
-		u = fmt.Sprintf("/page/%d", n-1)
+		u = fmt.Sprintf("%s/page/%d", navSuffix, n-1)
 	}
 
 	if tl {
@@ -279,11 +280,12 @@ func (c *Collection) PrevPageURL(prefix string, n int, tl bool) string {
 }
 
 // NextPageURL provides a full URL for the next page of collection posts
-func (c *Collection) NextPageURL(prefix string, n int, tl bool) string {
+func (c *Collection) NextPageURL(prefix, navSuffix string, n int, tl bool) string {
+
 	if tl {
-		return fmt.Sprintf("/page/%d", n+1)
+		return fmt.Sprintf("%s/page/%d", navSuffix, n+1)
 	}
-	return fmt.Sprintf("/%s%s/page/%d", prefix, c.Alias, n+1)
+	return fmt.Sprintf("/%s%s%s/page/%d", prefix, c.Alias, navSuffix, n+1)
 }
 
 func (c *Collection) DisplayTitle() string {
@@ -1084,6 +1086,7 @@ func handleViewCollectionLang(app *App, w http.ResponseWriter, r *http.Request) 
 
 	coll := newDisplayCollection(c, cr, page)
 	coll.Language = lang
+	coll.NavSuffix = fmt.Sprintf("/lang:%s", lang)
 
 	ttlPosts, err := app.db.GetCollLangTotalPosts(coll.ID, lang)
 	if err != nil {
