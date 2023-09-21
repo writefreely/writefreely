@@ -135,7 +135,10 @@ func InitTemplates(cfg *config.Config) error {
 
 	log.Info("Loading pages...")
 	// Initialize all static pages that use the base template
-	filepath.Walk(filepath.Join(cfg.Server.PagesParentDir, pagesDir), func(path string, i os.FileInfo, err error) error {
+	err = filepath.Walk(filepath.Join(cfg.Server.PagesParentDir, pagesDir), func(path string, i os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 		if !i.IsDir() && !strings.HasPrefix(i.Name(), ".") {
 			key := i.Name()
 			initPage(cfg.Server.PagesParentDir, path, key)
@@ -143,10 +146,16 @@ func InitTemplates(cfg *config.Config) error {
 
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
 	log.Info("Loading user pages...")
 	// Initialize all user pages that use base templates
-	filepath.Walk(filepath.Join(cfg.Server.TemplatesParentDir, templatesDir, "user"), func(path string, f os.FileInfo, err error) error {
+	err = filepath.Walk(filepath.Join(cfg.Server.TemplatesParentDir, templatesDir, "user"), func(path string, f os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 		if !f.IsDir() && !strings.HasPrefix(f.Name(), ".") {
 			corePath := path
 			if cfg.Server.TemplatesParentDir != "" {
@@ -162,6 +171,9 @@ func InitTemplates(cfg *config.Config) error {
 
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

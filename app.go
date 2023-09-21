@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -521,9 +522,41 @@ requests. We recommend supplying a valid host name.`)
 			err = http.ListenAndServeTLS(fmt.Sprintf("%s:443", bindAddress), app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, r)
 		}
 	} else {
-		log.Info("Serving on http://%s:%d\n", bindAddress, app.cfg.Server.Port)
+		network := "tcp"
+		protocol := "http"
+		if strings.HasPrefix(bindAddress, "/") {
+			network = "unix"
+			protocol = "http+unix"
+
+			// old sockets will remain after server closes;
+			// we need to delete them in order to open new ones
+			err = os.Remove(bindAddress)
+			if err != nil && !os.IsNotExist(err) {
+				log.Error("%s already exists but could not be removed: %v", bindAddress, err)
+				os.Exit(1)
+			}
+		} else {
+			bindAddress = fmt.Sprintf("%s:%d", bindAddress, app.cfg.Server.Port)
+		}
+
+		log.Info("Serving on %s://%s", protocol, bindAddress)
 		log.Info("---")
-		err = http.ListenAndServe(fmt.Sprintf("%s:%d", bindAddress, app.cfg.Server.Port), r)
+		listener, err := net.Listen(network, bindAddress)
+		if err != nil {
+			log.Error("Could not bind to address: %v", err)
+			os.Exit(1)
+		}
+
+		if network == "unix" {
+			err = os.Chmod(bindAddress, 0o666)
+			if err != nil {
+				log.Error("Could not update socket permissions: %v", err)
+				os.Exit(1)
+			}
+		}
+
+		defer listener.Close()
+		err = http.Serve(listener, r)
 	}
 	if err != nil {
 		log.Error("Unable to start: %v", err)
@@ -830,6 +863,16 @@ func connectToDatabase(app *App) {
 func shutdown(app *App) {
 	log.Info("Closing database connection...")
 	app.db.Close()
+	if strings.HasPrefix(app.cfg.Server.Bind, "/") {
+		// Clean up socket
+		log.Info("Removing socket file...")
+		err := os.Remove(app.cfg.Server.Bind)
+		if err != nil {
+			log.Error("Unable to remove socket: %s", err)
+			os.Exit(1)
+		}
+		log.Info("Success.")
+	}
 }
 
 // CreateUser creates a new admin or normal user from the given credentials.
