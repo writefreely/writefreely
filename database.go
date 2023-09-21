@@ -2274,7 +2274,7 @@ func (db *datastore) GetCollectionAttribute(id int64, attr string) string {
 }
 
 func (db *datastore) SetCollectionAttribute(id int64, attr, v string) error {
-	_, err := db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?)", id, attr, v)
+	_, err := db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) "+db.upsert("collection_id", "attribute")+" value = ?", id, attr, v, v)
 	if err != nil {
 		log.Error("Unable to INSERT into collectionattributes: %v", err)
 		return err
