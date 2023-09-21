@@ -120,7 +120,7 @@ func (p *PublicPost) augmentReadingDestination() {
 }
 
 func applyMarkdown(data []byte, baseURL string, cfg *config.Config) string {
-	return applyMarkdownSpecial(data, false, baseURL, cfg)
+	return applyMarkdownSpecial(data, baseURL, cfg, cfg.App.SingleUser)
 }
 
 func disableYoutubeAutoplay(outHTML string) string {
@@ -142,7 +142,7 @@ func disableYoutubeAutoplay(outHTML string) string {
 	return outHTML
 }
 
-func applyMarkdownSpecial(data []byte, skipNoFollow bool, baseURL string, cfg *config.Config) string {
+func applyMarkdownSpecial(data []byte, baseURL string, cfg *config.Config, skipNoFollow bool) string {
 	mdExtensions := 0 |
 		blackfriday.EXTENSION_TABLES |
 		blackfriday.EXTENSION_FENCED_CODE |
