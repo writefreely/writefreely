@@ -24,6 +24,7 @@ var (
 		Subcommands: []*cli.Command{
 			&cmdAddUser,
 			&cmdDelUser,
+			&cmdSilenceUser,
 			&cmdResetPass,
 			// TODO: possibly add a user list command
 		},
@@ -48,6 +49,13 @@ var (
 		Usage:   "Delete user",
 		Aliases: []string{"del", "d"},
 		Action:  delUserAction,
+	}
+
+	cmdSilenceUser cli.Command = cli.Command{
+		Name:    "silence",
+		Usage:   "Silence user",
+		Aliases: []string{"sil", "s"},
+		Action:  silenceUserAction,
 	}
 
 	cmdResetPass cli.Command = cli.Command{
@@ -82,6 +90,17 @@ func delUserAction(c *cli.Context) error {
 	}
 	app := writefreely.NewApp(c.String("c"))
 	return writefreely.DoDeleteAccount(app, username)
+}
+
+func silenceUserAction(c *cli.Context) error {
+	username := ""
+	if c.NArg() > 0 {
+		username = c.Args().Get(0)
+	} else {
+		return fmt.Errorf("No user passed. Example: writefreely user silence [USER]")
+	}
+	app := writefreely.NewApp(c.String("c"))
+	return writefreely.DoSilenceAccount(app, username)
 }
 
 func resetPassAction(c *cli.Context) error {
