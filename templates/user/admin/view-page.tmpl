@@ -29,6 +29,8 @@ input[type=text] {
 
 	{{if eq .Content.ID "about"}}
 	<p class="page-desc content-desc">Describe what your instance is <a href="/about" target="page">about</a>.</p>
+	{{else if eq .Content.ID "contact"}}
+	<p class="page-desc content-desc">Tell your users and outside visitors how to <a href="/contact" target="page">contact</a> you.</p>
 	{{else if eq .Content.ID "privacy"}}
 	<p class="page-desc content-desc">Outline your <a href="/privacy" target="page">privacy policy</a>.</p>
 	{{else if eq .Content.ID "reader"}}

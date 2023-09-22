@@ -40,6 +40,28 @@ func defaultAboutTitle(cfg *config.Config) sql.NullString {
 	return sql.NullString{String: "About " + cfg.App.SiteName, Valid: true}
 }
 
+func getContactPage(app *App) (*instanceContent, error) {
+	c, err := app.db.GetDynamicContent("contact")
+	if err != nil {
+		return nil, err
+	}
+	if c == nil {
+		c = &instanceContent{
+			ID:      "contact",
+			Type:    "page",
+			Content: defaultContactPage(app),
+		}
+	}
+	if !c.Title.Valid {
+		c.Title = defaultContactTitle()
+	}
+	return c, nil
+}
+
+func defaultContactTitle() sql.NullString {
+	return sql.NullString{String: "Contact Us", Valid: true}
+}
+
 func getPrivacyPage(app *App) (*instanceContent, error) {
 	c, err := app.db.GetDynamicContent("privacy")
 	if err != nil {
@@ -68,6 +90,18 @@ func defaultAboutPage(cfg *config.Config) string {
 		return `_` + cfg.App.SiteName + `_ is an interconnected place for you to write and publish, powered by [WriteFreely](https://writefreely.org) and ActivityPub.`
 	}
 	return `_` + cfg.App.SiteName + `_ is a place for you to write and publish, powered by [WriteFreely](https://writefreely.org).`
+}
+
+func defaultContactPage(app *App) string {
+	c, err := app.db.GetCollectionByID(1)
+	if err != nil {
+		return ""
+	}
+	return `_` + app.cfg.App.SiteName + `_ is administered by: [**` + c.Alias + `**](/` + c.Alias + `/).
+
+Contact them at this email address: _EMAIL GOES HERE_.
+
+You can also reach them here...`
 }
 
 func defaultPrivacyPolicy(cfg *config.Config) string {
