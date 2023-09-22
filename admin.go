@@ -460,7 +460,7 @@ func handleViewAdminPages(app *App, u *User, w http.ResponseWriter, r *http.Requ
 			Updated: defaultPageUpdatedTime,
 		})
 	}
-	if !hasAbout {
+	if !hasContact {
 		p.Pages = append(p.Pages, &instanceContent{
 			ID:      "contact",
 			Title:   defaultContactTitle(),
