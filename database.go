@@ -17,6 +17,7 @@ import (
 	"github.com/writeas/web-core/silobridge"
 	wf_db "github.com/writefreely/writefreely/db"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -95,7 +96,7 @@ type writestore interface {
 	GetCollection(alias string) (*Collection, error)
 	GetCollectionForPad(alias string) (*Collection, error)
 	GetCollectionByID(id int64) (*Collection, error)
-	UpdateCollection(c *SubmittedCollection, alias string) error
+	UpdateCollection(app *App, c *SubmittedCollection, alias string) error
 	DeleteCollection(alias string, userID int64) error
 
 	UpdatePostPinState(pinned bool, postID string, collID, ownerID, pos int64) error
@@ -815,6 +816,7 @@ func (db *datastore) GetCollectionBy(condition string, value interface{}) (*Coll
 	c.Format = format.String
 	c.Public = c.IsPublic()
 	c.Monetization = db.GetCollectionAttribute(c.ID, "monetization_pointer")
+	c.Verification = db.GetCollectionAttribute(c.ID, "verification_link")
 
 	c.db = db
 
@@ -851,7 +853,7 @@ func (db *datastore) GetCollectionFromDomain(host string) (*Collection, error) {
 	return db.GetCollectionBy("host = ?", host)
 }
 
-func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) error {
+func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias string) error {
 	q := query.NewUpdate().
 		SetStringPtr(c.Title, "title").
 		SetStringPtr(c.Description, "description").
@@ -907,6 +909,44 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 		if err != nil {
 			log.Error("Unable to delete render_mathjax value: %v", err)
 			return err
+		}
+	}
+
+	// Update Verification link value
+	if c.Verification != nil {
+		skipUpdate := false
+		if *c.Verification != "" {
+			// Strip away any excess spaces
+			trimmed := strings.TrimSpace(*c.Verification)
+			if strings.HasPrefix(trimmed, "@") && strings.Count(trimmed, "@") == 2 {
+				// This looks like a fediverse handle, so resolve profile URL
+				profileURL, err := GetProfileURLFromHandle(app, trimmed)
+				if err != nil || profileURL == "" {
+					log.Error("Couldn't find user %s: %v", trimmed, err)
+					skipUpdate = true
+				} else {
+					c.Verification = &profileURL
+				}
+			} else {
+				if !strings.HasPrefix(trimmed, "http") {
+					trimmed = "https://" + trimmed
+				}
+				vu, err := url.Parse(trimmed)
+				if err != nil {
+					// Value appears invalid, so don't update
+					skipUpdate = true
+				} else {
+					s := vu.String()
+					c.Verification = &s
+				}
+			}
+		}
+		if !skipUpdate {
+			err = db.SetCollectionAttribute(collID, "verification_link", *c.Verification)
+			if err != nil {
+				log.Error("Unable to insert verification_link value: %v", err)
+				return err
+			}
 		}
 	}
 
@@ -2274,7 +2314,7 @@ func (db *datastore) GetCollectionAttribute(id int64, attr string) string {
 }
 
 func (db *datastore) SetCollectionAttribute(id int64, attr, v string) error {
-	_, err := db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?)", id, attr, v)
+	_, err := db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) "+db.upsert("collection_id", "attribute")+" value = ?", id, attr, v, v)
 	if err != nil {
 		log.Error("Unable to INSERT into collectionattributes: %v", err)
 		return err
@@ -2811,6 +2851,7 @@ func handleFailedPostInsert(err error) error {
 	return err
 }
 
+// Deprecated: use GetProfileURLFromHandle() instead, which returns user-facing URL instead of actor_id
 func (db *datastore) GetProfilePageFromHandle(app *App, handle string) (string, error) {
 	handle = strings.TrimLeft(handle, "@")
 	actorIRI := ""

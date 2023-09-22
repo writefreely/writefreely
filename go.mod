@@ -22,7 +22,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/urfave/cli/v2 v2.25.7
 	github.com/writeas/activity v0.1.2
-	github.com/writeas/activityserve v0.0.0-20200409150223-d7ab3eaa4481
+	github.com/writeas/activityserve v0.0.0-20230428180247-dc13a4f4d835
 	github.com/writeas/go-strip-markdown/v2 v2.1.1
 	github.com/writeas/go-webfinger v1.1.0
 	github.com/writeas/httpsig v1.0.0

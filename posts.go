@@ -139,6 +139,7 @@ type (
 		IsPinned       bool
 		IsCustomDomain bool
 		Monetization   string
+		Verification   string
 		PinnedPosts    *[]PublicPost
 		IsFound        bool
 		IsAdmin        bool
@@ -516,9 +517,9 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 // newPost creates a new post with or without an owning Collection.
 //
 // Endpoints:
-//   /posts
-//   /posts?collection={alias}
-// ? /collections/{alias}/posts
+//   - /posts
+//   - /posts?collection={alias}
+//   - ? /collections/{alias}/posts
 func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r)
 	vars := mux.Vars(r)
@@ -1546,7 +1547,8 @@ Are you sure it was ever here?`,
 		tp.CanInvite = canUserInvite(app.cfg, tp.IsAdmin)
 		tp.PinnedPosts, _ = app.db.GetPinnedPosts(coll, p.IsOwner)
 		tp.IsPinned = len(*tp.PinnedPosts) > 0 && PostsContains(tp.PinnedPosts, p)
-		tp.Monetization = app.db.GetCollectionAttribute(coll.ID, "monetization_pointer")
+		tp.Monetization = coll.Monetization
+		tp.Verification = coll.Verification
 
 		if !postFound {
 			w.WriteHeader(http.StatusNotFound)

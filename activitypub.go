@@ -23,16 +23,19 @@ import (
 	"net/url"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/writeas/activity/streams"
+	"github.com/writeas/activityserve"
 	"github.com/writeas/httpsig"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/activitypub"
 	"github.com/writeas/web-core/activitystreams"
 	"github.com/writeas/web-core/id"
 	"github.com/writeas/web-core/log"
+	"github.com/writeas/web-core/silobridge"
 )
 
 const (
@@ -60,6 +63,7 @@ type RemoteUser struct {
 	ActorID     string
 	Inbox       string
 	SharedInbox string
+	URL         string
 	Handle      string
 }
 
@@ -452,7 +456,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 				followerID = remoteUser.ID
 			} else {
 				// Add follower locally, since it wasn't found before
-				res, err := t.Exec("INSERT INTO remoteusers (actor_id, inbox, shared_inbox) VALUES (?, ?, ?)", fullActor.ID, fullActor.Inbox, fullActor.Endpoints.SharedInbox)
+				res, err := t.Exec("INSERT INTO remoteusers (actor_id, inbox, shared_inbox, url) VALUES (?, ?, ?, ?)", fullActor.ID, fullActor.Inbox, fullActor.Endpoints.SharedInbox, fullActor.URL)
 				if err != nil {
 					// if duplicate key, res will be nil and panic on
 					// res.LastInsertId below
@@ -764,8 +768,8 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 
 func getRemoteUser(app *App, actorID string) (*RemoteUser, error) {
 	u := RemoteUser{ActorID: actorID}
-	var handle sql.NullString
-	err := app.db.QueryRow("SELECT id, inbox, shared_inbox, handle FROM remoteusers WHERE actor_id = ?", actorID).Scan(&u.ID, &u.Inbox, &u.SharedInbox, &handle)
+	var urlVal, handle sql.NullString
+	err := app.db.QueryRow("SELECT id, inbox, shared_inbox, url, handle FROM remoteusers WHERE actor_id = ?", actorID).Scan(&u.ID, &u.Inbox, &u.SharedInbox, &urlVal, &handle)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, impart.HTTPError{http.StatusNotFound, "No remote user with that ID."}
@@ -774,6 +778,7 @@ func getRemoteUser(app *App, actorID string) (*RemoteUser, error) {
 		return nil, err
 	}
 
+	u.URL = urlVal.String
 	u.Handle = handle.String
 
 	return &u, nil
@@ -783,7 +788,8 @@ func getRemoteUser(app *App, actorID string) (*RemoteUser, error) {
 // from the @user@server.tld handle
 func getRemoteUserFromHandle(app *App, handle string) (*RemoteUser, error) {
 	u := RemoteUser{Handle: handle}
-	err := app.db.QueryRow("SELECT id, actor_id, inbox, shared_inbox FROM remoteusers WHERE handle = ?", handle).Scan(&u.ID, &u.ActorID, &u.Inbox, &u.SharedInbox)
+	var urlVal sql.NullString
+	err := app.db.QueryRow("SELECT id, actor_id, inbox, shared_inbox, url FROM remoteusers WHERE handle = ?", handle).Scan(&u.ID, &u.ActorID, &u.Inbox, &u.SharedInbox, &urlVal)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, ErrRemoteUserNotFound
@@ -791,6 +797,7 @@ func getRemoteUserFromHandle(app *App, handle string) (*RemoteUser, error) {
 		log.Error("Couldn't get remote user %s: %v", handle, err)
 		return nil, err
 	}
+	u.URL = urlVal.String
 	return &u, nil
 }
 
@@ -822,6 +829,69 @@ func getActor(app *App, actorIRI string) (*activitystreams.Person, *RemoteUser, 
 		actor = remoteUser.AsPerson()
 	}
 	return actor, remoteUser, nil
+}
+
+func GetProfileURLFromHandle(app *App, handle string) (string, error) {
+	handle = strings.TrimLeft(handle, "@")
+	actorIRI := ""
+	parts := strings.Split(handle, "@")
+	if len(parts) != 2 {
+		return "", fmt.Errorf("invalid handle format")
+	}
+	domain := parts[1]
+
+	// Check non-AP instances
+	if siloProfileURL := silobridge.Profile(parts[0], domain); siloProfileURL != "" {
+		return siloProfileURL, nil
+	}
+
+	remoteUser, err := getRemoteUserFromHandle(app, handle)
+	if err != nil {
+		// can't find using handle in the table but the table may already have this user without
+		// handle from a previous version
+		// TODO: Make this determination. We should know whether a user exists without a handle, or doesn't exist at all
+		actorIRI = RemoteLookup(handle)
+		_, errRemoteUser := getRemoteUser(app, actorIRI)
+		// if it exists then we need to update the handle
+		if errRemoteUser == nil {
+			_, err := app.db.Exec("UPDATE remoteusers SET handle = ? WHERE actor_id = ?", handle, actorIRI)
+			if err != nil {
+				log.Error("Couldn't update handle '%s' for user %s", handle, actorIRI)
+			}
+		} else {
+			// this probably means we don't have the user in the table so let's try to insert it
+			// here we need to ask the server for the inboxes
+			remoteActor, err := activityserve.NewRemoteActor(actorIRI)
+			if err != nil {
+				log.Error("Couldn't fetch remote actor: %v", err)
+			}
+			if debugging {
+				log.Info("Got remote actor: %s %s %s %s %s", actorIRI, remoteActor.GetInbox(), remoteActor.GetSharedInbox(), remoteActor.URL(), handle)
+			}
+			_, err = app.db.Exec("INSERT INTO remoteusers (actor_id, inbox, shared_inbox, url, handle) VALUES(?, ?, ?, ?, ?)", actorIRI, remoteActor.GetInbox(), remoteActor.GetSharedInbox(), remoteActor.URL(), handle)
+			if err != nil {
+				log.Error("Couldn't insert remote user: %v", err)
+				return "", err
+			}
+			actorIRI = remoteActor.URL()
+		}
+	} else if remoteUser.URL == "" {
+		log.Info("Remote user %s URL empty, fetching", remoteUser.ActorID)
+		newRemoteActor, err := activityserve.NewRemoteActor(remoteUser.ActorID)
+		if err != nil {
+			log.Error("Couldn't fetch remote actor: %v", err)
+		} else {
+			_, err := app.db.Exec("UPDATE remoteusers SET url = ? WHERE actor_id = ?", newRemoteActor.URL(), remoteUser.ActorID)
+			if err != nil {
+				log.Error("Couldn't update handle '%s' for user %s", handle, actorIRI)
+			} else {
+				actorIRI = newRemoteActor.URL()
+			}
+		}
+	} else {
+		actorIRI = remoteUser.URL
+	}
+	return actorIRI, nil
 }
 
 // unmarshal actor normalizes the actor response to conform to
