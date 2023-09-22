@@ -139,6 +139,7 @@ type (
 		IsPinned       bool
 		IsCustomDomain bool
 		Monetization   string
+		Verification   string
 		PinnedPosts    *[]PublicPost
 		IsFound        bool
 		IsAdmin        bool
@@ -1547,6 +1548,7 @@ Are you sure it was ever here?`,
 		tp.PinnedPosts, _ = app.db.GetPinnedPosts(coll, p.IsOwner)
 		tp.IsPinned = len(*tp.PinnedPosts) > 0 && PostsContains(tp.PinnedPosts, p)
 		tp.Monetization = app.db.GetCollectionAttribute(coll.ID, "monetization_pointer")
+		tp.Verification = coll.Verification
 
 		if !postFound {
 			w.WriteHeader(http.StatusNotFound)
