@@ -17,7 +17,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -553,7 +553,7 @@ func makeActivityPost(hostName string, p *activitystreams.Person, url string, m 
 		defer resp.Body.Close()
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
@@ -605,7 +605,7 @@ func resolveIRI(hostName, url string) ([]byte, error) {
 		defer resp.Body.Close()
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

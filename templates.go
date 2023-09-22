@@ -14,9 +14,8 @@ import (
 	"errors"
 	"html/template"
 	"io"
-	"io/ioutil"
-	"net/http"
 	"os"
+	"net/http"
 	"path/filepath"
 	"strings"
 
@@ -120,7 +119,7 @@ func initUserPage(parentDir, path, key string) {
 // InitTemplates loads all template files from the configured parent dir.
 func InitTemplates(cfg *config.Config) error {
 	log.Info("Loading templates...")
-	tmplFiles, err := ioutil.ReadDir(filepath.Join(cfg.Server.TemplatesParentDir, templatesDir))
+	tmplFiles, err := os.ReadDir(filepath.Join(cfg.Server.TemplatesParentDir, templatesDir))
 	if err != nil {
 		return err
 	}

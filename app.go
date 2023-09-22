@@ -16,7 +16,6 @@ import (
 	_ "embed"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -177,7 +176,7 @@ func (app *App) LoadKeys() error {
 		executable = filepath.Base(executable)
 	}
 
-	app.keys.EmailKey, err = ioutil.ReadFile(emailKeyPath)
+	app.keys.EmailKey, err = os.ReadFile(emailKeyPath)
 	if err != nil {
 		return err
 	}
@@ -185,7 +184,7 @@ func (app *App) LoadKeys() error {
 	if debugging {
 		log.Info("  %s", cookieAuthKeyPath)
 	}
-	app.keys.CookieAuthKey, err = ioutil.ReadFile(cookieAuthKeyPath)
+	app.keys.CookieAuthKey, err = os.ReadFile(cookieAuthKeyPath)
 	if err != nil {
 		return err
 	}
@@ -193,7 +192,7 @@ func (app *App) LoadKeys() error {
 	if debugging {
 		log.Info("  %s", cookieKeyPath)
 	}
-	app.keys.CookieKey, err = ioutil.ReadFile(cookieKeyPath)
+	app.keys.CookieKey, err = os.ReadFile(cookieKeyPath)
 	if err != nil {
 		return err
 	}
@@ -201,7 +200,7 @@ func (app *App) LoadKeys() error {
 	if debugging {
 		log.Info("  %s", csrfKeyPath)
 	}
-	app.keys.CSRFKey, err = ioutil.ReadFile(csrfKeyPath)
+	app.keys.CSRFKey, err = os.ReadFile(csrfKeyPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			log.Error(`Missing key: %s.
