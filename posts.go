@@ -355,7 +355,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		return impart.HTTPError{http.StatusFound, fmt.Sprintf("/%s%s", fixedID, ext)}
 	}
 
-	err := app.db.QueryRow(fmt.Sprintf("SELECT owner_id, title, content, text_appearance, view_count, language, rtl FROM posts WHERE id = ?"), friendlyID).Scan(&ownerID, &title, &content, &font, &views, &language, &rtl)
+	err := app.db.QueryRow("SELECT owner_id, title, content, text_appearance, view_count, language, rtl FROM posts WHERE id = ?", friendlyID).Scan(&ownerID, &title, &content, &font, &views, &language, &rtl)
 	switch {
 	case err == sql.ErrNoRows:
 		found = false
