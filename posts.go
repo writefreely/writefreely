@@ -517,9 +517,9 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 // newPost creates a new post with or without an owning Collection.
 //
 // Endpoints:
-//   /posts
-//   /posts?collection={alias}
-// ? /collections/{alias}/posts
+//   - /posts
+//   - /posts?collection={alias}
+//   - ? /collections/{alias}/posts
 func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r)
 	vars := mux.Vars(r)
