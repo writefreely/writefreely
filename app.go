@@ -318,7 +318,7 @@ func handleTemplatedPage(app *App, w http.ResponseWriter, r *http.Request, t *te
 	}{
 		StaticPage: pageForReq(app, r),
 	}
-	if r.URL.Path == "/about" || r.URL.Path == "/privacy" {
+	if r.URL.Path == "/about" || r.URL.Path == "/contact" || r.URL.Path == "/privacy" {
 		var c *instanceContent
 		var err error
 
@@ -329,6 +329,12 @@ func handleTemplatedPage(app *App, w http.ResponseWriter, r *http.Request, t *te
 			p.AboutStats = &InstanceStats{}
 			p.AboutStats.NumPosts, _ = app.db.GetTotalPosts()
 			p.AboutStats.NumBlogs, _ = app.db.GetTotalCollections()
+		} else if r.URL.Path == "/contact" {
+			c, err = getContactPage(app)
+			if c.Updated.IsZero() {
+				// Page was never set up, so return 404
+				return ErrPostNotFound
+			}
 		} else {
 			c, err = getPrivacyPage(app)
 		}
