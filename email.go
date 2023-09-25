@@ -140,16 +140,6 @@ func handleCreateEmailSubscription(app *App, w http.ResponseWriter, r *http.Requ
 		return impart.HTTPError{http.StatusFound, from}
 	}
 
-	// Do email validation
-	// TODO: move this to an AJAX call before submitting email address, so we can immediately show errors to user
-	/*
-		err := validate(ss.Email)
-		if err != nil {
-			addSessionFlash(w, r, err.Error(), nil)
-			return impart.HTTPError{http.StatusFound, from}
-		}
-	*/
-
 	confirmed := app.db.IsSubscriberConfirmed(ss.Email)
 	es, err := app.db.AddEmailSubscription(c.ID, ss.UserID, ss.Email, confirmed)
 	if err != nil {
