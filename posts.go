@@ -140,6 +140,7 @@ type (
 		IsPinned       bool
 		IsCustomDomain bool
 		Monetization   string
+		Verification   string
 		PinnedPosts    *[]PublicPost
 		IsFound        bool
 		IsAdmin        bool
@@ -355,7 +356,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		return impart.HTTPError{http.StatusFound, fmt.Sprintf("/%s%s", fixedID, ext)}
 	}
 
-	err := app.db.QueryRow(fmt.Sprintf("SELECT owner_id, title, content, text_appearance, view_count, language, rtl FROM posts WHERE id = ?"), friendlyID).Scan(&ownerID, &title, &content, &font, &views, &language, &rtl)
+	err := app.db.QueryRow("SELECT owner_id, title, content, text_appearance, view_count, language, rtl FROM posts WHERE id = ?", friendlyID).Scan(&ownerID, &title, &content, &font, &views, &language, &rtl)
 	switch {
 	case err == sql.ErrNoRows:
 		found = false
@@ -517,9 +518,9 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 // newPost creates a new post with or without an owning Collection.
 //
 // Endpoints:
-//   /posts
-//   /posts?collection={alias}
-// ? /collections/{alias}/posts
+//   - /posts
+//   - /posts?collection={alias}
+//   - ? /collections/{alias}/posts
 func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r)
 	vars := mux.Vars(r)
@@ -1136,8 +1137,7 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p.extractData()
 
-	accept := r.Header.Get("Accept")
-	if strings.Contains(accept, "application/activity+json") {
+	if IsActivityPubRequest(r) {
 		if coll == nil {
 			// This is a draft post; 404 for now
 			// TODO: return ActivityObject
@@ -1582,7 +1582,8 @@ Are you sure it was ever here?`,
 		tp.CanInvite = canUserInvite(app.cfg, tp.IsAdmin)
 		tp.PinnedPosts, _ = app.db.GetPinnedPosts(coll, p.IsOwner)
 		tp.IsPinned = len(*tp.PinnedPosts) > 0 && PostsContains(tp.PinnedPosts, p)
-		tp.Monetization = app.db.GetCollectionAttribute(coll.ID, "monetization_pointer")
+		tp.Monetization = coll.Monetization
+		tp.Verification = coll.Verification
 
 		if !postFound {
 			w.WriteHeader(http.StatusNotFound)

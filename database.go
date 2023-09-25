@@ -18,6 +18,7 @@ import (
 	"github.com/writeas/web-core/silobridge"
 	wf_db "github.com/writefreely/writefreely/db"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -96,7 +97,7 @@ type writestore interface {
 	GetCollection(alias string) (*Collection, error)
 	GetCollectionForPad(alias string) (*Collection, error)
 	GetCollectionByID(id int64) (*Collection, error)
-	UpdateCollection(c *SubmittedCollection, alias string) error
+	UpdateCollection(app *App, c *SubmittedCollection, alias string) error
 	DeleteCollection(alias string, userID int64) error
 
 	UpdatePostPinState(pinned bool, postID string, collID, ownerID, pos int64) error
@@ -114,6 +115,7 @@ type writestore interface {
 
 	GetPostsCount(c *CollectionObj, includeFuture bool)
 	GetPosts(cfg *config.Config, c *Collection, page int, includeFuture, forceRecentFirst, includePinned bool) (*[]PublicPost, error)
+	GetAllPostsTaggedIDs(c *Collection, tag string, includeFuture bool) ([]string, error)
 	GetPostsTagged(cfg *config.Config, c *Collection, tag string, page int, includeFuture bool) (*[]PublicPost, error)
 
 	GetAPFollowers(c *Collection) (*[]RemoteUser, error)
@@ -815,6 +817,7 @@ func (db *datastore) GetCollectionBy(condition string, value interface{}) (*Coll
 	c.Format = format.String
 	c.Public = c.IsPublic()
 	c.Monetization = db.GetCollectionAttribute(c.ID, "monetization_pointer")
+	c.Verification = db.GetCollectionAttribute(c.ID, "verification_link")
 
 	c.db = db
 
@@ -851,7 +854,7 @@ func (db *datastore) GetCollectionFromDomain(host string) (*Collection, error) {
 	return db.GetCollectionBy("host = ?", host)
 }
 
-func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) error {
+func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias string) error {
 	q := query.NewUpdate().
 		SetStringPtr(c.Title, "title").
 		SetStringPtr(c.Description, "description").
@@ -907,6 +910,44 @@ func (db *datastore) UpdateCollection(c *SubmittedCollection, alias string) erro
 		if err != nil {
 			log.Error("Unable to delete render_mathjax value: %v", err)
 			return err
+		}
+	}
+
+	// Update Verification link value
+	if c.Verification != nil {
+		skipUpdate := false
+		if *c.Verification != "" {
+			// Strip away any excess spaces
+			trimmed := strings.TrimSpace(*c.Verification)
+			if strings.HasPrefix(trimmed, "@") && strings.Count(trimmed, "@") == 2 {
+				// This looks like a fediverse handle, so resolve profile URL
+				profileURL, err := GetProfileURLFromHandle(app, trimmed)
+				if err != nil || profileURL == "" {
+					log.Error("Couldn't find user %s: %v", trimmed, err)
+					skipUpdate = true
+				} else {
+					c.Verification = &profileURL
+				}
+			} else {
+				if !strings.HasPrefix(trimmed, "http") {
+					trimmed = "https://" + trimmed
+				}
+				vu, err := url.Parse(trimmed)
+				if err != nil {
+					// Value appears invalid, so don't update
+					skipUpdate = true
+				} else {
+					s := vu.String()
+					c.Verification = &s
+				}
+			}
+		}
+		if !skipUpdate {
+			err = db.SetCollectionAttribute(collID, "verification_link", *c.Verification)
+			if err != nil {
+				log.Error("Unable to insert verification_link value: %v", err)
+				return err
+			}
 		}
 	}
 
@@ -1231,6 +1272,51 @@ func (db *datastore) GetPosts(cfg *config.Config, c *Collection, page int, inclu
 	return &posts, nil
 }
 
+func (db *datastore) GetAllPostsTaggedIDs(c *Collection, tag string, includeFuture bool) ([]string, error) {
+	collID := c.ID
+
+	cf := c.NewFormat()
+	order := "DESC"
+	if cf.Ascending() {
+		order = "ASC"
+	}
+
+	timeCondition := ""
+	if !includeFuture {
+		timeCondition = "AND created <= NOW()"
+	}
+	var rows *sql.Rows
+	var err error
+	if db.driverName == driverSQLite {
+		rows, err = db.Query("SELECT id FROM posts WHERE collection_id = ? AND LOWER(content) regexp ? "+timeCondition+" ORDER BY created "+order, collID, `.*#`+strings.ToLower(tag)+`\b.*`)
+	} else {
+		rows, err = db.Query("SELECT id FROM posts WHERE collection_id = ? AND LOWER(content) RLIKE ? "+timeCondition+" ORDER BY created "+order, collID, "#"+strings.ToLower(tag)+"[[:>:]]")
+	}
+	if err != nil {
+		log.Error("Failed selecting tagged posts: %v", err)
+		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve tagged collection posts."}
+	}
+	defer rows.Close()
+
+	ids := []string{}
+	for rows.Next() {
+		var id string
+		err = rows.Scan(&id)
+		if err != nil {
+			log.Error("Failed scanning row: %v", err)
+			break
+		}
+
+		ids = append(ids, id)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Error("Error after Next() on rows: %v", err)
+	}
+
+	return ids, nil
+}
+
 // GetPostsTagged retrieves all posts on the given Collection that contain the
 // given tag.
 // It will return future posts if `includeFuture` is true.
@@ -1267,6 +1353,74 @@ func (db *datastore) GetPostsTagged(cfg *config.Config, c *Collection, tag strin
 	} else {
 		rows, err = db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND LOWER(content) RLIKE ? "+timeCondition+" ORDER BY created "+order+limitStr, collID, "#"+strings.ToLower(tag)+"[[:>:]]")
 	}
+	if err != nil {
+		log.Error("Failed selecting from posts: %v", err)
+		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve collection posts."}
+	}
+	defer rows.Close()
+
+	// TODO: extract this common row scanning logic for queries using `postCols`
+	posts := []PublicPost{}
+	for rows.Next() {
+		p := &Post{}
+		err = rows.Scan(&p.ID, &p.Slug, &p.Font, &p.Language, &p.RTL, &p.Privacy, &p.OwnerID, &p.CollectionID, &p.PinnedPosition, &p.Created, &p.Updated, &p.ViewCount, &p.Title, &p.Content)
+		if err != nil {
+			log.Error("Failed scanning row: %v", err)
+			break
+		}
+		p.extractData()
+		p.augmentContent(c)
+		p.formatContent(cfg, c, includeFuture, false)
+
+		posts = append(posts, p.processPost())
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Error("Error after Next() on rows: %v", err)
+	}
+
+	return &posts, nil
+}
+
+func (db *datastore) GetCollLangTotalPosts(collID int64, lang string) (uint64, error) {
+	var articles uint64
+	err := db.QueryRow("SELECT COUNT(*) FROM posts WHERE collection_id = ? AND language = ? AND created <= "+db.now(), collID, lang).Scan(&articles)
+	if err != nil && err != sql.ErrNoRows {
+		log.Error("Couldn't get total lang posts count for collection %d: %v", collID, err)
+		return 0, err
+	}
+	return articles, nil
+}
+
+func (db *datastore) GetLangPosts(cfg *config.Config, c *Collection, lang string, page int, includeFuture bool) (*[]PublicPost, error) {
+	collID := c.ID
+
+	cf := c.NewFormat()
+	order := "DESC"
+	if cf.Ascending() {
+		order = "ASC"
+	}
+
+	pagePosts := cf.PostsPerPage()
+	start := page*pagePosts - pagePosts
+	if page == 0 {
+		start = 0
+		pagePosts = 1000
+	}
+
+	limitStr := ""
+	if page > 0 {
+		limitStr = fmt.Sprintf(" LIMIT %d, %d", start, pagePosts)
+	}
+	timeCondition := ""
+	if !includeFuture {
+		timeCondition = "AND created <= " + db.now()
+	}
+
+	rows, err := db.Query(`SELECT `+postCols+`
+FROM posts
+WHERE collection_id = ? AND language = ? `+timeCondition+`
+ORDER BY created `+order+limitStr, collID, lang)
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve collection posts."}
@@ -2264,7 +2418,7 @@ func (db *datastore) GetCollectionAttribute(id int64, attr string) string {
 }
 
 func (db *datastore) SetCollectionAttribute(id int64, attr, v string) error {
-	_, err := db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?)", id, attr, v)
+	_, err := db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) "+db.upsert("collection_id", "attribute")+" value = ?", id, attr, v, v)
 	if err != nil {
 		log.Error("Unable to INSERT into collectionattributes: %v", err)
 		return err
@@ -2801,6 +2955,7 @@ func handleFailedPostInsert(err error) error {
 	return err
 }
 
+// Deprecated: use GetProfileURLFromHandle() instead, which returns user-facing URL instead of actor_id
 func (db *datastore) GetProfilePageFromHandle(app *App, handle string) (string, error) {
 	handle = strings.TrimLeft(handle, "@")
 	actorIRI := ""

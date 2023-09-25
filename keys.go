@@ -13,7 +13,6 @@ package writefreely
 import (
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/writefreely/key"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -65,7 +64,7 @@ func generateKey(path string) error {
 		log.Error("FAILED. %s. Run writefreely --gen-keys again.", err)
 		return err
 	}
-	err = ioutil.WriteFile(path, b, 0600)
+	err = os.WriteFile(path, b, 0600)
 	if err != nil {
 		log.Error("FAILED writing file: %s", err)
 		return err

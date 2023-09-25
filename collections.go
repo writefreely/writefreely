@@ -29,6 +29,7 @@ import (
 	"github.com/writeas/web-core/activitystreams"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/bots"
+	"github.com/writeas/web-core/i18n"
 	"github.com/writeas/web-core/log"
 	"github.com/writeas/web-core/posts"
 	"github.com/writefreely/writefreely/author"
@@ -62,6 +63,7 @@ type (
 		URL         string         `json:"url,omitempty"`
 
 		Monetization string `json:"monetization_pointer,omitempty"`
+		Verification string `json:"verification_link"`
 
 		db       *datastore
 		hostName string
@@ -76,6 +78,7 @@ type (
 	DisplayCollection struct {
 		*CollectionObj
 		Prefix      string
+		NavSuffix   string
 		IsTopLevel  bool
 		CurrentPage int
 		TotalPages  int
@@ -102,6 +105,7 @@ type (
 		Script       *sql.NullString `schema:"script" json:"script"`
 		Signature    *sql.NullString `schema:"signature" json:"signature"`
 		Monetization *string         `schema:"monetization_pointer" json:"monetization_pointer"`
+		Verification *string         `schema:"verification_link" json:"verification_link"`
 		LetterReply  *string         `schema:"letter_reply" json:"letter_reply"`
 		Visibility   *int            `schema:"visibility" json:"public"`
 		Format       *sql.NullString `schema:"format" json:"format"`
@@ -264,16 +268,16 @@ func (c *Collection) RedirectingCanonicalURL(isRedir bool) string {
 
 // PrevPageURL provides a full URL for the previous page of collection posts,
 // returning a /page/N result for pages >1
-func (c *Collection) PrevPageURL(prefix string, n int, tl bool) string {
+func (c *Collection) PrevPageURL(prefix, navSuffix string, n int, tl bool) string {
 	u := ""
 	if n == 2 {
 		// Previous page is 1; no need for /page/ prefix
 		if prefix == "" {
-			u = "/"
+			u = navSuffix + "/"
 		}
 		// Else leave off trailing slash
 	} else {
-		u = fmt.Sprintf("/page/%d", n-1)
+		u = fmt.Sprintf("%s/page/%d", navSuffix, n-1)
 	}
 
 	if tl {
@@ -283,11 +287,12 @@ func (c *Collection) PrevPageURL(prefix string, n int, tl bool) string {
 }
 
 // NextPageURL provides a full URL for the next page of collection posts
-func (c *Collection) NextPageURL(prefix string, n int, tl bool) string {
+func (c *Collection) NextPageURL(prefix, navSuffix string, n int, tl bool) string {
+
 	if tl {
-		return fmt.Sprintf("/page/%d", n+1)
+		return fmt.Sprintf("%s/page/%d", navSuffix, n+1)
 	}
-	return fmt.Sprintf("/%s%s/page/%d", prefix, c.Alias, n+1)
+	return fmt.Sprintf("/%s%s%s/page/%d", prefix, c.Alias, navSuffix, n+1)
 }
 
 func (c *Collection) DisplayTitle() string {
@@ -394,6 +399,16 @@ func (c *Collection) PlainDescription() string {
 
 func (c CollectionPage) DisplayMonetization() string {
 	return displayMonetization(c.Monetization, c.Alias)
+}
+
+func (c *DisplayCollection) Direction() string {
+	if c.Language == "" {
+		return "auto"
+	}
+	if i18n.LangIsRTL(c.Language) {
+		return "rtl"
+	}
+	return "ltr"
 }
 
 func newCollection(app *App, w http.ResponseWriter, r *http.Request) error {
@@ -505,8 +520,7 @@ func apiCheckCollectionPermissions(app *App, r *http.Request, c *Collection) (in
 
 // fetchCollection handles the API endpoint for retrieving collection data.
 func fetchCollection(app *App, w http.ResponseWriter, r *http.Request) error {
-	accept := r.Header.Get("Accept")
-	if strings.Contains(accept, "application/activity+json") {
+	if IsActivityPubRequest(r) {
 		return handleFetchCollectionActivities(app, w, r)
 	}
 
@@ -621,6 +635,30 @@ type CollectionPage struct {
 
 	// Helper field for Chorus mode
 	CollAlias string
+}
+
+type TagCollectionPage struct {
+	CollectionPage
+	Tag string
+}
+
+func (tcp TagCollectionPage) PrevPageURL(prefix string, n int, tl bool) string {
+	u := fmt.Sprintf("/tag:%s", tcp.Tag)
+	if n > 2 {
+		u += fmt.Sprintf("/page/%d", n-1)
+	}
+	if tl {
+		return u
+	}
+	return "/" + prefix + tcp.Alias + u
+
+}
+
+func (tcp TagCollectionPage) NextPageURL(prefix string, n int, tl bool) string {
+	if tl {
+		return fmt.Sprintf("/tag:%s/page/%d", tcp.Tag, n+1)
+	}
+	return fmt.Sprintf("/%s%s/tag:%s/page/%d", prefix, tcp.Alias, tcp.Tag, n+1)
 }
 
 func NewCollectionObj(c *Collection) *CollectionObj {
@@ -970,16 +1008,29 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 
 	coll := newDisplayCollection(c, cr, page)
 
+	taggedPostIDs, err := app.db.GetAllPostsTaggedIDs(c, tag, cr.isCollOwner)
+	if err != nil {
+		return err
+	}
+
+	ttlPosts := len(taggedPostIDs)
+	pagePosts := coll.Format.PostsPerPage()
+	coll.TotalPages = int(math.Ceil(float64(ttlPosts) / float64(pagePosts)))
+	if coll.TotalPages > 0 && page > coll.TotalPages {
+		redirURL := fmt.Sprintf("/page/%d", coll.TotalPages)
+		if !app.cfg.App.SingleUser {
+			redirURL = fmt.Sprintf("/%s%s%s", cr.prefix, coll.Alias, redirURL)
+		}
+		return impart.HTTPError{http.StatusFound, redirURL}
+	}
+
 	coll.Posts, _ = app.db.GetPostsTagged(app.cfg, c, tag, page, cr.isCollOwner)
 	if coll.Posts != nil && len(*coll.Posts) == 0 {
 		return ErrCollectionPageNotFound
 	}
 
 	// Serve collection
-	displayPage := struct {
-		CollectionPage
-		Tag string
-	}{
+	displayPage := TagCollectionPage{
 		CollectionPage: CollectionPage{
 			DisplayCollection: coll,
 			StaticPage:        pageForReq(app, r),
@@ -1026,6 +1077,111 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 	err = templates["collection-tags"].ExecuteTemplate(w, "collection-tags", displayPage)
 	if err != nil {
 		log.Error("Unable to render collection tag page: %v", err)
+	}
+
+	return nil
+}
+
+func handleViewCollectionLang(app *App, w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	lang := vars["lang"]
+
+	cr := &collectionReq{}
+	err := processCollectionRequest(cr, vars, w, r)
+	if err != nil {
+		return err
+	}
+
+	u, err := checkUserForCollection(app, cr, r, false)
+	if err != nil {
+		return err
+	}
+
+	page := getCollectionPage(vars)
+
+	c, err := processCollectionPermissions(app, cr, u, w, r)
+	if c == nil || err != nil {
+		return err
+	}
+
+	coll := newDisplayCollection(c, cr, page)
+	coll.Language = lang
+	coll.NavSuffix = fmt.Sprintf("/lang:%s", lang)
+
+	ttlPosts, err := app.db.GetCollLangTotalPosts(coll.ID, lang)
+	if err != nil {
+		log.Error("Unable to getCollLangTotalPosts: %s", err)
+	}
+	pagePosts := coll.Format.PostsPerPage()
+	coll.TotalPages = int(math.Ceil(float64(ttlPosts) / float64(pagePosts)))
+	if coll.TotalPages > 0 && page > coll.TotalPages {
+		redirURL := fmt.Sprintf("/lang:%s/page/%d", lang, coll.TotalPages)
+		if !app.cfg.App.SingleUser {
+			redirURL = fmt.Sprintf("/%s%s%s", cr.prefix, coll.Alias, redirURL)
+		}
+		return impart.HTTPError{http.StatusFound, redirURL}
+	}
+
+	coll.Posts, _ = app.db.GetLangPosts(app.cfg, c, lang, page, cr.isCollOwner)
+	if err != nil {
+		return ErrCollectionPageNotFound
+	}
+
+	// Serve collection
+	displayPage := struct {
+		CollectionPage
+		Tag string
+	}{
+		CollectionPage: CollectionPage{
+			DisplayCollection: coll,
+			StaticPage:        pageForReq(app, r),
+			IsCustomDomain:    cr.isCustomDomain,
+		},
+		Tag: lang,
+	}
+	var owner *User
+	if u != nil {
+		displayPage.Username = u.Username
+		displayPage.IsOwner = u.ID == coll.OwnerID
+		if displayPage.IsOwner {
+			// Add in needed information for users viewing their own collection
+			owner = u
+			displayPage.CanPin = true
+
+			pubColls, err := app.db.GetPublishableCollections(owner, app.cfg.App.Host)
+			if err != nil {
+				log.Error("unable to fetch collections: %v", err)
+			}
+			displayPage.Collections = pubColls
+		}
+	}
+	isOwner := owner != nil
+	if !isOwner {
+		// Current user doesn't own collection; retrieve owner information
+		owner, err = app.db.GetUserByID(coll.OwnerID)
+		if err != nil {
+			// Log the error and just continue
+			log.Error("Error getting user for collection: %v", err)
+		}
+		if owner.IsSilenced() {
+			return ErrCollectionNotFound
+		}
+	}
+	displayPage.Silenced = owner != nil && owner.IsSilenced()
+	displayPage.Owner = owner
+	coll.Owner = displayPage.Owner
+	// Add more data
+	// TODO: fix this mess of collections inside collections
+	displayPage.PinnedPosts, _ = app.db.GetPinnedPosts(coll.CollectionObj, isOwner)
+	displayPage.Monetization = app.db.GetCollectionAttribute(coll.ID, "monetization_pointer")
+
+	collTmpl := "collection"
+	if app.cfg.App.Chorus {
+		collTmpl = "chorus-collection"
+	}
+	err = templates[collTmpl].ExecuteTemplate(w, "collection", displayPage)
+	if err != nil {
+		log.Error("Unable to render collection lang page: %v", err)
 	}
 
 	return nil
@@ -1115,7 +1271,7 @@ func existingCollection(app *App, w http.ResponseWriter, r *http.Request) error 
 		}
 	}
 
-	err = app.db.UpdateCollection(&c, collAlias)
+	err = app.db.UpdateCollection(app, &c, collAlias)
 	if err != nil {
 		if err, ok := err.(impart.HTTPError); ok {
 			if reqJSON {

@@ -86,6 +86,7 @@ release : clean ui
 	cp -r templates $(BUILDPATH)
 	cp -r pages $(BUILDPATH)
 	cp -r static $(BUILDPATH)
+	rm -r $(BUILDPATH)/static/local
 	scripts/invalidate-css.sh $(BUILDPATH)
 	mkdir $(BUILDPATH)/keys
 	$(MAKE) build-linux

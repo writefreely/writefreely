@@ -67,7 +67,8 @@ var migrations = []Migration{
 	New("optimize drafts retrieval", optimizeDrafts),                // V8 -> V9
 	New("support post signatures", supportPostSignatures),           // V9 -> V10 (v0.13.0)
 	New("Widen oauth_users.access_token", widenOauthAcceesToken),    // V10 -> V11
-	New("support newsletters", supportLetters),                      // V11 -> V12
+	New("support verifying fedi profile", fediverseVerifyProfile),   // V11 -> V12 (v0.14.0)
+	New("support newsletters", supportLetters),                      // V12 -> V13
 }
 
 // CurrentVer returns the current migration version the application is on

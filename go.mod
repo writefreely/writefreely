@@ -37,13 +37,13 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/urfave/cli/v2 v2.25.7
 	github.com/writeas/activity v0.1.2
-	github.com/writeas/activityserve v0.0.0-20200409150223-d7ab3eaa4481
+	github.com/writeas/activityserve v0.0.0-20230428180247-dc13a4f4d835
 	github.com/writeas/go-strip-markdown/v2 v2.1.1
 	github.com/writeas/go-webfinger v1.1.0
 	github.com/writeas/httpsig v1.0.0
 	github.com/writeas/impart v1.1.1
 	github.com/writeas/import v0.2.1
-	github.com/writeas/monday v0.0.0-20181024183321-54a7dd579219
+	github.com/writeas/monday v1.3.0
 	github.com/writeas/saturday v1.7.2-0.20200427193424-392b95a03320
 	github.com/writeas/slug v1.2.0
 	github.com/writeas/web-core v1.5.0
