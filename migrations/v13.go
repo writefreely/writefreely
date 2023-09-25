@@ -18,11 +18,10 @@ func supportLetters(db *datastore) error {
 	}
 
 	_, err = t.Exec(`CREATE TABLE publishjobs (
-    id ` + db.typeInt() + ` auto_increment,
+    id      ` + db.typeIntPrimaryKey() + `,
     post_id ` + db.typeVarChar(16) + ` not null,
     action  ` + db.typeVarChar(16) + ` not null,
-    delay   ` + db.typeTinyInt() + ` not null,
-	PRIMARY KEY (id)
+    delay   ` + db.typeTinyInt() + ` not null
 )`)
 	if err != nil {
 		t.Rollback()
