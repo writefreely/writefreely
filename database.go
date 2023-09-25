@@ -3224,11 +3224,15 @@ func (db *datastore) DeleteJobByPost(postID string) error {
 }
 
 func (db *datastore) GetJobsToRun(action string) ([]*PostJob, error) {
+	timeWhere := "created < DATE_SUB(NOW(), INTERVAL delay MINUTE) AND created > DATE_SUB(NOW(), INTERVAL delay + 5 MINUTE)"
+	if db.driverName == driverSQLite {
+		timeWhere = "created < DATETIME('now', '-' || delay || ' MINUTE') AND created > DATETIME('now', '-' || (delay+5) || ' MINUTE')"
+	}
 	rows, err := db.Query(`SELECT pj.id, post_id, action, delay
 		FROM publishjobs pj
 		INNER JOIN posts p
 			ON post_id = p.id
-		WHERE action = ? AND created < DATE_SUB(NOW(), INTERVAL delay MINUTE) AND created > DATE_SUB(NOW(), INTERVAL delay + 5 MINUTE)
+		WHERE action = ? AND `+timeWhere+`
 		ORDER BY created ASC`, action)
 	if err != nil {
 		log.Error("Failed selecting from publishjobs: %v", err)
