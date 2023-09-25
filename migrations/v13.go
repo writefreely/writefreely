@@ -29,16 +29,15 @@ func supportLetters(db *datastore) error {
 		return err
 	}
 
-	// TODO: fix for SQLite database
 	_, err = t.Exec(`CREATE TABLE emailsubscribers (
-    id            char(8)              not null,
-    collection_id int                  not null,
-    user_id       int                  null,
-    email         varchar(255)         null,
-    subscribed    datetime             not null,
-    token         char(16)             not null,
-    confirmed     tinyint(1) default 0 not null,
-    allow_export  tinyint(1) default 0 not null,
+    id            ` + db.typeChar(8) + ` not null,
+    collection_id ` + db.typeInt() + ` not null,
+    user_id       ` + db.typeInt() + ` null,
+    email         ` + db.typeVarChar(255) + ` null,
+    subscribed    ` + db.typeDateTime() + ` not null,
+    token         ` + db.typeChar(16) + ` not null,
+    confirmed     ` + db.typeBool() + ` default 0 not null,
+    allow_export  ` + db.typeBool() + ` default 0 not null,
     constraint eu_coll_email
         unique (collection_id, email),
     constraint eu_coll_user
