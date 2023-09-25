@@ -101,7 +101,7 @@ textarea.section.norm {
 					</label>
 					<p class="describe">Readers can subscribe to your blog's <a href="{{.CanonicalURL}}feed/" target="feed">RSS feed</a> with their favorite RSS reader.</p>
 				</li>
-				{{if .LettersCfg.Enabled}}
+				{{if .EmailCfg.Enabled}}
 				<li>
 					<label class="option-text" id="email-sub-label"><input type="checkbox" name="email_subs" id="email_subs" {{if .EmailSubsEnabled}}checked="checked"{{end}} />
 						Email subscriptions
