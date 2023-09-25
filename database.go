@@ -976,7 +976,6 @@ func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias st
 
 	// Update EmailSub value
 	if c.EmailSubs {
-		// TODO: ensure these work with SQLite
 		err = db.SetCollectionAttribute(collID, "email_subs", "1")
 		if err != nil {
 			log.Error("Unable to insert email_subs value: %v", err)
