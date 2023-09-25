@@ -3018,7 +3018,7 @@ func (db *datastore) AddEmailSubscription(collID, userID int64, email string, co
 		Valid: userID > 0,
 	}
 
-	_, err := db.Exec("INSERT INTO emailsubscribers (id, collection_id, user_id, email, subscribed, token, confirmed) VALUES (?, ?, ?, ?, NOW(), ?, ?)", subID, collID, userIDVal, emailVal, token, confirmed)
+	_, err := db.Exec("INSERT INTO emailsubscribers (id, collection_id, user_id, email, subscribed, token, confirmed) VALUES (?, ?, ?, ?, "+db.now()+", ?, ?)", subID, collID, userIDVal, emailVal, token, confirmed)
 	if err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			if mysqlErr.Number == mySQLErrDuplicateKey {
