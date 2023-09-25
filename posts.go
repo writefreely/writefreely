@@ -657,7 +657,7 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		if !app.cfg.App.Private && app.cfg.App.Federation && !newPost.Created.After(time.Now()) {
 			go federatePost(app, newPost, newPost.Collection.ID, false)
 		}
-		if app.cfg.Letters.Enabled() && newPost.Collection.EmailSubsEnabled() {
+		if app.cfg.Email.Enabled() && newPost.Collection.EmailSubsEnabled() {
 			go app.db.InsertJob(&PostJob{
 				PostID: newPost.ID,
 				Action: "email",
@@ -973,7 +973,7 @@ func addPost(app *App, w http.ResponseWriter, r *http.Request) error {
 				go federatePost(app, pRes.Post, pRes.Post.Collection.ID, false)
 			}
 		}
-		if app.cfg.Letters.Enabled() && pRes.Post.Collection.EmailSubsEnabled() {
+		if app.cfg.Email.Enabled() && pRes.Post.Collection.EmailSubsEnabled() {
 			go app.db.InsertJob(&PostJob{
 				PostID: pRes.Post.ID,
 				Action: "email",
@@ -1558,7 +1558,7 @@ Are you sure it was ever here?`,
 	} else {
 		p.extractData()
 		p.Content = strings.Replace(p.Content, "<!--more-->", "", 1)
-		if app.cfg.Letters.Enabled() && c.EmailSubsEnabled() {
+		if app.cfg.Email.Enabled() && c.EmailSubsEnabled() {
 			// TODO: indicate plan is inactive or subs disabled when OWNER is viewing their own post.
 			if u != nil && u.IsEmailSubscriber(app, c.ID) {
 				p.Content = strings.Replace(p.Content, "<!--emailsub-->", `<p id="emailsub">You're subscribed to email updates. <a href="/api/collections/`+c.Alias+`/email/unsubscribe?slug=`+p.Slug.String+`">Unsubscribe</a>.</p>`, -1)

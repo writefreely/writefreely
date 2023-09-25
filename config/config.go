@@ -170,7 +170,7 @@ type (
 		DisablePasswordAuth bool `ini:"disable_password_auth"`
 	}
 
-	LettersCfg struct {
+	EmailCfg struct {
 		Domain         string `ini:"domain"`
 		MailgunPrivate string `ini:"mailgun_private"`
 	}
@@ -180,7 +180,7 @@ type (
 		Server       ServerCfg       `ini:"server"`
 		Database     DatabaseCfg     `ini:"database"`
 		App          AppCfg          `ini:"app"`
-		Letters      LettersCfg      `ini:"letters"`
+		Email        EmailCfg        `ini:"email"`
 		SlackOauth   SlackOauthCfg   `ini:"oauth.slack"`
 		WriteAsOauth WriteAsOauthCfg `ini:"oauth.writeas"`
 		GitlabOauth  GitlabOauthCfg  `ini:"oauth.gitlab"`
@@ -241,7 +241,7 @@ func (ac *AppCfg) LandingPath() string {
 	return ac.Landing
 }
 
-func (lc LettersCfg) Enabled() bool {
+func (lc EmailCfg) Enabled() bool {
 	return lc.Domain != "" && lc.MailgunPrivate != ""
 }
 

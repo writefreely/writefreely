@@ -313,8 +313,8 @@ Originally published on ` + p.Collection.DisplayTitle() + ` (` + p.Collection.Ca
 
 Sent to %recipient.to%. Unsubscribe: ` + p.Collection.CanonicalURL() + `email/unsubscribe/%recipient.id%?t=%recipient.token%`
 
-	gun := mailgun.NewMailgun(app.cfg.Letters.Domain, app.cfg.Letters.MailgunPrivate)
-	m := mailgun.NewMessage(p.Collection.DisplayTitle()+" <"+p.Collection.Alias+"@"+app.cfg.Letters.Domain+">", stripmd.Strip(p.DisplayTitle()), plainMsg)
+	gun := mailgun.NewMailgun(app.cfg.Email.Domain, app.cfg.Email.MailgunPrivate)
+	m := mailgun.NewMessage(p.Collection.DisplayTitle()+" <"+p.Collection.Alias+"@"+app.cfg.Email.Domain+">", stripmd.Strip(p.DisplayTitle()), plainMsg)
 	replyTo := app.db.GetCollectionAttribute(collID, collAttrLetterReplyTo)
 	if replyTo != "" {
 		m.SetReplyTo(replyTo)
@@ -443,14 +443,14 @@ func sendSubConfirmEmail(app *App, c *Collection, email, subID, token string) er
 	}
 
 	// Send email
-	gun := mailgun.NewMailgun(app.cfg.Letters.Domain, app.cfg.Letters.MailgunPrivate)
+	gun := mailgun.NewMailgun(app.cfg.Email.Domain, app.cfg.Email.MailgunPrivate)
 
 	plainMsg := "Confirm your subscription to " + c.DisplayTitle() + ` (` + c.CanonicalURL() + `) to start receiving future posts. Simply click the following link (or copy and paste it into your browser):
 
 ` + c.CanonicalURL() + "email/confirm/" + subID + "?t=" + token + `
 
 If you didn't subscribe to this site or you're not sure why you're getting this email, you can delete it. You won't be subscribed or receive any future emails.`
-	m := mailgun.NewMessage(c.DisplayTitle()+" <"+c.Alias+"@"+app.cfg.Letters.Domain+">", "Confirm your subscription to "+c.DisplayTitle(), plainMsg, fmt.Sprintf("<%s>", email))
+	m := mailgun.NewMessage(c.DisplayTitle()+" <"+c.Alias+"@"+app.cfg.Email.Domain+">", "Confirm your subscription to "+c.DisplayTitle(), plainMsg, fmt.Sprintf("<%s>", email))
 	m.AddTag("Email Verification")
 
 	m.SetHtml(`<html>
