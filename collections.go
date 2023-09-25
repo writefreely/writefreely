@@ -84,6 +84,14 @@ type (
 		TotalPages  int
 		Silenced    bool
 	}
+
+	CollectionNav struct {
+		*Collection
+		Path       string
+		SingleUser bool
+		CanPost    bool
+	}
+
 	SubmittedCollection struct {
 		// Data used for updating a given collection
 		ID      int64

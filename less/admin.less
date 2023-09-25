@@ -60,6 +60,35 @@ nav#admin {
 			background: #ccc;
 		}
 	}
+
+	&.sub {
+		margin: 1em 0 2em;
+		a:not(.toggle) {
+			border: 0;
+			border-bottom: 2px transparent solid;
+			.rounded(0);
+			padding: 0.5em;
+			margin-left: 0.5em;
+			margin-right: 0.5em;
+
+			&:hover {
+				color: @primary;
+				background: transparent;
+			}
+			&.selected {
+				color: @primary;
+				background: transparent;
+				border-bottom-color: @primary;
+			}
+			&+a {
+				margin-left: 1em;
+			}
+		}
+		a.toggle {
+			margin-top: -0.5em;
+			float: right;
+		}
+	}
 }
 
 .admin-actions {
