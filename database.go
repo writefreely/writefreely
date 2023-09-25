@@ -977,7 +977,7 @@ func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias st
 	// Update EmailSub value
 	if c.EmailSubs {
 		// TODO: ensure these work with SQLite
-		_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?", collID, "email_subs", "1", "1")
+		err = db.SetCollectionAttribute(collID, "email_subs", "1")
 		if err != nil {
 			log.Error("Unable to insert email_subs value: %v", err)
 			return err
@@ -994,7 +994,7 @@ func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias st
 				skipUpdate = true
 			}
 			if !skipUpdate {
-				_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?", collID, collAttrLetterReplyTo, *c.LetterReply, *c.LetterReply)
+				err = db.SetCollectionAttribute(collID, collAttrLetterReplyTo, *c.LetterReply)
 				if err != nil {
 					log.Error("Unable to insert %s value: %v", collAttrLetterReplyTo, err)
 					return err
