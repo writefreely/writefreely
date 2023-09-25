@@ -159,7 +159,11 @@ func handleCreateEmailSubscription(app *App, w http.ResponseWriter, r *http.Requ
 
 	// Send confirmation email if needed
 	if !confirmed {
-		sendSubConfirmEmail(app, c, ss.Email, es.ID, es.Token)
+		err = sendSubConfirmEmail(app, c, ss.Email, es.ID, es.Token)
+		if err != nil {
+			log.Error("Failed to send subscription confirmation email: %s", err)
+			return err
+		}
 	}
 
 	if ss.Web {
