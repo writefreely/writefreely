@@ -69,6 +69,7 @@ var migrations = []Migration{
 	New("Widen oauth_users.access_token", widenOauthAcceesToken),    // V10 -> V11
 	New("support verifying fedi profile", fediverseVerifyProfile),   // V11 -> V12 (v0.14.0)
 	New("support newsletters", supportLetters),                      // V12 -> V13
+	New("support password resetting", supportPassReset),             // V13 -> V14
 }
 
 // CurrentVer returns the current migration version the application is on

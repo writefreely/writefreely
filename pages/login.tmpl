@@ -3,6 +3,9 @@
 <meta itemprop="description" content="Log in to {{.SiteName}}.">
 <style>
 input{margin-bottom:0.5em;}
+p.forgot {
+	font-size: 0.86em;
+}
 </style>
 {{end}}
 {{define "content"}}
@@ -19,6 +22,7 @@ input{margin-bottom:0.5em;}
 	<form action="/auth/login" method="post" style="text-align: center;margin-top:1em;" onsubmit="disableSubmit()">
 		<input type="text" name="alias" placeholder="Username" value="{{.LoginUsername}}" {{if not .LoginUsername}}autofocus{{end}} /><br />
 		<input type="password" name="pass" placeholder="Password" {{if .LoginUsername}}autofocus{{end}} /><br />
+		<p class="forgot"><a href="/reset">Forgot password?</a></p>
 		{{if .To}}<input type="hidden" name="to" value="{{.To}}" />{{end}}
 		<input type="submit" id="btn-login" value="Login" />
 	</form>
