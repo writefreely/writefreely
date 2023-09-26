@@ -1068,7 +1068,7 @@ func pinPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		ppr := PinPostResult{ID: p.ID}
 		if err != nil {
 			ppr.Code = http.StatusInternalServerError
-			// TODO: set error messsage
+			// TODO: set error message
 		} else {
 			ppr.Code = http.StatusOK
 		}

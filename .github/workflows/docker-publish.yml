@@ -1,4 +1,4 @@
-name: Build container image, publish as Github-package
+name: Build container image, publish as GitHub-package
 
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
