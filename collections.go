@@ -853,7 +853,7 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 	}
 
 	// Serve ActivityStreams data now, if requested
-	if strings.Contains(r.Header.Get("Accept"), "application/activity+json") {
+	if IsActivityPubRequest(r) {
 		ac := c.PersonObject()
 		ac.Context = []interface{}{activitystreams.Namespace}
 		setCacheControl(w, apCacheTime)
