@@ -63,6 +63,7 @@ type (
 		Host     string `ini:"host"`
 		Port     int    `ini:"port"`
 		TLS      bool   `ini:"tls"`
+		IcuRegex bool   `ini:"icu_regex"`
 	}
 
 	WriteAsOauthCfg struct {

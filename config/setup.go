@@ -12,12 +12,13 @@ package config
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	"github.com/mitchellh/go-wordwrap"
 	"github.com/writeas/web-core/auth"
-	"strconv"
-	"strings"
 )
 
 type SetupData struct {
@@ -227,6 +228,17 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 				return data, err
 			}
 			data.Config.Database.Port, _ = strconv.Atoi(dbPort) // Ignore error, as we've already validated number
+
+			selPrompt = promptui.Select{
+				Templates: selTmpls,
+				Label:     "Are you using MySQL 8.0.4 or higher?",
+				Items:     []string{"Yes", "No"},
+			}
+			_, icuRegex, err := selPrompt.Run()
+			if err != nil {
+				return data, err
+			}
+			data.Config.Database.IcuRegex = icuRegex == "Yes"
 		} else if sel == 1 {
 			// Configure for SQLite
 			data.Config.UseSQLite(isNewCfg)

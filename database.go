@@ -14,12 +14,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/writeas/web-core/silobridge"
-	wf_db "github.com/writefreely/writefreely/db"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/writeas/web-core/silobridge"
+	wf_db "github.com/writefreely/writefreely/db"
 
 	"github.com/guregu/null"
 	"github.com/guregu/null/zero"
@@ -1315,7 +1316,16 @@ func (db *datastore) GetPostsTagged(cfg *config.Config, c *Collection, tag strin
 	if db.driverName == driverSQLite {
 		rows, err = db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND LOWER(content) regexp ? "+timeCondition+" ORDER BY created "+order+limitStr, collID, `.*#`+strings.ToLower(tag)+`\b.*`)
 	} else {
-		rows, err = db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND LOWER(content) RLIKE ? "+timeCondition+" ORDER BY created "+order+limitStr, collID, "#"+strings.ToLower(tag)+"[[:>:]]")
+		// MySQL versions prior to 8.0.4 used Henry Spencer's implementation of regular expressions
+		// which is not compatible with newer - International Components for Unicode (ICU) regular expressions.
+		var regexSuffix string
+		if cfg.Database.IcuRegex {
+			regexSuffix = "\\b"
+		} else {
+			regexSuffix = "[[:>:]]"
+		}
+
+		rows, err = db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND LOWER(content) RLIKE ? "+timeCondition+" ORDER BY created "+order+limitStr, collID, "#"+strings.ToLower(tag)+regexSuffix)
 	}
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)
