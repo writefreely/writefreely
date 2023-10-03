@@ -61,6 +61,13 @@ func (db *datastore) typeVarChar(l int) string {
 	return fmt.Sprintf("VARCHAR(%d)", l)
 }
 
+func (db *datastore) typeVarBinary(l int) string {
+	if db.driverName == driverSQLite {
+		return "BLOB"
+	}
+	return fmt.Sprintf("VARBINARY(%d)", l)
+}
+
 func (db *datastore) typeBool() string {
 	if db.driverName == driverSQLite {
 		return "INTEGER"

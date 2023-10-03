@@ -1,0 +1,58 @@
+{{define "head"}}<title>Reset password &mdash; {{.SiteName}}</title>
+<style>
+input {
+	margin-bottom: 0.5em;
+	width: 100%;
+	box-sizing: border-box;
+}
+label {
+	display: block;
+}
+</style>
+{{end}}
+{{define "content"}}
+<div class="toosmall content-container clean">
+	<h1>Reset your password</h1>
+
+{{ if .DisablePasswordAuth }}
+	<div class="alert info">
+		<p><strong>Password login is disabled on this server</strong>, so it's not possible to reset your password.</p>
+	</div>
+{{ else if not .EmailEnabled }}
+	<div class="alert info">
+		<p><strong>Email is not configured on this server!</strong> Please <a href="/contact">contact your admin</a> to reset your password.</p>
+	</div>
+{{ else }}
+	{{if .Flashes}}<ul class="errors">
+		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
+	</ul>{{end}}
+
+	{{if .IsResetting}}
+		<form method="post" action="/reset" onsubmit="disableSubmit()">
+			<label>
+				<p>New Password</p>
+				<input type="password" name="new-pass" autocomplete="new-password" placeholder="New password" tabindex="1" />
+			</label>
+			<input type="hidden" name="t" value="{{.Token}}" />
+			<input type="submit" id="btn-login" value="Reset Password" />
+			{{ .CSRFField }}
+		</form>
+	{{else if not .IsSent}}
+		<form action="/reset" method="post" onsubmit="disableSubmit()">
+			<label>
+				<p>Username</p>
+				<input type="text" name="alias" placeholder="Username" autofocus />
+			</label>
+			{{ .CSRFField }}
+			<input type="submit" id="btn-login" value="Reset Password" />
+		</form>
+	{{end}}
+
+	<script type="text/javascript">
+	var $btn = document.getElementById("btn-login");
+	function disableSubmit() {
+		$btn.disabled = true;
+	}
+	</script>
+{{ end }}
+{{end}}

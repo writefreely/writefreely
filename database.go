@@ -586,6 +586,37 @@ func (db *datastore) GetTemporaryOneTimeAccessToken(userID int64, validSecs int,
 	return u.String(), nil
 }
 
+func (db *datastore) CreatePasswordResetToken(userID int64) (string, error) {
+	t := id.Generate62RandomString(32)
+
+	_, err := db.Exec("INSERT INTO password_resets (user_id, token, used, created) VALUES (?, ?, 0, "+db.now()+")", userID, t)
+	if err != nil {
+		log.Error("Couldn't INSERT password_resets: %v", err)
+		return "", err
+	}
+
+	return t, nil
+}
+
+func (db *datastore) GetUserFromPasswordReset(token string) int64 {
+	var userID int64
+	err := db.QueryRow("SELECT user_id FROM password_resets WHERE token = ? AND used = 0 AND created > "+db.dateSub(3, "HOUR"), token).Scan(&userID)
+	if err != nil {
+		return 0
+	}
+	return userID
+}
+
+func (db *datastore) ConsumePasswordResetToken(t string) error {
+	_, err := db.Exec("UPDATE password_resets SET used = 1 WHERE token = ?", t)
+	if err != nil {
+		log.Error("Couldn't UPDATE password_resets: %v", err)
+		return err
+	}
+
+	return nil
+}
+
 func (db *datastore) CreateOwnedPost(post *SubmittedPost, accessToken, collAlias, hostName string) (*PublicPost, error) {
 	var userID, collID int64 = -1, -1
 	var coll *Collection
