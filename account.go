@@ -1059,17 +1059,20 @@ func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error 
 	}
 	obj := struct {
 		*UserPage
-		VisitsBlog  string
-		Collection  *Collection
-		TopPosts    *[]PublicPost
-		APFollowers int
-		Silenced    bool
+		VisitsBlog       string
+		Collection       *Collection
+		TopPosts         *[]PublicPost
+		APFollowers      int
+		EmailEnabled     bool
+		EmailSubscribers int
+		Silenced         bool
 	}{
-		UserPage:   NewUserPage(app, r, u, titleStats+"Stats", flashes),
-		VisitsBlog: alias,
-		Collection: c,
-		TopPosts:   topPosts,
-		Silenced:   silenced,
+		UserPage:     NewUserPage(app, r, u, titleStats+"Stats", flashes),
+		VisitsBlog:   alias,
+		Collection:   c,
+		TopPosts:     topPosts,
+		EmailEnabled: app.cfg.Email.Enabled(),
+		Silenced:     silenced,
 	}
 	obj.UserPage.CollAlias = c.Alias
 	if app.cfg.App.Federation {
@@ -1079,8 +1082,70 @@ func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error 
 		}
 		obj.APFollowers = len(*folls)
 	}
+	if obj.EmailEnabled {
+		subs, err := app.db.GetEmailSubscribers(c.ID, true)
+		if err != nil {
+			return err
+		}
+		obj.EmailSubscribers = len(subs)
+	}
 
 	showUserPage(w, "stats", obj)
+	return nil
+}
+
+func handleViewSubscribers(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	c, err := app.db.GetCollection(vars["collection"])
+	if err != nil {
+		return err
+	}
+
+	filter := r.FormValue("filter")
+
+	flashes, _ := getSessionFlashes(app, w, r, nil)
+	obj := struct {
+		*UserPage
+		Collection CollectionNav
+		EmailSubs  []*EmailSubscriber
+		Followers  *[]RemoteUser
+		Silenced   bool
+
+		Filter            string
+		FederationEnabled bool
+		CanEmailSub       bool
+		CanAddSubs        bool
+		EmailSubsEnabled  bool
+	}{
+		UserPage: NewUserPage(app, r, u, c.DisplayTitle()+" Subscribers", flashes),
+		Collection: CollectionNav{
+			Collection: c,
+			Path:       r.URL.Path,
+			SingleUser: app.cfg.App.SingleUser,
+		},
+		Silenced:          u.IsSilenced(),
+		Filter:            filter,
+		FederationEnabled: app.cfg.App.Federation,
+		CanEmailSub:       app.cfg.Email.Enabled(),
+		EmailSubsEnabled:  c.EmailSubsEnabled(),
+	}
+
+	obj.Followers, err = app.db.GetAPFollowers(c)
+	if err != nil {
+		return err
+	}
+
+	obj.EmailSubs, err = app.db.GetEmailSubscribers(c.ID, true)
+	if err != nil {
+		return err
+	}
+
+	if obj.Filter == "" {
+		// Set permission to add email subscribers
+		//obj.CanAddSubs = app.db.GetUserAttribute(c.OwnerID, userAttrCanAddEmailSubs) == "1"
+	}
+
+	showUserPage(w, "subscribers", obj)
 	return nil
 }
 
