@@ -718,7 +718,7 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 		// create a new "Create" activity
 		// with our article as object
 		if isUpdate {
-			na.Updated = p.Updated
+			na.Updated = &p.Updated
 			activity = activitystreams.NewUpdateActivity(na)
 		} else {
 			activity = activitystreams.NewCreateActivity(na)
