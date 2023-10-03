@@ -1321,6 +1321,11 @@ func doAutomatedPasswordChange(app *App, userID int64, newPass string) error {
 func handleResetPasswordInit(app *App, w http.ResponseWriter, r *http.Request) error {
 	returnLoc := impart.HTTPError{http.StatusFound, "/reset"}
 
+	if !app.cfg.Email.Enabled() {
+		// Email isn't configured, so there's nothing to do; send back to the reset form, where they'll get an explanation
+		return returnLoc
+	}
+
 	ip := spam.GetIP(r)
 	alias := r.FormValue("alias")
 
