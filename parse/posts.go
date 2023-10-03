@@ -80,3 +80,12 @@ func TruncToWord(s string, l int) (string, bool) {
 	}
 	return s, truncated
 }
+
+// Truncate truncates the given text to the provided limit, returning the original string if it's shorter than the limit.
+func Truncate(s string, l int) string {
+	c := []rune(s)
+	if len(c) > l {
+		s = string(c[:l])
+	}
+	return s
+}
