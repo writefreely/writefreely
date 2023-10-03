@@ -1546,7 +1546,7 @@ Are you sure it was ever here?`,
 			fmt.Fprintf(w, "# %s\n\n", p.Title.String)
 		}
 		fmt.Fprint(w, p.Content)
-	} else if strings.Contains(r.Header.Get("Accept"), "application/activity+json") {
+	} else if IsActivityPubRequest(r) {
 		if !postFound {
 			return ErrCollectionPageNotFound
 		}

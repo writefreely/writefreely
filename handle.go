@@ -818,7 +818,7 @@ func (h *Handler) handleHTTPError(w http.ResponseWriter, r *http.Request, err er
 			return
 		} else if err.Status == http.StatusNotFound {
 			w.WriteHeader(err.Status)
-			if strings.Contains(r.Header.Get("Accept"), "application/activity+json") {
+			if IsActivityPubRequest(r) {
 				// This is a fediverse request; simply return the header
 				return
 			}
