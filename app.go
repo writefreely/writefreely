@@ -428,6 +428,17 @@ func Initialize(apper Apper, debug bool) (*App, error) {
 
 	initActivityPub(apper.App())
 
+	if apper.App().cfg.Email.Domain != "" || apper.App().cfg.Email.MailgunPrivate != "" {
+		if apper.App().cfg.Email.Domain == "" {
+			log.Error("[FAILED] Starting publish jobs queue: no [letters]domain config value set.")
+		} else if apper.App().cfg.Email.MailgunPrivate == "" {
+			log.Error("[FAILED] Starting publish jobs queue: no [letters]mailgun_private config value set.")
+		} else {
+			log.Info("Starting publish jobs queue...")
+			go startPublishJobsQueue(apper.App())
+		}
+	}
+
 	// Handle local timeline, if enabled
 	if apper.App().cfg.App.LocalTimeline {
 		log.Info("Initializing local timeline...")

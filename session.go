@@ -21,6 +21,10 @@ import (
 const (
 	day           = 86400
 	sessionLength = 180 * day
+
+	userEmailCookieName = "ue"
+	userEmailCookieVal  = "email"
+
 	cookieName    = "wfu"
 	cookieUserVal = "u"
 

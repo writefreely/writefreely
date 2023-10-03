@@ -1,10 +1,19 @@
 module github.com/writefreely/writefreely
 
 require (
+	github.com/PuerkitoBio/goquery v1.7.0 // indirect
+	github.com/aymerick/douceur v0.2.0
+	github.com/clbanning/mxj v1.8.4 // indirect
 	github.com/dustin/go-humanize v1.0.1
+	github.com/facebookgo/ensure v0.0.0-20200202191622-63f1cf65ac4c // indirect
+	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
+	github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 // indirect
 	github.com/fatih/color v1.15.0
 	github.com/go-ini/ini v1.67.0
 	github.com/go-sql-driver/mysql v1.7.1
+	github.com/go-test/deep v1.0.1 // indirect
+	github.com/gobuffalo/envy v1.9.0 // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/gorilla/csrf v1.7.1
 	github.com/gorilla/feeds v1.1.1
 	github.com/gorilla/mux v1.8.0
@@ -14,11 +23,17 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/ikeikeikeike/go-sitemap-generator/v2 v2.0.2
 	github.com/kylemcc/twitter-text-go v0.0.0-20180726194232-7f582f6736ec
+	github.com/mailgun/mailgun-go v2.0.0+incompatible
 	github.com/manifoldco/promptui v0.9.0
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/microcosm-cc/bluemonday v1.0.25
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
+	github.com/onsi/ginkgo v1.16.4 // indirect
+	github.com/onsi/gomega v1.13.0 // indirect
+	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
+	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
+	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
 	github.com/stretchr/testify v1.8.4
 	github.com/urfave/cli/v2 v2.25.7
 	github.com/writeas/activity v0.1.2
@@ -40,35 +55,31 @@ require (
 
 require (
 	code.as/core/socks v1.0.0 // indirect
-	github.com/aymerick/douceur v0.2.0 // indirect
+	github.com/andybalholm/cascadia v1.1.0 // indirect
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/captncraig/cors v0.0.0-20190703115713-e80254a89df1 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
-	github.com/clbanning/mxj v1.8.4 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dchest/uniuri v0.0.0-20200228104902-7aecb25e1fe5 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/go-fed/httpsig v0.1.1-0.20200204213531-0ef28562fabe // indirect
-	github.com/go-test/deep v1.0.1 // indirect
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
 	github.com/gologme/log v1.2.0 // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
+	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
+	github.com/rogpeppe/go-internal v1.3.2 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
-	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
-	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
 	github.com/writeas/go-writeas/v2 v2.0.2 // indirect
 	github.com/writeas/openssl-go v1.0.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect

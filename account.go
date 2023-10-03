@@ -875,12 +875,19 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 		*UserPage
 		*Collection
 		Silenced bool
+
+		config.EmailCfg
+		LetterReplyTo string
 	}{
 		UserPage:   NewUserPage(app, r, u, "Edit "+c.DisplayTitle(), flashes),
 		Collection: c,
 		Silenced:   silenced,
+		EmailCfg:   app.cfg.Email,
 	}
 	obj.UserPage.CollAlias = c.Alias
+	if obj.EmailCfg.Enabled() {
+		obj.LetterReplyTo = app.db.GetCollectionAttribute(c.ID, collAttrLetterReplyTo)
+	}
 
 	showUserPage(w, "collection", obj)
 	return nil
