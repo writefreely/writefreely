@@ -14,7 +14,11 @@ label {
 <div class="toosmall content-container clean">
 	<h1>Reset your password</h1>
 
-{{ if not .EmailEnabled }}
+{{ if .DisablePasswordAuth }}
+	<div class="alert info">
+		<p><strong>Password login is disabled on this server</strong>, so it's not possible to reset your password.</p>
+	</div>
+{{ else if not .EmailEnabled }}
 	<div class="alert info">
 		<p><strong>Email is not configured on this server!</strong> Please <a href="/contact">contact your admin</a> to reset your password.</p>
 	</div>
