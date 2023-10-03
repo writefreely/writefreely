@@ -13,6 +13,7 @@ package writefreely
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/mailgun/mailgun-go"
 	"html/template"
 	"net/http"
 	"regexp"
@@ -1235,6 +1236,54 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 
 	showUserPage(w, "settings", obj)
 	return nil
+}
+
+func loginViaEmail(app *App, alias, redirectTo string) error {
+	if !app.cfg.Email.Enabled() {
+		return fmt.Errorf("EMAIL ISN'T CONFIGURED on this server")
+	}
+
+	// Make sure user has added an email
+	// TODO: create a new func to just get user's email; "ForAuth" doesn't match here
+	u, _ := app.db.GetUserForAuth(alias)
+	if u == nil {
+		if strings.IndexAny(alias, "@") > 0 {
+			return ErrUserNotFoundEmail
+		}
+		return ErrUserNotFound
+	}
+	if u.Email.String == "" {
+		return impart.HTTPError{http.StatusPreconditionFailed, "User doesn't have an email address. Log in with password, instead."}
+	}
+
+	// Generate one-time login token
+	t, err := app.db.GetTemporaryOneTimeAccessToken(u.ID, 60*15, true)
+	if err != nil {
+		log.Error("Unable to generate token for email login: %s", err)
+		return impart.HTTPError{http.StatusInternalServerError, "Unable to generate token."}
+	}
+
+	// Send email
+	gun := mailgun.NewMailgun(app.cfg.Email.Domain, app.cfg.Email.MailgunPrivate)
+	toEmail := u.EmailClear(app.keys)
+	footerPara := "This link will only work once and expires in 15 minutes. Didn't ask us to log in? You can safely ignore this email."
+
+	plainMsg := fmt.Sprintf("Log in to %s here: %s/login?to=%s&with=%s\n\n%s", app.cfg.App.SiteName, app.cfg.App.Host, redirectTo, t, footerPara)
+	m := mailgun.NewMessage(app.cfg.App.SiteName+" <noreply-login@"+app.cfg.Email.Domain+">", "Log in to "+app.cfg.App.SiteName, plainMsg, fmt.Sprintf("<%s>", toEmail))
+	m.AddTag("Email Login")
+
+	m.SetHtml(fmt.Sprintf(`<html>
+	<body style="font-family:Lora, 'Palatino Linotype', Palatino, Baskerville, 'Book Antiqua', 'New York', 'DejaVu serif', serif; font-size: 100%%; margin:1em 2em;">
+		<div style="margin:0 auto; max-width: 40em; font-size: 1.2em;">
+        <h1 style="font-size:1.75em"><a style="text-decoration:none;color:#000;" href="%s">%s</a></h1>
+		<p style="font-size:1.2em;margin-bottom:1.5em;text-align:center"><a href="%s/login?to=%s&with=%s">Log in to %s here</a>.</p>
+        <p style="font-size: 0.86em;color:#666;text-align:center;max-width:35em;margin:1em auto">%s</p>
+        </div>
+	</body>
+</html>`, app.cfg.App.Host, app.cfg.App.SiteName, app.cfg.App.Host, redirectTo, t, app.cfg.App.SiteName, footerPara))
+	_, _, err = gun.Send(m)
+
+	return err
 }
 
 func saveTempInfo(app *App, key, val string, r *http.Request, w http.ResponseWriter) error {

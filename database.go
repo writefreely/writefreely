@@ -174,6 +174,13 @@ func (db *datastore) upsert(indexedCols ...string) string {
 	return "ON DUPLICATE KEY UPDATE"
 }
 
+func (db *datastore) dateAdd(l int, unit string) string {
+	if db.driverName == driverSQLite {
+		return fmt.Sprintf("DATETIME('now', '%d %s')", l, unit)
+	}
+	return fmt.Sprintf("DATE_ADD(NOW(), INTERVAL %d %s)", l, unit)
+}
+
 func (db *datastore) dateSub(l int, unit string) string {
 	if db.driverName == driverSQLite {
 		return fmt.Sprintf("DATETIME('now', '-%d %s')", l, unit)
@@ -567,7 +574,7 @@ func (db *datastore) GetTemporaryOneTimeAccessToken(userID int64, validSecs int,
 
 	expirationVal := "NULL"
 	if validSecs > 0 {
-		expirationVal = fmt.Sprintf("DATE_ADD("+db.now()+", INTERVAL %d SECOND)", validSecs)
+		expirationVal = db.dateAdd(validSecs, "SECOND")
 	}
 
 	_, err = db.Exec("INSERT INTO accesstokens (token, user_id, one_time, expires) VALUES (?, ?, ?, "+expirationVal+")", string(binTok), userID, oneTime)
