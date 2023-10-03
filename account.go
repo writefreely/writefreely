@@ -325,6 +325,7 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		To            string
 		Message       template.HTML
 		Flashes       []template.HTML
+		EmailEnabled  bool
 		LoginUsername string
 	}{
 		StaticPage:    pageForReq(app, r),
@@ -332,6 +333,7 @@ func viewLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		To:            r.FormValue("to"),
 		Message:       template.HTML(""),
 		Flashes:       []template.HTML{},
+		EmailEnabled:  app.cfg.Email.Enabled(),
 		LoginUsername: getTempInfo(app, "login-user", r, w),
 	}
 
