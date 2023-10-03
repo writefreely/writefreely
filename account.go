@@ -1278,18 +1278,20 @@ func viewResetPassword(app *App, w http.ResponseWriter, r *http.Request) error {
 	// Show reset password page
 	d := struct {
 		page.StaticPage
-		Flashes     []string
-		CSRFField   template.HTML
-		Token       string
-		IsResetting bool
-		IsSent      bool
+		Flashes      []string
+		EmailEnabled bool
+		CSRFField    template.HTML
+		Token        string
+		IsResetting  bool
+		IsSent       bool
 	}{
-		StaticPage:  pageForReq(app, r),
-		Flashes:     f,
-		CSRFField:   csrf.TemplateField(r),
-		Token:       token,
-		IsResetting: resetting,
-		IsSent:      r.FormValue("sent") == "1",
+		StaticPage:   pageForReq(app, r),
+		Flashes:      f,
+		EmailEnabled: app.cfg.Email.Enabled(),
+		CSRFField:    csrf.TemplateField(r),
+		Token:        token,
+		IsResetting:  resetting,
+		IsSent:       r.FormValue("sent") == "1",
 	}
 	err := pages["reset.tmpl"].ExecuteTemplate(w, "base", d)
 	if err != nil {
