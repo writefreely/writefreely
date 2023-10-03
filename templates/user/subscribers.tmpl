@@ -13,21 +13,23 @@
 		{{template "user-silenced"}}
 	{{end}}
 
-{{if .Collection.Collection}}{{template "collection-breadcrumbs" .}}{{end}}
+	{{if .Collection.Collection}}{{template "collection-breadcrumbs" .}}{{end}}
 
-<h1>Subscribers</h1>
-{{if .Collection.Collection}}
-	{{template "collection-nav" .Collection}}
+	<h1>Subscribers</h1>
+	{{if .Collection.Collection}}
+		{{template "collection-nav" .Collection}}
 
-	<nav class="pager sub">
-		<a href="/me/c/{{.Collection.Alias}}/subscribers" {{if eq .Filter ""}}class="selected"{{end}}>Email ({{len .EmailSubs}})</a>
-		<a href="/me/c/{{.Collection.Alias}}/subscribers?filter=fediverse" {{if eq .Filter "fediverse"}}class="selected"{{end}}>Followers ({{len .Followers}})</a>
-	</nav>
-{{end}}
+		<nav class="pager sub">
+			<a href="/me/c/{{.Collection.Alias}}/subscribers" {{if eq .Filter ""}}class="selected"{{end}}>Email ({{len .EmailSubs}})</a>
+			<a href="/me/c/{{.Collection.Alias}}/subscribers?filter=fediverse" {{if eq .Filter "fediverse"}}class="selected"{{end}}>Followers ({{len .Followers}})</a>
+		</nav>
+	{{end}}
 
-    {{if .Flashes}}<ul class="errors">
-        {{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
-	</ul>{{end}}
+	{{if .Flashes -}}
+		<ul class="errors">
+			{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
+		</ul>
+	{{- end}}
 
 	{{ if eq .Filter "fediverse" }}
 		<table class="classy export">
@@ -36,23 +38,23 @@
 				<th colspan="2">Since</th>
 			</tr>
 
-            {{if and (gt (len .Followers) 0) (not .FederationEnabled)}}
+			{{if and (gt (len .Followers) 0) (not .FederationEnabled)}}
 				<div class="alert info">
 					<p><strong>Federation is disabled on this server</strong>, so followers won't receive any new posts.</p>
 				</div>
-            {{end}}
-            {{ if gt (len .Followers) 0 }}
-                {{range $el := .Followers}}
+			{{end}}
+			{{ if gt (len .Followers) 0 }}
+				{{range $el := .Followers}}
 					<tr>
 						<td><a href="{{.ActorID}}">@{{.EstimatedHandle}}</a></td>
 						<td>{{.CreatedFriendly}}</td>
 					</tr>
-                {{end}}
-            {{ else }}
+				{{end}}
+			{{ else }}
 				<tr>
 					<td colspan="2">No followers yet.</td>
 				</tr>
-            {{ end }}
+			{{ end }}
 		</table>
 	{{ else }}
 		{{if or .CanEmailSub .EmailSubs}}
