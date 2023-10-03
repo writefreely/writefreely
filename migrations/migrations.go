@@ -70,6 +70,7 @@ var migrations = []Migration{
 	New("support verifying fedi profile", fediverseVerifyProfile),   // V11 -> V12 (v0.14.0)
 	New("support newsletters", supportLetters),                      // V12 -> V13
 	New("support password resetting", supportPassReset),             // V13 -> V14
+	New("speed up blog post retrieval", addPostRetrievalIndex),      // V14 -> V15
 }
 
 // CurrentVer returns the current migration version the application is on
