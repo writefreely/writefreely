@@ -1359,7 +1359,12 @@ func handleResetPasswordInit(app *App, w http.ResponseWriter, r *http.Request) e
 		return returnLoc
 	}
 
-	emailPasswordReset(app, u.EmailClear(app.keys), token)
+	err = emailPasswordReset(app, u.EmailClear(app.keys), token)
+	if err != nil {
+		log.Error("Error emailing password reset: %s", err)
+		addSessionFlash(app, w, r, ErrInternalGeneral.Message, nil)
+		return returnLoc
+	}
 
 	addSessionFlash(app, w, r, "We sent an email to the address associated with this account.", nil)
 	returnLoc.Message += "?sent=1"
