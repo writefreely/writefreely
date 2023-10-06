@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2020 A Bunch Tell LLC.
+ * Copyright © 2019-2020 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -247,10 +247,7 @@ func (b *CreateTableSqlBuilder) ToSQL() (string, error) {
 		}
 		things = append(things, columnStr)
 	}
-	for _, constraint := range b.Constraints {
-		things = append(things, constraint)
-	}
-
+	things = append(things, b.Constraints...)
 	if thingLen := len(things); thingLen > 0 {
 		str.WriteString(" ( ")
 		for i, thing := range things {

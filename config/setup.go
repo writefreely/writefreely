@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 A Bunch Tell LLC.
+ * Copyright © 2018 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -57,7 +57,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 		Success: "{{ . | bold | faint }}: ",
 	}
 	selTmpls := &promptui.SelectTemplates{
-		Selected: fmt.Sprintf(`{{.Label}} {{ . | faint }}`),
+		Selected: `{{.Label}} {{ . | faint }}`,
 	}
 
 	var selPrompt promptui.Select

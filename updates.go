@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2020 A Bunch Tell LLC.
+ * Copyright © 2019-2020 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -12,7 +12,7 @@ package writefreely
 
 import (
 	"github.com/writeas/web-core/log"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -121,7 +121,7 @@ func newVersionCheck() (string, error) {
 	if err == nil && res.StatusCode == http.StatusOK {
 		defer res.Body.Close()
 
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			return "", err
 		}

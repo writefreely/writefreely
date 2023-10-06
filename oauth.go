@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2021 A Bunch Tell LLC.
+ * Copyright © 2019-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -15,7 +15,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -293,10 +292,15 @@ func configureGiteaOauth(parentHandler *Handler, r *mux.Router, app *App) {
 			ClientID:         app.Config().GiteaOauth.ClientID,
 			ClientSecret:     app.Config().GiteaOauth.ClientSecret,
 			ExchangeLocation: app.Config().GiteaOauth.Host + "/login/oauth/access_token",
-			InspectLocation:  app.Config().GiteaOauth.Host + "/api/v1/user",
+			InspectLocation:  app.Config().GiteaOauth.Host + "/login/oauth/userinfo",
 			AuthLocation:     app.Config().GiteaOauth.Host + "/login/oauth/authorize",
 			HttpClient:       config.DefaultHTTPClient(),
 			CallbackLocation: callbackLocation,
+			Scope:            "openid profile email",
+			MapUserID:        "sub",
+			MapUsername:      "login",
+			MapDisplayName:   "full_name",
+			MapEmail:         "email",
 		}
 		configureOauthRoutes(parentHandler, r, app, oauthClient, callbackProxy)
 	}
@@ -355,7 +359,7 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 	}
 
 	if localUserID != -1 && attachUserID > 0 {
-		if err = addSessionFlash(app, w, r, "This Slack account is already attached to another user.", nil); err != nil {
+		if err = addSessionFlash(app, w, r, "This OAuth account is already attached to another user.", nil); err != nil {
 			return impart.HTTPError{Status: http.StatusInternalServerError, Message: err.Error()}
 		}
 		return impart.HTTPError{http.StatusFound, "/me/settings"}
@@ -376,6 +380,7 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 	}
 	if attachUserID > 0 {
 		log.Info("attaching to user %d", attachUserID)
+		log.Info("OAuth userid: %s", tokenInfo.UserID)
 		err = h.DB.RecordRemoteUserID(r.Context(), attachUserID, tokenInfo.UserID, provider, clientID, tokenResponse.AccessToken)
 		if err != nil {
 			return impart.HTTPError{http.StatusInternalServerError, err.Error()}
@@ -444,7 +449,7 @@ func (r *callbackProxyClient) register(ctx context.Context, state string) error 
 
 func limitedJsonUnmarshal(body io.ReadCloser, n int, thing interface{}) error {
 	lr := io.LimitReader(body, int64(n+1))
-	data, err := ioutil.ReadAll(lr)
+	data, err := io.ReadAll(lr)
 	if err != nil {
 		return err
 	}

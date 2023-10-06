@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 A Bunch Tell LLC.
+ * Copyright © 2018-2019 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -21,6 +21,10 @@ import (
 const (
 	day           = 86400
 	sessionLength = 180 * day
+
+	userEmailCookieName = "ue"
+	userEmailCookieVal  = "email"
+
 	cookieName    = "wfu"
 	cookieUserVal = "u"
 
@@ -130,12 +134,13 @@ func saveUserSession(app *App, r *http.Request, w http.ResponseWriter) error {
 	return err
 }
 
-func getFullUserSession(app *App, r *http.Request) *User {
+func getFullUserSession(app *App, r *http.Request) (*User, error) {
 	u := getUserSession(app, r)
 	if u == nil {
-		return nil
+		return nil, nil
 	}
 
-	u, _ = app.db.GetUserByID(u.ID)
-	return u
+	var err error
+	u, err = app.db.GetUserByID(u.ID)
+	return u, err
 }

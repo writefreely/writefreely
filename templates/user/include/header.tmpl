@@ -18,6 +18,7 @@
 				<nav class="tabs">
 					<a href="/me/c/{{.Username}}" {{if and (hasPrefix .Path "/me/c/") (hasSuffix .Path .Username)}}class="selected"{{end}}>Customize</a>
 					<a href="/me/c/{{.Username}}/stats" {{if hasSuffix .Path "/stats"}}class="selected"{{end}}>Stats</a>
+					<a href="/me/c/{{.Username}}/subscribers" {{if hasSuffix .Path "/subscribers"}}class="selected"{{end}}>Subscribers</a>
 					<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>
 				</nav>
 			</nav>
@@ -83,6 +84,7 @@
 	<title>{{.PageTitle}} {{if .Separator}}{{.Separator}}{{else}}&mdash;{{end}} {{.SiteName}}</title>
 
 	<link rel="stylesheet" type="text/css" href="/css/write.css" />
+	{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
 	<link rel="shortcut icon" href="/favicon.ico" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<meta name="theme-color" content="#888888" />

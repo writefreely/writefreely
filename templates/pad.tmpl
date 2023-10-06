@@ -5,6 +5,7 @@
 		<title>{{if .Editing}}Editing {{if .Post.Title}}{{.Post.Title}}{{else}}{{.Post.Id}}{{end}}{{else}}New Post{{end}} &mdash; {{.SiteName}}</title>
 		
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
+		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 		<meta name="google" value="notranslate">
@@ -24,7 +25,7 @@
 				{{if not .SingleUser}}<h1><a href="/me/c/" title="View blogs"><img class="ic-24dp" src="/img/ic_blogs_dark@2x.png" /></a></h1>{{end}}
 				<nav id="target" {{if .SingleUser}}style="margin-left:0"{{end}}><ul>
 						{{if .Editing}}<li>{{if .EditCollection}}<a href="{{.EditCollection.CanonicalURL}}">{{.EditCollection.Title}}</a>{{else}}<a>Draft</a>{{end}}</li>
-						{{else}}<li class="has-submenu"><a id="publish-to"><span id="target-name">Draft</span> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
+						{{else}}<li class="has-submenu"><a href="#" id="publish-to" onclick="return false"><span id="target-name">Draft</span> <img class="ic-18dp" src="/img/ic_down_arrow_dark@2x.png" /></a>
 						<ul>
 							<li class="menu-heading">Publish to...</li>
 							{{if .Blogs}}{{range $idx, $el := .Blogs}}
@@ -56,7 +57,7 @@
 				</ul></nav>
 				<span id="wc" class="hidden if-room room-4">0 words</span>
 			</div>
-			<noscript style="margin-left: 2em;"><strong>NOTE</strong>: for now, you'll need Javascript enabled to post.</noscript>
+			<noscript style="margin-left: 2em;"><strong>NOTE</strong>: for now, you'll need JavaScript enabled to post.</noscript>
 			<div id="belt">
 				{{if .Editing}}<div class="tool hidden if-room"><a href="{{if .EditCollection}}{{.EditCollection.CanonicalURL}}{{.Post.Slug}}/edit/meta{{else}}/{{if .SingleUser}}d/{{end}}{{.Post.Id}}/meta{{end}}" title="Edit post metadata" id="edit-meta"><img class="ic-24dp" src="/img/ic_info_dark@2x.png" /></a></div>{{end}}
 				<div class="tool hidden if-room room-2"><a href="#theme" title="Toggle theme" id="toggle-theme"><img class="ic-24dp" src="/img/ic_brightness_dark@2x.png" /></a></div>

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2021 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -13,9 +13,10 @@ package writefreely
 import (
 	"crypto/tls"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"html/template"
-	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -35,12 +36,13 @@ import (
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/converter"
 	"github.com/writeas/web-core/log"
+	"golang.org/x/crypto/acme/autocert"
+
 	"github.com/writefreely/writefreely/author"
 	"github.com/writefreely/writefreely/config"
 	"github.com/writefreely/writefreely/key"
 	"github.com/writefreely/writefreely/migrations"
 	"github.com/writefreely/writefreely/page"
-	"golang.org/x/crypto/acme/autocert"
 )
 
 const (
@@ -56,7 +58,7 @@ var (
 	debugging bool
 
 	// Software version can be set from git env using -ldflags
-	softwareVer = "0.13.1"
+	softwareVer = "0.14.0"
 
 	// DEPRECATED VARS
 	isSingleUser bool
@@ -174,7 +176,7 @@ func (app *App) LoadKeys() error {
 		executable = filepath.Base(executable)
 	}
 
-	app.keys.EmailKey, err = ioutil.ReadFile(emailKeyPath)
+	app.keys.EmailKey, err = os.ReadFile(emailKeyPath)
 	if err != nil {
 		return err
 	}
@@ -182,7 +184,7 @@ func (app *App) LoadKeys() error {
 	if debugging {
 		log.Info("  %s", cookieAuthKeyPath)
 	}
-	app.keys.CookieAuthKey, err = ioutil.ReadFile(cookieAuthKeyPath)
+	app.keys.CookieAuthKey, err = os.ReadFile(cookieAuthKeyPath)
 	if err != nil {
 		return err
 	}
@@ -190,7 +192,7 @@ func (app *App) LoadKeys() error {
 	if debugging {
 		log.Info("  %s", cookieKeyPath)
 	}
-	app.keys.CookieKey, err = ioutil.ReadFile(cookieKeyPath)
+	app.keys.CookieKey, err = os.ReadFile(cookieKeyPath)
 	if err != nil {
 		return err
 	}
@@ -198,7 +200,7 @@ func (app *App) LoadKeys() error {
 	if debugging {
 		log.Info("  %s", csrfKeyPath)
 	}
-	app.keys.CSRFKey, err = ioutil.ReadFile(csrfKeyPath)
+	app.keys.CSRFKey, err = os.ReadFile(csrfKeyPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			log.Error(`Missing key: %s.
@@ -315,7 +317,7 @@ func handleTemplatedPage(app *App, w http.ResponseWriter, r *http.Request, t *te
 	}{
 		StaticPage: pageForReq(app, r),
 	}
-	if r.URL.Path == "/about" || r.URL.Path == "/privacy" {
+	if r.URL.Path == "/about" || r.URL.Path == "/contact" || r.URL.Path == "/privacy" {
 		var c *instanceContent
 		var err error
 
@@ -326,6 +328,12 @@ func handleTemplatedPage(app *App, w http.ResponseWriter, r *http.Request, t *te
 			p.AboutStats = &InstanceStats{}
 			p.AboutStats.NumPosts, _ = app.db.GetTotalPosts()
 			p.AboutStats.NumBlogs, _ = app.db.GetTotalCollections()
+		} else if r.URL.Path == "/contact" {
+			c, err = getContactPage(app)
+			if c.Updated.IsZero() {
+				// Page was never set up, so return 404
+				return ErrPostNotFound
+			}
 		} else {
 			c, err = getPrivacyPage(app)
 		}
@@ -354,6 +362,11 @@ func pageForReq(app *App, r *http.Request) page.StaticPage {
 		AppCfg:  app.cfg.App,
 		Path:    r.URL.Path,
 		Version: "v" + softwareVer,
+	}
+
+	// Use custom style, if file exists
+	if _, err := os.Stat(filepath.Join(staticDir, "local", "custom.css")); err == nil {
+		p.CustomCSS = true
 	}
 
 	// Add user information, if given
@@ -414,6 +427,17 @@ func Initialize(apper Apper, debug bool) (*App, error) {
 	}
 
 	initActivityPub(apper.App())
+
+	if apper.App().cfg.Email.Domain != "" || apper.App().cfg.Email.MailgunPrivate != "" {
+		if apper.App().cfg.Email.Domain == "" {
+			log.Error("[FAILED] Starting publish jobs queue: no [letters]domain config value set.")
+		} else if apper.App().cfg.Email.MailgunPrivate == "" {
+			log.Error("[FAILED] Starting publish jobs queue: no [letters]mailgun_private config value set.")
+		} else {
+			log.Info("Starting publish jobs queue...")
+			go startPublishJobsQueue(apper.App())
+		}
+	}
 
 	// Handle local timeline, if enabled
 	if apper.App().cfg.App.LocalTimeline {
@@ -503,9 +527,41 @@ requests. We recommend supplying a valid host name.`)
 			err = http.ListenAndServeTLS(fmt.Sprintf("%s:443", bindAddress), app.cfg.Server.TLSCertPath, app.cfg.Server.TLSKeyPath, r)
 		}
 	} else {
-		log.Info("Serving on http://%s:%d\n", bindAddress, app.cfg.Server.Port)
+		network := "tcp"
+		protocol := "http"
+		if strings.HasPrefix(bindAddress, "/") {
+			network = "unix"
+			protocol = "http+unix"
+
+			// old sockets will remain after server closes;
+			// we need to delete them in order to open new ones
+			err = os.Remove(bindAddress)
+			if err != nil && !os.IsNotExist(err) {
+				log.Error("%s already exists but could not be removed: %v", bindAddress, err)
+				os.Exit(1)
+			}
+		} else {
+			bindAddress = fmt.Sprintf("%s:%d", bindAddress, app.cfg.Server.Port)
+		}
+
+		log.Info("Serving on %s://%s", protocol, bindAddress)
 		log.Info("---")
-		err = http.ListenAndServe(fmt.Sprintf("%s:%d", bindAddress, app.cfg.Server.Port), r)
+		listener, err := net.Listen(network, bindAddress)
+		if err != nil {
+			log.Error("Could not bind to address: %v", err)
+			os.Exit(1)
+		}
+
+		if network == "unix" {
+			err = os.Chmod(bindAddress, 0o666)
+			if err != nil {
+				log.Error("Could not update socket permissions: %v", err)
+				os.Exit(1)
+			}
+		}
+
+		defer listener.Close()
+		err = http.Serve(listener, r)
 	}
 	if err != nil {
 		log.Error("Unable to start: %v", err)
@@ -529,8 +585,8 @@ func (app *App) InitDecoder() {
 // tests the connection.
 func ConnectToDatabase(app *App) error {
 	// Check database configuration
-	if app.cfg.Database.Type == driverMySQL && (app.cfg.Database.User == "" || app.cfg.Database.Password == "") {
-		return fmt.Errorf("Database user or password not set.")
+	if app.cfg.Database.Type == driverMySQL && app.cfg.Database.User == "" {
+		return fmt.Errorf("Database user not set.")
 	}
 	if app.cfg.Database.Host == "" {
 		app.cfg.Database.Host = "localhost"
@@ -812,6 +868,16 @@ func connectToDatabase(app *App) {
 func shutdown(app *App) {
 	log.Info("Closing database connection...")
 	app.db.Close()
+	if strings.HasPrefix(app.cfg.Server.Bind, "/") {
+		// Clean up socket
+		log.Info("Removing socket file...")
+		err := os.Remove(app.cfg.Server.Bind)
+		if err != nil {
+			log.Error("Unable to remove socket: %s", err)
+			os.Exit(1)
+		}
+		log.Info("Success.")
+	}
 }
 
 // CreateUser creates a new admin or normal user from the given credentials.
@@ -874,15 +940,18 @@ func CreateUser(apper Apper, username, password string, isAdmin bool) error {
 	return nil
 }
 
-func adminInitDatabase(app *App) error {
-	schemaFileName := "schema.sql"
-	if app.cfg.Database.Type == driverSQLite {
-		schemaFileName = "sqlite.sql"
-	}
+//go:embed schema.sql
+var schemaSql string
 
-	schema, err := Asset(schemaFileName)
-	if err != nil {
-		return fmt.Errorf("Unable to load schema file: %v", err)
+//go:embed sqlite.sql
+var sqliteSql string
+
+func adminInitDatabase(app *App) error {
+	var schema string
+	if app.cfg.Database.Type == driverSQLite {
+		schema = sqliteSql
+	} else {
+		schema = schemaSql
 	}
 
 	tblReg := regexp.MustCompile("CREATE TABLE (IF NOT EXISTS )?`([a-z_]+)`")
@@ -898,7 +967,7 @@ func adminInitDatabase(app *App) error {
 		} else {
 			log.Info("Creating table ??? (Weird query) No match in: %v", parts)
 		}
-		_, err = app.db.Exec(q)
+		_, err := app.db.Exec(q)
 		if err != nil {
 			log.Error("%s", err)
 		} else {
@@ -908,7 +977,7 @@ func adminInitDatabase(app *App) error {
 
 	// Set up migrations table
 	log.Info("Initializing appmigrations table...")
-	err = migrations.SetInitialMigrations(migrations.NewDatastore(app.db.DB, app.db.driverName))
+	err := migrations.SetInitialMigrations(migrations.NewDatastore(app.db.DB, app.db.driverName))
 	if err != nil {
 		return fmt.Errorf("Unable to set initial migrations: %v", err)
 	}

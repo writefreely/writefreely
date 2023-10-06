@@ -2,7 +2,7 @@
 ###############################################################################
 ##			writefreely update script			     ##
 ##								 	     ##
-##	WARNING: running this script will overwrite any modifed assets or    ##
+##	WARNING: running this script will overwrite any modified assets or   ##
 ##	template files. If you have any custom changes to these files you    ##
 ##	should back them up FIRST.					     ##
 ##									     ##
@@ -11,7 +11,7 @@
 ##	have not installed the binary `writefreely` in another location.     ##
 ###############################################################################
 #
-#	Copyright © 2019-2020 A Bunch Tell LLC.
+#	Copyright © 2019-2020 Musing Studio LLC.
 #
 #	This file is part of WriteFreely.
 #

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2021 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -13,6 +13,7 @@ package writefreely
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/mailgun/mailgun-go"
 	"html/template"
 	"net/http"
 	"regexp"
@@ -504,7 +505,7 @@ func login(app *App, w http.ResponseWriter, r *http.Request) error {
 			// User has no email set, so check if they haven't added a password, either,
 			// so we can return a more helpful error message.
 			if hasPass, _ := app.db.IsUserPassSet(u.ID); !hasPass {
-				log.Info("Tried logging in to %s, but no password or email.", signin.Alias)
+				log.Info("Tried logging into %s, but no password or email.", signin.Alias)
 				return impart.HTTPError{http.StatusPreconditionFailed, "This user never added a password or email address. Please contact us for help."}
 			}
 		}
@@ -577,7 +578,7 @@ func getVerboseAuthUser(app *App, token string, u *User, verbose bool) *AuthUser
 		}
 		passIsSet, err := app.db.IsUserPassSet(u.ID)
 		if err != nil {
-			// TODO: correct error meesage
+			// TODO: correct error message
 			log.Error("Login: Unable to get user collections: %v", err)
 		}
 
@@ -787,6 +788,9 @@ func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 
 	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
+		if err == ErrUserNotFound {
+			return err
+		}
 		log.Error("view articles: %v", err)
 	}
 	d := struct {
@@ -822,7 +826,10 @@ func viewCollections(app *App, u *User, w http.ResponseWriter, r *http.Request) 
 
 	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
-		log.Error("view collections %v", err)
+		if err == ErrUserNotFound {
+			return err
+		}
+		log.Error("view collections: %v", err)
 		return fmt.Errorf("view collections: %v", err)
 	}
 	d := struct {
@@ -856,11 +863,11 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 		return ErrCollectionNotFound
 	}
 
-	// Add collection properties
-	c.Monetization = app.db.GetCollectionAttribute(c.ID, "monetization_pointer")
-
 	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
+		if err == ErrUserNotFound {
+			return err
+		}
 		log.Error("view edit collection %v", err)
 		return fmt.Errorf("view edit collection: %v", err)
 	}
@@ -869,12 +876,19 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 		*UserPage
 		*Collection
 		Silenced bool
+
+		config.EmailCfg
+		LetterReplyTo string
 	}{
 		UserPage:   NewUserPage(app, r, u, "Edit "+c.DisplayTitle(), flashes),
 		Collection: c,
 		Silenced:   silenced,
+		EmailCfg:   app.cfg.Email,
 	}
 	obj.UserPage.CollAlias = c.Alias
+	if obj.EmailCfg.Enabled() {
+		obj.LetterReplyTo = app.db.GetCollectionAttribute(c.ID, collAttrLetterReplyTo)
+	}
 
 	showUserPage(w, "collection", obj)
 	return nil
@@ -1038,22 +1052,28 @@ func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error 
 
 	silenced, err := app.db.IsUserSilenced(u.ID)
 	if err != nil {
+		if err == ErrUserNotFound {
+			return err
+		}
 		log.Error("view stats: %v", err)
 		return err
 	}
 	obj := struct {
 		*UserPage
-		VisitsBlog  string
-		Collection  *Collection
-		TopPosts    *[]PublicPost
-		APFollowers int
-		Silenced    bool
+		VisitsBlog       string
+		Collection       *Collection
+		TopPosts         *[]PublicPost
+		APFollowers      int
+		EmailEnabled     bool
+		EmailSubscribers int
+		Silenced         bool
 	}{
-		UserPage:   NewUserPage(app, r, u, titleStats+"Stats", flashes),
-		VisitsBlog: alias,
-		Collection: c,
-		TopPosts:   topPosts,
-		Silenced:   silenced,
+		UserPage:     NewUserPage(app, r, u, titleStats+"Stats", flashes),
+		VisitsBlog:   alias,
+		Collection:   c,
+		TopPosts:     topPosts,
+		EmailEnabled: app.cfg.Email.Enabled(),
+		Silenced:     silenced,
 	}
 	obj.UserPage.CollAlias = c.Alias
 	if app.cfg.App.Federation {
@@ -1063,14 +1083,79 @@ func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error 
 		}
 		obj.APFollowers = len(*folls)
 	}
+	if obj.EmailEnabled {
+		subs, err := app.db.GetEmailSubscribers(c.ID, true)
+		if err != nil {
+			return err
+		}
+		obj.EmailSubscribers = len(subs)
+	}
 
 	showUserPage(w, "stats", obj)
+	return nil
+}
+
+func handleViewSubscribers(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	c, err := app.db.GetCollection(vars["collection"])
+	if err != nil {
+		return err
+	}
+
+	filter := r.FormValue("filter")
+
+	flashes, _ := getSessionFlashes(app, w, r, nil)
+	obj := struct {
+		*UserPage
+		Collection CollectionNav
+		EmailSubs  []*EmailSubscriber
+		Followers  *[]RemoteUser
+		Silenced   bool
+
+		Filter            string
+		FederationEnabled bool
+		CanEmailSub       bool
+		CanAddSubs        bool
+		EmailSubsEnabled  bool
+	}{
+		UserPage: NewUserPage(app, r, u, c.DisplayTitle()+" Subscribers", flashes),
+		Collection: CollectionNav{
+			Collection: c,
+			Path:       r.URL.Path,
+			SingleUser: app.cfg.App.SingleUser,
+		},
+		Silenced:          u.IsSilenced(),
+		Filter:            filter,
+		FederationEnabled: app.cfg.App.Federation,
+		CanEmailSub:       app.cfg.Email.Enabled(),
+		EmailSubsEnabled:  c.EmailSubsEnabled(),
+	}
+
+	obj.Followers, err = app.db.GetAPFollowers(c)
+	if err != nil {
+		return err
+	}
+
+	obj.EmailSubs, err = app.db.GetEmailSubscribers(c.ID, true)
+	if err != nil {
+		return err
+	}
+
+	if obj.Filter == "" {
+		// Set permission to add email subscribers
+		//obj.CanAddSubs = app.db.GetUserAttribute(c.OwnerID, userAttrCanAddEmailSubs) == "1"
+	}
+
+	showUserPage(w, "subscribers", obj)
 	return nil
 }
 
 func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	fullUser, err := app.db.GetUserByID(u.ID)
 	if err != nil {
+		if err == ErrUserNotFound {
+			return err
+		}
 		log.Error("Unable to get user for settings: %s", err)
 		return impart.HTTPError{http.StatusInternalServerError, "Unable to retrieve user data. The humans have been alerted."}
 	}
@@ -1151,6 +1236,54 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 
 	showUserPage(w, "settings", obj)
 	return nil
+}
+
+func loginViaEmail(app *App, alias, redirectTo string) error {
+	if !app.cfg.Email.Enabled() {
+		return fmt.Errorf("EMAIL ISN'T CONFIGURED on this server")
+	}
+
+	// Make sure user has added an email
+	// TODO: create a new func to just get user's email; "ForAuth" doesn't match here
+	u, _ := app.db.GetUserForAuth(alias)
+	if u == nil {
+		if strings.IndexAny(alias, "@") > 0 {
+			return ErrUserNotFoundEmail
+		}
+		return ErrUserNotFound
+	}
+	if u.Email.String == "" {
+		return impart.HTTPError{http.StatusPreconditionFailed, "User doesn't have an email address. Log in with password, instead."}
+	}
+
+	// Generate one-time login token
+	t, err := app.db.GetTemporaryOneTimeAccessToken(u.ID, 60*15, true)
+	if err != nil {
+		log.Error("Unable to generate token for email login: %s", err)
+		return impart.HTTPError{http.StatusInternalServerError, "Unable to generate token."}
+	}
+
+	// Send email
+	gun := mailgun.NewMailgun(app.cfg.Email.Domain, app.cfg.Email.MailgunPrivate)
+	toEmail := u.EmailClear(app.keys)
+	footerPara := "This link will only work once and expires in 15 minutes. Didn't ask us to log in? You can safely ignore this email."
+
+	plainMsg := fmt.Sprintf("Log in to %s here: %s/login?to=%s&with=%s\n\n%s", app.cfg.App.SiteName, app.cfg.App.Host, redirectTo, t, footerPara)
+	m := mailgun.NewMessage(app.cfg.App.SiteName+" <noreply-login@"+app.cfg.Email.Domain+">", "Log in to "+app.cfg.App.SiteName, plainMsg, fmt.Sprintf("<%s>", toEmail))
+	m.AddTag("Email Login")
+
+	m.SetHtml(fmt.Sprintf(`<html>
+	<body style="font-family:Lora, 'Palatino Linotype', Palatino, Baskerville, 'Book Antiqua', 'New York', 'DejaVu serif', serif; font-size: 100%%; margin:1em 2em;">
+		<div style="margin:0 auto; max-width: 40em; font-size: 1.2em;">
+        <h1 style="font-size:1.75em"><a style="text-decoration:none;color:#000;" href="%s">%s</a></h1>
+		<p style="font-size:1.2em;margin-bottom:1.5em;text-align:center"><a href="%s/login?to=%s&with=%s">Log in to %s here</a>.</p>
+        <p style="font-size: 0.86em;color:#666;text-align:center;max-width:35em;margin:1em auto">%s</p>
+        </div>
+	</body>
+</html>`, app.cfg.App.Host, app.cfg.App.SiteName, app.cfg.App.Host, redirectTo, t, app.cfg.App.SiteName, footerPara))
+	_, _, err = gun.Send(m)
+
+	return err
 }
 
 func saveTempInfo(app *App, key, val string, r *http.Request, w http.ResponseWriter) error {

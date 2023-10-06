@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2021 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -20,10 +20,10 @@ import (
 	"strings"
 	"time"
 
-	"git.mills.io/prologic/go-gopher"
 	"github.com/gorilla/sessions"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
+	"github.com/writefreely/go-gopher"
 	"github.com/writefreely/writefreely/config"
 	"github.com/writefreely/writefreely/page"
 )
@@ -155,8 +155,14 @@ func (h *Handler) User(f userHandlerFunc) http.HandlerFunc {
 			err := f(h.app.App(), u, w, r)
 			if err == nil {
 				status = http.StatusOK
-			} else if err, ok := err.(impart.HTTPError); ok {
-				status = err.Status
+			} else if impErr, ok := err.(impart.HTTPError); ok {
+				status = impErr.Status
+				if impErr == ErrUserNotFound {
+					log.Info("Logged-in user not found. Logging out.")
+					sendRedirect(w, http.StatusFound, "/me/logout?to="+h.app.App().cfg.App.LandingPath())
+					// Reset err so handleHTTPError does nothing
+					err = nil
+				}
 			} else {
 				status = http.StatusInternalServerError
 			}
@@ -256,7 +262,7 @@ func apiAuth(app *App, r *http.Request) (*User, error) {
 	return u, nil
 }
 
-// optionaAPIAuth is used for endpoints that accept authenticated requests via
+// optionalAPIAuth is used for endpoints that accept authenticated requests via
 // Authorization header or cookie, unlike apiAuth. It returns a different err
 // in the case where no Authorization header is present.
 func optionalAPIAuth(app *App, r *http.Request) (*User, error) {

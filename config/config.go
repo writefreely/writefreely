@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2021 A Bunch Tell LLC.
+ * Copyright © 2018-2021 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -15,9 +15,9 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/go-ini/ini"
 	"github.com/writeas/web-core/log"
 	"golang.org/x/net/idna"
-	"gopkg.in/ini.v1"
 )
 
 const (
@@ -170,11 +170,17 @@ type (
 		DisablePasswordAuth bool `ini:"disable_password_auth"`
 	}
 
+	EmailCfg struct {
+		Domain         string `ini:"domain"`
+		MailgunPrivate string `ini:"mailgun_private"`
+	}
+
 	// Config holds the complete configuration for running a writefreely instance
 	Config struct {
 		Server       ServerCfg       `ini:"server"`
 		Database     DatabaseCfg     `ini:"database"`
 		App          AppCfg          `ini:"app"`
+		Email        EmailCfg        `ini:"email"`
 		SlackOauth   SlackOauthCfg   `ini:"oauth.slack"`
 		WriteAsOauth WriteAsOauthCfg `ini:"oauth.writeas"`
 		GitlabOauth  GitlabOauthCfg  `ini:"oauth.gitlab"`
@@ -233,6 +239,10 @@ func (ac *AppCfg) LandingPath() string {
 		return "/" + ac.Landing
 	}
 	return ac.Landing
+}
+
+func (lc EmailCfg) Enabled() bool {
+	return lc.Domain != "" && lc.MailgunPrivate != ""
 }
 
 func (ac AppCfg) SignupPath() string {
