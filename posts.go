@@ -434,9 +434,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 			log.Error("view post: %v", err)
 		}
 
-		protectDraft = (collection.IsPrivate() || collection.IsProtected())
-	} else {
-		protectDraft = true
+		protectDraft = collection.IsPrivate() || collection.IsProtected()
 	}
 
 	// Check if post has been unpublished
