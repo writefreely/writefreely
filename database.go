@@ -1320,7 +1320,7 @@ func (db *datastore) GetAllPostsTaggedIDs(c *Collection, tag string, includeFutu
 
 	timeCondition := ""
 	if !includeFuture {
-		timeCondition = "AND created <= NOW()"
+		timeCondition = "AND created <= " + db.now()
 	}
 	var rows *sql.Rows
 	var err error
