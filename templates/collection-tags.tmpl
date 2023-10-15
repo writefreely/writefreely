@@ -61,6 +61,17 @@
 		{{if .Posts}}<section id="wrapper" itemscope itemtype="http://schema.org/Blog">{{else}}<div id="wrapper">{{end}}
 			<h1>{{.Tag}}</h1>
 			{{template "posts" .}}
+
+		{{if gt .TotalPages 1}}<nav id="paging" class="content-container clearfix">
+			{{if or (and .Format.Ascending (lt .CurrentPage .TotalPages)) (isRTL .Direction)}}
+				{{if gt .CurrentPage 1}}<a href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">&#8672; {{if and .Format.Ascending (lt .CurrentPage .TotalPages)}}Previous{{else}}Newer{{end}}</a>{{end}}
+				{{if lt .CurrentPage .TotalPages}}<a style="float:right;" href="{{.NextPageURL .Prefix .CurrentPage .IsTopLevel}}">{{if and .Format.Ascending (lt .CurrentPage .TotalPages)}}Next{{else}}Older{{end}} &#8674;</a>{{end}}
+			{{else}}
+				{{if lt .CurrentPage .TotalPages}}<a href="{{.NextPageURL .Prefix .CurrentPage .IsTopLevel}}">&#8672; Older</a>{{end}}
+				{{if gt .CurrentPage 1}}<a style="float:right;" href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">Newer &#8674;</a>{{end}}
+			{{end}}
+		</nav>{{end}}
+
 		{{if .Posts}}</section>{{else}}</div>{{end}}
 
 		{{ if .Collection.ShowFooterBranding }}

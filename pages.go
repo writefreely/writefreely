@@ -40,6 +40,28 @@ func defaultAboutTitle(cfg *config.Config) sql.NullString {
 	return sql.NullString{String: "About " + cfg.App.SiteName, Valid: true}
 }
 
+func getContactPage(app *App) (*instanceContent, error) {
+	c, err := app.db.GetDynamicContent("contact")
+	if err != nil {
+		return nil, err
+	}
+	if c == nil {
+		c = &instanceContent{
+			ID:      "contact",
+			Type:    "page",
+			Content: defaultContactPage(app),
+		}
+	}
+	if !c.Title.Valid {
+		c.Title = defaultContactTitle()
+	}
+	return c, nil
+}
+
+func defaultContactTitle() sql.NullString {
+	return sql.NullString{String: "Contact Us", Valid: true}
+}
+
 func getPrivacyPage(app *App) (*instanceContent, error) {
 	c, err := app.db.GetDynamicContent("privacy")
 	if err != nil {
@@ -70,12 +92,24 @@ func defaultAboutPage(cfg *config.Config) string {
 	return `_` + cfg.App.SiteName + `_ is a place for you to write and publish, powered by [WriteFreely](https://writefreely.org).`
 }
 
+func defaultContactPage(app *App) string {
+	c, err := app.db.GetCollectionByID(1)
+	if err != nil {
+		return ""
+	}
+	return `_` + app.cfg.App.SiteName + `_ is administered by: [**` + c.Alias + `**](/` + c.Alias + `/).
+
+Contact them at this email address: _EMAIL GOES HERE_.
+
+You can also reach them here...`
+}
+
 func defaultPrivacyPolicy(cfg *config.Config) string {
 	return `[WriteFreely](https://writefreely.org), the software that powers this site, is built to enforce your right to privacy by default.
 
 It retains as little data about you as possible, not even requiring an email address to sign up. However, if you _do_ give us your email address, it is stored encrypted in our database. We salt and hash your account's password.
 
-We store log files, or data about what happens on our servers. We also use cookies to keep you logged in to your account.
+We store log files, or data about what happens on our servers. We also use cookies to keep you logged into your account.
 
 Beyond this, it's important that you trust whoever runs **` + cfg.App.SiteName + `**. Software can only do so much to protect you -- your level of privacy protections will ultimately fall on the humans that run this particular service.`
 }

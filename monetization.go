@@ -16,7 +16,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/log"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -144,7 +144,7 @@ func verifyReceipt(receipt, id string) error {
 		defer resp.Body.Close()
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Error("Unable to read %s response body: %s", receiptsHost, err)
 		return err

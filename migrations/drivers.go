@@ -36,6 +36,13 @@ func (db *datastore) typeSmallInt() string {
 	return "SMALLINT"
 }
 
+func (db *datastore) typeTinyInt() string {
+	if db.driverName == driverSQLite {
+		return "INTEGER"
+	}
+	return "TINYINT"
+}
+
 func (db *datastore) typeText() string {
 	return "TEXT"
 }
@@ -54,6 +61,13 @@ func (db *datastore) typeVarChar(l int) string {
 	return fmt.Sprintf("VARCHAR(%d)", l)
 }
 
+func (db *datastore) typeVarBinary(l int) string {
+	if db.driverName == driverSQLite {
+		return "BLOB"
+	}
+	return fmt.Sprintf("VARBINARY(%d)", l)
+}
+
 func (db *datastore) typeBool() string {
 	if db.driverName == driverSQLite {
 		return "INTEGER"
@@ -63,6 +77,15 @@ func (db *datastore) typeBool() string {
 
 func (db *datastore) typeDateTime() string {
 	return "DATETIME"
+}
+
+func (db *datastore) typeIntPrimaryKey() string {
+	if db.driverName == driverSQLite {
+		// From docs: "In SQLite, a column with type INTEGER PRIMARY KEY is an alias for the ROWID (except in WITHOUT
+		// ROWID tables) which is always a 64-bit signed integer."
+		return "INTEGER PRIMARY KEY"
+	}
+	return "INT AUTO_INCREMENT PRIMARY KEY"
 }
 
 func (db *datastore) collateMultiByte() string {

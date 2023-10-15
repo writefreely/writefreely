@@ -9,6 +9,7 @@
             {{if .CanPost}}<a href="{{if .SingleUser}}/me/new{{else}}/#{{.Alias}}{{end}}" class="btn gentlecta">New Post</a>{{end}}
             <a href="/me/c/{{.Alias}}" {{if and (hasPrefix .Path "/me/c/") (hasSuffix .Path .Alias)}}class="selected"{{end}}>Customize</a>
             <a href="/me/c/{{.Alias}}/stats" {{if hasSuffix .Path "/stats"}}class="selected"{{end}}>Stats</a>
+            <a href="/me/c/{{.Alias}}/subscribers" {{if hasSuffix .Path "/subscribers"}}class="selected"{{end}}>Subscribers</a>
             <a href="{{if .SingleUser}}/{{else}}/{{.Alias}}/{{end}}">View Blog &rarr;</a>
         </nav>
     </header>

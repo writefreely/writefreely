@@ -1,5 +1,8 @@
 # Build image
-FROM golang:1.15-alpine as build
+FROM golang:1.19-alpine as build
+
+LABEL org.opencontainers.image.source=https://github.com/writefreely/writefreely
+LABEL org.opencontainers.image.description="WriteFreely is a clean, minimalist publishing platform made for writers. Start a blog, share knowledge within your organization, or build a community around the shared act of writing."
 
 RUN apk add --update nodejs npm make g++ git
 RUN npm install -g less less-plugin-clean-css
@@ -10,7 +13,10 @@ WORKDIR /go/src/github.com/writefreely/writefreely
 
 COPY . .
 
+RUN cat ossl_legacy.cnf > /etc/ssl/openssl.cnf
+
 ENV GO111MODULE=on
+ENV NODE_OPTIONS=--openssl-legacy-provider
 
 RUN make build \
   && make ui

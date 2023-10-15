@@ -13,6 +13,7 @@ package writefreely
 import (
 	"database/sql"
 	"fmt"
+	"html/template"
 	"net/http"
 	"runtime"
 	"strconv"
@@ -102,13 +103,16 @@ func NewAdminPage(app *App) *AdminPage {
 	return ap
 }
 
-func (c instanceContent) UpdatedFriendly() string {
+func (c instanceContent) UpdatedFriendly() template.HTML {
 	/*
 		// TODO: accept a locale in this method and use that for the format
 		var loc monday.Locale = monday.LocaleEnUS
 		return monday.Format(u.Created, monday.DateTimeFormatsByLocale[loc], loc)
 	*/
-	return c.Updated.Format("January 2, 2006, 3:04 PM")
+	if c.Updated.IsZero() {
+		return "<em>Never</em>"
+	}
+	return template.HTML(c.Updated.Format("January 2, 2006, 3:04 PM"))
 }
 
 func handleViewAdminDash(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
@@ -426,15 +430,20 @@ func handleViewAdminPages(app *App, u *User, w http.ResponseWriter, r *http.Requ
 	}
 
 	// Add in default pages
-	var hasAbout, hasPrivacy bool
+	var hasAbout, hasContact, hasPrivacy bool
 	for i, c := range p.Pages {
-		if hasAbout && hasPrivacy {
+		if hasAbout && hasContact && hasPrivacy {
 			break
 		}
 		if c.ID == "about" {
 			hasAbout = true
 			if !c.Title.Valid {
 				p.Pages[i].Title = defaultAboutTitle(app.cfg)
+			}
+		} else if c.ID == "contact" {
+			hasContact = true
+			if !c.Title.Valid {
+				p.Pages[i].Title = defaultContactTitle()
 			}
 		} else if c.ID == "privacy" {
 			hasPrivacy = true
@@ -449,6 +458,13 @@ func handleViewAdminPages(app *App, u *User, w http.ResponseWriter, r *http.Requ
 			Title:   defaultAboutTitle(app.cfg),
 			Content: defaultAboutPage(app.cfg),
 			Updated: defaultPageUpdatedTime,
+		})
+	}
+	if !hasContact {
+		p.Pages = append(p.Pages, &instanceContent{
+			ID:      "contact",
+			Title:   defaultContactTitle(),
+			Content: defaultContactPage(app),
 		})
 	}
 	if !hasPrivacy {
@@ -489,6 +505,8 @@ func handleViewAdminPage(app *App, u *User, w http.ResponseWriter, r *http.Reque
 	// Get pre-defined pages, or select slug
 	if slug == "about" {
 		p.Content, err = getAboutPage(app)
+	} else if slug == "contact" {
+		p.Content, err = getContactPage(app)
 	} else if slug == "privacy" {
 		p.Content, err = getPrivacyPage(app)
 	} else if slug == "landing" {
@@ -523,7 +541,7 @@ func handleAdminUpdateSite(app *App, u *User, w http.ResponseWriter, r *http.Req
 	id := vars["page"]
 
 	// Validate
-	if id != "about" && id != "privacy" && id != "landing" && id != "reader" {
+	if id != "about" && id != "contact" && id != "privacy" && id != "landing" && id != "reader" {
 		return impart.HTTPError{http.StatusNotFound, "No such page."}
 	}
 

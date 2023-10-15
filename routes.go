@@ -82,7 +82,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	configureGenericOauth(handler, write, apper.App())
 	configureGiteaOauth(handler, write, apper.App())
 
-	// Set up dyamic page handlers
+	// Set up dynamic page handlers
 	// Handle auth
 	auth := write.PathPrefix("/api/auth/").Subrouter()
 	if apper.App().cfg.App.OpenRegistration {
@@ -99,6 +99,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	me.HandleFunc("/c/", handler.User(viewCollections)).Methods("GET")
 	me.HandleFunc("/c/{collection}", handler.User(viewEditCollection)).Methods("GET")
 	me.HandleFunc("/c/{collection}/stats", handler.User(viewStats)).Methods("GET")
+	me.HandleFunc("/c/{collection}/subscribers", handler.User(handleViewSubscribers)).Methods("GET")
 	me.Path("/delete").Handler(csrf.Protect(apper.App().keys.CSRFKey)(handler.User(handleUserDelete))).Methods("POST")
 	me.HandleFunc("/posts", handler.Redirect("/me/posts/", UserLevelUser)).Methods("GET")
 	me.HandleFunc("/posts/", handler.User(viewArticles)).Methods("GET")
@@ -147,6 +148,9 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	apiColls.HandleFunc("/{alias}/collect", handler.All(addPost)).Methods("POST")
 	apiColls.HandleFunc("/{alias}/pin", handler.All(pinPost)).Methods("POST")
 	apiColls.HandleFunc("/{alias}/unpin", handler.All(pinPost)).Methods("POST")
+	apiColls.HandleFunc("/{alias}/email/subscribe", handler.All(handleCreateEmailSubscription)).Methods("POST")
+	apiColls.HandleFunc("/{alias}/email/subscribe", handler.All(handleDeleteEmailSubscription)).Methods("DELETE")
+	apiColls.HandleFunc("/{collection}/email/unsubscribe", handler.All(handleDeleteEmailSubscription)).Methods("GET")
 	apiColls.HandleFunc("/{alias}/inbox", handler.All(handleFetchCollectionInbox)).Methods("POST")
 	apiColls.HandleFunc("/{alias}/outbox", handler.AllReader(handleFetchCollectionOutbox)).Methods("GET")
 	apiColls.HandleFunc("/{alias}/following", handler.AllReader(handleFetchCollectionFollowing)).Methods("GET")
@@ -180,6 +184,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	write.HandleFunc("/admin/updates", handler.Admin(handleViewAdminUpdates)).Methods("GET")
 
 	// Handle special pages first
+	write.Path("/reset").Handler(csrf.Protect(apper.App().keys.CSRFKey)(handler.Web(viewResetPassword, UserLevelNoneRequired)))
 	write.HandleFunc("/login", handler.Web(viewLogin, UserLevelNoneRequired))
 	write.HandleFunc("/signup", handler.Web(handleViewLanding, UserLevelNoneRequired))
 	write.HandleFunc("/invite/{code:[a-zA-Z0-9]+}", handler.Web(handleViewInvite, UserLevelOptional)).Methods("GET")
@@ -216,10 +221,15 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 func RouteCollections(handler *Handler, r *mux.Router) {
 	r.HandleFunc("/logout", handler.Web(handleLogOutCollection, UserLevelOptional))
 	r.HandleFunc("/page/{page:[0-9]+}", handler.Web(handleViewCollection, UserLevelReader))
+	r.HandleFunc("/lang:{lang:[a-z]{2}}", handler.Web(handleViewCollectionLang, UserLevelOptional))
+	r.HandleFunc("/lang:{lang:[a-z]{2}}/page/{page:[0-9]+}", handler.Web(handleViewCollectionLang, UserLevelOptional))
 	r.HandleFunc("/tag:{tag}", handler.Web(handleViewCollectionTag, UserLevelReader))
+	r.HandleFunc("/tag:{tag}/page/{page:[0-9]+}", handler.Web(handleViewCollectionTag, UserLevelReader))
 	r.HandleFunc("/tag:{tag}/feed/", handler.Web(ViewFeed, UserLevelReader))
 	r.HandleFunc("/sitemap.xml", handler.AllReader(handleViewSitemap))
 	r.HandleFunc("/feed/", handler.AllReader(ViewFeed))
+	r.HandleFunc("/email/confirm/{subscriber}", handler.All(handleConfirmEmailSubscription)).Methods("GET")
+	r.HandleFunc("/email/unsubscribe/{subscriber}", handler.All(handleDeleteEmailSubscription)).Methods("GET")
 	r.HandleFunc("/{slug}", handler.CollectionPostOrStatic)
 	r.HandleFunc("/{slug}/edit", handler.Web(handleViewPad, UserLevelUser))
 	r.HandleFunc("/{slug}/edit/meta", handler.Web(handleViewMeta, UserLevelUser))

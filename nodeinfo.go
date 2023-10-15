@@ -94,14 +94,20 @@ INNER JOIN collections c
 ON collection_id = c.id
 WHERE collection_id IS NOT NULL
 	AND updated > DATE_SUB(NOW(), INTERVAL 6 MONTH)) co`).Scan(&activeHalfYear)
+		if err != nil {
+			log.Error("Failed getting 6-month active user stats: %s", err)
+		}
 
 		err = r.db.QueryRow(`SELECT COUNT(*) FROM (
 SELECT DISTINCT collection_id
 FROM posts
-INNER JOIN FROM collections c
+INNER JOIN collections c
 ON collection_id = c.id
 WHERE collection_id IS NOT NULL
 	AND updated > DATE_SUB(NOW(), INTERVAL 1 MONTH)) co`).Scan(&activeMonth)
+		if err != nil {
+			log.Error("Failed getting 1-month active user stats: %s", err)
+		}
 	}
 
 	return nodeinfo.Usage{
