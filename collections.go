@@ -39,7 +39,12 @@ import (
 	"golang.org/x/net/idna"
 )
 
-const collAttrLetterReplyTo = "letter_reply_to"
+const (
+	collAttrLetterReplyTo = "letter_reply_to"
+
+	collMaxLengthTitle       = 255
+	collMaxLengthDescription = 160
+)
 
 type (
 	// TODO: add Direction to db

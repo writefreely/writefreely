@@ -17,6 +17,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/writeas/web-core/silobridge"
 	wf_db "github.com/writefreely/writefreely/db"
+	"github.com/writefreely/writefreely/parse"
 	"net/http"
 	"net/url"
 	"strings"
@@ -893,6 +894,14 @@ func (db *datastore) GetCollectionFromDomain(host string) (*Collection, error) {
 }
 
 func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias string) error {
+	// Truncate fields correctly, so we don't get "Data too long for column" errors in MySQL (writefreely#600)
+	if c.Title != nil {
+		*c.Title = parse.Truncate(*c.Title, collMaxLengthTitle)
+	}
+	if c.Description != nil {
+		*c.Description = parse.Truncate(*c.Description, collMaxLengthDescription)
+	}
+
 	q := query.NewUpdate().
 		SetStringPtr(c.Title, "title").
 		SetStringPtr(c.Description, "description").

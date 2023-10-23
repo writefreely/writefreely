@@ -36,7 +36,7 @@ textarea.section.norm {
 <form name="customize-form" action="/api/collections/{{.Alias}}" method="post" onsubmit="return disableSubmit()">
 <div id="collection-options">
 	<div style="text-align:center">
-		<h1><input type="text" name="title" id="title" value="{{.DisplayTitle}}" placeholder="Title" /></h1>
+		<h1><input type="text" name="title" id="title" value="{{.DisplayTitle}}" placeholder="Title" maxlength="255" /></h1>
 		<p><input type="text" name="description" id="description" value="{{.Description}}" placeholder="Description" maxlength="160" /></p>
 	</div>
 
