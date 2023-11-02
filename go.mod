@@ -1,7 +1,7 @@
 module github.com/writefreely/writefreely
 
 require (
-	github.com/PuerkitoBio/goquery v1.7.0 // indirect
+	github.com/PuerkitoBio/goquery v1.8.1 // indirect
 	github.com/aymerick/douceur v0.2.0
 	github.com/clbanning/mxj v1.8.4 // indirect
 	github.com/dustin/go-humanize v1.0.1
@@ -26,7 +26,7 @@ require (
 	github.com/mailgun/mailgun-go v2.0.0+incompatible
 	github.com/manifoldco/promptui v0.9.0
 	github.com/mattn/go-sqlite3 v1.14.17
-	github.com/microcosm-cc/bluemonday v1.0.25
+	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/onsi/ginkgo v1.16.4 // indirect
@@ -55,7 +55,7 @@ require (
 
 require (
 	code.as/core/socks v1.0.0 // indirect
-	github.com/andybalholm/cascadia v1.1.0 // indirect
+	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/captncraig/cors v0.0.0-20190703115713-e80254a89df1 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
