@@ -19,7 +19,7 @@
 		<meta name="description" content="{{.Description}}">
 		<meta itemprop="name" content="{{.SiteName}}">
 		<meta itemprop="description" content="{{.Description}}">
-		<meta name="twitter:card" content="summary">
+		<meta name="twitter:card" content="{{if gt (len .Images) 0}}summary_large_image{{else}}summary{{end}}">
 		<meta name="twitter:title" content="{{if .Title}}{{.Title}}{{else}}{{.GenTitle}}{{end}}">
 		<meta name="twitter:description" content="{{.Description}}">
 		{{if gt .Views 1}}<meta name="twitter:label1" value="Views">
