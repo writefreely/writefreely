@@ -341,6 +341,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 
 	var ownerID sql.NullInt64
+	var collectionID sql.NullInt64
 	var title string
 	var content string
 	var font string
@@ -356,7 +357,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		return impart.HTTPError{http.StatusFound, fmt.Sprintf("/%s%s", fixedID, ext)}
 	}
 
-	err := app.db.QueryRow("SELECT owner_id, title, content, text_appearance, view_count, language, rtl FROM posts WHERE id = ?", friendlyID).Scan(&ownerID, &title, &content, &font, &views, &language, &rtl)
+	err := app.db.QueryRow("SELECT owner_id, collection_id, title, content, text_appearance, view_count, language, rtl FROM posts WHERE id = ?", friendlyID).Scan(&ownerID, &collectionID, &title, &content, &font, &views, &language, &rtl)
 	switch {
 	case err == sql.ErrNoRows:
 		found = false
@@ -426,6 +427,16 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
+	var protectDraft bool
+	if found && collectionID.Valid {
+		collection, err := app.db.GetCollectionByID(collectionID.Int64)
+		if err != nil {
+			log.Error("view post: %v", err)
+		}
+
+		protectDraft = collection.IsPrivate() || collection.IsProtected()
+	}
+
 	// Check if post has been unpublished
 	if title == "" && content == "" {
 		gone = true
@@ -488,6 +499,10 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 
 		if !page.IsOwner && silenced {
+			return ErrPostNotFound
+		}
+
+		if !page.IsOwner && protectDraft {
 			return ErrPostNotFound
 		}
 		page.Silenced = silenced
