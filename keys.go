@@ -13,7 +13,6 @@ package writefreely
 import (
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/writefreely/key"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -52,7 +51,7 @@ func initKeyPaths(app *App) {
 func generateKey(path string) error {
 	// Check if key file exists
 	if _, err := os.Stat(path); err == nil {
-		log.Info("%s already exists. rm the file if you understand the consquences.", path)
+		log.Info("%s already exists. rm the file if you understand the consequences.", path)
 		return nil
 	} else if !os.IsNotExist(err) {
 		log.Error("%s", err)
@@ -65,7 +64,7 @@ func generateKey(path string) error {
 		log.Error("FAILED. %s. Run writefreely --gen-keys again.", err)
 		return err
 	}
-	err = ioutil.WriteFile(path, b, 0600)
+	err = os.WriteFile(path, b, 0600)
 	if err != nil {
 		log.Error("FAILED writing file: %s", err)
 		return err

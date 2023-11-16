@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -100,7 +99,7 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 			}
 			defer file.Close()
 
-			tempFile, err := ioutil.TempFile("", "post-upload-*.txt")
+			tempFile, err := os.CreateTemp("", "post-upload-*.txt")
 			if err != nil {
 				fileErrs = append(fileErrs, fmt.Errorf("Internal error for %s", formFile.Filename))
 				log.Error("import file: create temp file %s: %v", formFile.Filename, err)

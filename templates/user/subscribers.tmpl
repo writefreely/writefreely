@@ -1,0 +1,98 @@
+{{define "subscribers"}}
+{{template "header" .}}
+
+<style>
+	.toolbar {
+		text-align: right;
+		margin: 1em 0;
+	}
+</style>
+
+<div class="snug content-container {{if not .CanEmailSub}}clean{{end}}">
+	{{if .Silenced}}
+		{{template "user-silenced"}}
+	{{end}}
+
+	{{if .Collection.Collection}}{{template "collection-breadcrumbs" .}}{{end}}
+
+	<h1>Subscribers</h1>
+	{{if .Collection.Collection}}
+		{{template "collection-nav" .Collection}}
+
+		<nav class="pager sub">
+			<a href="/me/c/{{.Collection.Alias}}/subscribers" {{if eq .Filter ""}}class="selected"{{end}}>Email ({{len .EmailSubs}})</a>
+			<a href="/me/c/{{.Collection.Alias}}/subscribers?filter=fediverse" {{if eq .Filter "fediverse"}}class="selected"{{end}}>Followers ({{len .Followers}})</a>
+		</nav>
+	{{end}}
+
+	{{if .Flashes -}}
+		<ul class="errors">
+			{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
+		</ul>
+	{{- end}}
+
+	{{ if eq .Filter "fediverse" }}
+		<table class="classy export">
+			<tr>
+				<th style="width: 60%">Username</th>
+				<th colspan="2">Since</th>
+			</tr>
+
+			{{if and (gt (len .Followers) 0) (not .FederationEnabled)}}
+				<div class="alert info">
+					<p><strong>Federation is disabled on this server</strong>, so followers won't receive any new posts.</p>
+				</div>
+			{{end}}
+			{{ if gt (len .Followers) 0 }}
+				{{range $el := .Followers}}
+					<tr>
+						<td><a href="{{.ActorID}}">@{{.EstimatedHandle}}</a></td>
+						<td>{{.CreatedFriendly}}</td>
+					</tr>
+				{{end}}
+			{{ else }}
+				<tr>
+					<td colspan="2">No followers yet.</td>
+				</tr>
+			{{ end }}
+		</table>
+	{{ else }}
+		{{if or .CanEmailSub .EmailSubs}}
+			{{if not .CanEmailSub}}
+				<div class="alert info">
+					<p><strong>Email subscriptions are disabled on this server</strong>, so no new emails will be sent out.</p>
+				</div>
+			{{end}}
+			{{if not .EmailSubsEnabled}}
+				<div class="alert info">
+					<p><strong>Email subscriptions are disabled</strong>. {{if .EmailSubs}}No new emails will be sent out.{{end}} To enable email subscriptions, turn the option on from your blog's <a href="/me/c/{{.Collection.Alias}}#updates">Customize</a> page.</p>
+				</div>
+			{{end}}
+			<table class="classy export">
+				<tr>
+					<th style="width: 60%">Email Address</th>
+					<th colspan="2">Since</th>
+				</tr>
+
+				{{ if .EmailSubs }}
+					{{range $el := .EmailSubs}}
+						<tr>
+							<td><a href="mailto:{{.Email.String}}">{{.Email.String}}</a></td>
+							<td>{{.SubscribedFriendly}}</td>
+						</tr>
+					{{end}}
+				{{ else }}
+					<tr>
+						<td colspan="2">No subscribers yet.</td>
+					</tr>
+				{{ end }}
+			</table>
+		{{end}}
+	{{ end }}
+
+</div>
+
+{{template "foot" .}}
+
+{{template "body-end" .}}
+{{end}}

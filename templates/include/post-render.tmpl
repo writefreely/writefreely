@@ -1,7 +1,10 @@
-<!-- Miscelaneous render related template parts we use multiple times -->
+<!-- Miscellaneous render related template parts we use multiple times -->
 {{define "collection-meta"}}
 	{{if .Monetization -}}
 		<meta name="monetization" content="{{.DisplayMonetization}}" />
+	{{- end}}
+	{{if .Verification -}}
+		<link rel="me" href="{{.Verification}}" />
 	{{- end}}
 {{end}}
 
@@ -76,7 +79,7 @@
           jss.push(lurl);
         }
       }
-      // Load files in order, higlight on last load
+      // Load files in order, highlight on last load
       loadLanguages(jss, () => {highlight(lb)});
     }
   });
@@ -101,4 +104,29 @@
 </script>
 <script type="text/javascript" id="MathJax-script" src="/js/mathjax/tex-svg-full.js" async>
 </script>
+{{end}}
+
+{{define "emailsubscribe"}}
+    {{if .EmailSubsEnabled}}
+		<div id="emailsub">
+            {{if .IsSubscriber}}
+			<p>You're subscribed to email updates. <a href="/api/collections/{{.Alias}}/email/unsubscribe">Unsubscribe</a>.</p>
+            {{else}}
+			<form method="post" action="/api/collections/{{.Alias}}/email/subscribe">
+				<input type="hidden" name="web" value="1" />
+				<p>Enter your email to subscribe to updates.</p> <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="email" name="{{.Honeypot}}" tabindex="-1" value="" /><input type="password" name="fake_password" tabindex="-1" placeholder="password" autocomplete="new-password" /></div>
+				<input type="email" name="email" placeholder="me@example.com" />
+				<input type="submit" id="subscribe-btn" value="Subscribe" />
+			</form>
+			<script type="text/javascript">
+                var $form = document.getElementById('emailsub').getElementsByTagName('form')[0];
+                $form.onsubmit = function() {
+                    var $sub = document.getElementById('subscribe-btn');
+                    $sub.disabled = true;
+                    $sub.value = 'Subscribing...';
+                }
+			</script>
+            {{end}}
+		</div>
+    {{end}}
 {{end}}

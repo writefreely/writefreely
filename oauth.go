@@ -15,7 +15,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -450,7 +449,7 @@ func (r *callbackProxyClient) register(ctx context.Context, state string) error 
 
 func limitedJsonUnmarshal(body io.ReadCloser, n int, thing interface{}) error {
 	lr := io.LimitReader(body, int64(n+1))
-	data, err := ioutil.ReadAll(lr)
+	data, err := io.ReadAll(lr)
 	if err != nil {
 		return err
 	}

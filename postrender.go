@@ -120,7 +120,7 @@ func (p *PublicPost) augmentReadingDestination() {
 }
 
 func applyMarkdown(data []byte, baseURL string, cfg *config.Config) string {
-	return applyMarkdownSpecial(data, false, baseURL, cfg)
+	return applyMarkdownSpecial(data, baseURL, cfg, cfg.App.SingleUser)
 }
 
 func disableYoutubeAutoplay(outHTML string) string {
@@ -142,7 +142,7 @@ func disableYoutubeAutoplay(outHTML string) string {
 	return outHTML
 }
 
-func applyMarkdownSpecial(data []byte, skipNoFollow bool, baseURL string, cfg *config.Config) string {
+func applyMarkdownSpecial(data []byte, baseURL string, cfg *config.Config, skipNoFollow bool) string {
 	mdExtensions := 0 |
 		blackfriday.EXTENSION_TABLES |
 		blackfriday.EXTENSION_FENCED_CODE |
@@ -270,6 +270,7 @@ func getSanitizationPolicy() *bluemonday.Policy {
 	policy.AllowAttrs("target").OnElements("a")
 	policy.AllowAttrs("title").OnElements("abbr")
 	policy.AllowAttrs("style", "class", "id").Globally()
+	policy.AllowAttrs("alt").OnElements("img")
 	policy.AllowElements("header", "footer")
 	policy.AllowURLSchemes("http", "https", "mailto", "xmpp")
 	return policy
@@ -284,12 +285,13 @@ func sanitizePost(content string) string {
 // choosing what to generate. In case a post has a title, this function will
 // fail, and logic should instead be implemented to skip this when there's no
 // title, like so:
-//    var desc string
-//    if title == "" {
-//        desc = postDescription(content, title, friendlyId)
-//    } else {
-//        desc = shortPostDescription(content)
-//    }
+//
+//	var desc string
+//	if title == "" {
+//	    desc = postDescription(content, title, friendlyId)
+//	} else {
+//	    desc = shortPostDescription(content)
+//	}
 func postDescription(content, title, friendlyId string) string {
 	maxLen := 140
 

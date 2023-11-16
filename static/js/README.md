@@ -1,6 +1,6 @@
 # static/js
 
-This directory is for Javascript.
+This directory is for JavaScript.
 
 ## Updating libraries
 

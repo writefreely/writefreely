@@ -2,7 +2,7 @@
 ###############################################################################
 ##			writefreely update script			     ##
 ##								 	     ##
-##	WARNING: running this script will overwrite any modifed assets or    ##
+##	WARNING: running this script will overwrite any modified assets or   ##
 ##	template files. If you have any custom changes to these files you    ##
 ##	should back them up FIRST.					     ##
 ##									     ##

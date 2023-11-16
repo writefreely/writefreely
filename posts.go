@@ -14,6 +14,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/writefreely/writefreely/spam"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -139,6 +140,7 @@ type (
 		IsPinned       bool
 		IsCustomDomain bool
 		Monetization   string
+		Verification   string
 		PinnedPosts    *[]PublicPost
 		IsFound        bool
 		IsAdmin        bool
@@ -354,7 +356,7 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		return impart.HTTPError{http.StatusFound, fmt.Sprintf("/%s%s", fixedID, ext)}
 	}
 
-	err := app.db.QueryRow(fmt.Sprintf("SELECT owner_id, title, content, text_appearance, view_count, language, rtl FROM posts WHERE id = ?"), friendlyID).Scan(&ownerID, &title, &content, &font, &views, &language, &rtl)
+	err := app.db.QueryRow("SELECT owner_id, title, content, text_appearance, view_count, language, rtl FROM posts WHERE id = ?", friendlyID).Scan(&ownerID, &title, &content, &font, &views, &language, &rtl)
 	switch {
 	case err == sql.ErrNoRows:
 		found = false
@@ -516,9 +518,9 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 // newPost creates a new post with or without an owning Collection.
 //
 // Endpoints:
-//   /posts
-//   /posts?collection={alias}
-// ? /collections/{alias}/posts
+//   - /posts
+//   - /posts?collection={alias}
+//   - ? /collections/{alias}/posts
 func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r)
 	vars := mux.Vars(r)
@@ -651,8 +653,17 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	// Write success now
 	response := impart.WriteSuccess(w, newPost, http.StatusCreated)
 
-	if newPost.Collection != nil && !app.cfg.App.Private && app.cfg.App.Federation && !newPost.Created.After(time.Now()) {
-		go federatePost(app, newPost, newPost.Collection.ID, false)
+	if newPost.Collection != nil {
+		if !app.cfg.App.Private && app.cfg.App.Federation && !newPost.Created.After(time.Now()) {
+			go federatePost(app, newPost, newPost.Collection.ID, false)
+		}
+		if app.cfg.Email.Enabled() && newPost.Collection.EmailSubsEnabled() {
+			go app.db.InsertJob(&PostJob{
+				PostID: newPost.ID,
+				Action: "email",
+				Delay:  emailSendDelay,
+			})
+		}
 	}
 
 	return response
@@ -952,15 +963,22 @@ func addPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	if !app.cfg.App.Private && app.cfg.App.Federation {
-		for _, pRes := range *res {
-			if pRes.Code != http.StatusOK {
-				continue
-			}
+	for _, pRes := range *res {
+		if pRes.Code != http.StatusOK {
+			continue
+		}
+		if !app.cfg.App.Private && app.cfg.App.Federation {
 			if !pRes.Post.Created.After(time.Now()) {
 				pRes.Post.Collection.hostName = app.cfg.App.Host
 				go federatePost(app, pRes.Post, pRes.Post.Collection.ID, false)
 			}
+		}
+		if app.cfg.Email.Enabled() && pRes.Post.Collection.EmailSubsEnabled() {
+			go app.db.InsertJob(&PostJob{
+				PostID: pRes.Post.ID,
+				Action: "email",
+				Delay:  emailSendDelay,
+			})
 		}
 	}
 	return impart.WriteSuccess(w, res, http.StatusOK)
@@ -1067,7 +1085,7 @@ func pinPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		ppr := PinPostResult{ID: p.ID}
 		if err != nil {
 			ppr.Code = http.StatusInternalServerError
-			// TODO: set error messsage
+			// TODO: set error message
 		} else {
 			ppr.Code = http.StatusOK
 		}
@@ -1119,8 +1137,7 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	p.extractData()
 
-	accept := r.Header.Get("Accept")
-	if strings.Contains(accept, "application/activity+json") {
+	if IsActivityPubRequest(r) {
 		if coll == nil {
 			// This is a draft post; 404 for now
 			// TODO: return ActivityObject
@@ -1162,6 +1179,15 @@ func (p *PublicPost) CanonicalURL(hostName string) string {
 		return hostName + "/" + p.ID + ".md"
 	}
 	return p.Collection.CanonicalURL() + p.Slug.String
+}
+
+func (pp *PublicPost) DisplayCanonicalURL() string {
+	us := pp.CanonicalURL(pp.Collection.hostName)
+	u, err := url.Parse(us)
+	if err != nil {
+		return us
+	}
+	return u.Hostname() + u.Path
 }
 
 func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
@@ -1520,7 +1546,7 @@ Are you sure it was ever here?`,
 			fmt.Fprintf(w, "# %s\n\n", p.Title.String)
 		}
 		fmt.Fprint(w, p.Content)
-	} else if strings.Contains(r.Header.Get("Accept"), "application/activity+json") {
+	} else if IsActivityPubRequest(r) {
 		if !postFound {
 			return ErrCollectionPageNotFound
 		}
@@ -1532,6 +1558,15 @@ Are you sure it was ever here?`,
 	} else {
 		p.extractData()
 		p.Content = strings.Replace(p.Content, "<!--more-->", "", 1)
+		if app.cfg.Email.Enabled() && c.EmailSubsEnabled() {
+			// TODO: indicate plan is inactive or subs disabled when OWNER is viewing their own post.
+			if u != nil && u.IsEmailSubscriber(app, c.ID) {
+				p.Content = strings.Replace(p.Content, "<!--emailsub-->", `<p id="emailsub">You're subscribed to email updates. <a href="/api/collections/`+c.Alias+`/email/unsubscribe?slug=`+p.Slug.String+`">Unsubscribe</a>.</p>`, -1)
+			} else {
+				p.Content = strings.Replace(p.Content, "<!--emailsub-->", `<form method="post" id="emailsub" action="/api/collections/`+c.Alias+`/email/subscribe"><input type="hidden" name="slug" value="`+p.Slug.String+`" /><input type="hidden" name="web" value="1" /><div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="email" name="`+spam.HoneypotFieldName()+`" tabindex="-1" value="" /><input type="password" name="fake_password" tabindex="-1" placeholder="password" autocomplete="new-password" /></div><input type="email" name="email" placeholder="me@example.com" /><input type="submit" id="subscribe-btn" value="Subscribe" /></form>`, -1)
+			}
+		}
+		p.Content = strings.Replace(p.Content, "&lt;!--emailsub-->", "<!--emailsub-->", 1)
 		// TODO: move this to function
 		p.formatContent(app.cfg, cr.isCollOwner, true)
 		tp := CollectionPostPage{
@@ -1547,7 +1582,8 @@ Are you sure it was ever here?`,
 		tp.CanInvite = canUserInvite(app.cfg, tp.IsAdmin)
 		tp.PinnedPosts, _ = app.db.GetPinnedPosts(coll, p.IsOwner)
 		tp.IsPinned = len(*tp.PinnedPosts) > 0 && PostsContains(tp.PinnedPosts, p)
-		tp.Monetization = app.db.GetCollectionAttribute(coll.ID, "monetization_pointer")
+		tp.Monetization = coll.Monetization
+		tp.Verification = coll.Verification
 
 		if !postFound {
 			w.WriteHeader(http.StatusNotFound)
@@ -1593,6 +1629,14 @@ func PostsContains(sl *[]PublicPost, s *PublicPost) bool {
 func (p *Post) extractData() {
 	p.Tags = tags.Extract(p.Content)
 	p.extractImages()
+}
+
+func (p *Post) IsSans() bool {
+	return p.Font == "sans"
+}
+
+func (p *Post) IsMonospace() bool {
+	return p.Font == "mono"
 }
 
 func (rp *RawPost) UserFacingCreated() string {

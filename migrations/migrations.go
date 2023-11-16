@@ -65,7 +65,12 @@ var migrations = []Migration{
 	New("support oauth attach", oauthAttach),                        // V6 -> V7
 	New("support oauth via invite", oauthInvites),                   // V7 -> V8 (v0.12.0)
 	New("optimize drafts retrieval", optimizeDrafts),                // V8 -> V9
-	New("support post signatures", supportPostSignatures),           // V9 -> V10
+	New("support post signatures", supportPostSignatures),           // V9 -> V10 (v0.13.0)
+	New("Widen oauth_users.access_token", widenOauthAcceesToken),    // V10 -> V11
+	New("support verifying fedi profile", fediverseVerifyProfile),   // V11 -> V12 (v0.14.0)
+	New("support newsletters", supportLetters),                      // V12 -> V13
+	New("support password resetting", supportPassReset),             // V13 -> V14
+	New("speed up blog post retrieval", addPostRetrievalIndex),      // V14 -> V15
 }
 
 // CurrentVer returns the current migration version the application is on

@@ -9,8 +9,8 @@
 		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="canonical" href="{{.CanonicalURL}}">
-		{{if gt .CurrentPage 1}}<link rel="prev" href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">{{end}}
-		{{if lt .CurrentPage .TotalPages}}<link rel="next" href="{{.NextPageURL .Prefix .CurrentPage .IsTopLevel}}">{{end}}
+		{{if gt .CurrentPage 1}}<link rel="prev" href="{{.PrevPageURL .Prefix .NavSuffix .CurrentPage .IsTopLevel}}">{{end}}
+		{{if lt .CurrentPage .TotalPages}}<link rel="next" href="{{.NextPageURL .Prefix .NavSuffix .CurrentPage .IsTopLevel}}">{{end}}
 		{{if not .IsPrivate}}<link rel="alternate" type="application/rss+xml" title="{{.DisplayTitle}} &raquo; Feed" href="{{.CanonicalURL}}feed/" />{{end}}
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -54,6 +54,7 @@
 							{{if .SimpleNav}}<li><a href="/new#{{.Alias}}">New Post</a></li>{{end}}
 							<li><a href="/me/c/{{.Alias}}">Customize</a></li>
 							<li><a href="/me/c/{{.Alias}}/stats">Stats</a></li>
+							<li><a href="/me/c/{{.Alias}}/subscribers">Subscribers</a></li>
 							<li class="separator"><hr /></li>
 							{{if not .SingleUser}}<li><a href="/me/c/"><img class="ic-18dp" src="/img/ic_blogs_dark@2x.png" /> View Blogs</a></li>{{end}}
 							<li><a href="/me/posts/"><img class="ic-18dp" src="/img/ic_list_dark@2x.png" /> View Drafts</a></li>
@@ -103,17 +104,25 @@
 			</div>
 			{{end}}
 
+			{{if .Flash}}
+				<div class="alert success flash">
+					<p>{{.Flash}}</p>
+				</div>
+			{{end}}
+
 			{{template "posts" .}}
 
 		{{if gt .TotalPages 1}}<nav id="paging" class="content-container clearfix">
 			{{if or (and .Format.Ascending (le .CurrentPage .TotalPages)) (isRTL .Direction)}}
-				{{if gt .CurrentPage 1}}<a href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">&#8672; {{if and .Format.Ascending (le .CurrentPage .TotalPages)}}Previous{{else}}Newer{{end}}</a>{{end}}
-				{{if lt .CurrentPage .TotalPages}}<a style="float:right;" href="{{.NextPageURL .Prefix .CurrentPage .IsTopLevel}}">{{if and .Format.Ascending (lt .CurrentPage .TotalPages)}}Next{{else}}Older{{end}} &#8674;</a>{{end}}
+				{{if gt .CurrentPage 1}}<a href="{{.PrevPageURL .Prefix .NavSuffix .CurrentPage .IsTopLevel}}">&#8672; {{if and .Format.Ascending (le .CurrentPage .TotalPages)}}Previous{{else}}Newer{{end}}</a>{{end}}
+				{{if lt .CurrentPage .TotalPages}}<a style="float:right;" href="{{.NextPageURL .Prefix .NavSuffix .CurrentPage .IsTopLevel}}">{{if and .Format.Ascending (lt .CurrentPage .TotalPages)}}Next{{else}}Older{{end}} &#8674;</a>{{end}}
 			{{else}}
-				{{if lt .CurrentPage .TotalPages}}<a href="{{.NextPageURL .Prefix .CurrentPage .IsTopLevel}}">&#8672; Older</a>{{end}}
-				{{if gt .CurrentPage 1}}<a style="float:right;" href="{{.PrevPageURL .Prefix .CurrentPage .IsTopLevel}}">Newer &#8674;</a>{{end}}
+				{{if lt .CurrentPage .TotalPages}}<a href="{{.NextPageURL .Prefix .NavSuffix .CurrentPage .IsTopLevel}}">&#8672; Older</a>{{end}}
+				{{if gt .CurrentPage 1}}<a style="float:right;" href="{{.PrevPageURL .Prefix .NavSuffix .CurrentPage .IsTopLevel}}">Newer &#8674;</a>{{end}}
 			{{end}}
 		</nav>{{end}}
+
+		{{if not .IsWelcome}}{{template "emailsubscribe" .}}{{end}}
 
 		{{if .Posts}}</section>{{else}}</div>{{end}}
 
