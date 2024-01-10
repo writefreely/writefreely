@@ -8,6 +8,7 @@
 					<a href="/about">about</a>
 					{{if and .LocalTimeline .CanViewReader}}<a href="/read">reader</a>{{end}}
 					{{if .Username}}<a href="https://writefreely.org/guide/{{.OfficialVersion}}" target="guide">writer's guide</a>{{end}}
+					<a href="/contact">contact</a>
 					<a href="/privacy">privacy</a>
 					<p style="font-size: 0.9em">powered by <a href="https://writefreely.org">writefreely</a></p>
 				{{else}}
@@ -25,6 +26,7 @@
 						<ul>
 							<li><a href="/about">about</a></li>
 							{{if and (and (not .SingleUser) .LocalTimeline) .CanViewReader}}<a href="/read">reader</a>{{end}}
+							<li><a href="/contact">contact</a></li>
 							<li><a href="/privacy">privacy</a></li>
 						</ul>
 					</div>
