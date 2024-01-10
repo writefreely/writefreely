@@ -50,7 +50,7 @@ require (
 	github.com/writefreely/go-gopher v0.0.0-20220429181814-40127126f83b
 	github.com/writefreely/go-nodeinfo v1.2.0
 	golang.org/x/crypto v0.18.0
-	golang.org/x/net v0.17.0
+	golang.org/x/net v0.20.0
 )
 
 require (
