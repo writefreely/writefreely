@@ -905,9 +905,9 @@ func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias st
 	q := query.NewUpdate().
 		SetStringPtr(c.Title, "title").
 		SetStringPtr(c.Description, "description").
-		SetNullString(c.StyleSheet, "style_sheet").
-		SetNullString(c.Script, "script").
-		SetNullString(c.Signature, "post_signature")
+		SetStringPtr(c.StyleSheet, "style_sheet").
+		SetStringPtr(c.Script, "script").
+		SetStringPtr(c.Signature, "post_signature")
 
 	if c.Format != nil {
 		cf := &CollectionFormat{Format: c.Format.String}
