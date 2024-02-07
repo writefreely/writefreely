@@ -35,7 +35,7 @@ RUN make build \
 FROM alpine@sha256:48d9183eb12a05c99bcc0bf44a003607b8e941e1d4f41f9ad12bdcc4b5672f86
 
 RUN apk -U upgrade \
-    && apk add --no-cache openssl ca-certificates
+    && apk add --no-cache openssl ca-certificates curl
 
 COPY --from=build --chown=daemon:daemon /stage /go
 
