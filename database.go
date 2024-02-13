@@ -14,14 +14,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/go-sql-driver/mysql"
-	"github.com/writeas/web-core/silobridge"
-	wf_db "github.com/writefreely/writefreely/db"
-	"github.com/writefreely/writefreely/parse"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/go-sql-driver/mysql"
+	"github.com/writeas/web-core/silobridge"
+	wf_db "github.com/writefreely/writefreely/db"
+	"github.com/writefreely/writefreely/parse"
 
 	"github.com/guregu/null"
 	"github.com/guregu/null/zero"
@@ -49,9 +50,7 @@ const (
 	driverSQLite = "sqlite3"
 )
 
-var (
-	SQLiteEnabled bool
-)
+var SQLiteEnabled bool
 
 type writestore interface {
 	CreateUser(*config.Config, *User, string, string) error
@@ -1497,7 +1496,7 @@ ORDER BY created `+order+limitStr, collID, lang)
 }
 
 func (db *datastore) GetAPFollowers(c *Collection) (*[]RemoteUser, error) {
-	rows, err := db.Query("SELECT actor_id, inbox, shared_inbox FROM remotefollows f INNER JOIN remoteusers u ON f.remote_user_id = u.id WHERE collection_id = ?", c.ID)
+	rows, err := db.Query("SELECT actor_id, inbox, shared_inbox, f.created FROM remotefollows f INNER JOIN remoteusers u ON f.remote_user_id = u.id WHERE collection_id = ?", c.ID)
 	if err != nil {
 		log.Error("Failed selecting from followers: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve followers."}
@@ -1507,7 +1506,7 @@ func (db *datastore) GetAPFollowers(c *Collection) (*[]RemoteUser, error) {
 	followers := []RemoteUser{}
 	for rows.Next() {
 		f := RemoteUser{}
-		err = rows.Scan(&f.ActorID, &f.Inbox, &f.SharedInbox)
+		err = rows.Scan(&f.ActorID, &f.Inbox, &f.SharedInbox, &f.Created)
 		followers = append(followers, f)
 	}
 	return &followers, nil
@@ -1981,7 +1980,7 @@ func (db *datastore) GetMeStats(u *User) userMeStats {
 
 func (db *datastore) GetTotalCollections() (collCount int64, err error) {
 	err = db.QueryRow(`
-	SELECT COUNT(*) 
+	SELECT COUNT(*)
 	FROM collections c
 	LEFT JOIN users u ON u.id = c.owner_id
 	WHERE u.status = 0`).Scan(&collCount)
@@ -3107,10 +3106,10 @@ func (db *datastore) GetEmailSubscribers(collID int64, reqConfirmed bool) ([]*Em
 	if reqConfirmed {
 		cond = " AND confirmed = 1"
 	}
-	rows, err := db.Query(`SELECT s.id, collection_id, user_id, s.email, u.email, subscribed, token, confirmed, allow_export 
-FROM emailsubscribers s 
-LEFT JOIN users u 
-  ON u.id = user_id 
+	rows, err := db.Query(`SELECT s.id, collection_id, user_id, s.email, u.email, subscribed, token, confirmed, allow_export
+FROM emailsubscribers s
+LEFT JOIN users u
+  ON u.id = user_id
 WHERE collection_id = ?`+cond+`
 ORDER BY subscribed DESC`, collID)
 	if err != nil {
