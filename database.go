@@ -670,7 +670,12 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 	ownerCollID := sql.NullInt64{
 		Valid: false,
 	}
-	slug := sql.NullString{"", false}
+	slugString := *post.Slug
+	slugValid := true
+	if slugString == "" {
+		slugValid = false
+	}
+	slug := sql.NullString{slugString, slugValid}
 
 	// If an alias was supplied, we'll add this to the collection as well.
 	if userID > 0 {

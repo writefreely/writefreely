@@ -13,6 +13,8 @@ package writefreely
 import (
 	"database/sql"
 	"encoding/json"
+	"path/filepath"
+	"errors"
 	"fmt"
 	"github.com/writefreely/writefreely/spam"
 	"html/template"
@@ -21,6 +23,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/guregu/null"
@@ -163,6 +166,7 @@ type (
 		Language     sql.NullString
 		OwnerID      int64
 		CollectionID sql.NullInt64
+		MediaFilesList    []string
 
 		Found bool
 		Gone  bool
@@ -650,6 +654,8 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 			}
 			collID = coll.ID
 		}
+		slug := getSlugFromPost(*p.Title, *p.Content, p.Language.String)
+		p.Slug = &slug
 		// TODO: return PublicPost from createPost
 		newPost.Post, err = app.db.CreatePost(userID, collID, p)
 	}
@@ -821,6 +827,13 @@ func deletePost(app *App, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	friendlyID := vars["post"]
 	editToken := r.FormValue("token")
+	var err error
+
+	user := getUserSession(app, r)
+	slug, err := getSlugFromActionId(app, friendlyID)
+	if err == nil {
+		deleteMediaFilesOfPost(app, user.Username, slug)
+	}
 
 	var ownerID int64
 	var u *User
@@ -834,7 +847,6 @@ func deletePost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	var res sql.Result
 	var t *sql.Tx
-	var err error
 	var collID sql.NullInt64
 	var coll *Collection
 	var pp *PublicPost
@@ -931,6 +943,15 @@ func deletePost(app *App, w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return impart.HTTPError{Status: http.StatusNoContent}
+}
+
+func deleteMediaFilesOfPost(app *App, username, slug string) {
+	mediaDirectoryPath := filepath.Join(app.cfg.Server.MediaParentDir, mediaDir,
+						username, slug)
+	err := os.RemoveAll(mediaDirectoryPath)
+	if err != nil {
+		log.Error("Deleting media directory of %s failed: %v", username, err)
+	}
 }
 
 // addPost associates a post with the authenticated user.
@@ -1323,6 +1344,18 @@ func (p *SubmittedPost) isFontValid() bool {
 
 	_, valid := validFonts[p.Font]
 	return valid
+}
+
+func getSlugFromActionId(app *App, actionID string) (string, error) {
+	var slug string
+	err := app.db.QueryRow("SELECT slug FROM posts WHERE id = ?", actionID).Scan(&slug)
+	switch {
+	case err == sql.ErrNoRows:
+		return "", errors.New("Post not found")
+	case err != nil:
+		return "", errors.New("Unable to fetch post")
+	}
+	return slug, nil
 }
 
 func getRawPost(app *App, friendlyID string) *RawPost {
