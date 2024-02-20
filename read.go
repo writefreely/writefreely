@@ -229,11 +229,9 @@ func showLocalTimeline(app *App, w http.ResponseWriter, r *http.Request, page in
 		TotalPages:  ttlPages,
 		SelTopic:    tag,
 	}
-	if app.cfg.App.Chorus {
-		u := getUserSession(app, r)
-		d.IsAdmin = u != nil && u.IsAdmin()
-		d.CanInvite = canUserInvite(app.cfg, d.IsAdmin)
-	}
+	u := getUserSession(app, r)
+	d.IsAdmin = u != nil && u.IsAdmin()
+	d.CanInvite = canUserInvite(app.cfg, d.IsAdmin)
 	c, err := getReaderSection(app)
 	if err != nil {
 		return err
