@@ -47,4 +47,4 @@ USER daemon
 ENTRYPOINT ["cmd/writefreely/writefreely"]
 
 HEALTHCHECK --start-period=5s --interval=15s --timeout=5s \
-    CMD curl -fSs http://localhost:8080/ || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1
