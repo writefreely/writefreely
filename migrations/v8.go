@@ -26,10 +26,10 @@ func oauthInvites(db *datastore) error {
 		builders := []wf_db.SQLBuilder{
 			dialect.
 				AlterTable("oauth_client_states").
-				AddColumn(dialect.Column("invite_code", wf_db.ColumnTypeChar, wf_db.OptionalInt{
-					Set:   true,
-					Value: 6,
-				}).SetNullable(true)),
+				AddColumn(wf_db.NullableColumn("invite_code", wf_db.ColumnTypeString{
+					IsFixedLength: true,
+					MaxChars:      6,
+				})),
 		}
 		for _, builder := range builders {
 			query, err := builder.ToSQL()

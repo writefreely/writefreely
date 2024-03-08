@@ -26,8 +26,8 @@ func oauth(db *datastore) error {
 		createTableUsersOauth, err := dialect.
 			Table("oauth_users").
 			SetIfNotExists(false).
-			Column(dialect.Column("user_id", wf_db.ColumnTypeInteger, wf_db.UnsetSize)).
-			Column(dialect.Column("remote_user_id", wf_db.ColumnTypeInteger, wf_db.UnsetSize)).
+			Column(wf_db.NonNullableColumn("user_id", wf_db.ColumnTypeInt{MaxBytes: 4})).
+			Column(wf_db.NonNullableColumn("remote_user_id", wf_db.ColumnTypeInt{MaxBytes: 4})).
 			ToSQL()
 		if err != nil {
 			return err
@@ -35,9 +35,9 @@ func oauth(db *datastore) error {
 		createTableOauthClientState, err := dialect.
 			Table("oauth_client_states").
 			SetIfNotExists(false).
-			Column(dialect.Column("state", wf_db.ColumnTypeVarChar, wf_db.OptionalInt{Set: true, Value: 255})).
-			Column(dialect.Column("used", wf_db.ColumnTypeBool, wf_db.UnsetSize)).
-			Column(dialect.Column("created_at", wf_db.ColumnTypeDateTime, wf_db.UnsetSize).SetDefaultCurrentTimestamp()).
+			Column(wf_db.NonNullableColumn("state", wf_db.ColumnTypeString{MaxChars: 255})).
+			Column(wf_db.NonNullableColumn("used", wf_db.ColumnTypeBool{})).
+			Column(wf_db.NonNullableColumn("created_at", wf_db.ColumnTypeDateTime{DefaultVal: wf_db.DefaultNow})).
 			UniqueConstraint("state").
 			ToSQL()
 		if err != nil {

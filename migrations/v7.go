@@ -26,11 +26,13 @@ func oauthAttach(db *datastore) error {
 		builders := []wf_db.SQLBuilder{
 			dialect.
 				AlterTable("oauth_client_states").
-				AddColumn(dialect.
-					Column(
+				AddColumn(wf_db.
+					NullableColumn(
 						"attach_user_id",
-						wf_db.ColumnTypeInteger,
-						wf_db.OptionalInt{Set: true, Value: 24}).SetNullable(true)),
+						wf_db.ColumnTypeInt{
+							MaxBytes:  4,
+							MaxDigits: 24,
+						})),
 		}
 		for _, builder := range builders {
 			query, err := builder.ToSQL()
