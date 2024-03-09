@@ -99,7 +99,10 @@ func (ru *RemoteUser) AsPerson() *activitystreams.Person {
 
 func activityPubClient() *http.Client {
 	return &http.Client{
-		Timeout: 15 * time.Second,
+		Timeout: 120 * time.Second,
+		Transport: &http.Transport{
+		    Proxy: http.ProxyFromEnvironment,
+	},
 	}
 }
 
