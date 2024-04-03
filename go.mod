@@ -34,7 +34,7 @@ require (
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
 	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/urfave/cli/v2 v2.27.1
 	github.com/writeas/activity v0.1.2
 	github.com/writeas/activityserve v0.0.0-20230428180247-dc13a4f4d835
