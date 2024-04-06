@@ -1,14 +1,14 @@
 # Build image
-FROM golang:1.19-alpine as build
+# SHA256 of golang:1.21-alpine3.18 linux/amd64
+FROM golang@sha256:f475434ea2047a83e9ba02a1da8efc250fa6b2ed0e9e8e4eb8c5322ea6997795 as build
 
-LABEL org.opencontainers.image.source=https://github.com/writefreely/writefreely
+LABEL org.opencontainers.image.source="https://github.com/writefreely/writefreely"
 LABEL org.opencontainers.image.description="WriteFreely is a clean, minimalist publishing platform made for writers. Start a blog, share knowledge within your organization, or build a community around the shared act of writing."
 
 RUN apk add --update nodejs npm make g++ git
 RUN npm install -g less less-plugin-clean-css
 RUN go get -u github.com/go-bindata/go-bindata/...
 
-RUN mkdir -p /go/src/github.com/writefreely/writefreely
 WORKDIR /go/src/github.com/writefreely/writefreely
 
 COPY . .
@@ -19,9 +19,9 @@ ENV GO111MODULE=on
 ENV NODE_OPTIONS=--openssl-legacy-provider
 
 RUN make build \
-  && make ui
-RUN mkdir /stage && \
-    cp -R /go/bin \
+    && make ui \
+    && mkdir /stage \
+    && cp -R /go/bin \
       /go/src/github.com/writefreely/writefreely/templates \
       /go/src/github.com/writefreely/writefreely/static \
       /go/src/github.com/writefreely/writefreely/pages \
@@ -30,9 +30,12 @@ RUN mkdir /stage && \
       /stage
 
 # Final image
-FROM alpine:3
+# SHA256 of alpine:3.18.4 linux/amd64
+FROM alpine@sha256:48d9183eb12a05c99bcc0bf44a003607b8e941e1d4f41f9ad12bdcc4b5672f86
 
-RUN apk add --no-cache openssl ca-certificates
+RUN apk -U upgrade \
+    && apk add --no-cache openssl ca-certificates
+
 COPY --from=build --chown=daemon:daemon /stage /go
 
 WORKDIR /go
@@ -41,3 +44,6 @@ EXPOSE 8080
 USER daemon
 
 ENTRYPOINT ["cmd/writefreely/writefreely"]
+
+HEALTHCHECK --start-period=5s --interval=15s --timeout=5s \
+    CMD curl -fSs http://localhost:8080/ || exit 1

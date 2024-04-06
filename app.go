@@ -56,7 +56,7 @@ var (
 	debugging bool
 
 	// Software version can be set from git env using -ldflags
-	softwareVer = "0.14.0"
+	softwareVer = "0.15.0"
 
 	// DEPRECATED VARS
 	isSingleUser bool
@@ -363,7 +363,7 @@ func pageForReq(app *App, r *http.Request) page.StaticPage {
 	}
 
 	// Use custom style, if file exists
-	if _, err := os.Stat(filepath.Join(staticDir, "local", "custom.css")); err == nil {
+	if _, err := os.Stat(filepath.Join(app.cfg.Server.StaticParentDir, staticDir, "local", "custom.css")); err == nil {
 		p.CustomCSS = true
 	}
 

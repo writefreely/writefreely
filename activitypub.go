@@ -65,6 +65,20 @@ type RemoteUser struct {
 	SharedInbox string
 	URL         string
 	Handle      string
+	Created     time.Time
+}
+
+func (ru *RemoteUser) CreatedFriendly() string {
+	return ru.Created.Format("January 2, 2006")
+}
+
+func (ru *RemoteUser) EstimatedHandle() string {
+	if ru.Handle != "" {
+		return ru.Handle
+	}
+	username := filepath.Base(ru.ActorID)
+	host, _ := url.Parse(ru.ActorID)
+	return username + "@" + host.Host
 }
 
 func (ru *RemoteUser) AsPerson() *activitystreams.Person {
@@ -718,6 +732,7 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 		// create a new "Create" activity
 		// with our article as object
 		if isUpdate {
+			na.Updated = &p.Updated
 			activity = activitystreams.NewUpdateActivity(na)
 		} else {
 			activity = activitystreams.NewCreateActivity(na)

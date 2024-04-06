@@ -14,13 +14,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/go-sql-driver/mysql"
-	"github.com/writeas/web-core/silobridge"
-	wf_db "github.com/writefreely/writefreely/db"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/go-sql-driver/mysql"
+	"github.com/writeas/web-core/silobridge"
+	wf_db "github.com/writefreely/writefreely/db"
+	"github.com/writefreely/writefreely/parse"
 
 	"github.com/guregu/null"
 	"github.com/guregu/null/zero"
@@ -893,12 +895,20 @@ func (db *datastore) GetCollectionFromDomain(host string) (*Collection, error) {
 }
 
 func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias string) error {
+	// Truncate fields correctly, so we don't get "Data too long for column" errors in MySQL (writefreely#600)
+	if c.Title != nil {
+		*c.Title = parse.Truncate(*c.Title, collMaxLengthTitle)
+	}
+	if c.Description != nil {
+		*c.Description = parse.Truncate(*c.Description, collMaxLengthDescription)
+	}
+
 	q := query.NewUpdate().
 		SetStringPtr(c.Title, "title").
 		SetStringPtr(c.Description, "description").
-		SetNullString(c.StyleSheet, "style_sheet").
-		SetNullString(c.Script, "script").
-		SetNullString(c.Signature, "post_signature")
+		SetStringPtr(c.StyleSheet, "style_sheet").
+		SetStringPtr(c.Script, "script").
+		SetStringPtr(c.Signature, "post_signature")
 
 	if c.Format != nil {
 		cf := &CollectionFormat{Format: c.Format.String}
@@ -1488,7 +1498,7 @@ ORDER BY created `+order+limitStr, collID, lang)
 }
 
 func (db *datastore) GetAPFollowers(c *Collection) (*[]RemoteUser, error) {
-	rows, err := db.Query("SELECT actor_id, inbox, shared_inbox FROM remotefollows f INNER JOIN remoteusers u ON f.remote_user_id = u.id WHERE collection_id = ?", c.ID)
+	rows, err := db.Query("SELECT actor_id, inbox, shared_inbox, f.created FROM remotefollows f INNER JOIN remoteusers u ON f.remote_user_id = u.id WHERE collection_id = ?", c.ID)
 	if err != nil {
 		log.Error("Failed selecting from followers: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve followers."}
@@ -1498,7 +1508,7 @@ func (db *datastore) GetAPFollowers(c *Collection) (*[]RemoteUser, error) {
 	followers := []RemoteUser{}
 	for rows.Next() {
 		f := RemoteUser{}
-		err = rows.Scan(&f.ActorID, &f.Inbox, &f.SharedInbox)
+		err = rows.Scan(&f.ActorID, &f.Inbox, &f.SharedInbox, &f.Created)
 		followers = append(followers, f)
 	}
 	return &followers, nil

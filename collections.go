@@ -38,7 +38,12 @@ import (
 	"golang.org/x/net/idna"
 )
 
-const collAttrLetterReplyTo = "letter_reply_to"
+const (
+	collAttrLetterReplyTo = "letter_reply_to"
+
+	collMaxLengthTitle       = 255
+	collMaxLengthDescription = 160
+)
 
 type (
 	// TODO: add Direction to db
@@ -108,9 +113,9 @@ type (
 		Alias        *string         `schema:"alias" json:"alias"`
 		Title        *string         `schema:"title" json:"title"`
 		Description  *string         `schema:"description" json:"description"`
-		StyleSheet   *sql.NullString `schema:"style_sheet" json:"style_sheet"`
-		Script       *sql.NullString `schema:"script" json:"script"`
-		Signature    *sql.NullString `schema:"signature" json:"signature"`
+		StyleSheet   *string         `schema:"style_sheet" json:"style_sheet"`
+		Script       *string         `schema:"script" json:"script"`
+		Signature    *string         `schema:"signature" json:"signature"`
 		Monetization *string         `schema:"monetization_pointer" json:"monetization_pointer"`
 		Verification *string         `schema:"verification_link" json:"verification_link"`
 		LetterReply  *string         `schema:"letter_reply" json:"letter_reply"`
