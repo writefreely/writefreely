@@ -32,7 +32,7 @@ jobs:
 
       # Set up QEMU for cross-building
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.0.0
+        uses: docker/setup-qemu-action@v3.2.0
 
       # Set up Docker Buildx
       - name: Set up Docker Buildx
