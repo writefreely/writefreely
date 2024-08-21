@@ -72,6 +72,7 @@ type writestore interface {
 	GetTemporaryAccessToken(userID int64, validSecs int) (string, error)
 	GetTemporaryOneTimeAccessToken(userID int64, validSecs int, oneTime bool) (string, error)
 	DeleteAccount(userID int64) error
+	SilenceAccount(userID int64) error
 	ChangeSettings(app *App, u *User, s *userSettings) error
 	ChangePassphrase(userID int64, sudo bool, curPass string, hashedPass []byte) error
 
@@ -2638,6 +2639,33 @@ func (db *datastore) DeleteAccount(userID int64) error {
 
 	// TODO: federate delete actor
 
+	return nil
+}
+
+func (db *datastore) SilenceAccount(userID int64) error {
+	// Start transaction
+	t, err := db.Begin()
+	if err != nil {
+		log.Error("Unable to begin: %v", err)
+		return err
+	}
+
+	// Update user state
+	_, err = t.Exec("UPDATE users SET status=1 WHERE id=?", userID)
+        if err != nil {
+		t.Rollback()
+		return fmt.Errorf("Unable to update user status: %s", err)
+	}
+
+	// Commit all changes to the database
+	err = t.Commit()
+	if err != nil {
+		t.Rollback()
+		log.Error("Unable to commit: %v", err)
+		return err
+	}
+
+	// TODO: federate delete actor here too?
 	return nil
 }
 

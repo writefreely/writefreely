@@ -835,6 +835,51 @@ func DoDeleteAccount(apper Apper, username string) error {
 	return nil
 }
 
+func DoSilenceAccount(apper Apper, username string) error {
+	// Connect to the database
+	apper.LoadConfig()
+	connectToDatabase(apper.App())
+	defer shutdown(apper.App())
+
+	// check user exists
+	u, err := apper.App().db.GetUserForAuth(username)
+	if err != nil {
+		log.Error("%s", err)
+		os.Exit(1)
+	}
+	userID := u.ID
+
+	// do not silence the admin account
+	// TODO: check for other admins and skip?
+	if u.IsAdmin() {
+		log.Error("Can not silence admin account")
+		os.Exit(1)
+	}
+
+	// confirm deletion, w/ w/out posts
+	prompt := promptui.Prompt{
+		Templates: &promptui.PromptTemplates{
+			Success: "{{ . | bold | faint }}: ",
+		},
+		Label:     fmt.Sprintf("Really silence user : %s", username),
+		IsConfirm: true,
+	}
+	_, err = prompt.Run()
+	if err != nil {
+		log.Info("Aborted...")
+		os.Exit(0)
+	}
+
+	log.Info("Silencing...")
+	err = apper.App().db.SilenceAccount(userID)
+	if err != nil {
+		log.Error("%s", err)
+		os.Exit(1)
+	}
+	log.Info("Success.")
+	return nil
+}
+
 func connectToDatabase(app *App) {
 	log.Info("Connecting to %s database...", app.cfg.Database.Type)
 
