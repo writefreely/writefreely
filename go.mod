@@ -26,7 +26,7 @@ require (
 	github.com/mailgun/mailgun-go v2.0.0+incompatible
 	github.com/manifoldco/promptui v0.9.0
 	github.com/mattn/go-sqlite3 v1.14.21
-	github.com/microcosm-cc/bluemonday v1.0.26
+	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/onsi/ginkgo v1.16.4 // indirect
@@ -50,7 +50,7 @@ require (
 	github.com/writefreely/go-gopher v0.0.0-20220429181814-40127126f83b
 	github.com/writefreely/go-nodeinfo v1.2.0
 	golang.org/x/crypto v0.24.0
-	golang.org/x/net v0.22.0
+	golang.org/x/net v0.26.0
 )
 
 require (
@@ -66,7 +66,7 @@ require (
 	github.com/go-fed/httpsig v0.1.1-0.20200204213531-0ef28562fabe // indirect
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
 	github.com/gologme/log v1.2.0 // indirect
-	github.com/gorilla/css v1.0.0 // indirect
+	github.com/gorilla/css v1.0.1 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/joho/godotenv v1.3.0 // indirect
