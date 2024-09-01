@@ -18,7 +18,7 @@ require (
 	github.com/gorilla/feeds v1.1.2
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/schema v1.4.1
-	github.com/gorilla/sessions v1.3.0
+	github.com/gorilla/sessions v1.4.0
 	github.com/guregu/null v4.0.0+incompatible
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/ikeikeikeike/go-sitemap-generator/v2 v2.0.2
