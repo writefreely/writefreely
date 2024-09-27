@@ -19,6 +19,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/schema v1.4.1
 	github.com/gorilla/sessions v1.3.0
+	github.com/gosimple/slug v1.14.0
 	github.com/guregu/null v4.0.0+incompatible
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/ikeikeikeike/go-sitemap-generator/v2 v2.0.2
@@ -45,7 +46,6 @@ require (
 	github.com/writeas/import v0.2.1
 	github.com/writeas/monday v1.3.0
 	github.com/writeas/saturday v1.7.2-0.20200427193424-392b95a03320
-	github.com/writeas/slug v1.2.0
 	github.com/writeas/web-core v1.6.1-0.20231003013047-d81124d45431
 	github.com/writefreely/go-gopher v0.0.0-20220429181814-40127126f83b
 	github.com/writefreely/go-nodeinfo v1.2.0
@@ -68,6 +68,7 @@ require (
 	github.com/gologme/log v1.2.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
+	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
@@ -82,6 +83,7 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/writeas/go-writeas/v2 v2.0.2 // indirect
 	github.com/writeas/openssl-go v1.0.0 // indirect
+	github.com/writeas/slug v1.2.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
