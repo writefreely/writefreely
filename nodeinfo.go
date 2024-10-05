@@ -46,7 +46,7 @@ func nodeInfoConfig(db *datastore, cfg *config.Config) *nodeinfo.Config {
 			Software: nodeinfo.SoftwareMeta{
 				HomePage: softwareURL,
 				GitHub:   "https://github.com/writefreely/writefreely",
-				Follow:   "https://writing.exchange/@write_as",
+				Follow:   "https://writing.exchange/@writefreely",
 			},
 			MaxBlogs:     cfg.App.MaxBlogs,
 			PublicReader: cfg.App.LocalTimeline,
