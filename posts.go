@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gosimple/slug"
 	"github.com/guregu/null"
 	"github.com/guregu/null/zero"
 	"github.com/kylemcc/twitter-text-go/extract"
@@ -30,7 +31,6 @@ import (
 	stripmd "github.com/writeas/go-strip-markdown/v2"
 	"github.com/writeas/impart"
 	"github.com/writeas/monday"
-	"github.com/writeas/slug"
 	"github.com/writeas/web-core/activitystreams"
 	"github.com/writeas/web-core/bots"
 	"github.com/writeas/web-core/converter"
