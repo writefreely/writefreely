@@ -1,0 +1,34 @@
+FROM golang:alpine AS build
+
+LABEL org.opencontainers.image.source="https://github.com/writefreely/writefreely"
+LABEL org.opencontainers.image.description="WriteFreely is a clean, minimalist publishing platform made for writers. Start a blog, share knowledge within your organization, or build a community around the shared act of writing."
+
+RUN apk update --no-cache && \
+	apk upgrade --no-cache && \
+	apk add --no-cache nodejs npm make g++ git sqlite-dev patch && \
+	npm install -g less less-plugin-clean-css && \
+	mkdir -p /go/src/github.com/writefreely/writefreely
+
+COPY . /go/src/github.com/writefreely/writefreely
+WORKDIR /go/src/github.com/writefreely/writefreely
+ENV NODE_OPTIONS=--openssl-legacy-provider
+RUN cat ossl_legacy.cnf >> /etc/ssl/openssl.cnf && \
+	make build && \
+	make ui
+
+FROM alpine
+
+RUN apk update --no-cache && \
+	apk upgrade --no-cache && \
+	apk add --no-cache openssl ca-certificates && \
+	mkdir /usr/share/writefreely
+
+COPY --from=build /go/src/github.com/writefreely/writefreely/cmd/writefreely/writefreely /usr/bin
+COPY --from=build /go/src/github.com/writefreely/writefreely/pages /usr/share/writefreely/pages
+COPY --from=build /go/src/github.com/writefreely/writefreely/static /usr/share/writefreely/static
+COPY --from=build /go/src/github.com/writefreely/writefreely/templates /usr/share/writefreely/templates
+
+ENV WRITEFREELY_DOCKER=True
+ENV HOME=/data
+WORKDIR /data
+CMD ["/usr/bin/writefreely"]

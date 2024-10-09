@@ -12,12 +12,14 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
+
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	"github.com/mitchellh/go-wordwrap"
 	"github.com/writeas/web-core/auth"
-	"strconv"
-	"strings"
 )
 
 type SetupData struct {
@@ -79,6 +81,8 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 		}
 		isDevEnv := envType == "Development"
 		isStandalone := envType == "Production, standalone"
+
+		_, isDocker := os.LookupEnv("WRITEFREELY_DOCKER")
 
 		data.Config.Server.Dev = isDevEnv
 
@@ -148,6 +152,16 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 		} else {
 			data.Config.Server.TLSCertPath = ""
 			data.Config.Server.TLSKeyPath = ""
+		}
+
+		// If running in docker:
+		// 1. always bind to 0.0.0.0 instead of localhost
+		// 2. set paths of static files in UNIX manners
+		if !isDevEnv && isDocker {
+			data.Config.Server.TemplatesParentDir = "/usr/share/writefreely"
+			data.Config.Server.StaticParentDir = "/usr/share/writefreely"
+			data.Config.Server.PagesParentDir = "/usr/share/writefreely"
+			data.Config.Server.Bind = "0.0.0.0"
 		}
 
 		fmt.Println()
