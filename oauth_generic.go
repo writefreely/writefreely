@@ -70,6 +70,8 @@ func (c genericOauthClient) buildLoginURL(state string) (string, error) {
 
 func (c genericOauthClient) exchangeOauthCode(ctx context.Context, code string) (*TokenResponse, error) {
 	form := url.Values{}
+	form.Add("client_id", c.ClientID)
+	form.Add("client_secret", c.ClientSecret)
 	form.Add("grant_type", "authorization_code")
 	form.Add("redirect_uri", c.CallbackLocation)
 	form.Add("scope", c.Scope)

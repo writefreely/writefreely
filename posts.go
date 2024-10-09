@@ -314,6 +314,8 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	// Display reserved page if that is requested resource
 	if t, ok := pages[r.URL.Path[1:]+".tmpl"]; ok {
 		return handleTemplatedPage(app, w, r, t)
+	} else if r.URL.Path == "/sitemap.xml" && !app.cfg.App.SingleUser {
+		return impart.HTTPError{Status: http.StatusNotFound, Message: "Page not found."}
 	} else if (strings.Contains(r.URL.Path, ".") && !isRaw && !isMarkdown) || r.URL.Path == "/robots.txt" || r.URL.Path == "/manifest.json" {
 		// Serve static file
 		app.shttp.ServeHTTP(w, r)
@@ -1669,7 +1671,7 @@ func (rp *RawPost) Updated8601() string {
 	return rp.Updated.Format("2006-01-02T15:04:05Z")
 }
 
-var imageURLRegex = regexp.MustCompile(`(?i)[^ ]+\.(gif|png|jpg|jpeg|image)$`)
+var imageURLRegex = regexp.MustCompile(`(?i)[^ ]+\.(gif|png|jpg|jpeg|avif|avifs|webp|jxl|image)$`)
 
 func (p *Post) extractImages() {
 	p.Images = extractImages(p.Content)

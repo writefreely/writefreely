@@ -18,11 +18,11 @@ First, you'll want to clone the WriteFreely repo, install development dependenci
 
 ### Starting development
 
-Next, [join our forum](https://discuss.write.as) so you can discuss development with the team. Then take a look at [our roadmap on Phabricator](https://phabricator.write.as/tag/write_freely/) to see where the project is today and where it's headed.
+Next, [join our forum](https://discuss.write.as) so you can discuss development with the team. Then take a look at [our roadmap on Phabricator](https://todo.musing.studio/tag/writefreely/) to see where the project is today and where it's headed.
 
 When you find something you want to work on, start a new topic on the forum or jump into an existing discussion, if there is one. The team will respond and continue the conversation there.
 
-Lastly, **before submitting any code**, please sign our [contributor's agreement](https://phabricator.write.as/L1) so we can accept your contributions. It is substantially similar to the _Apache Individual Contributor License Agreement_. If you'd like to know about the rationale behind this requirement, you can [read more about that here](https://phabricator.write.as/w/writefreely/cla/).
+Lastly, **before submitting any code**, please sign our [contributor's agreement](https://todo.musing.studio/L1) so we can accept your contributions. It is substantially similar to the _Apache Individual Contributor License Agreement_. If you'd like to know about the rationale behind this requirement, you can [read more about that here](https://todo.musing.studio/w/writefreely/cla/).
 
 ### Branching
 
@@ -49,7 +49,7 @@ We value reliable, readable, and maintainable code over all else in our work. To
 * Write code for other humans, not computers.
 * The less complexity, the better. The more someone can understand code just by looking at it, the better.
 * Functionality, readability, and maintainability over senseless elegance.
-* Only abstract when necessary. 
+* Only abstract when necessary.
 * Keep an eye to the future, but don't pre-optimize at the expense of today's simplicity.
 
 #### Code guidelines
