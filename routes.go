@@ -113,6 +113,10 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	me.HandleFunc("/invites", handler.User(handleViewUserInvites)).Methods("GET")
 	me.HandleFunc("/logout", handler.Web(viewLogout, UserLevelNone)).Methods("GET")
 
+	if apper.App().cfg.App.AllowUploadMedia {
+		write.HandleFunc("/media/{author}/{slug}/{filename}", handler.All(handleGetFile)).Methods("GET")
+	}
+
 	write.HandleFunc("/api/me", handler.All(viewMeAPI)).Methods("GET")
 	apiMe := write.PathPrefix("/api/me/").Subrouter()
 	apiMe.HandleFunc("/", handler.All(viewMeAPI)).Methods("GET")
@@ -203,6 +207,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	// All the existing stuff
 	write.HandleFunc(draftEditPrefix+"/{action}/edit", handler.Web(handleViewPad, UserLevelUser)).Methods("GET")
 	write.HandleFunc(draftEditPrefix+"/{action}/meta", handler.Web(handleViewMeta, UserLevelUser)).Methods("GET")
+	write.HandleFunc(draftEditPrefix+"/{action}/meta/mediafile/", handler.Web(handleUploadMedia, UserLevelUser)).Methods("POST")
 	// Collections
 	if apper.App().cfg.App.SingleUser {
 		RouteCollections(handler, write.PathPrefix("/").Subrouter())
@@ -233,6 +238,8 @@ func RouteCollections(handler *Handler, r *mux.Router) {
 	r.HandleFunc("/{slug}", handler.CollectionPostOrStatic)
 	r.HandleFunc("/{slug}/edit", handler.Web(handleViewPad, UserLevelUser))
 	r.HandleFunc("/{slug}/edit/meta", handler.Web(handleViewMeta, UserLevelUser))
+	r.HandleFunc("/{slug}/edit/meta/mediafile/{filename}", handler.Web(handleDeleteFile, UserLevelUser)).Methods("DELETE")
+	r.HandleFunc("/{slug}/edit/meta/mediafile/", handler.Web(handleUploadMedia, UserLevelUser)).Methods("POST")
 	r.HandleFunc("/{slug}/", handler.Web(handleCollectionPostRedirect, UserLevelReader)).Methods("GET")
 }
 
