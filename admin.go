@@ -12,6 +12,7 @@ package writefreely
 
 import (
 	"database/sql"
+	"path/filepath"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -19,6 +20,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
@@ -345,8 +347,18 @@ func handleAdminDeleteUser(app *App, u *User, w http.ResponseWriter, r *http.Req
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not delete user account for '%s': %v", username, err)}
 	}
 
+	deleteMediaFilesOfUser(app, username)
 	_ = addSessionFlash(app, w, r, fmt.Sprintf("User \"%s\" was deleted successfully.", username), nil)
 	return impart.HTTPError{http.StatusFound, "/admin/users"}
+}
+
+func deleteMediaFilesOfUser(app *App, username string) {
+	mediaDirectoryPath := filepath.Join(app.cfg.Server.MediaParentDir, mediaDir,
+					                            username)
+	err := os.RemoveAll(mediaDirectoryPath)
+	if err != nil {
+		log.Error("Deleting media directory of %s failed: %v", username, err)
+	}
 }
 
 func handleAdminToggleUserStatus(app *App, u *User, w http.ResponseWriter, r *http.Request) error {

@@ -265,10 +265,83 @@
 				</dl>
 				<input type="hidden" name="web" value="true" />
 			</form>
+
+			<dt><label>Media Files List</label></dt></br>
+			<ul id="mediaFilesList"></ul>
+
+			<form id="uploadForm">
+				<input type="file" id="fileInput" />
+				<button type="button" onclick="uploadFile()">Upload</button>
+			</form>
+
 		</div>
 		
 		<script src="/js/h.js"></script>
+
 		<script>
+		function uploadFile() {
+			const fileInput = document.getElementById('fileInput');
+			const file = fileInput.files[0];
+			if (!file) {
+				alert('Please select a file to upload.');
+				return;
+			}
+			const formData = new FormData();
+			formData.append('file', file);
+			const url =  "meta/mediafile/"
+			fetch(url, {
+				method: 'POST',
+				body: formData,
+				}).then(response => response.json())
+					.then(data => {
+						alert('File uploaded successfully, path: /' + data.path);
+						location.reload();
+					}).catch(error => {
+						alert('An error occurred during file upload.');
+					});
+		}
+		</script>
+
+			<script>
+			function getFileNameFromPath(filePath) {
+				const parts = filePath.split("/");
+				return parts.pop();
+			}
+
+			function postDeleteMediafile(fileName) {
+					const url =  "meta/mediafile/" + fileName;
+					fetch(url, {
+						method: 'DELETE',
+						headers: {},
+					})
+					.then(response => {
+						if (!response.ok) {
+							 console.error(response);
+					} else {
+						location.reload();
+					}
+					});
+			}
+
+			const valueListElement = document.getElementById("mediaFilesList");
+			{{.Post.MediaFilesList}}.forEach((value) => {
+				const listItemElement = document.createElement("li");
+				listItemElement.textContent = value;
+				valueListElement.appendChild(listItemElement);
+				const buttonElement = document.createElement("button");
+				buttonElement.textContent = "Remove";
+				buttonElement.addEventListener("click", () => {
+					const confirmResult = confirm("Are you sure to remove: " + value + "?");
+					if (confirmResult) {
+						fileName = getFileNameFromPath(value)
+						postDeleteMediafile(fileName);
+					} else {}
+				});
+				listItemElement.appendChild(buttonElement);
+			});
+			</script>
+
+			<script>
 function updateMeta() {
 	if ({{.Silenced}}) {
 		alert("Your account is silenced, so you can't edit posts.");
