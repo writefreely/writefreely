@@ -22,6 +22,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -43,6 +44,11 @@ const (
 	apCustomHandleDefault = "blog"
 
 	apCacheTime = time.Minute
+)
+
+var (
+	apCollectionPostIRIRegex = regexp.MustCompile("/api/collections/([a-z0-9\\-]+)/posts/([a-z0-9\\-]+)$")
+	apDraftPostIRIRegex      = regexp.MustCompile("/api/posts/([a-z0-9\\-]{12,16})$")
 )
 
 var instanceColl *Collection
@@ -351,11 +357,76 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 	a := streams.NewAccept()
 	p := c.PersonObject()
 	var to *url.URL
-	var isFollow, isUnfollow bool
+	var isFollow, isUnfollow, isLike bool
+	var likePostID string
 	fullActor := &activitystreams.Person{}
 	var remoteUser *RemoteUser
 
 	res := &streams.Resolver{
+		LikeCallback: func(l *streams.Like) error {
+			isLike = true
+
+			// 1) Use the Like concrete type here
+			// 2) Errors are propagated to res.Deserialize call below
+			m["@context"] = []string{activitystreams.Namespace}
+			b, _ := json.Marshal(m)
+			if debugging {
+				log.Info("Like: %s", b)
+			}
+
+			_, likeID := l.GetId()
+			if likeID == nil {
+				log.Error("Didn't resolve Like ID")
+			}
+			if p := l.HasObject(0); p == streams.NoPresence {
+				return fmt.Errorf("no object for Like activity at index 0")
+			}
+
+			obj := l.Raw().GetObjectIRI(0)
+			/*
+			   // TODO: handle this more robustly
+			   l.ResolveObject(&streams.Resolver{
+			     LinkCallback: func(link *streams.Link) error {
+			       return nil
+			     },
+			   }, 0)
+			*/
+
+			// Get post ID from URL
+			var collAlias, slug string
+			if m := apCollectionPostIRIRegex.FindStringSubmatch(obj.String()); len(m) == 3 {
+				collAlias = m[1]
+				slug = m[2]
+			} else if m = apDraftPostIRIRegex.FindStringSubmatch(obj.String()); len(m) == 2 {
+				likePostID = m[1]
+			} else {
+				return fmt.Errorf("unable to match objectIRI: %s", obj)
+			}
+
+			// Get postID if all we have is collection and slug
+			if collAlias != "" && slug != "" {
+				c, err := app.db.GetCollection(collAlias)
+				if err != nil {
+					return err
+				}
+				p, err := app.db.GetPost(slug, c.ID)
+				if err != nil {
+					return err
+				}
+				likePostID = p.ID
+			}
+
+			// Finally, get actor information
+			_, from := l.GetActor(0)
+			if from == nil {
+				return fmt.Errorf("No valid actor string")
+			}
+			fullActor, remoteUser, err = getActor(app, from.String())
+			if err != nil {
+				return err
+			}
+			return nil
+		},
 		FollowCallback: func(f *streams.Follow) error {
 			isFollow = true
 
@@ -435,6 +506,48 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		return err
 	}
 
+	// Handle synchronous activities
+	if isLike {
+		t, err := app.db.Begin()
+		if err != nil {
+			log.Error("Unable to start transaction: %v", err)
+			return fmt.Errorf("unable to start transaction: %v", err)
+		}
+
+		var remoteUserID int64
+		if remoteUser != nil {
+			remoteUserID = remoteUser.ID
+		} else {
+			remoteUserID, err = apAddRemoteUser(app, t, fullActor)
+		}
+
+		// Add like
+		_, err = t.Exec("INSERT INTO remote_likes (post_id, remote_user_id, created) VALUES (?, ?, NOW())", likePostID, remoteUserID)
+		if err != nil {
+			if !app.db.isDuplicateKeyErr(err) {
+				t.Rollback()
+				log.Error("Couldn't add like in DB: %v\n", err)
+				return fmt.Errorf("Couldn't add like in DB: %v", err)
+			} else {
+				t.Rollback()
+				log.Error("Couldn't add like in DB: %v\n", err)
+				return fmt.Errorf("Couldn't add like in DB: %v", err)
+			}
+		}
+
+		err = t.Commit()
+		if err != nil {
+			t.Rollback()
+			log.Error("Rolling back after Commit(): %v\n", err)
+			return fmt.Errorf("Rolling back after Commit(): %v\n", err)
+		}
+
+		if debugging {
+			log.Info("Successfully liked post %s by remote user %s", likePostID, remoteUser.URL)
+		}
+		return impart.RenderActivityJSON(w, "", http.StatusOK)
+	}
+
 	go func() {
 		if to == nil {
 			if debugging {
@@ -469,6 +582,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			if remoteUser != nil {
 				followerID = remoteUser.ID
 			} else {
+				// TODO: use apAddRemoteUser() here, instead!
 				// Add follower locally, since it wasn't found before
 				res, err := t.Exec("INSERT INTO remoteusers (actor_id, inbox, shared_inbox, url) VALUES (?, ?, ?, ?)", fullActor.ID, fullActor.Inbox, fullActor.Endpoints.SharedInbox, fullActor.URL)
 				if err != nil {
