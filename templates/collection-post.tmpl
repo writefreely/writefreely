@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 
 		<title>{{.PlainDisplayTitle}} {{localhtml "title dash" .Language.String}} {{.Collection.DisplayTitle}}</title>
-		
+
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
 		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
 		<link rel="shortcut icon" href="/favicon.ico" />
@@ -45,7 +45,7 @@
 
 	</head>
 	<body id="post">
-		
+
 		<div id="overlay"></div>
 
 		<header>
@@ -61,7 +61,7 @@
 				{{ end }}
 			</nav>
 		</header>
-		
+
 		{{if .Silenced}}
 			{{template "user-silenced"}}
 		{{end}}
@@ -71,7 +71,7 @@
 		<footer dir="ltr"><hr><nav><p style="font-size: 0.9em">{{localhtml "published with write.as" .Language.String}}</p></nav></footer>
 		{{ end }}
 	</body>
-	
+
 	{{if .Collection.CanShowScript}}
 		{{range .Collection.ExternalScripts}}<script type="text/javascript" src="{{.}}" async></script>{{end}}
 		{{if .Collection.Script}}<script type="text/javascript">{{.Collection.ScriptDisplay}}</script>{{end}}
