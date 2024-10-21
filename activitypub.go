@@ -357,8 +357,8 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 	a := streams.NewAccept()
 	p := c.PersonObject()
 	var to *url.URL
-	var isFollow, isUnfollow, isLike bool
-	var likePostID string
+	var isFollow, isUnfollow, isLike, isUnlike bool
+	var likePostID, unlikePostID string
 	fullActor := &activitystreams.Person{}
 	var remoteUser *RemoteUser
 
@@ -392,29 +392,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			   }, 0)
 			*/
 
-			// Get post ID from URL
-			var collAlias, slug string
-			if m := apCollectionPostIRIRegex.FindStringSubmatch(obj.String()); len(m) == 3 {
-				collAlias = m[1]
-				slug = m[2]
-			} else if m = apDraftPostIRIRegex.FindStringSubmatch(obj.String()); len(m) == 2 {
-				likePostID = m[1]
-			} else {
-				return fmt.Errorf("unable to match objectIRI: %s", obj)
-			}
-
-			// Get postID if all we have is collection and slug
-			if collAlias != "" && slug != "" {
-				c, err := app.db.GetCollection(collAlias)
-				if err != nil {
-					return err
-				}
-				p, err := app.db.GetPost(slug, c.ID)
-				if err != nil {
-					return err
-				}
-				likePostID = p.ID
-			}
+			likePostID, err = parsePostIDFromURL(app, obj)
 
 			// Finally, get actor information
 			_, from := l.GetActor(0)
@@ -465,8 +443,6 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			return impart.RenderActivityJSON(w, m, http.StatusOK)
 		},
 		UndoCallback: func(u *streams.Undo) error {
-			isUnfollow = true
-
 			m["@context"] = []string{activitystreams.Namespace}
 			b, _ := json.Marshal(m)
 			if debugging {
@@ -474,6 +450,31 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			}
 
 			a.AppendObject(u.Raw())
+
+			// Check type -- we handle Undo:Like and Undo:Follow
+			_, err := u.ResolveObject(&streams.Resolver{
+				LikeCallback: func(like *streams.Like) error {
+					isUnlike = true
+
+					_, from := like.GetActor(0)
+					obj := like.Raw().GetObjectIRI(0)
+					unlikePostID, err = parsePostIDFromURL(app, obj)
+					fullActor, remoteUser, err = getActor(app, from.String())
+					if err != nil {
+						return err
+					}
+					return nil
+				},
+				// TODO: add FollowCallback for more robust handling
+			}, 0)
+			if err != nil {
+				return err
+			}
+			if isUnlike {
+				return nil
+			}
+
+			isUnfollow = true
 			_, to = u.GetActor(0)
 			// TODO: get actor from object.object, not object
 			obj := u.Raw().GetObjectIRI(0)
@@ -544,6 +545,39 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 
 		if debugging {
 			log.Info("Successfully liked post %s by remote user %s", likePostID, remoteUser.URL)
+		}
+		return impart.RenderActivityJSON(w, "", http.StatusOK)
+	} else if isUnlike {
+		t, err := app.db.Begin()
+		if err != nil {
+			log.Error("Unable to start transaction: %v", err)
+			return fmt.Errorf("unable to start transaction: %v", err)
+		}
+
+		var remoteUserID int64
+		if remoteUser != nil {
+			remoteUserID = remoteUser.ID
+		} else {
+			remoteUserID, err = apAddRemoteUser(app, t, fullActor)
+		}
+
+		// Add follow
+		_, err = t.Exec("DELETE FROM remote_likes WHERE post_id = ? AND remote_user_id = ?", unlikePostID, remoteUserID)
+		if err != nil {
+			t.Rollback()
+			log.Error("Couldn't delete Like from DB: %v\n", err)
+			return fmt.Errorf("Couldn't delete Like from DB: %v", err)
+		}
+
+		err = t.Commit()
+		if err != nil {
+			t.Rollback()
+			log.Error("Rolling back after Commit(): %v\n", err)
+			return fmt.Errorf("Rolling back after Commit(): %v\n", err)
+		}
+
+		if debugging {
+			log.Info("Successfully un-liked post %s by remote user %s", unlikePostID, remoteUser.URL)
 		}
 		return impart.RenderActivityJSON(w, "", http.StatusOK)
 	}
@@ -1076,6 +1110,34 @@ func unmarshalActor(actorResp []byte, actor *activitystreams.Person) error {
 	}(flexActor.Context)
 
 	return nil
+}
+
+func parsePostIDFromURL(app *App, u *url.URL) (string, error) {
+	// Get post ID from URL
+	var collAlias, slug, postID string
+	if m := apCollectionPostIRIRegex.FindStringSubmatch(u.String()); len(m) == 3 {
+		collAlias = m[1]
+		slug = m[2]
+	} else if m = apDraftPostIRIRegex.FindStringSubmatch(u.String()); len(m) == 2 {
+		postID = m[1]
+	} else {
+		return "", fmt.Errorf("unable to match objectIRI: %s", u)
+	}
+
+	// Get postID if all we have is collection and slug
+	if collAlias != "" && slug != "" {
+		c, err := app.db.GetCollection(collAlias)
+		if err != nil {
+			return "", err
+		}
+		p, err := app.db.GetPost(slug, c.ID)
+		if err != nil {
+			return "", err
+		}
+		postID = p.ID
+	}
+
+	return postID, nil
 }
 
 func setCacheControl(w http.ResponseWriter, ttl time.Duration) {
