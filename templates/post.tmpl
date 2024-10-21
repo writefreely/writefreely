@@ -41,10 +41,8 @@
 			<nav>
 				<span class="views{{if not .IsOwner}} owner-visible{{end}}" dir="ltr"><strong>{{largeNumFmt .Views}}</strong> {{pluralize "view" "views" .Views}}</span>
 				{{if .IsCode}}<a href="/{{.ID}}.txt" rel="noindex" dir="{{.Direction}}">View raw</a>{{end}}
-				{{ if .Username }}
-				{{if .IsOwner}}
+				{{ if and .Username .IsOwner }}
 				<a href="/{{if .SingleUser}}d/{{end}}{{.ID}}/edit" dir="{{.Direction}}">Edit</a>
-				{{end}}
 				<a class="xtra-feature dash-nav" href="/me/posts/" dir="{{.Direction}}">Drafts</a>
 				{{ end }}
 			</nav>
