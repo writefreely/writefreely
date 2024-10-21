@@ -392,7 +392,13 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			   }, 0)
 			*/
 
+			if obj == nil {
+				return fmt.Errorf("didn't get ObjectIRI to Like")
+			}
 			likePostID, err = parsePostIDFromURL(app, obj)
+			if err != nil {
+				return err
+			}
 
 			// Finally, get actor information
 			_, from := l.GetActor(0)
@@ -458,7 +464,13 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 
 					_, from := like.GetActor(0)
 					obj := like.Raw().GetObjectIRI(0)
+					if obj == nil {
+						return fmt.Errorf("didn't get ObjectIRI for Undo Like")
+					}
 					unlikePostID, err = parsePostIDFromURL(app, obj)
+					if err != nil {
+						return err
+					}
 					fullActor, remoteUser, err = getActor(app, from.String())
 					if err != nil {
 						return err
