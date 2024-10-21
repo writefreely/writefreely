@@ -48,7 +48,7 @@ const (
 
 var (
 	apCollectionPostIRIRegex = regexp.MustCompile("/api/collections/([a-z0-9\\-]+)/posts/([a-z0-9\\-]+)$")
-	apDraftPostIRIRegex      = regexp.MustCompile("/api/posts/([a-z0-9\\-]{12,16})$")
+	apDraftPostIRIRegex      = regexp.MustCompile("/api/posts/([a-z0-9\\-])$")
 )
 
 var instanceColl *Collection
