@@ -5,7 +5,7 @@ body {
 	-moz-osx-font-smoothing: grayscale;
 	background-color: white;
 	color: #111;
-	
+
 	h1, header h2 {
 		a {
 			color: @headerTextColor;
@@ -672,6 +672,26 @@ body#collection article, body#subpage article {
 		}
 	}
 }
+#wrapper.archive {
+	h1 {
+		margin: 0 !important;
+	}
+	ul {
+		list-style: none;
+
+		li {
+			display: flex;
+			justify-content: space-between;
+			line-height: 1.4;
+			margin: 0.5em 0;
+		}
+
+		.year {
+			font-weight: bold;
+			font-size: 1.5em;
+		}
+	}
+}
 body#post article {
 	p.badge {
 		font-size: 0.9em;
@@ -1101,7 +1121,7 @@ li {
 	}
 }
 
-ul.errors { 
+ul.errors {
 	padding: 0;
 	text-indent: 0;
 	li.urgent {

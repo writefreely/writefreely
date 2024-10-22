@@ -49,6 +49,12 @@ const (
 	postIDLen     = 10
 
 	postMetaDateFormat = "2006-01-02 15:04:05"
+)
+
+type PostType string
+
+const (
+	postArch PostType = "archive"
 
 	shortCodePaid = "<!--paid-->"
 )
@@ -1507,6 +1513,10 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 				// User tried to access blog feed without a trailing slash, and
 				// there's no post with a slug "feed"
 				return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "feed/"}
+			} else if slug == "archive" {
+				// User tried to access blog Archive without a trailing slash, and
+				// there's no post with a slug "archive"
+				return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "archive/"}
 			}
 
 			po := &Post{
