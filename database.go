@@ -1995,7 +1995,7 @@ func (db *datastore) GetMeStats(u *User) userMeStats {
 
 func (db *datastore) GetTotalCollections() (collCount int64, err error) {
 	err = db.QueryRow(`
-	SELECT COUNT(*) 
+	SELECT COUNT(*)
 	FROM collections c
 	LEFT JOIN users u ON u.id = c.owner_id
 	WHERE u.status = 0`).Scan(&collCount)
@@ -3121,10 +3121,10 @@ func (db *datastore) GetEmailSubscribers(collID int64, reqConfirmed bool) ([]*Em
 	if reqConfirmed {
 		cond = " AND confirmed = 1"
 	}
-	rows, err := db.Query(`SELECT s.id, collection_id, user_id, s.email, u.email, subscribed, token, confirmed, allow_export 
-FROM emailsubscribers s 
-LEFT JOIN users u 
-  ON u.id = user_id 
+	rows, err := db.Query(`SELECT s.id, collection_id, user_id, s.email, u.email, subscribed, token, confirmed, allow_export
+FROM emailsubscribers s
+LEFT JOIN users u
+  ON u.id = user_id
 WHERE collection_id = ?`+cond+`
 ORDER BY subscribed DESC`, collID)
 	if err != nil {
