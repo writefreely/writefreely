@@ -62,3 +62,15 @@
 {{ end }}
 
 {{define "paid-badge"}}<img class="paid" alt="Paid article" src="/img/paidarticle.svg" /> {{end}}
+
+{{define "paging"}}
+    {{if gt .TotalPages 1}}<nav id="paging" class="content-container clearfix">
+        {{if or (and .Format.Ascending (le .CurrentPage .TotalPages)) (isRTL .Direction)}}
+            {{if gt .CurrentPage 1}}<a href="{{.PrevPageURL .Prefix .NavSuffix .CurrentPage .IsTopLevel}}">&#8672; {{if and .Format.Ascending (le .CurrentPage .TotalPages)}}Previous{{else}}Newer{{end}}</a>{{end}}
+            {{if lt .CurrentPage .TotalPages}}<a style="float:right;" href="{{.NextPageURL .Prefix .NavSuffix .CurrentPage .IsTopLevel}}">{{if and .Format.Ascending (lt .CurrentPage .TotalPages)}}Next{{else}}Older{{end}} &#8674;</a>{{end}}
+        {{else}}
+            {{if lt .CurrentPage .TotalPages}}<a href="{{.NextPageURL .Prefix .NavSuffix .CurrentPage .IsTopLevel}}">&#8672; Older</a>{{end}}
+            {{if gt .CurrentPage 1}}<a style="float:right;" href="{{.PrevPageURL .Prefix .NavSuffix .CurrentPage .IsTopLevel}}">Newer &#8674;</a>{{end}}
+        {{end}}
+	</nav>{{end}}
+{{end}}

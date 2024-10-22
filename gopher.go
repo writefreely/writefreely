@@ -111,7 +111,7 @@ func handleGopherCollection(app *App, w gopher.ResponseWriter, r *gopher.Request
 		w.WriteInfo(c.Description)
 	}
 
-	posts, err := app.db.GetPosts(app.cfg, c, 0, false, false, false)
+	posts, err := app.db.GetPosts(app.cfg, c, 0, false, false, false, "")
 	if err != nil {
 		return err
 	}

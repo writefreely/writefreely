@@ -14,8 +14,8 @@ import (
 	"errors"
 	"html/template"
 	"io"
-	"os"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -70,14 +70,14 @@ func initTemplate(parentDir, name string) {
 		filepath.Join(parentDir, templatesDir, "base.tmpl"),
 		filepath.Join(parentDir, templatesDir, "user", "include", "silenced.tmpl"),
 	}
-	if name == "collection" || name == "collection-tags" || name == "chorus-collection" || name == "read" {
+	if name == "collection" || name == "collection-tags" || name == "collection-archive" || name == "chorus-collection" || name == "read" {
 		// These pages list out collection posts, so we also parse templatesDir + "include/posts.tmpl"
 		files = append(files, filepath.Join(parentDir, templatesDir, "include", "posts.tmpl"))
 	}
 	if name == "chorus-collection" || name == "chorus-collection-post" {
 		files = append(files, filepath.Join(parentDir, templatesDir, "user", "include", "header.tmpl"))
 	}
-	if name == "collection" || name == "collection-tags" || name == "collection-post" || name == "post" || name == "chorus-collection" || name == "chorus-collection-post" {
+	if name == "collection" || name == "collection-tags" || name == "collection-archive" || name == "collection-post" || name == "post" || name == "chorus-collection" || name == "chorus-collection-post" {
 		files = append(files, filepath.Join(parentDir, templatesDir, "include", "post-render.tmpl"))
 	}
 	templates[name] = template.Must(template.New("").Funcs(funcMap).ParseFiles(files...))
