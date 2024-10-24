@@ -14,6 +14,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/writefreely/writefreely/mailer"
 	"html/template"
 	"net/http"
 	"strings"
@@ -437,17 +438,23 @@ func sendSubConfirmEmail(app *App, c *Collection, email, subID, token string) er
 	}
 
 	// Send email
-	gun := mailgun.NewMailgun(app.cfg.Email.Domain, app.cfg.Email.MailgunPrivate)
+	mlr, err := mailer.New(app.cfg.Email)
+	if err != nil {
+		return err
+	}
 
 	plainMsg := "Confirm your subscription to " + c.DisplayTitle() + ` (` + c.CanonicalURL() + `) to start receiving future posts. Simply click the following link (or copy and paste it into your browser):
 
 ` + c.CanonicalURL() + "email/confirm/" + subID + "?t=" + token + `
 
 If you didn't subscribe to this site or you're not sure why you're getting this email, you can delete it. You won't be subscribed or receive any future emails.`
-	m := mailgun.NewMessage(c.DisplayTitle()+" <"+c.Alias+"@"+app.cfg.Email.Domain+">", "Confirm your subscription to "+c.DisplayTitle(), plainMsg, fmt.Sprintf("<%s>", email))
+	m, err := mlr.NewMessage(c.DisplayTitle()+" <"+c.Alias+"@"+app.cfg.Email.Domain+">", "Confirm your subscription to "+c.DisplayTitle(), plainMsg, fmt.Sprintf("<%s>", email))
+	if err != nil {
+		return err
+	}
 	m.AddTag("Email Verification")
 
-	m.SetHtml(`<html>
+	m.SetHTML(`<html>
 	<body style="font-family:Lora, 'Palatino Linotype', Palatino, Baskerville, 'Book Antiqua', 'New York', 'DejaVu serif', serif; font-size: 100%%; margin:1em 2em;">
 		<div style="font-size: 1.2em;">
 			<p>Confirm your subscription to <a href="` + c.CanonicalURL() + `">` + c.DisplayTitle() + `</a> to start receiving future posts:</p>
@@ -456,7 +463,10 @@ If you didn't subscribe to this site or you're not sure why you're getting this 
         </div>
 	</body>
 </html>`)
-	gun.Send(m)
+	err = mlr.Send(m)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
