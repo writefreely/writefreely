@@ -32,7 +32,7 @@ type (
 )
 
 // New creates a new Mailer from the instance's config.EmailCfg, returning an error if not properly configured.
-func New(eCfg *config.EmailCfg) (*Mailer, error) {
+func New(eCfg config.EmailCfg) (*Mailer, error) {
 	m := &Mailer{}
 	if eCfg.Domain != "" && eCfg.MailgunPrivate != "" {
 		m.mailGun = mailgun.NewMailgun(eCfg.Domain, eCfg.MailgunPrivate)
@@ -77,6 +77,13 @@ func (m *Message) SetHTML(html string) {
 		m.smtpMsg.SetBody(mail.TextHTML, html)
 	} else if m.mgMsg != nil {
 		m.mgMsg.SetHtml(html)
+	}
+}
+
+// AddTag attaches a tag to the Message for providers that support it.
+func (m *Message) AddTag(tag string) {
+	if m.mgMsg != nil {
+		m.mgMsg.AddTag(tag)
 	}
 }
 
