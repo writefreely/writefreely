@@ -188,21 +188,22 @@ var movePostHTML = function(postID) {
 	}
 	return $tmpl.innerHTML.replace(/POST_ID/g, postID);
 }
-var createPostEl = function(post, owned) {
+var createPostEl = function(post, owned, singleUser) {
 	var $post = document.createElement('div');
 	let p = H.createPost(post.id, "", post.body)
 	var title = (post.title || p.title || post.id);
 	title = title.replace(/</g, "&lt;");
+	var postLink = (singleUser ? '/d/' : '/') + post.id
 	$post.id = 'post-' + post.id;
 	$post.className = 'post';
-	$post.innerHTML = '<h3><a href="/' + post.id + '">' + title + '</a></h3>';
+	$post.innerHTML = '<h3><a href="' + postLink + '">' + title + '</a></h3>';
 
 	var posted = "";
 	if (post.created) {
 		posted = getFormattedDate(new Date(post.created))
 	}
 	var hasDraft = H.exists('draft' + post.id);
-	$post.innerHTML += '<h4><date>' + posted + '</date> <a class="action" href="/pad/' + post.id + '">edit' + (hasDraft ? 'ed' : '') + '</a> <a class="delete action" href="/' + post.id + '" onclick="delPost(event, \'' + post.id + '\'' + (owned === true ? ', true' : '') + ')">delete</a> '+movePostHTML(post.id)+'</h4>';
+	$post.innerHTML += '<h4><date>' + posted + '</date> <a class="action" href="' + postLink + '/edit">edit' + (hasDraft ? 'ed' : '') + '</a> <a class="delete action" href="/' + post.id + '" onclick="delPost(event, \'' + post.id + '\'' + (owned === true ? ', true' : '') + ')">delete</a> '+movePostHTML(post.id)+'</h4>';
 
 	if (post.error) {
 		$post.innerHTML += '<p class="error"><strong>Sync error:</strong> ' + post.error + ' <nav><a href="#" onclick="localPosts.dismissError(event, this)">dismiss</a> <a href="#" onclick="localPosts.deletePost(event, this, \''+post.id+'\')">remove post</a></nav></p>';
