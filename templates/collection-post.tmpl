@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 
 		<title>{{.PlainDisplayTitle}} {{localhtml "title dash" .Language.String}} {{.Collection.DisplayTitle}}</title>
-		
+
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
 		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
 		<link rel="shortcut icon" href="/favicon.ico" />
@@ -45,7 +45,7 @@
 
 	</head>
 	<body id="post">
-		
+
 		<div id="overlay"></div>
 
 		<header>
@@ -55,12 +55,13 @@
 				{{range .PinnedPosts}}<a class="pinned{{if eq .Slug.String $.Slug.String}} selected{{end}}" href="{{if not $.SingleUser}}/{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}
 				{{end}}
 				{{ if and .IsOwner .IsFound }}<span class="views" dir="ltr"><strong>{{largeNumFmt .Views}}</strong> {{pluralize "view" "views" .Views}}</span>
+                {{if .Likes}}<span class="views" dir="ltr"><strong>{{largeNumFmt .Likes}}</strong> {{pluralize "like" "likes" .Likes}}</span>{{end}}
 				<a class="xtra-feature" href="/{{if not .SingleUser}}{{.Collection.Alias}}/{{end}}{{.Slug.String}}/edit" dir="{{.Direction}}">Edit</a>
 				{{if .IsPinned}}<a class="xtra-feature unpin" href="/{{.Collection.Alias}}/{{.Slug.String}}/unpin" dir="{{.Direction}}" onclick="unpinPost(event, '{{.ID}}')">Unpin</a>{{end}}
 				{{ end }}
 			</nav>
 		</header>
-		
+
 		{{if .Silenced}}
 			{{template "user-silenced"}}
 		{{end}}
@@ -70,7 +71,7 @@
 		<footer dir="ltr"><hr><nav><p style="font-size: 0.9em">{{localhtml "published with write.as" .Language.String}}</p></nav></footer>
 		{{ end }}
 	</body>
-	
+
 	{{if .Collection.CanShowScript}}
 		{{range .Collection.ExternalScripts}}<script type="text/javascript" src="{{.}}" async></script>{{end}}
 		{{if .Collection.Script}}<script type="text/javascript">{{.Collection.ScriptDisplay}}</script>{{end}}

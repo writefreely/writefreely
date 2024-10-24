@@ -51,11 +51,13 @@ td.none {
 			<th>Post</th>
 			{{if not .Collection}}<th>Blog</th>{{end}}
 			<th class="num">Total Views</th>
+			{{if .Federation}}<th class="num">Likes</th>{{end}}
 		</tr>
 		{{range .TopPosts}}<tr>
 			<td style="word-break: break-all;"><a href="{{if .Collection}}{{.Collection.CanonicalURL}}{{.Slug.String}}{{else}}/{{.ID}}{{end}}">{{if ne .DisplayTitle ""}}{{.DisplayTitle}}{{else}}<em>{{.ID}}</em>{{end}}</a></td>
 			{{ if not $.Collection }}<td>{{if .Collection}}<a href="{{.Collection.CanonicalURL}}">{{.Collection.Title}}</a>{{else}}<em>Draft</em>{{end}}</td>{{ end }}
 			<td class="num">{{.ViewCount}}</td>
+			{{if $.Federation}}<td class="num">{{.LikeCount}}</td>{{end}}
 		</tr>{{end}}
 	</table>
 
