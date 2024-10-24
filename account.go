@@ -13,7 +13,7 @@ package writefreely
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/mailgun/mailgun-go"
+	"github.com/writefreely/writefreely/mailer"
 	"github.com/writefreely/writefreely/spam"
 	"html/template"
 	"net/http"
@@ -1378,13 +1378,19 @@ func handleResetPasswordInit(app *App, w http.ResponseWriter, r *http.Request) e
 
 func emailPasswordReset(app *App, toEmail, token string) error {
 	// Send email
-	gun := mailgun.NewMailgun(app.cfg.Email.Domain, app.cfg.Email.MailgunPrivate)
+	mlr, err := mailer.New(app.cfg.Email)
+	if err != nil {
+		return err
+	}
 	footerPara := "Didn't request this password reset? Your account is still safe, and you can safely ignore this email."
 
 	plainMsg := fmt.Sprintf("We received a request to reset your password on %s. Please click the following link to continue (or copy and paste it into your browser): %s/reset?t=%s\n\n%s", app.cfg.App.SiteName, app.cfg.App.Host, token, footerPara)
-	m := mailgun.NewMessage(app.cfg.App.SiteName+" <noreply-password@"+app.cfg.Email.Domain+">", "Reset Your "+app.cfg.App.SiteName+" Password", plainMsg, fmt.Sprintf("<%s>", toEmail))
+	m, err := mlr.NewMessage(app.cfg.App.SiteName+" <noreply-password@"+app.cfg.Email.Domain+">", "Reset Your "+app.cfg.App.SiteName+" Password", plainMsg, fmt.Sprintf("<%s>", toEmail))
+	if err != nil {
+		return err
+	}
 	m.AddTag("Password Reset")
-	m.SetHtml(fmt.Sprintf(`<html>
+	m.SetHTML(fmt.Sprintf(`<html>
 	<body style="font-family:Lora, 'Palatino Linotype', Palatino, Baskerville, 'Book Antiqua', 'New York', 'DejaVu serif', serif; font-size: 100%%; margin:1em 2em;">
 		<div style="margin:0 auto; max-width: 40em; font-size: 1.2em;">
         <h1 style="font-size:1.75em"><a style="text-decoration:none;color:#000;" href="%s">%s</a></h1>
@@ -1394,8 +1400,7 @@ func emailPasswordReset(app *App, toEmail, token string) error {
         </div>
 	</body>
 </html>`, app.cfg.App.Host, app.cfg.App.SiteName, app.cfg.App.SiteName, app.cfg.App.Host, token, footerPara))
-	_, _, err := gun.Send(m)
-	return err
+	return mlr.Send(m)
 }
 
 func loginViaEmail(app *App, alias, redirectTo string) error {
@@ -1424,15 +1429,21 @@ func loginViaEmail(app *App, alias, redirectTo string) error {
 	}
 
 	// Send email
-	gun := mailgun.NewMailgun(app.cfg.Email.Domain, app.cfg.Email.MailgunPrivate)
+	mlr, err := mailer.New(app.cfg.Email)
+	if err != nil {
+		return err
+	}
 	toEmail := u.EmailClear(app.keys)
 	footerPara := "This link will only work once and expires in 15 minutes. Didn't ask us to log in? You can safely ignore this email."
 
 	plainMsg := fmt.Sprintf("Log in to %s here: %s/login?to=%s&with=%s\n\n%s", app.cfg.App.SiteName, app.cfg.App.Host, redirectTo, t, footerPara)
-	m := mailgun.NewMessage(app.cfg.App.SiteName+" <noreply-login@"+app.cfg.Email.Domain+">", "Log in to "+app.cfg.App.SiteName, plainMsg, fmt.Sprintf("<%s>", toEmail))
+	m, err := mlr.NewMessage(app.cfg.App.SiteName+" <noreply-login@"+app.cfg.Email.Domain+">", "Log in to "+app.cfg.App.SiteName, plainMsg, fmt.Sprintf("<%s>", toEmail))
+	if err != nil {
+		return err
+	}
 	m.AddTag("Email Login")
 
-	m.SetHtml(fmt.Sprintf(`<html>
+	m.SetHTML(fmt.Sprintf(`<html>
 	<body style="font-family:Lora, 'Palatino Linotype', Palatino, Baskerville, 'Book Antiqua', 'New York', 'DejaVu serif', serif; font-size: 100%%; margin:1em 2em;">
 		<div style="margin:0 auto; max-width: 40em; font-size: 1.2em;">
         <h1 style="font-size:1.75em"><a style="text-decoration:none;color:#000;" href="%s">%s</a></h1>
@@ -1441,9 +1452,7 @@ func loginViaEmail(app *App, alias, redirectTo string) error {
         </div>
 	</body>
 </html>`, app.cfg.App.Host, app.cfg.App.SiteName, app.cfg.App.Host, redirectTo, t, app.cfg.App.SiteName, footerPara))
-	_, _, err = gun.Send(m)
-
-	return err
+	return mlr.Send(m)
 }
 
 func saveTempInfo(app *App, key, val string, r *http.Request, w http.ResponseWriter) error {
