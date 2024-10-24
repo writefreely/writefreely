@@ -41,6 +41,12 @@ build-darwin: deps
 	fi
 	xgo --targets=darwin/amd64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.21.x -out writefreely -pkg ./cmd/writefreely .
 
+build-darwin-arm64: deps
+	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
+	fi
+	xgo --targets=darwin/arm64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.21.x -out writefreely -pkg ./cmd/writefreely .
+
 build-arm6: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
@@ -109,6 +115,10 @@ release : clean ui
 	mv build/$(BINARY_NAME)-darwin-10.12-amd64 $(BUILDPATH)/$(BINARY_NAME)
 	tar -cvzf $(BINARY_NAME)_$(GITREV)_macos_amd64.tar.gz -C build $(BINARY_NAME)
 	rm $(BUILDPATH)/$(BINARY_NAME)
+	$(MAKE) build-darwin-arm64
+	mv build/$(BINARY_NAME)-darwin-arm64 $(BUILDPATH)/$(BINARY_NAME)
+	tar -cvzf $(BINARY_NAME)_$(GITREV)_macos_arm64.tar.gz -C build $(BINARY_NAME)
+	rm $(BUILDPATH)/$(BINARY_NAME)
 	$(MAKE) build-windows
 	mv build/$(BINARY_NAME)-windows-4.0-amd64.exe $(BUILDPATH)/$(BINARY_NAME).exe
 	cd build; zip -r ../$(BINARY_NAME)_$(GITREV)_windows_amd64.zip ./$(BINARY_NAME)
@@ -145,5 +155,5 @@ clean :
 	-rm -rf tmp
 	cd less/; $(MAKE) clean $(MFLAGS)
 
-force_look : 
+force_look :
 	true
