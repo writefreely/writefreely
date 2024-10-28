@@ -348,19 +348,10 @@
 		  } catch (e) {}
 		};
 		var fonts = document.querySelectorAll('nav#font-picker a.font');
-		var setFontClass = function(fontClass) {
-			return (state, dispatch) => {
-				if (dispatch && window.editorView) {
-					window.editorView.view.dom.classList.remove("norm", "sans", "wrap");
-					window.editorView.view.dom.classList.add(fontClass);
-				}
-				return true;
-			}
-		}
-		var changeEditorFont = function(fontClass) {
+		var setEditorFontClass = function(fontClass) {
 			if (window.editorView) {
-				const command = setFontClass(fontClass);
-				command(window.editorView.view.state, window.editorView.view.dispatch);
+				window.editorView.view.dom.classList.remove("norm", "sans", "wrap");
+				window.editorView.view.dom.classList.add(fontClass);
 			}
 		};
 		for (var i=0; i<fonts.length; i++) {
@@ -368,7 +359,7 @@
 				e.preventDefault();
 				selectedFont = this.href.substring(this.href.indexOf('#')+1);
 				$title.el.className = selectedFont;
-				changeEditorFont(selectedFont);
+				setEditorFontClass(selectedFont);
 				document.querySelector('nav#font-picker li.selected').classList.remove('selected');
 				this.parentElement.classList.add('selected');
 				H.set('{{if .Editing}}draft{{.Post.Id}}font{{else}}padFont{{end}}', selectedFont);
@@ -378,7 +369,7 @@
 			});
 		}
 		var selectedFont = H.get('{{if .Editing}}draft{{.Post.Id}}font{{else}}padFont{{end}}', '{{.Post.Font}}');
-		document.addEventListener('DOMContentLoaded', () => {changeEditorFont(selectedFont)});
+		document.addEventListener('DOMContentLoaded', () => {setEditorFontClass(selectedFont)});
 		var sfe = document.querySelector('nav#font-picker a.font.'+selectedFont);
 		if (sfe != null) {
 			sfe.click();
