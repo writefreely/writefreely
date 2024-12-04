@@ -251,7 +251,8 @@ func (ac *AppCfg) LandingPath() string {
 }
 
 func (lc EmailCfg) Enabled() bool {
-	return lc.Domain != "" && lc.MailgunPrivate != ""
+	return (lc.Domain != "" && lc.MailgunPrivate != "") ||
+	lc.Username != "" && lc.Password != "" && lc.Host != "" && lc.Port > 0
 }
 
 func (ac AppCfg) SignupPath() string {

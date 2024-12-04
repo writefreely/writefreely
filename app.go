@@ -428,15 +428,11 @@ func Initialize(apper Apper, debug bool) (*App, error) {
 
 	initActivityPub(apper.App())
 
-	if apper.App().cfg.Email.Domain != "" || apper.App().cfg.Email.MailgunPrivate != "" {
-		if apper.App().cfg.Email.Domain == "" {
-			log.Error("[FAILED] Starting publish jobs queue: no [letters]domain config value set.")
-		} else if apper.App().cfg.Email.MailgunPrivate == "" {
-			log.Error("[FAILED] Starting publish jobs queue: no [letters]mailgun_private config value set.")
-		} else {
-			log.Info("Starting publish jobs queue...")
-			go startPublishJobsQueue(apper.App())
-		}
+	if apper.App().cfg.Email.Enabled() {
+		log.Info("Starting publish jobs queue...")
+		go startPublishJobsQueue(apper.App())
+	} else {
+		log.Error("[FAILED] Starting publish jobs queue: no email provider is configured.")
 	}
 
 	// Handle local timeline, if enabled
