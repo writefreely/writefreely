@@ -417,7 +417,7 @@ Sent to %recipient.to%. Unsubscribe: ` + p.Collection.CanonicalURL() + `email/un
 	for _, s := range subs {
 		e := s.FinalEmail(app.keys)
 		log.Info("[email] Adding %s", e)
-		err = m.AddRecipientAndVariables(e, map[string]interface{}{
+		err = m.AddRecipientAndVariables(e, map[string]string{
 			"id":    s.ID,
 			"to":    e,
 			"token": s.Token,

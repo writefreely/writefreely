@@ -12,8 +12,10 @@ package mailer
 
 import (
 	"fmt"
+	"strings"
 	"github.com/mailgun/mailgun-go"
 	"github.com/writefreely/writefreely/config"
+	"github.com/writeas/web-core/log"
 	mail "github.com/xhit/go-simple-mail/v2"
 )
 
@@ -27,7 +29,21 @@ type (
 	// Message holds the email contents and metadata for the preferred mailing provider.
 	Message struct {
 		mgMsg   *mailgun.Message
-		smtpMsg *mail.Email
+		smtpMsg *SmtpMessage
+	}
+
+	SmtpMessage struct {
+		from string
+		replyTo string 
+		subject string
+		recipients []Recipient
+		html string
+		text string
+	}
+
+	Recipient struct {
+		email string
+		vars map[string]string
 	}
 )
 
@@ -48,6 +64,8 @@ func New(eCfg config.EmailCfg) (*Mailer, error) {
 		if eCfg.EnableStartTLS {
 			m.smtp.Encryption = mail.EncryptionSTARTTLS
 		}
+		// To allow sending multiple email
+		m.smtp.KeepAlive = true
 	} else {
 		return nil, fmt.Errorf("no email provider is configured")
 	}
@@ -61,14 +79,16 @@ func (m *Mailer) NewMessage(from, subject, text string, to ...string) (*Message,
 	if m.mailGun != nil {
 		msg.mgMsg = m.mailGun.NewMessage(from, subject, text, to...)
 	} else if m.smtp != nil {
-		msg.smtpMsg = mail.NewMSG()
-		msg.smtpMsg.SetFrom(from)
-		msg.smtpMsg.AddTo(to...)
-		msg.smtpMsg.SetSubject(subject)
-		msg.smtpMsg.AddAlternative(mail.TextPlain, text)
-
-		if msg.smtpMsg.Error != nil {
-			return nil, msg.smtpMsg.Error
+		msg.smtpMsg = &SmtpMessage {
+			from,
+			"",
+			subject,
+			make([]Recipient, len(to)),
+			"",
+			text,
+		}
+		for _, r := range to {
+			msg.smtpMsg.recipients = append(msg.smtpMsg.recipients, Recipient{r, make(map[string]string)})
 		}
 	}
 	return msg, nil
@@ -77,7 +97,7 @@ func (m *Mailer) NewMessage(from, subject, text string, to ...string) (*Message,
 // SetHTML sets the body of the message.
 func (m *Message) SetHTML(html string) {
 	if m.smtpMsg != nil {
-		m.smtpMsg.SetBody(mail.TextHTML, html)
+		m.smtpMsg.html = html
 	} else if m.mgMsg != nil {
 		m.mgMsg.SetHtml(html)
 	}
@@ -85,7 +105,7 @@ func (m *Message) SetHTML(html string) {
 
 func (m *Message) SetReplyTo(replyTo string) {
 	if (m.smtpMsg != nil) {
-		m.smtpMsg.SetReplyTo(replyTo)
+		m.smtpMsg.replyTo = replyTo
 	} else {
 		m.mgMsg.SetReplyTo(replyTo)
 	}
@@ -98,13 +118,16 @@ func (m *Message) AddTag(tag string) {
 	}
 }
 
-// Variable only used by mailgun
-func (m *Message) AddRecipientAndVariables(r string, vars map[string]interface{}) error {
-	if (m.smtpMsg != nil) {
-		m.smtpMsg.AddBcc(r)
+func (m *Message) AddRecipientAndVariables(r string, vars map[string]string) error {
+	if m.smtpMsg != nil {
+		m.smtpMsg.recipients = append(m.smtpMsg.recipients, Recipient{r, vars})
 		return nil
 	} else {
-		return m.mgMsg.AddRecipientAndVariables(r, vars)
+		varsInterfaces := make(map[string]interface{}, len(vars))
+		for k, v := range vars {
+			varsInterfaces[k] = v
+		}
+		return m.mgMsg.AddRecipientAndVariables(r, varsInterfaces)
 	}
 }
 
@@ -115,8 +138,39 @@ func (m *Mailer) Send(msg *Message) error {
 		if err != nil {
 			return err
 		}
-		// TODO: handle possible limits (new config?) on max recipients (multiple batches, with delay?)
-		return msg.smtpMsg.Send(client)
+		emailSent := false
+		for _, r := range msg.smtpMsg.recipients {
+			customMsg := mail.NewMSG()
+			customMsg.SetFrom(msg.smtpMsg.from)
+			if (msg.smtpMsg.replyTo != "") {
+				customMsg.SetReplyTo(msg.smtpMsg.replyTo)
+			}
+			customMsg.SetSubject(msg.smtpMsg.subject)
+			customMsg.AddTo(r.email)
+			cText := msg.smtpMsg.text
+			cHtml := msg.smtpMsg.html
+			for v, value := range r.vars {
+				placeHolder := fmt.Sprintf("%%recipient.%s%%", v)
+				cText = strings.ReplaceAll(cText, placeHolder, value)
+				cHtml = strings.ReplaceAll(cHtml, placeHolder, value)
+			}
+			customMsg.SetBody(mail.TextHTML, cHtml)
+			customMsg.AddAlternative(mail.TextPlain, cText)
+			e := customMsg.Error
+			if e == nil {
+				e = customMsg.Send(client)
+			}
+			if e == nil {
+				emailSent = true
+			} else {
+				log.Error("Unable to send email to %s: %v",  r.email, e)
+				err = e
+			}
+		}
+		if !emailSent {
+			// only send an error if no email could be sent (to avoid retry of successfully sent emails)
+			return err
+		}
 	} else if m.mailGun != nil {
 		_, _, err := m.mailGun.Send(msg.mgMsg)
 		if err != nil {
