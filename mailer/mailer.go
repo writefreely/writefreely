@@ -83,10 +83,28 @@ func (m *Message) SetHTML(html string) {
 	}
 }
 
+func (m *Message) SetReplyTo(replyTo string) {
+	if (m.smtpMsg != nil) {
+		m.smtpMsg.SetReplyTo(replyTo)
+	} else {
+		m.mgMsg.SetReplyTo(replyTo)
+	}
+}
+
 // AddTag attaches a tag to the Message for providers that support it.
 func (m *Message) AddTag(tag string) {
 	if m.mgMsg != nil {
 		m.mgMsg.AddTag(tag)
+	}
+}
+
+// Variable only used by mailgun
+func (m *Message) AddRecipientAndVariables(r string, vars map[string]interface{}) error {
+	if (m.smtpMsg != nil) {
+		m.smtpMsg.AddBcc(r)
+		return nil
+	} else {
+		return m.mgMsg.AddRecipientAndVariables(r, vars)
 	}
 }
 
@@ -97,6 +115,7 @@ func (m *Mailer) Send(msg *Message) error {
 		if err != nil {
 			return err
 		}
+		// TODO: handle possible limits (new config?) on max recipients (multiple batches, with delay?)
 		return msg.smtpMsg.Send(client)
 	} else if m.mailGun != nil {
 		_, _, err := m.mailGun.Send(msg.mgMsg)

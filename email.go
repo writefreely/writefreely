@@ -22,7 +22,6 @@ import (
 
 	"github.com/aymerick/douceur/inliner"
 	"github.com/gorilla/mux"
-	"github.com/mailgun/mailgun-go"
 	stripmd "github.com/writeas/go-strip-markdown/v2"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/data"
@@ -308,14 +307,14 @@ Originally published on ` + p.Collection.DisplayTitle() + ` (` + p.Collection.Ca
 
 Sent to %recipient.to%. Unsubscribe: ` + p.Collection.CanonicalURL() + `email/unsubscribe/%recipient.id%?t=%recipient.token%`
 
-	gun := mailgun.NewMailgun(app.cfg.Email.Domain, app.cfg.Email.MailgunPrivate)
-
-	if app.cfg.Email.MailgunEurope {
-		gun.SetAPIBase("https://api.eu.mailgun.net/v3")
+	mlr, err := mailer.New(app.cfg.Email)
+	if err != nil {
+		return err
 	}
-
-
-	m := mailgun.NewMessage(p.Collection.DisplayTitle()+" <"+p.Collection.Alias+"@"+app.cfg.Email.Domain+">", stripmd.Strip(p.DisplayTitle()), plainMsg)
+	m, err := mlr.NewMessage(p.Collection.DisplayTitle()+" <"+p.Collection.Alias+"@"+app.cfg.Email.Domain+">", stripmd.Strip(p.DisplayTitle()), plainMsg)
+	if err != nil {
+		return err
+	}
 	replyTo := app.db.GetCollectionAttribute(collID, collAttrLetterReplyTo)
 	if replyTo != "" {
 		m.SetReplyTo(replyTo)
@@ -412,7 +411,7 @@ Sent to %recipient.to%. Unsubscribe: ` + p.Collection.CanonicalURL() + `email/un
 		return err
 	}
 
-	m.SetHtml(html)
+	m.SetHTML(html)
 
 	log.Info("[email] Adding %d recipient(s)", len(subs))
 	for _, s := range subs {
@@ -428,8 +427,8 @@ Sent to %recipient.to%. Unsubscribe: ` + p.Collection.CanonicalURL() + `email/un
 		}
 	}
 
-	res, _, err := gun.Send(m)
-	log.Info("[email] Send result: %s", res)
+	err = mlr.Send(m)
+	log.Info("[email] Email sent")
 	if err != nil {
 		log.Error("Unable to send post email: %v", err)
 		return err
