@@ -181,6 +181,7 @@ type (
 		// Mailgun configuration values
 		Domain         string `ini:"domain"`
 		MailgunPrivate string `ini:"mailgun_private"`
+		MailgunEurope  bool   `ini:"mailgun_europe"`
 	}
 
 	// Config holds the complete configuration for running a writefreely instance
