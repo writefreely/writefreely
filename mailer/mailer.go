@@ -36,6 +36,9 @@ func New(eCfg config.EmailCfg) (*Mailer, error) {
 	m := &Mailer{}
 	if eCfg.Domain != "" && eCfg.MailgunPrivate != "" {
 		m.mailGun = mailgun.NewMailgun(eCfg.Domain, eCfg.MailgunPrivate)
+		if eCfg.MailgunEurope {
+			m.mailGun.SetAPIBase("https://api.eu.mailgun.net/v3")
+		}
 	} else if eCfg.Username != "" && eCfg.Password != "" && eCfg.Host != "" && eCfg.Port > 0 {
 		m.smtp = mail.NewSMTPClient()
 		m.smtp.Host = eCfg.Host

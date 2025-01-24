@@ -309,6 +309,12 @@ Originally published on ` + p.Collection.DisplayTitle() + ` (` + p.Collection.Ca
 Sent to %recipient.to%. Unsubscribe: ` + p.Collection.CanonicalURL() + `email/unsubscribe/%recipient.id%?t=%recipient.token%`
 
 	gun := mailgun.NewMailgun(app.cfg.Email.Domain, app.cfg.Email.MailgunPrivate)
+
+	if app.cfg.Email.MailgunEurope {
+		gun.SetAPIBase("https://api.eu.mailgun.net/v3")
+	}
+
+
 	m := mailgun.NewMessage(p.Collection.DisplayTitle()+" <"+p.Collection.Alias+"@"+app.cfg.Email.Domain+">", stripmd.Strip(p.DisplayTitle()), plainMsg)
 	replyTo := app.db.GetCollectionAttribute(collID, collAttrLetterReplyTo)
 	if replyTo != "" {
