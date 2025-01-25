@@ -12,11 +12,11 @@ package mailer
 
 import (
 	"fmt"
-	"strings"
 	"github.com/mailgun/mailgun-go"
-	"github.com/writefreely/writefreely/config"
 	"github.com/writeas/web-core/log"
+	"github.com/writefreely/writefreely/config"
 	mail "github.com/xhit/go-simple-mail/v2"
+	"strings"
 )
 
 type (
@@ -33,17 +33,17 @@ type (
 	}
 
 	SmtpMessage struct {
-		from string
-		replyTo string 
-		subject string
+		from       string
+		replyTo    string
+		subject    string
 		recipients []Recipient
-		html string
-		text string
+		html       string
+		text       string
 	}
 
 	Recipient struct {
 		email string
-		vars map[string]string
+		vars  map[string]string
 	}
 )
 
@@ -79,13 +79,13 @@ func (m *Mailer) NewMessage(from, subject, text string, to ...string) (*Message,
 	if m.mailGun != nil {
 		msg.mgMsg = m.mailGun.NewMessage(from, subject, text, to...)
 	} else if m.smtp != nil {
-		msg.smtpMsg = &SmtpMessage {
-			from,
-			"",
-			subject,
-			make([]Recipient, len(to)),
-			"",
-			text,
+		msg.smtpMsg = &SmtpMessage{
+			from:       from,
+			replyTo:    "",
+			subject:    subject,
+			recipients: make([]Recipient, len(to)),
+			html:       "",
+			text:       text,
 		}
 		for _, r := range to {
 			msg.smtpMsg.recipients = append(msg.smtpMsg.recipients, Recipient{r, make(map[string]string)})
@@ -104,7 +104,7 @@ func (m *Message) SetHTML(html string) {
 }
 
 func (m *Message) SetReplyTo(replyTo string) {
-	if (m.smtpMsg != nil) {
+	if m.smtpMsg != nil {
 		m.smtpMsg.replyTo = replyTo
 	} else {
 		m.mgMsg.SetReplyTo(replyTo)
@@ -142,7 +142,7 @@ func (m *Mailer) Send(msg *Message) error {
 		for _, r := range msg.smtpMsg.recipients {
 			customMsg := mail.NewMSG()
 			customMsg.SetFrom(msg.smtpMsg.from)
-			if (msg.smtpMsg.replyTo != "") {
+			if msg.smtpMsg.replyTo != "" {
 				customMsg.SetReplyTo(msg.smtpMsg.replyTo)
 			}
 			customMsg.SetSubject(msg.smtpMsg.subject)
@@ -163,7 +163,7 @@ func (m *Mailer) Send(msg *Message) error {
 			if e == nil {
 				emailSent = true
 			} else {
-				log.Error("Unable to send email to %s: %v",  r.email, e)
+				log.Error("Unable to send email to %s: %v", r.email, e)
 				err = e
 			}
 		}
