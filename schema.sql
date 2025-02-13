@@ -136,7 +136,7 @@ CREATE TABLE IF NOT EXISTS `posts` (
   `updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `view_count` int(6) NOT NULL,
   `title` varchar(160) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `content` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_slug` (`collection_id`,`slug`),
   UNIQUE KEY `owner_id` (`owner_id`,`id`),
