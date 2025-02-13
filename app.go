@@ -46,9 +46,10 @@ import (
 )
 
 const (
-	staticDir       = "static"
-	assumedTitleLen = 80
-	postsPerPage    = 10
+	staticDir        = "static"
+	assumedTitleLen  = 80
+	postsPerPage     = 10
+	postsPerArchPage = 40
 
 	serverSoftware = "WriteFreely"
 	softwareURL    = "https://writefreely.org"

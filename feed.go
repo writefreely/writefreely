@@ -67,7 +67,7 @@ func ViewFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 	if tag != "" {
 		coll.Posts, _ = app.db.GetPostsTagged(app.cfg, c, tag, 1, false)
 	} else {
-		coll.Posts, _ = app.db.GetPosts(app.cfg, c, 1, false, true, false)
+		coll.Posts, _ = app.db.GetPosts(app.cfg, c, 1, false, true, false, "")
 	}
 
 	author := ""

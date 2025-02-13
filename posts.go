@@ -49,6 +49,12 @@ const (
 	postIDLen     = 10
 
 	postMetaDateFormat = "2006-01-02 15:04:05"
+)
+
+type PostType string
+
+const (
+	postArch PostType = "archive"
 
 	shortCodePaid = "<!--paid-->"
 )
@@ -105,6 +111,7 @@ type (
 		Created        time.Time     `db:"created" json:"created"`
 		Updated        time.Time     `db:"updated" json:"updated"`
 		ViewCount      int64         `db:"view_count" json:"-"`
+		LikeCount      int64         `db:"like_count" json:"likes"`
 		Title          zero.String   `db:"title" json:"title"`
 		HTMLTitle      template.HTML `db:"title" json:"-"`
 		Content        string        `db:"content" json:"body"`
@@ -127,6 +134,7 @@ type (
 		IsTopLevel  bool           `json:"-"`
 		DisplayDate string         `json:"-"`
 		Views       int64          `json:"views"`
+		Likes       int64          `json:"likes"`
 		Owner       *PublicUser    `json:"-"`
 		IsOwner     bool           `json:"-"`
 		URL         string         `json:"url,omitempty"`
@@ -1184,6 +1192,7 @@ func fetchPostProperty(app *App, w http.ResponseWriter, r *http.Request) error {
 func (p *Post) processPost() PublicPost {
 	res := &PublicPost{Post: p, Views: 0}
 	res.Views = p.ViewCount
+	res.Likes = p.LikeCount
 	// TODO: move to own function
 	loc := monday.FuzzyLocale(p.Language.String)
 	res.DisplayDate = monday.Format(p.Created, monday.LongFormatsByLocale[loc], loc)
@@ -1507,6 +1516,10 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 				// User tried to access blog feed without a trailing slash, and
 				// there's no post with a slug "feed"
 				return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "feed/"}
+			} else if slug == "archive" {
+				// User tried to access blog Archive without a trailing slash, and
+				// there's no post with a slug "archive"
+				return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "archive/"}
 			}
 
 			po := &Post{

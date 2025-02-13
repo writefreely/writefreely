@@ -83,9 +83,9 @@ install : build
 
 release : clean ui
 	mkdir -p $(BUILDPATH)
-	cp -r templates $(BUILDPATH)
-	cp -r pages $(BUILDPATH)
-	cp -r static $(BUILDPATH)
+	rsync -av --exclude=".*" templates $(BUILDPATH)
+	rsync -av --exclude=".*" pages $(BUILDPATH)
+	rsync -av --exclude=".*" static $(BUILDPATH)
 	rm -r $(BUILDPATH)/static/local
 	scripts/invalidate-css.sh $(BUILDPATH)
 	mkdir $(BUILDPATH)/keys

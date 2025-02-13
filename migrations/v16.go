@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2024 Musing Studio LLC.
+ * Copyright © 2024 Musing Studio LLC.
  *
  * This file is part of WriteFreely.
  *
@@ -10,41 +10,30 @@
 
 package migrations
 
-import (
-	"context"
-	"database/sql"
-
-	wf_db "github.com/writefreely/writefreely/db"
-)
-
-func increasePostContentSize(db *datastore) error {
-	if db.driverName != driverMySQL {
-		// Only MySQL databases need this migration
-		return nil
+func supportRemoteLikes(db *datastore) error {
+	t, err := db.Begin()
+	if err != nil {
+		t.Rollback()
+		return err
 	}
 
-	dialect := wf_db.DialectMySQL
-	return wf_db.RunTransactionWithOptions(context.Background(), db.DB, &sql.TxOptions{}, func(ctx context.Context, tx *sql.Tx) error {
-		builders := []wf_db.SQLBuilder{
-			dialect.AlterTable("posts").
-				ChangeColumn("content",
-					dialect.Column(
-						"column",
-						wf_db.ColumnTypeLongText,
-						wf_db.OptionalInt{
-							Set: false,
-							Value: 0,
-						}).SetNullable(false)),
-		}
-		for _, builder := range builders {
-			query, err := builder.ToSQL()
-			if err != nil {
-				return err
-			}
-			if _, err := tx.ExecContext(ctx, query); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	_, err = t.Exec(`CREATE TABLE remote_likes (
+	post_id        ` + db.typeChar(16) + ` NOT NULL,
+	remote_user_id ` + db.typeInt() + ` NOT NULL,
+	created        ` + db.typeDateTime() + ` NOT NULL,
+	PRIMARY KEY (post_id,remote_user_id)
+)`)
+	if err != nil {
+		t.Rollback()
+		return err
+	}
+
+	err = t.Commit()
+	if err != nil {
+		t.Rollback()
+		return err
+	}
+
+	return nil
 }
+
