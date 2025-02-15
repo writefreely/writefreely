@@ -971,6 +971,24 @@ func getRemoteUserFromHandle(app *App, handle string) (*RemoteUser, error) {
 	return &u, nil
 }
 
+// getRemoteUserFromURL retrieves the profile page of a remote user
+// from the @user@server.tld handle
+func getRemoteUserFromURL(app *App, urlStr string) (*RemoteUser, error) {
+	u := RemoteUser{URL: urlStr}
+	var urlVal, handle sql.NullString
+	err := app.db.QueryRow("SELECT id, actor_id, inbox, shared_inbox, url, handle FROM remoteusers WHERE url = ?", urlStr).Scan(&u.ID, &u.ActorID, &u.Inbox, &u.SharedInbox, &urlVal, &handle)
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, ErrRemoteUserNotFound
+	case err != nil:
+		log.Error("Couldn't get remote user from URL %s: %v", urlStr, err)
+		return nil, err
+	}
+	u.URL = urlVal.String
+	u.Handle = handle.String
+	return &u, nil
+}
+
 func getActor(app *App, actorIRI string) (*activitystreams.Person, *RemoteUser, error) {
 	log.Info("Fetching actor %s locally", actorIRI)
 	actor := &activitystreams.Person{}
