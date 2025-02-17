@@ -554,7 +554,7 @@ requests. We recommend supplying a valid host name.`)
 		}
 
 		if network == "unix" {
-			err = os.Chmod(bindAddress, 0o666)
+			err = os.Chmod(bindAddress, 0o600)
 			if err != nil {
 				log.Error("Could not update socket permissions: %v", err)
 				os.Exit(1)
