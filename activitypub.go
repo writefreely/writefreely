@@ -971,8 +971,7 @@ func getRemoteUserFromHandle(app *App, handle string) (*RemoteUser, error) {
 	return &u, nil
 }
 
-// getRemoteUserFromURL retrieves the profile page of a remote user
-// from the @user@server.tld handle
+// getRemoteUserFromURL retrieves a RemoteUser from their public profile URL.
 func getRemoteUserFromURL(app *App, urlStr string) (*RemoteUser, error) {
 	u := RemoteUser{URL: urlStr}
 	var urlVal, handle sql.NullString
