@@ -884,7 +884,6 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 	// Serve ActivityStreams data now, if requested
 	if IsActivityPubRequest(r) {
 		ac := c.PersonObject()
-		ac.Context = []interface{}{activitystreams.Namespace}
 		setCacheControl(w, apCacheTime)
 		return impart.RenderActivityJSON(w, ac, http.StatusOK)
 	}
