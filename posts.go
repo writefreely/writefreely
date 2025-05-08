@@ -56,6 +56,7 @@ type PostType string
 const (
 	postArch PostType = "archive"
 
+	shortCodeMore = "<!--more-->"
 	shortCodePaid = "<!--paid-->"
 )
 
@@ -1289,6 +1290,39 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 		o.CC = append(o.CC, iri)
 		o.Tag = append(o.Tag, activitystreams.Tag{Type: "Mention", HRef: iri, Name: handle})
 	}
+
+	// Add shortened Note as the `preview` property if this is an Article
+	if o.Type == "Article" {
+		o.Preview = p.PreviewObject(app, o)
+	}
+
+	return o
+}
+
+// PreviewObject returns an activitystreams.Object that can be used as an Article's `preview` property.
+func (p *PublicPost) PreviewObject(app *App, art *activitystreams.Object) *activitystreams.Object {
+	o := activitystreams.NewNoteObject()
+	o.To = nil
+	o.ID = art.ID
+	o.URL = art.URL
+	o.Published = art.Published
+	o.Updated = art.Updated
+	o.Tag = art.Tag
+	o.Attachment = art.Attachment
+
+	baseURL := p.Collection.CanonicalURL()
+	// Try to truncate at user-defined excerpt, if exists
+	exc := strings.Index(p.Content, shortCodeMore)
+	if exc == -1 {
+		// No excerpt; fall back to truncating at first paragraph
+		exc = strings.Index(p.Content, "\n\n")
+	}
+	if exc > -1 {
+		p.HTMLExcerpt = template.HTML(applyMarkdown([]byte(p.Content[:exc]), baseURL, app.cfg))
+	} else {
+		p.HTMLExcerpt = p.HTMLContent
+	}
+	o.Content = strings.TrimRight(string(p.Excerpt()), "\n")
 	return o
 }
 
