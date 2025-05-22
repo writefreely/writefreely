@@ -135,6 +135,7 @@ type (
 		DisplayDate string         `json:"-"`
 		Views       int64          `json:"views"`
 		Likes       int64          `json:"likes"`
+	RemoteLikers []*RemoteUser `json:"remote_likers,omitempty"` // New field
 		Owner       *PublicUser    `json:"-"`
 		IsOwner     bool           `json:"-"`
 		URL         string         `json:"url,omitempty"`

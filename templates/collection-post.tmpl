@@ -56,6 +56,20 @@
 				{{end}}
 				{{ if and .IsOwner .IsFound }}<span class="views" dir="ltr"><strong>{{largeNumFmt .Views}}</strong> {{pluralize "view" "views" .Views}}</span>
                 {{if .Likes}}<span class="views" dir="ltr"><strong>{{largeNumFmt .Likes}}</strong> {{pluralize "like" "likes" .Likes}}</span>{{end}}
+
+        {{/* New section for Remote Likers */}}
+        {{if .RemoteLikers}}
+          <div class="remote-likers views" dir="ltr"> {{/* Borrowing "views" class for similar styling */}}
+            <p style="margin-top: 5px; margin-bottom: 2px; font-size: 0.9em;">Liked by:</p>
+            <ul style="list-style-type: none; padding-left: 0; margin-top: 0;">
+              {{range .RemoteLikers}}
+                <li style="display: inline-block; margin-right: 5px;">
+                  <a href="{{.URL}}" target="_blank" rel="noopener noreferrer" title="{{.ActorID}}">{{.EstimatedHandle}}</a>
+                </li>
+              {{end}}
+            </ul>
+          </div>
+        {{end}}
 				<a href="/{{if not .SingleUser}}{{.Collection.Alias}}/{{end}}{{.Slug.String}}/edit" dir="{{.Direction}}">Edit</a>
 				{{if .IsPinned}}<a class="xtra-feature unpin" href="/{{.Collection.Alias}}/{{.Slug.String}}/unpin" dir="{{.Direction}}" onclick="unpinPost(event, '{{.ID}}')">Unpin</a>{{end}}
 				{{ end }}

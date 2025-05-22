@@ -1132,6 +1132,19 @@ func (db *datastore) GetEditablePost(id, editToken string) (*PublicPost, error) 
 		res.Owner = &PublicUser{Username: ownerName.String}
 	}
 
+	// Get remote likers for the post
+	likers, err := db.getRemoteLikersForPost(p.ID)
+	if err != nil {
+		// Log the error but don't block returning the post
+		// getRemoteLikersForPost is expected to return an empty slice on sql.ErrNoRows
+		log.Error("GetPost: Failed to get remote likers for post %s: %v", p.ID, err)
+		// If likers is nil due to an unexpected error, ensure it's an empty slice
+		if likers == nil {
+			likers = []*RemoteUser{}
+		}
+	}
+	res.RemoteLikers = likers
+
 	return &res, nil
 }
 
@@ -1460,6 +1473,57 @@ func (db *datastore) GetPostsTagged(cfg *config.Config, c *Collection, tag strin
 	}
 
 	return &posts, nil
+}
+
+// getRemoteLikersForPost retrieves a list of remote users who liked a specific post.
+func (db *datastore) getRemoteLikersForPost(postID string) ([]*RemoteUser, error) {
+	rows, err := db.Query(`
+		SELECT ru.id, ru.actor_id, ru.url, ru.handle, ru.created, ru.inbox, ru.shared_inbox
+		FROM remoteusers ru
+		JOIN remote_likes rl ON ru.id = rl.remote_user_id
+		WHERE rl.post_id = ?
+		ORDER BY rl.created DESC
+	`, postID)
+	if err != nil {
+		// sql.ErrNoRows is not an error in this case, just means no likers.
+		// It's handled by the loop below which won't execute.
+		return nil, err
+	}
+	defer rows.Close()
+
+	var likers []*RemoteUser
+	for rows.Next() {
+		var u RemoteUser
+		var handle sql.NullString
+		var created sql.NullTime
+		var url sql.NullString
+		var inbox sql.NullString
+		var sharedInbox sql.NullString
+
+		err := rows.Scan(&u.ID, &u.ActorID, &url, &handle, &created, &inbox, &sharedInbox)
+		if err != nil {
+			return nil, err
+		}
+		u.URL = url.String
+		u.Handle = handle.String
+		if created.Valid {
+			u.Created = created.Time
+		}
+		u.Inbox = inbox.String
+		u.SharedInbox = sharedInbox.String
+		likers = append(likers, &u)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// If likers slice is still nil (e.g. no rows found), initialize it to an empty slice.
+	if likers == nil {
+		likers = []*RemoteUser{}
+	}
+
+	return likers, nil
 }
 
 func (db *datastore) GetCollLangTotalPosts(collID int64, lang string) (uint64, error) {
