@@ -53,6 +53,8 @@ require (
 	golang.org/x/net v0.30.0
 )
 
+require github.com/xhit/go-simple-mail/v2 v2.16.0
+
 require (
 	code.as/core/socks v1.0.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
@@ -82,6 +84,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
+	github.com/toorop/go-dkim v0.0.0-20201103131630-e1cd1a0a5208 // indirect
 	github.com/writeas/go-writeas/v2 v2.0.2 // indirect
 	github.com/writeas/openssl-go v1.0.0 // indirect
 	github.com/writeas/slug v1.2.0 // indirect
