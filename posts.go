@@ -1294,6 +1294,7 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 	// Add shortened Note as the `preview` property if this is an Article
 	if o.Type == "Article" {
 		o.Preview = p.PreviewObject(app, o)
+		o.Summary = &o.Preview.Content
 	}
 
 	return o
