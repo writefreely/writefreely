@@ -13,18 +13,56 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/hectane/go-acl"
 	"github.com/urfave/cli/v2"
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/writefreely"
 )
 
+func checkWindowsACL(path string) error {
+	// Retrieves existing ACL entries
+	aclEntries, err := acl.Get(path)
+	if err != nil {
+		return fmt.Errorf("cannot get ACL for %s: %w", path, err)
+	}
+	// Ensure only the current user has read access
+	for _, entry := range aclEntries {
+		if entry.Tag.String() == "user" && entry.String() == "owner" {
+			continue
+		}
+		if entry.Tag == acl.TagOther {
+			return fmt.Errorf("insecure ACL: other-users have access to %s", path)
+		}
+	}
+	return nil
+}
+
 func main() {
 	cli.VersionPrinter = func(c *cli.Context) {
 		fmt.Printf("%s\n", c.App.Version)
 	}
+	cfgPath := "config.ini" // Set your config path logic here
+
+	if runtime.GOOS == "windows" {
+		if err := checkWindowsACL(cfgPath); err != nil {
+			log.Fatalf("insecure config ACL: %v\nPlease run the following in an Administrator command prompt to restrict access:\n  icacls config.ini /inheritance:r\n  icacls config.ini /grant %USERNAME%:R\n  icacls config.ini /remove \"Users\" \"Everyone\"")
+		}
+	} else {
+		// Attempt to fix permissions automatically
+		_ = os.Chmod(cfgPath, 0600)
+		info, err := os.Stat(cfgPath)
+		if err != nil {
+			log.Fatalf("cannot stat config: %v", err)
+		}
+		if perm := info.Mode().Perm(); perm&0o077 != 0 {
+			log.Fatalf("insecure permissions %v: config must be owner‑only", perm)
+		}
+	}
+
 	app := &cli.App{
 		Name:    "WriteFreely",
 		Usage:   "A beautifully pared-down blogging platform",
