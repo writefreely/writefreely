@@ -235,6 +235,7 @@ func (db *datastore) dateSub(l int, unit string) string {
 
 // CreateUser creates a new user in the database from the given User, UPDATING it in the process with the user's ID.
 func (db *datastore) CreateUser(cfg *config.Config, u *User, collectionTitle string, collectionDesc string) error {
+	var res sql.Result
 	if db.PostIDExists(u.Username) {
 		return impart.HTTPError{http.StatusConflict, "Invalid collection name."}
 	}
@@ -247,21 +248,33 @@ func (db *datastore) CreateUser(cfg *config.Config, u *User, collectionTitle str
 
 	// 1. Add to `users` table
 	// NOTE: Assumes User's Password is already hashed!
-	res, err := t.Exec(db.QueryWrap("INSERT INTO users (username, password, email) VALUES (?, ?, ?)"), u.Username, u.HashedPass, u.Email)
-	if err != nil {
-		t.Rollback()
-		if db.isDuplicateKeyErr(err) {
-			return impart.HTTPError{http.StatusConflict, "Username is already taken."}
+	if db.driverName == driverPostgres {
+		err := t.QueryRow(db.QueryWrap("INSERT INTO users (username, password, email) VALUES (?, ?, ?) RETURNING id"), u.Username, u.HashedPass, u.Email).Scan(&u.ID)
+		if err != nil {
+			t.Rollback()
+			if db.isDuplicateKeyErr(err) {
+				return impart.HTTPError{http.StatusConflict, "Username is already taken."}
+			}
+			log.Error("Rolling back users INSERT: %v\n", err)
+			return err
 		}
+	} else {
+		res, err = t.Exec(db.QueryWrap("INSERT INTO users (username, password, email) VALUES (?, ?, ?)"), u.Username, u.HashedPass, u.Email)
+		if err != nil {
+			t.Rollback()
+			if db.isDuplicateKeyErr(err) {
+				return impart.HTTPError{http.StatusConflict, "Username is already taken."}
+			}
 
-		log.Error("Rolling back users INSERT: %v\n", err)
-		return err
-	}
-	u.ID, err = res.LastInsertId()
-	if err != nil {
-		t.Rollback()
-		log.Error("Rolling back after LastInsertId: %v\n", err)
-		return err
+			log.Error("Rolling back users INSERT: %v\n", err)
+			return err
+		}
+		u.ID, err = res.LastInsertId()
+		if err != nil {
+			t.Rollback()
+			log.Error("Rolling back after LastInsertId: %v\n", err)
+			return err
+		}
 	}
 
 	// 2. Create user's Collection
