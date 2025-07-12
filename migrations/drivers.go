@@ -16,31 +16,55 @@ import (
 
 // TODO: use now() from writefreely pkg
 func (db *datastore) now() string {
-	if db.driverName == driverSQLite {
+	switch db.driverName {
+	case driverSQLite:
 		return "strftime('%Y-%m-%d %H:%M:%S','now')"
+	case driverMySQL:
+		return "NOW()"
+	case driverPostgres:
+		return "NOW()"
 	}
-	return "NOW()"
+
+	return "" // placeholder
 }
 
 func (db *datastore) typeInt() string {
-	if db.driverName == driverSQLite {
+	switch db.driverName {
+	case driverSQLite:
 		return "INTEGER"
+	case driverMySQL:
+		return "INT"
+	case driverPostgres:
+		return "INT"
 	}
-	return "INT"
+
+	return "" // placeholder
 }
 
 func (db *datastore) typeSmallInt() string {
-	if db.driverName == driverSQLite {
+	switch db.driverName {
+	case driverSQLite:
 		return "INTEGER"
+	case driverMySQL:
+		return "SMALLINT"
+	case driverPostgres:
+		return "SMALLINT"
 	}
-	return "SMALLINT"
+
+	return "" // placeholder
 }
 
 func (db *datastore) typeTinyInt() string {
-	if db.driverName == driverSQLite {
+	switch db.driverName {
+	case driverSQLite:
 		return "INTEGER"
+	case driverMySQL:
+		return "TINYINT"
+	case driverPostgres:
+		return "SMALLINT"
 	}
-	return "TINYINT"
+
+	return "" // placeholder
 }
 
 func (db *datastore) typeText() string {
@@ -48,63 +72,171 @@ func (db *datastore) typeText() string {
 }
 
 func (db *datastore) typeChar(l int) string {
-	if db.driverName == driverSQLite {
+	switch db.driverName {
+	case driverSQLite:
 		return "TEXT"
+	case driverMySQL:
+		return fmt.Sprintf("CHAR(%d)", l)
+	case driverPostgres:
+		return fmt.Sprintf("CHAR(%d)", l)
 	}
-	return fmt.Sprintf("CHAR(%d)", l)
+
+	return "" // placeholder
 }
 
 func (db *datastore) typeVarChar(l int) string {
-	if db.driverName == driverSQLite {
+	switch db.driverName {
+	case driverSQLite:
 		return "TEXT"
+	case driverMySQL:
+		return fmt.Sprintf("VARCHAR(%d)", l)
+	case driverPostgres:
+		return fmt.Sprintf("VARCHAR(%d)", l)
 	}
-	return fmt.Sprintf("VARCHAR(%d)", l)
+
+	return "" // placeholder
 }
 
 func (db *datastore) typeVarBinary(l int) string {
-	if db.driverName == driverSQLite {
+	switch db.driverName {
+	case driverSQLite:
 		return "BLOB"
+	case driverMySQL:
+		return fmt.Sprintf("VARBINARY(%d)", l)
+	case driverPostgres:
+		return "BYTEA"
 	}
-	return fmt.Sprintf("VARBINARY(%d)", l)
+
+	return "" // placeholder
 }
 
 func (db *datastore) typeBool() string {
-	if db.driverName == driverSQLite {
+	switch db.driverName {
+	case driverSQLite:
 		return "INTEGER"
+	case driverMySQL:
+		return "TINYINT(1)"
+	case driverPostgres:
+		return "BOOLEAN"
 	}
-	return "TINYINT(1)"
+
+	return "" // placeholder
 }
 
 func (db *datastore) typeDateTime() string {
-	return "DATETIME"
+	switch db.driverName {
+	case driverSQLite:
+		return "DATETIME"
+	case driverMySQL:
+		return "DATETIME"
+	case driverPostgres:
+		return "TIMESTAMP"
+	}
+
+	return "" // placeholder
 }
 
 func (db *datastore) typeIntPrimaryKey() string {
-	if db.driverName == driverSQLite {
+	switch db.driverName {
+	case driverSQLite:
 		// From docs: "In SQLite, a column with type INTEGER PRIMARY KEY is an alias for the ROWID (except in WITHOUT
 		// ROWID tables) which is always a 64-bit signed integer."
 		return "INTEGER PRIMARY KEY"
+	case driverMySQL:
+		return "INT AUTO_INCREMENT PRIMARY KEY"
+	case driverPostgres:
+		return "SERIAL PRIMARY KEY"
 	}
-	return "INT AUTO_INCREMENT PRIMARY KEY"
+
+	return "" // placeholder
 }
 
 func (db *datastore) collateMultiByte() string {
-	if db.driverName == driverSQLite {
+	switch db.driverName {
+	case driverSQLite:
+		return ""
+	case driverMySQL:
+		return " COLLATE utf8_bin"
+	case driverPostgres:
 		return ""
 	}
-	return " COLLATE utf8_bin"
+
+	return "" // placeholder
 }
 
 func (db *datastore) engine() string {
-	if db.driverName == driverSQLite {
+	switch db.driverName {
+	case driverSQLite:
+		return ""
+	case driverMySQL:
+		return " ENGINE = InnoDB"
+	case driverPostgres:
 		return ""
 	}
-	return " ENGINE = InnoDB"
+
+	return "" // placeholder
 }
 
 func (db *datastore) after(colName string) string {
-	if db.driverName == driverSQLite {
+	switch db.driverName {
+	case driverSQLite:
+		return ""
+	case driverMySQL:
+		return fmt.Sprintf(" AFTER %s", colName)
+	case driverPostgres:
 		return ""
 	}
-	return " AFTER " + colName
+
+	return "" // placeholder
+}
+
+func (db *datastore) boolTrue() string {
+	switch db.driverName {
+	case driverSQLite:
+		return "1"
+	case driverMySQL:
+		return "1"
+	case driverPostgres:
+		return "TRUE"
+	}
+
+	return "" // placeholder
+}
+
+func (db *datastore) boolFalse() string {
+	switch db.driverName {
+	case driverSQLite:
+		return "0"
+	case driverMySQL:
+		return "0"
+	case driverPostgres:
+		return "FALSE"
+	}
+
+	return "" // placeholder
+}
+
+func (db *datastore) QueryWrap(q string) string {
+	if db.driverName != driverPostgres {
+		return q
+	}
+
+	output := ""
+	escape := false
+	ctr := 0
+
+	for i := range len(q) {
+		if q[i] == '\'' || q[i] == '`' {
+			escape = !escape
+		}
+
+		if q[i] == '?' && !escape {
+			ctr += 1
+			output += fmt.Sprintf("$%d", ctr)
+		} else {
+			output += string(q[i])
+		}
+	}
+
+	return output
 }
