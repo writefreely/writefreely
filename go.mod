@@ -55,6 +55,8 @@ require (
 
 require github.com/xhit/go-simple-mail/v2 v2.16.0
 
+require github.com/lib/pq v1.10.9
+
 require (
 	code.as/core/socks v1.0.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
@@ -95,4 +97,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-go 1.21
+go 1.22
