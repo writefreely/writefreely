@@ -174,7 +174,7 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 		selPrompt = promptui.Select{
 			Templates: selTmpls,
 			Label:     "Database driver",
-			Items:     []string{"MySQL", "SQLite"},
+			Items:     []string{"MySQL", "Postgres", "SQLite"},
 		}
 		sel, _, err := selPrompt.Run()
 		if err != nil {
@@ -242,6 +242,66 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 			}
 			data.Config.Database.Port, _ = strconv.Atoi(dbPort) // Ignore error, as we've already validated number
 		} else if sel == 1 {
+			// Configure for Postgres
+			data.Config.UsePostgres(isNewCfg)
+
+			prompt = promptui.Prompt{
+				Templates: tmpls,
+				Label:     "Username",
+				Validate:  validateNonEmpty,
+				Default:   data.Config.Database.User,
+			}
+			data.Config.Database.User, err = prompt.Run()
+			if err != nil {
+				return data, err
+			}
+
+			prompt = promptui.Prompt{
+				Templates: tmpls,
+				Label:     "Password",
+				Validate:  validateNonEmpty,
+				Default:   data.Config.Database.Password,
+				Mask:      '*',
+			}
+			data.Config.Database.Password, err = prompt.Run()
+			if err != nil {
+				return data, err
+			}
+
+			prompt = promptui.Prompt{
+				Templates: tmpls,
+				Label:     "Database name",
+				Validate:  validateNonEmpty,
+				Default:   data.Config.Database.Database,
+			}
+			data.Config.Database.Database, err = prompt.Run()
+			if err != nil {
+				return data, err
+			}
+
+			prompt = promptui.Prompt{
+				Templates: tmpls,
+				Label:     "Host",
+				Validate:  validateNonEmpty,
+				Default:   data.Config.Database.Host,
+			}
+			data.Config.Database.Host, err = prompt.Run()
+			if err != nil {
+				return data, err
+			}
+
+			prompt = promptui.Prompt{
+				Templates: tmpls,
+				Label:     "Port",
+				Validate:  validatePort,
+				Default:   fmt.Sprintf("%d", data.Config.Database.Port),
+			}
+			dbPort, err := prompt.Run()
+			if err != nil {
+				return data, err
+			}
+			data.Config.Database.Port, _ = strconv.Atoi(dbPort) // Ignore error, as we've already validated number
+		} else if sel == 2 {
 			// Configure for SQLite
 			data.Config.UseSQLite(isNewCfg)
 
