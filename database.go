@@ -48,8 +48,13 @@ const (
 	mySQLErrTooManyConns = 1040
 	mySQLErrMaxUserConns = 1203
 
-	driverMySQL  = "mysql"
-	driverSQLite = "sqlite3"
+	postgresErrDuplicateKey = "23505"
+	postgresErrTooManyConns = "53300"
+	postgresErrMaxUserConns = "53400"
+
+	driverMySQL    = "mysql"
+	driverPostgres = "postgres"
+	driverSQLite   = "sqlite3"
 )
 
 var (
@@ -156,41 +161,76 @@ type datastore struct {
 var _ writestore = &datastore{}
 
 func (db *datastore) now() string {
-	if db.driverName == driverSQLite {
+	switch db.driverName {
+	case driverSQLite:
 		return "strftime('%Y-%m-%d %H:%M:%S','now')"
+	case driverMySQL:
+		return "NOW()"
+	case driverPostgres:
+		return "NOW()"
 	}
-	return "NOW()"
+
+	return "" // placeholder
 }
 
 func (db *datastore) clip(field string, l int) string {
-	if db.driverName == driverSQLite {
+	switch db.driverName {
+	case driverSQLite:
 		return fmt.Sprintf("SUBSTR(%s, 0, %d)", field, l)
+	case driverMySQL:
+		return fmt.Sprintf("LEFT(%s, %d)", field, l)
+	case driverPostgres:
+		return fmt.Sprintf("LEFT(%s, %d)", field, l)
 	}
-	return fmt.Sprintf("LEFT(%s, %d)", field, l)
+
+	return "" // placeholder
 }
 
 func (db *datastore) upsert(indexedCols ...string) string {
-	if db.driverName == driverSQLite {
+	cc := strings.Join(indexedCols, ", ")
+
+	switch db.driverName {
+	case driverSQLite:
 		// NOTE: SQLite UPSERT syntax only works in v3.24.0 (2018-06-04) or later
 		// Leaving this for whenever we can upgrade and include it in our binary
-		cc := strings.Join(indexedCols, ", ")
+		return "ON CONFLICT(" + cc + ") DO UPDATE SET"
+	case driverMySQL:
+		return "ON DUPLICATE KEY UPDATE"
+	case driverPostgres:
 		return "ON CONFLICT(" + cc + ") DO UPDATE SET"
 	}
-	return "ON DUPLICATE KEY UPDATE"
+
+	return "" // placeholder
 }
 
 func (db *datastore) dateAdd(l int, unit string) string {
-	if db.driverName == driverSQLite {
+	switch db.driverName {
+	case driverSQLite:
+		// NOTE: SQLite UPSERT syntax only works in v3.24.0 (2018-06-04) or later
+		// Leaving this for whenever we can upgrade and include it in our binary
 		return fmt.Sprintf("DATETIME('now', '%d %s')", l, unit)
+	case driverMySQL:
+		return fmt.Sprintf("DATE_ADD(NOW(), INTERVAL %d %s)", l, unit)
+	case driverPostgres:
+		return fmt.Sprintf("DATE_ADD(NOW(), %d %s)", l, unit)
 	}
-	return fmt.Sprintf("DATE_ADD(NOW(), INTERVAL %d %s)", l, unit)
+
+	return "" // placeholder
 }
 
 func (db *datastore) dateSub(l int, unit string) string {
-	if db.driverName == driverSQLite {
+	switch db.driverName {
+	case driverSQLite:
+		// NOTE: SQLite UPSERT syntax only works in v3.24.0 (2018-06-04) or later
+		// Leaving this for whenever we can upgrade and include it in our binary
 		return fmt.Sprintf("DATETIME('now', '-%d %s')", l, unit)
+	case driverMySQL:
+		return fmt.Sprintf("DATE_SUB(NOW(), INTERVAL %d %s)", l, unit)
+	case driverPostgres:
+		return fmt.Sprintf("DATE_SUBTRACT(NOW(), %d %s)", l, unit)
 	}
-	return fmt.Sprintf("DATE_SUB(NOW(), INTERVAL %d %s)", l, unit)
+
+	return "" // placeholder
 }
 
 // CreateUser creates a new user in the database from the given User, UPDATING it in the process with the user's ID.
@@ -207,7 +247,7 @@ func (db *datastore) CreateUser(cfg *config.Config, u *User, collectionTitle str
 
 	// 1. Add to `users` table
 	// NOTE: Assumes User's Password is already hashed!
-	res, err := t.Exec("INSERT INTO users (username, password, email) VALUES (?, ?, ?)", u.Username, u.HashedPass, u.Email)
+	res, err := t.Exec(db.QueryWrap("INSERT INTO users (username, password, email) VALUES (?, ?, ?)"), u.Username, u.HashedPass, u.Email)
 	if err != nil {
 		t.Rollback()
 		if db.isDuplicateKeyErr(err) {
@@ -228,7 +268,7 @@ func (db *datastore) CreateUser(cfg *config.Config, u *User, collectionTitle str
 	if collectionTitle == "" {
 		collectionTitle = u.Username
 	}
-	res, err = t.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", u.Username, collectionTitle, collectionDesc, defaultVisibility(cfg), u.ID, 0)
+	res, err = t.Exec(db.QueryWrap("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)"), u.Username, collectionTitle, collectionDesc, defaultVisibility(cfg), u.ID, 0)
 	if err != nil {
 		t.Rollback()
 		if db.isDuplicateKeyErr(err) {
@@ -594,7 +634,7 @@ func (db *datastore) GetTemporaryOneTimeAccessToken(userID int64, validSecs int,
 func (db *datastore) CreatePasswordResetToken(userID int64) (string, error) {
 	t := id.Generate62RandomString(32)
 
-	_, err := db.Exec("INSERT INTO password_resets (user_id, token, used, created) VALUES (?, ?, 0, "+db.now()+")", userID, t)
+	_, err := db.Exec(fmt.Sprintf("INSERT INTO password_resets (user_id, token, used, created) VALUES (?, ?, %s, %s)", db.BoolFalse(), db.now()), userID, t)
 	if err != nil {
 		log.Error("Couldn't INSERT password_resets: %v", err)
 		return "", err
@@ -605,7 +645,7 @@ func (db *datastore) CreatePasswordResetToken(userID int64) (string, error) {
 
 func (db *datastore) GetUserFromPasswordReset(token string) int64 {
 	var userID int64
-	err := db.QueryRow("SELECT user_id FROM password_resets WHERE token = ? AND used = 0 AND created > "+db.dateSub(3, "HOUR"), token).Scan(&userID)
+	err := db.QueryRow("SELECT user_id FROM password_resets WHERE token = ? AND used = "+db.BoolFalse()+" AND created > "+db.dateSub(3, "HOUR"), token).Scan(&userID)
 	if err != nil {
 		return 0
 	}
@@ -613,7 +653,7 @@ func (db *datastore) GetUserFromPasswordReset(token string) int64 {
 }
 
 func (db *datastore) ConsumePasswordResetToken(t string) error {
-	_, err := db.Exec("UPDATE password_resets SET used = 1 WHERE token = ?", t)
+	_, err := db.Exec(fmt.Sprintf("UPDATE password_resets SET used = %s WHERE token = ?", db.BoolTrue()), t)
 	if err != nil {
 		log.Error("Couldn't UPDATE password_resets: %v", err)
 		return err
@@ -719,18 +759,18 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 		}
 	}
 
-	stmt, err := db.Prepare("INSERT INTO posts (id, slug, title, content, text_appearance, language, rtl, privacy, owner_id, collection_id, created, updated, view_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, " + db.now() + ", ?)")
+	stmt, err := db.Prepare(db.QueryWrap("INSERT INTO posts (id, slug, title, content, text_appearance, language, rtl, privacy, owner_id, collection_id, created, updated, view_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, " + db.now() + ", ?)"))
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
-	_, err = stmt.Exec(friendlyID, slug, post.Title, post.Content, appearance, post.Language, post.IsRTL, 0, ownerID, ownerCollID, created, 0)
+	_, err = stmt.Exec(friendlyID, slug, post.Title, post.Content, appearance, post.Language, post.IsRTL, db.BoolFalse(), ownerID, ownerCollID, created, 0)
 	if err != nil {
 		if db.isDuplicateKeyErr(err) {
 			// Duplicate entry error; try a new slug
 			// TODO: make this a little more robust
 			slug = sql.NullString{id.GenSafeUniqueSlug(slug.String), true}
-			_, err = stmt.Exec(friendlyID, slug, post.Title, post.Content, appearance, post.Language, post.IsRTL, 0, ownerID, ownerCollID, created, 0)
+			_, err = stmt.Exec(friendlyID, slug, post.Title, post.Content, appearance, post.Language, post.IsRTL, db.BoolFalse(), ownerID, ownerCollID, created, 0)
 			if err != nil {
 				return nil, handleFailedPostInsert(fmt.Errorf("Retried slug generation, still failed: %v", err))
 			}
@@ -1784,7 +1824,7 @@ func (db *datastore) ClaimPosts(cfg *config.Config, userID int64, collAlias stri
 			query = "UPDATE posts SET owner_id = ? WHERE id = ? AND modify_token = ? AND owner_id IS NULL"
 			params = []interface{}{userID, p.ID, p.Token}
 		}
-		qRes, err = db.AttemptClaim(&p, query, params, slugIdx)
+		qRes, err = db.AttemptClaim(&p, db.QueryWrap(query), params, slugIdx)
 		if err != nil {
 			r.Code = http.StatusInternalServerError
 			r.ErrorMessage = "An unknown error occurred."
@@ -1954,11 +1994,11 @@ func (db *datastore) GetPublishableCollections(u *User, hostName string) (*[]Col
 }
 
 func (db *datastore) GetPublicCollections(hostName string) (*[]Collection, error) {
-	rows, err := db.Query(`SELECT c.id, alias, title, description, privacy, view_count
-	FROM collections c
-	LEFT JOIN users u ON u.id = c.owner_id
-	WHERE c.privacy = 1 AND u.status = 0
-	ORDER BY title ASC`)
+	rows, err := db.Query(fmt.Sprintf(`SELECT c.id, alias, title, description, privacy, view_count
+		FROM collections c
+		LEFT JOIN users u ON u.id = c.owner_id
+		WHERE c.privacy = %s AND u.status = 0
+		ORDER BY title ASC`, db.BoolTrue()))
 	if err != nil {
 		log.Error("Failed selecting public collections: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve public collections."}
@@ -2235,7 +2275,7 @@ func (db *datastore) ChangeSettings(app *App, u *User, s *userSettings) error {
 			return err
 		}
 
-		_, err = t.Exec("UPDATE users SET username = ? WHERE id = ?", newUsername, u.ID)
+		_, err = t.Exec(db.QueryWrap("UPDATE users SET username = ? WHERE id = ?"), newUsername, u.ID)
 		if err != nil {
 			t.Rollback()
 			if db.isDuplicateKeyErr(err) {
@@ -2245,7 +2285,7 @@ func (db *datastore) ChangeSettings(app *App, u *User, s *userSettings) error {
 			return ErrInternalGeneral
 		}
 
-		_, err = t.Exec("UPDATE collections SET alias = ? WHERE alias = ? AND owner_id = ?", newUsername, u.Username, u.ID)
+		_, err = t.Exec(db.QueryWrap("UPDATE collections SET alias = ? WHERE alias = ? AND owner_id = ?"), newUsername, u.Username, u.ID)
 		if err != nil {
 			t.Rollback()
 			if db.isDuplicateKeyErr(err) {
@@ -2257,11 +2297,11 @@ func (db *datastore) ChangeSettings(app *App, u *User, s *userSettings) error {
 
 		// Keep track of name changes for redirection
 		db.RemoveCollectionRedirect(t, newUsername)
-		_, err = t.Exec("UPDATE collectionredirects SET new_alias = ? WHERE new_alias = ?", newUsername, u.Username)
+		_, err = t.Exec(db.QueryWrap("UPDATE collectionredirects SET new_alias = ? WHERE new_alias = ?"), newUsername, u.Username)
 		if err != nil {
 			log.Error("Unable to update collectionredirects: %v", err)
 		}
-		_, err = t.Exec("INSERT INTO collectionredirects (prev_alias, new_alias) VALUES (?, ?)", u.Username, newUsername)
+		_, err = t.Exec(db.QueryWrap("INSERT INTO collectionredirects (prev_alias, new_alias) VALUES (?, ?)"), u.Username, newUsername)
 		if err != nil {
 			log.Error("Unable to add new collectionredirect: %v", err)
 		}
@@ -2374,7 +2414,7 @@ func (db *datastore) ChangePassphrase(userID int64, sudo bool, curPass string, h
 }
 
 func (db *datastore) RemoveCollectionRedirect(t *sql.Tx, alias string) error {
-	_, err := t.Exec("DELETE FROM collectionredirects WHERE prev_alias = ?", alias)
+	_, err := t.Exec(db.QueryWrap("DELETE FROM collectionredirects WHERE prev_alias = ?"), alias)
 	if err != nil {
 		log.Error("Unable to delete from collectionredirects: %v", err)
 		return err
@@ -2422,28 +2462,28 @@ func (db *datastore) DeleteCollection(alias string, userID int64) error {
 	}
 
 	// Float all collection's posts
-	_, err = t.Exec("UPDATE posts SET collection_id = NULL WHERE collection_id = ? AND owner_id = ?", c.ID, userID)
+	_, err = t.Exec(db.QueryWrap("UPDATE posts SET collection_id = NULL WHERE collection_id = ? AND owner_id = ?"), c.ID, userID)
 	if err != nil {
 		t.Rollback()
 		return err
 	}
 
 	// Remove redirects to or from this collection
-	_, err = t.Exec("DELETE FROM collectionredirects WHERE prev_alias = ? OR new_alias = ?", alias, alias)
+	_, err = t.Exec(db.QueryWrap("DELETE FROM collectionredirects WHERE prev_alias = ? OR new_alias = ?"), alias, alias)
 	if err != nil {
 		t.Rollback()
 		return err
 	}
 
 	// Remove any optional collection password
-	_, err = t.Exec("DELETE FROM collectionpasswords WHERE collection_id = ?", c.ID)
+	_, err = t.Exec(db.QueryWrap("DELETE FROM collectionpasswords WHERE collection_id = ?"), c.ID)
 	if err != nil {
 		t.Rollback()
 		return err
 	}
 
 	// Finally, delete collection itself
-	_, err = t.Exec("DELETE FROM collections WHERE id = ?", c.ID)
+	_, err = t.Exec(db.QueryWrap("DELETE FROM collections WHERE id = ?"), c.ID)
 	if err != nil {
 		t.Rollback()
 		return err
@@ -2537,7 +2577,7 @@ func (db *datastore) DeleteAccount(userID int64) error {
 	var res sql.Result
 	for _, c := range colls {
 		// Delete tokens
-		res, err = t.Exec("DELETE FROM collectionattributes WHERE collection_id = ?", c.ID)
+		res, err = t.Exec(db.QueryWrap("DELETE FROM collectionattributes WHERE collection_id = ?"), c.ID)
 		if err != nil {
 			t.Rollback()
 			log.Error("Unable to delete attributes on %s: %v", c.Alias, err)
@@ -2547,7 +2587,7 @@ func (db *datastore) DeleteAccount(userID int64) error {
 		log.Info("Deleted %d for %s from collectionattributes", rs, c.Alias)
 
 		// Remove any optional collection password
-		res, err = t.Exec("DELETE FROM collectionpasswords WHERE collection_id = ?", c.ID)
+		res, err = t.Exec(db.QueryWrap("DELETE FROM collectionpasswords WHERE collection_id = ?"), c.ID)
 		if err != nil {
 			t.Rollback()
 			log.Error("Unable to delete passwords on %s: %v", c.Alias, err)
@@ -2557,7 +2597,7 @@ func (db *datastore) DeleteAccount(userID int64) error {
 		log.Info("Deleted %d for %s from collectionpasswords", rs, c.Alias)
 
 		// Remove redirects to this collection
-		res, err = t.Exec("DELETE FROM collectionredirects WHERE new_alias = ?", c.Alias)
+		res, err = t.Exec(db.QueryWrap("DELETE FROM collectionredirects WHERE new_alias = ?"), c.Alias)
 		if err != nil {
 			t.Rollback()
 			log.Error("Unable to delete redirects on %s: %v", c.Alias, err)
@@ -2567,7 +2607,7 @@ func (db *datastore) DeleteAccount(userID int64) error {
 		log.Info("Deleted %d for %s from collectionredirects", rs, c.Alias)
 
 		// Remove any collection keys
-		res, err = t.Exec("DELETE FROM collectionkeys WHERE collection_id = ?", c.ID)
+		res, err = t.Exec(db.QueryWrap("DELETE FROM collectionkeys WHERE collection_id = ?"), c.ID)
 		if err != nil {
 			t.Rollback()
 			log.Error("Unable to delete keys on %s: %v", c.Alias, err)
@@ -2579,7 +2619,7 @@ func (db *datastore) DeleteAccount(userID int64) error {
 		// TODO: federate delete collection
 
 		// Remove remote follows
-		res, err = t.Exec("DELETE FROM remotefollows WHERE collection_id = ?", c.ID)
+		res, err = t.Exec(db.QueryWrap("DELETE FROM remotefollows WHERE collection_id = ?"), c.ID)
 		if err != nil {
 			t.Rollback()
 			log.Error("Unable to delete remote follows on %s: %v", c.Alias, err)
@@ -2590,7 +2630,7 @@ func (db *datastore) DeleteAccount(userID int64) error {
 	}
 
 	// Delete collections
-	res, err = t.Exec("DELETE FROM collections WHERE owner_id = ?", userID)
+	res, err = t.Exec(db.QueryWrap("DELETE FROM collections WHERE owner_id = ?"), userID)
 	if err != nil {
 		t.Rollback()
 		log.Error("Unable to delete collections: %v", err)
@@ -2600,7 +2640,7 @@ func (db *datastore) DeleteAccount(userID int64) error {
 	log.Info("Deleted %d from collections", rs)
 
 	// Delete tokens
-	res, err = t.Exec("DELETE FROM accesstokens WHERE user_id = ?", userID)
+	res, err = t.Exec(db.QueryWrap("DELETE FROM accesstokens WHERE user_id = ?"), userID)
 	if err != nil {
 		t.Rollback()
 		log.Error("Unable to delete access tokens: %v", err)
@@ -2610,7 +2650,7 @@ func (db *datastore) DeleteAccount(userID int64) error {
 	log.Info("Deleted %d from accesstokens", rs)
 
 	// Delete user attributes
-	res, err = t.Exec("DELETE FROM oauth_users WHERE user_id = ?", userID)
+	res, err = t.Exec(db.QueryWrap("DELETE FROM oauth_users WHERE user_id = ?"), userID)
 	if err != nil {
 		t.Rollback()
 		log.Error("Unable to delete oauth_users: %v", err)
@@ -2622,7 +2662,7 @@ func (db *datastore) DeleteAccount(userID int64) error {
 	// Delete posts
 	// TODO: should maybe get each row so we can federate a delete
 	// if so needs to be outside of transaction like collections
-	res, err = t.Exec("DELETE FROM posts WHERE owner_id = ?", userID)
+	res, err = t.Exec(db.QueryWrap("DELETE FROM posts WHERE owner_id = ?"), userID)
 	if err != nil {
 		t.Rollback()
 		log.Error("Unable to delete posts: %v", err)
@@ -2632,7 +2672,7 @@ func (db *datastore) DeleteAccount(userID int64) error {
 	log.Info("Deleted %d from posts", rs)
 
 	// Delete user attributes
-	res, err = t.Exec("DELETE FROM userattributes WHERE user_id = ?", userID)
+	res, err = t.Exec(db.QueryWrap("DELETE FROM userattributes WHERE user_id = ?"), userID)
 	if err != nil {
 		t.Rollback()
 		log.Error("Unable to delete attributes: %v", err)
@@ -2642,7 +2682,7 @@ func (db *datastore) DeleteAccount(userID int64) error {
 	log.Info("Deleted %d from userattributes", rs)
 
 	// Delete user invites
-	res, err = t.Exec("DELETE FROM userinvites WHERE owner_id = ?", userID)
+	res, err = t.Exec(db.QueryWrap("DELETE FROM userinvites WHERE owner_id = ?"), userID)
 	if err != nil {
 		t.Rollback()
 		log.Error("Unable to delete invites: %v", err)
@@ -2652,7 +2692,7 @@ func (db *datastore) DeleteAccount(userID int64) error {
 	log.Info("Deleted %d from userinvites", rs)
 
 	// Delete the user
-	res, err = t.Exec("DELETE FROM users WHERE id = ?", userID)
+	res, err = t.Exec(db.QueryWrap("DELETE FROM users WHERE id = ?"), userID)
 	if err != nil {
 		t.Rollback()
 		log.Error("Unable to delete user: %v", err)
@@ -2695,7 +2735,7 @@ func (db *datastore) GetAPActorKeys(collectionID int64) ([]byte, []byte) {
 }
 
 func (db *datastore) CreateUserInvite(id string, userID int64, maxUses int, expires *time.Time) error {
-	_, err := db.Exec("INSERT INTO userinvites (id, owner_id, max_uses, created, expires, inactive) VALUES (?, ?, ?, "+db.now()+", ?, 0)", id, userID, maxUses, expires)
+	_, err := db.Exec("INSERT INTO userinvites (id, owner_id, max_uses, created, expires, inactive) VALUES (?, ?, ?, "+db.now()+", ?, "+db.BoolFalse()+")", id, userID, maxUses, expires)
 	return err
 }
 
@@ -2905,7 +2945,7 @@ func (db *datastore) GenerateOAuthState(ctx context.Context, provider string, cl
 	state := id.Generate62RandomString(24)
 	attachUserVal := sql.NullInt64{Valid: attachUser > 0, Int64: attachUser}
 	inviteCodeVal := sql.NullString{Valid: inviteCode != "", String: inviteCode}
-	_, err := db.ExecContext(ctx, "INSERT INTO oauth_client_states (state, provider, client_id, used, created_at, attach_user_id, invite_code) VALUES (?, ?, ?, FALSE, "+db.now()+", ?, ?)", state, provider, clientID, attachUserVal, inviteCodeVal)
+	_, err := db.ExecContext(ctx, db.QueryWrap("INSERT INTO oauth_client_states (state, provider, client_id, used, created_at, attach_user_id, invite_code) VALUES (?, ?, ?, FALSE, "+db.now()+", ?, ?)"), state, provider, clientID, attachUserVal, inviteCodeVal)
 	if err != nil {
 		return "", fmt.Errorf("unable to record oauth client state: %w", err)
 	}
@@ -2919,13 +2959,13 @@ func (db *datastore) ValidateOAuthState(ctx context.Context, state string) (stri
 	var inviteCode sql.NullString
 	err := wf_db.RunTransactionWithOptions(ctx, db.DB, &sql.TxOptions{}, func(ctx context.Context, tx *sql.Tx) error {
 		err := tx.
-			QueryRowContext(ctx, "SELECT provider, client_id, attach_user_id, invite_code FROM oauth_client_states WHERE state = ? AND used = FALSE", state).
+			QueryRowContext(ctx, db.QueryWrap("SELECT provider, client_id, attach_user_id, invite_code FROM oauth_client_states WHERE state = ? AND used = FALSE"), state).
 			Scan(&provider, &clientID, &attachUserID, &inviteCode)
 		if err != nil {
 			return err
 		}
 
-		res, err := tx.ExecContext(ctx, "UPDATE oauth_client_states SET used = TRUE WHERE state = ?", state)
+		res, err := tx.ExecContext(ctx, db.QueryWrap("UPDATE oauth_client_states SET used = TRUE WHERE state = ?"), state)
 		if err != nil {
 			return err
 		}
@@ -2947,9 +2987,9 @@ func (db *datastore) ValidateOAuthState(ctx context.Context, state string) (stri
 func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID int64, remoteUserID, provider, clientID, accessToken string) error {
 	var err error
 	if db.driverName == driverSQLite {
-		_, err = db.ExecContext(ctx, "INSERT OR REPLACE INTO oauth_users (user_id, remote_user_id, provider, client_id, access_token) VALUES (?, ?, ?, ?, ?)", localUserID, remoteUserID, provider, clientID, accessToken)
+		_, err = db.ExecContext(ctx, db.QueryWrap("INSERT OR REPLACE INTO oauth_users (user_id, remote_user_id, provider, client_id, access_token) VALUES (?, ?, ?, ?, ?)"), localUserID, remoteUserID, provider, clientID, accessToken)
 	} else {
-		_, err = db.ExecContext(ctx, "INSERT INTO oauth_users (user_id, remote_user_id, provider, client_id, access_token) VALUES (?, ?, ?, ?, ?) "+db.upsert("user")+" access_token = ?", localUserID, remoteUserID, provider, clientID, accessToken, accessToken)
+		_, err = db.ExecContext(ctx, db.QueryWrap("INSERT INTO oauth_users (user_id, remote_user_id, provider, client_id, access_token) VALUES (?, ?, ?, ?, ?) "+db.upsert("user")+" access_token = ?"), localUserID, remoteUserID, provider, clientID, accessToken, accessToken)
 	}
 	if err != nil {
 		log.Error("Unable to INSERT oauth_users for '%d': %v", localUserID, err)
@@ -2961,7 +3001,7 @@ func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID int64, 
 func (db *datastore) GetIDForRemoteUser(ctx context.Context, remoteUserID, provider, clientID string) (int64, error) {
 	var userID int64 = -1
 	err := db.
-		QueryRowContext(ctx, "SELECT user_id FROM oauth_users WHERE remote_user_id = ? AND provider = ? AND client_id = ?", remoteUserID, provider, clientID).
+		QueryRowContext(ctx, db.QueryWrap("SELECT user_id FROM oauth_users WHERE remote_user_id = ? AND provider = ? AND client_id = ?"), remoteUserID, provider, clientID).
 		Scan(&userID)
 	// Not finding a record is OK.
 	if err != nil && err != sql.ErrNoRows {
@@ -2979,7 +3019,7 @@ type oauthAccountInfo struct {
 }
 
 func (db *datastore) GetOauthAccounts(ctx context.Context, userID int64) ([]oauthAccountInfo, error) {
-	rows, err := db.QueryContext(ctx, "SELECT provider, client_id, remote_user_id FROM oauth_users WHERE user_id = ? ", userID)
+	rows, err := db.QueryContext(ctx, db.QueryWrap("SELECT provider, client_id, remote_user_id FROM oauth_users WHERE user_id = ? "), userID)
 	if err != nil {
 		log.Error("Failed selecting from oauth_users: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve user oauth accounts."}
@@ -3022,7 +3062,7 @@ func (db *datastore) DatabaseInitialized() bool {
 }
 
 func (db *datastore) RemoveOauth(ctx context.Context, userID int64, provider string, clientID string, remoteUserID string) error {
-	_, err := db.ExecContext(ctx, `DELETE FROM oauth_users WHERE user_id = ? AND provider = ? AND client_id = ? AND remote_user_id = ?`, userID, provider, clientID, remoteUserID)
+	_, err := db.ExecContext(ctx, db.QueryWrap(`DELETE FROM oauth_users WHERE user_id = ? AND provider = ? AND client_id = ? AND remote_user_id = ?`), userID, provider, clientID, remoteUserID)
 	return err
 }
 
@@ -3139,7 +3179,7 @@ func (db *datastore) IsEmailSubscriber(email string, userID, collID int64) bool 
 func (db *datastore) GetEmailSubscribers(collID int64, reqConfirmed bool) ([]*EmailSubscriber, error) {
 	cond := ""
 	if reqConfirmed {
-		cond = " AND confirmed = 1"
+		cond = " AND confirmed = " + db.BoolTrue()
 	}
 	rows, err := db.Query(`SELECT s.id, collection_id, user_id, s.email, u.email, subscribed, token, confirmed, allow_export
 FROM emailsubscribers s
@@ -3241,7 +3281,7 @@ func (db *datastore) UpdateSubscriberConfirmed(subID, token string) error {
 	}
 
 	// TODO: ensure all addresses with original name are also confirmed, e.g. matt+fake@write.as and matt@write.as are now confirmed
-	_, err = db.Exec("UPDATE emailsubscribers SET confirmed = 1 WHERE email = ?", email)
+	_, err = db.Exec(fmt.Sprint("UPDATE emailsubscribers SET confirmed = %s WHERE email = ?", db.BoolTrue()), email)
 	if err != nil {
 		log.Error("Could not update email subscriber confirmation status: %v", err)
 		return err
@@ -3251,7 +3291,7 @@ func (db *datastore) UpdateSubscriberConfirmed(subID, token string) error {
 
 func (db *datastore) IsSubscriberConfirmed(email string) bool {
 	var dummy int64
-	err := db.QueryRow("SELECT 1 FROM emailsubscribers WHERE email = ? AND confirmed = 1", email).Scan(&dummy)
+	err := db.QueryRow(fmt.Sprintf("SELECT 1 FROM emailsubscribers WHERE email = ? AND confirmed = %s", db.BoolTrue()), email).Scan(&dummy)
 	switch {
 	case err == sql.ErrNoRows:
 		return false
@@ -3327,4 +3367,67 @@ func (db *datastore) GetJobsToRun(action string) ([]*PostJob, error) {
 		jobs = append(jobs, j)
 	}
 	return jobs, nil
+}
+
+func (db *datastore) BoolTrue() string {
+	switch db.driverName {
+	case driverSQLite:
+		return "1"
+	case driverMySQL:
+		return "1"
+	case driverPostgres:
+		return "TRUE"
+	}
+
+	return "" // placeholder
+}
+
+func (db *datastore) BoolFalse() string {
+	switch db.driverName {
+	case driverSQLite:
+		return "0"
+	case driverMySQL:
+		return "0"
+	case driverPostgres:
+		return "FALSE"
+	}
+
+	return "" // placeholder
+}
+
+func (db *datastore) Query(query string, args ...any) (*sql.Rows, error) {
+	return (*db.DB).Query(db.QueryWrap(query), args...)
+}
+
+func (db *datastore) QueryRow(query string, args ...any) *sql.Row {
+	return (*db.DB).QueryRow(db.QueryWrap(query), args...)
+}
+
+func (db *datastore) Exec(query string, args ...any) (sql.Result, error) {
+	return (*db.DB).Exec(db.QueryWrap(query), args...)
+}
+ 
+func (db *datastore) QueryWrap(q string) string {
+	if db.driverName != driverPostgres {
+		return q
+	}
+
+	output := ""
+	escape := false
+	ctr := 0
+
+	for i := range len(q) {
+		if q[i] == '\'' || q[i] == '`' {
+			escape = !escape
+		}
+
+		if q[i] == '?' && !escape {
+			ctr += 1
+			output += fmt.Sprintf("$%d", ctr)
+		} else {
+			output += string(q[i])
+		}
+	}
+
+	return output
 }
