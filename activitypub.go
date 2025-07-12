@@ -596,7 +596,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		}
 
 		// Add like
-		_, err = t.Exec("INSERT INTO remote_likes (post_id, remote_user_id, created) VALUES (?, ?, "+app.db.now()+")", likePostID, remoteUserID)
+		_, err = t.Exec(app.db.QueryWrap("INSERT INTO remote_likes (post_id, remote_user_id, created) VALUES (?, ?, "+app.db.now()+")"), likePostID, remoteUserID)
 		if err != nil {
 			if !app.db.isDuplicateKeyErr(err) {
 				t.Rollback()
@@ -636,7 +636,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		}
 
 		// Remove like
-		_, err = t.Exec("DELETE FROM remote_likes WHERE post_id = ? AND remote_user_id = ?", unlikePostID, remoteUserID)
+		_, err = t.Exec(app.db.QueryWrap("DELETE FROM remote_likes WHERE post_id = ? AND remote_user_id = ?"), unlikePostID, remoteUserID)
 		if err != nil {
 			t.Rollback()
 			log.Error("Couldn't delete Like from DB: %v\n", err)
@@ -696,7 +696,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			} else {
 				// TODO: use apAddRemoteUser() here, instead!
 				// Add follower locally, since it wasn't found before
-				res, err := t.Exec("INSERT INTO remoteusers (actor_id, inbox, shared_inbox, url) VALUES (?, ?, ?, ?)", fullActor.ID, fullActor.Inbox, fullActor.Endpoints.SharedInbox, fullActor.URL)
+				res, err := t.Exec(app.db.QueryWrap("INSERT INTO remoteusers (actor_id, inbox, shared_inbox, url) VALUES (?, ?, ?, ?)"), fullActor.ID, fullActor.Inbox, fullActor.Endpoints.SharedInbox, fullActor.URL)
 				if err != nil {
 					// if duplicate key, res will be nil and panic on
 					// res.LastInsertId below
@@ -713,7 +713,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 				}
 
 				// Add in key
-				_, err = t.Exec("INSERT INTO remoteuserkeys (id, remote_user_id, public_key) VALUES (?, ?, ?)", fullActor.PublicKey.ID, followerID, fullActor.PublicKey.PublicKeyPEM)
+				_, err = t.Exec(app.db.QueryWrap("INSERT INTO remoteuserkeys (id, remote_user_id, public_key) VALUES (?, ?, ?)"), fullActor.PublicKey.ID, followerID, fullActor.PublicKey.PublicKeyPEM)
 				if err != nil {
 					if !app.db.isDuplicateKeyErr(err) {
 						t.Rollback()
@@ -724,7 +724,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			}
 
 			// Add follow
-			_, err = t.Exec("INSERT INTO remotefollows (collection_id, remote_user_id, created) VALUES (?, ?, "+app.db.now()+")", c.ID, followerID)
+			_, err = t.Exec(app.db.QueryWrap("INSERT INTO remotefollows (collection_id, remote_user_id, created) VALUES (?, ?, "+app.db.now()+")"), c.ID, followerID)
 			if err != nil {
 				if !app.db.isDuplicateKeyErr(err) {
 					t.Rollback()
