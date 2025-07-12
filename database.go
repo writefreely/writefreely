@@ -1358,7 +1358,11 @@ func (db *datastore) GetPosts(cfg *config.Config, c *Collection, page int, inclu
 
 	limitStr := ""
 	if page > 0 {
-		limitStr = fmt.Sprintf(" LIMIT %d, %d", start, pagePosts)
+		if db.driverName == driverPostgres {
+			limitStr = fmt.Sprintf(" LIMIT %d OFFSET %d", pagePosts, start)
+		} else {
+			limitStr = fmt.Sprintf(" LIMIT %d, %d", start, pagePosts)
+		}
 	}
 	timeCondition := ""
 	if !includeFuture {
@@ -1472,7 +1476,11 @@ func (db *datastore) GetPostsTagged(cfg *config.Config, c *Collection, tag strin
 
 	limitStr := ""
 	if page > 0 {
-		limitStr = fmt.Sprintf(" LIMIT %d, %d", start, pagePosts)
+		if db.driverName == driverPostgres {
+			limitStr = fmt.Sprintf(" LIMIT %d OFFSET %d", pagePosts, start)
+		} else {
+			limitStr = fmt.Sprintf(" LIMIT %d, %d", start, pagePosts)
+		}
 	}
 	timeCondition := ""
 	if !includeFuture {
@@ -1543,7 +1551,11 @@ func (db *datastore) GetLangPosts(cfg *config.Config, c *Collection, lang string
 
 	limitStr := ""
 	if page > 0 {
-		limitStr = fmt.Sprintf(" LIMIT %d, %d", start, pagePosts)
+		if db.driverName == driverPostgres {
+			limitStr = fmt.Sprintf(" LIMIT %d OFFSET %d", pagePosts, start)
+		} else {
+			limitStr = fmt.Sprintf(" LIMIT %d, %d", start, pagePosts)
+		}
 	}
 	timeCondition := ""
 	if !includeFuture {
@@ -2154,7 +2166,11 @@ func (db *datastore) GetAnonymousPosts(u *User, page int) (*[]PublicPost, error)
 
 	limitStr := ""
 	if page > 0 {
-		limitStr = fmt.Sprintf(" LIMIT %d, %d", start, pagePosts)
+		if db.driverName == driverPostgres {
+			limitStr = fmt.Sprintf(" LIMIT %d OFFSET %d", pagePosts, start)
+		} else {
+			limitStr = fmt.Sprintf(" LIMIT %d, %d", start, pagePosts)
+		}
 	}
 	rows, err := db.Query("SELECT id, view_count, title, language, created, updated, content FROM posts WHERE owner_id = ? AND collection_id IS NULL ORDER BY created DESC"+limitStr, u.ID)
 	if err != nil {
@@ -2880,12 +2896,22 @@ func (db *datastore) UpdateDynamicContent(id, title, content, contentType string
 }
 
 func (db *datastore) GetAllUsers(page uint) (*[]User, error) {
-	limitStr := fmt.Sprintf("0, %d", adminUsersPerPage)
+	var limitStr string
 	if page > 1 {
-		limitStr = fmt.Sprintf("%d, %d", (page-1)*adminUsersPerPage, adminUsersPerPage)
+		if db.driverName == driverPostgres {
+			limitStr = fmt.Sprintf(" LIMIT %d OFFSET %d", adminUsersPerPage, (page-1)*adminUsersPerPage)
+		} else {
+			limitStr = fmt.Sprintf(" LIMIT %d, %d", (page-1)*adminUsersPerPage, adminUsersPerPage)
+		}
+	} else {
+		if db.driverName == driverPostgres {
+			limitStr = fmt.Sprintf(" LIMIT 0, %d", adminUsersPerPage)
+		} else {
+			limitStr = fmt.Sprintf(" LIMIT %d OFFSET 0", adminUsersPerPage)
+		}
 	}
 
-	rows, err := db.Query("SELECT id, username, created, status FROM users ORDER BY created DESC LIMIT " + limitStr)
+	rows, err := db.Query("SELECT id, username, created, status FROM users ORDER BY created DESC" + limitStr)
 	if err != nil {
 		log.Error("Failed selecting from users: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve all users."}
