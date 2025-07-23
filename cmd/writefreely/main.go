@@ -16,20 +16,13 @@ import (
 	"os"
 	"runtime"
 	"strings"
-
-	"github.com/capnspacehook/go-acl"
 	"github.com/gorilla/mux"
 	"github.com/urfave/cli/v2"
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/writefreely"
 )
 
-func checkWindowsACL(path string) error {
-	if err := acl.Chmod(path, 0600); err != nil {
-		return fmt.Errorf("failed to set ACL on %s: %w", path, err)
-	}
-	return nil
-}
+
 
 func main() {
 	cli.VersionPrinter = func(c *cli.Context) {
