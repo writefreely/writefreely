@@ -19,6 +19,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/schema v1.4.1
 	github.com/gorilla/sessions v1.3.0
+	github.com/gosimple/slug v1.14.0
 	github.com/guregu/null v4.0.0+incompatible
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/ikeikeikeike/go-sitemap-generator/v2 v2.0.2
@@ -26,7 +27,7 @@ require (
 	github.com/mailgun/mailgun-go v2.0.0+incompatible
 	github.com/manifoldco/promptui v0.9.0
 	github.com/mattn/go-sqlite3 v1.14.21
-	github.com/microcosm-cc/bluemonday v1.0.26
+	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/onsi/ginkgo v1.16.4 // indirect
@@ -45,15 +46,16 @@ require (
 	github.com/writeas/import v0.2.1
 	github.com/writeas/monday v1.3.0
 	github.com/writeas/saturday v1.7.2-0.20200427193424-392b95a03320
-	github.com/writeas/slug v1.2.0
 	github.com/writeas/web-core v1.6.1-0.20231003013047-d81124d45431
 	github.com/writefreely/go-gopher v0.0.0-20220429181814-40127126f83b
 	github.com/writefreely/go-nodeinfo v1.2.0
-	golang.org/x/crypto v0.24.0
-	golang.org/x/net v0.26.0
+	golang.org/x/crypto v0.28.0
+	golang.org/x/net v0.30.0
 )
 
 require github.com/capnspacehook/go-acl v0.0.0-20191017210724-28a28d1b4c77
+require github.com/xhit/go-simple-mail/v2 v2.16.0
+
 
 require (
 	code.as/core/socks v1.0.0 // indirect
@@ -69,8 +71,9 @@ require (
 	github.com/go-fed/httpsig v0.1.1-0.20200204213531-0ef28562fabe // indirect
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
 	github.com/gologme/log v1.2.0 // indirect
-	github.com/gorilla/css v1.0.0 // indirect
+	github.com/gorilla/css v1.0.1 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
+	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hectane/go-acl v0.0.0-20230122075934-ca0b05cb1adb // indirect
 	github.com/joho/godotenv v1.3.0 // indirect
@@ -84,11 +87,13 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
+	github.com/toorop/go-dkim v0.0.0-20201103131630-e1cd1a0a5208 // indirect
 	github.com/writeas/go-writeas/v2 v2.0.2 // indirect
 	github.com/writeas/openssl-go v1.0.0 // indirect
+	github.com/writeas/slug v1.2.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
-	golang.org/x/sys v0.21.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
+	golang.org/x/text v0.19.0 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

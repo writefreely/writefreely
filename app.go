@@ -46,9 +46,10 @@ import (
 )
 
 const (
-	staticDir       = "static"
-	assumedTitleLen = 80
-	postsPerPage    = 10
+	staticDir        = "static"
+	assumedTitleLen  = 80
+	postsPerPage     = 10
+	postsPerArchPage = 40
 
 	serverSoftware = "WriteFreely"
 	softwareURL    = "https://writefreely.org"
@@ -428,15 +429,11 @@ func Initialize(apper Apper, debug bool) (*App, error) {
 
 	initActivityPub(apper.App())
 
-	if apper.App().cfg.Email.Domain != "" || apper.App().cfg.Email.MailgunPrivate != "" {
-		if apper.App().cfg.Email.Domain == "" {
-			log.Error("[FAILED] Starting publish jobs queue: no [letters]domain config value set.")
-		} else if apper.App().cfg.Email.MailgunPrivate == "" {
-			log.Error("[FAILED] Starting publish jobs queue: no [letters]mailgun_private config value set.")
-		} else {
-			log.Info("Starting publish jobs queue...")
-			go startPublishJobsQueue(apper.App())
-		}
+	if apper.App().cfg.Email.Enabled() {
+		log.Info("Starting publish jobs queue...")
+		go startPublishJobsQueue(apper.App())
+	} else {
+		log.Error("[FAILED] Starting publish jobs queue: no email provider is configured.")
 	}
 
 	// Handle local timeline, if enabled
@@ -903,12 +900,12 @@ func CreateUser(apper Apper, username, password string, isAdmin bool) error {
 	if isAdmin {
 		// Abort if trying to create admin user, but one already exists
 		if firstUser != nil {
-			return fmt.Errorf("Admin user already exists (%s). Create a regular user with: writefreely --create-user", firstUser.Username)
+			return fmt.Errorf("Admin user already exists (%s). Create a regular user with: writefreely user create [USER]:[PASSWORD]", firstUser.Username)
 		}
 	} else {
 		// Abort if trying to create regular user, but no admin exists yet
 		if firstUser == nil {
-			return fmt.Errorf("No admin user exists yet. Create an admin first with: writefreely --create-admin")
+			return fmt.Errorf("No admin user exists yet. Create an admin first with: writefreely user create --admin [USER]:[PASSWORD]")
 		}
 	}
 

@@ -69,6 +69,7 @@ For common platforms, start with our [pre-built binaries](https://github.com/wri
 You can also find WriteFreely in these package repositories, thanks to our wonderful community!
 
 * [Arch User Repository](https://aur.archlinux.org/packages/writefreely/)
+* [Nanos Repository](https://repo.ops.city/v2/packages/eyberg/writefreely/show)
 
 ## Documentation
 
@@ -86,4 +87,4 @@ Before contributing anything, please read our [Contributing Guide](https://githu
 
 ## License
 
-Copyright © 2018-2022 [Musing Studio LLC](https://musing.studio) and contributing authors. Licensed under the [AGPL](https://github.com/writefreely/writefreely/blob/develop/LICENSE).
+Copyright © 2018-2025 [Musing Studio LLC](https://musing.studio) and contributing authors. Licensed under the [AGPL](https://github.com/writefreely/writefreely/blob/develop/LICENSE).

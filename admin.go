@@ -208,7 +208,7 @@ func handleViewAdminUsers(app *App, u *User, w http.ResponseWriter, r *http.Requ
 
 	p.Flashes, _ = getSessionFlashes(app, w, r, nil)
 	p.TotalUsers = app.db.GetAllUsersCount()
-	ttlPages := p.TotalUsers / adminUsersPerPage
+	ttlPages := (p.TotalUsers - 1) / adminUsersPerPage + 1
 	p.TotalPages = []int{}
 	for i := 1; i <= int(ttlPages); i++ {
 		p.TotalPages = append(p.TotalPages, i)

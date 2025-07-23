@@ -1,0 +1,25 @@
+services:
+  app:
+    image: writefreely
+    container_name: writefreely
+    volumes:
+      - ./data:/data
+    ports:
+      - 127.0.0.1:8080:8080
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: lscr.io/linuxserver/mariadb
+    container_name: writefreely-mariadb
+    volumes: 
+      - ./db:/config
+    environment:
+      - PUID=65534
+      - PGID=65534
+      - TZ=Etc/UTC
+      - MYSQL_DATABASE=writefreely
+      - MYSQL_USER=writefreely
+      - MYSQL_PASSWORD=P@ssw0rd
+    restart: unless-stopped

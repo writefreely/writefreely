@@ -14,6 +14,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/writefreely/writefreely/mailer"
 	"html/template"
 	"net/http"
 	"strings"
@@ -21,7 +22,6 @@ import (
 
 	"github.com/aymerick/douceur/inliner"
 	"github.com/gorilla/mux"
-	"github.com/mailgun/mailgun-go"
 	stripmd "github.com/writeas/go-strip-markdown/v2"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/data"
@@ -307,8 +307,14 @@ Originally published on ` + p.Collection.DisplayTitle() + ` (` + p.Collection.Ca
 
 Sent to %recipient.to%. Unsubscribe: ` + p.Collection.CanonicalURL() + `email/unsubscribe/%recipient.id%?t=%recipient.token%`
 
-	gun := mailgun.NewMailgun(app.cfg.Email.Domain, app.cfg.Email.MailgunPrivate)
-	m := mailgun.NewMessage(p.Collection.DisplayTitle()+" <"+p.Collection.Alias+"@"+app.cfg.Email.Domain+">", stripmd.Strip(p.DisplayTitle()), plainMsg)
+	mlr, err := mailer.New(app.cfg.Email)
+	if err != nil {
+		return err
+	}
+	m, err := mlr.NewMessage(p.Collection.DisplayTitle()+" <"+p.Collection.Alias+"@"+app.cfg.Email.Domain+">", stripmd.Strip(p.DisplayTitle()), plainMsg)
+	if err != nil {
+		return err
+	}
 	replyTo := app.db.GetCollectionAttribute(collID, collAttrLetterReplyTo)
 	if replyTo != "" {
 		m.SetReplyTo(replyTo)
@@ -405,13 +411,13 @@ Sent to %recipient.to%. Unsubscribe: ` + p.Collection.CanonicalURL() + `email/un
 		return err
 	}
 
-	m.SetHtml(html)
+	m.SetHTML(html)
 
 	log.Info("[email] Adding %d recipient(s)", len(subs))
 	for _, s := range subs {
 		e := s.FinalEmail(app.keys)
 		log.Info("[email] Adding %s", e)
-		err = m.AddRecipientAndVariables(e, map[string]interface{}{
+		err = m.AddRecipientAndVariables(e, map[string]string{
 			"id":    s.ID,
 			"to":    e,
 			"token": s.Token,
@@ -421,8 +427,8 @@ Sent to %recipient.to%. Unsubscribe: ` + p.Collection.CanonicalURL() + `email/un
 		}
 	}
 
-	res, _, err := gun.Send(m)
-	log.Info("[email] Send result: %s", res)
+	err = mlr.Send(m)
+	log.Info("[email] Email sent")
 	if err != nil {
 		log.Error("Unable to send post email: %v", err)
 		return err
@@ -437,17 +443,23 @@ func sendSubConfirmEmail(app *App, c *Collection, email, subID, token string) er
 	}
 
 	// Send email
-	gun := mailgun.NewMailgun(app.cfg.Email.Domain, app.cfg.Email.MailgunPrivate)
+	mlr, err := mailer.New(app.cfg.Email)
+	if err != nil {
+		return err
+	}
 
 	plainMsg := "Confirm your subscription to " + c.DisplayTitle() + ` (` + c.CanonicalURL() + `) to start receiving future posts. Simply click the following link (or copy and paste it into your browser):
 
 ` + c.CanonicalURL() + "email/confirm/" + subID + "?t=" + token + `
 
 If you didn't subscribe to this site or you're not sure why you're getting this email, you can delete it. You won't be subscribed or receive any future emails.`
-	m := mailgun.NewMessage(c.DisplayTitle()+" <"+c.Alias+"@"+app.cfg.Email.Domain+">", "Confirm your subscription to "+c.DisplayTitle(), plainMsg, fmt.Sprintf("<%s>", email))
+	m, err := mlr.NewMessage(c.DisplayTitle()+" <"+c.Alias+"@"+app.cfg.Email.Domain+">", "Confirm your subscription to "+c.DisplayTitle(), plainMsg, fmt.Sprintf("<%s>", email))
+	if err != nil {
+		return err
+	}
 	m.AddTag("Email Verification")
 
-	m.SetHtml(`<html>
+	m.SetHTML(`<html>
 	<body style="font-family:Lora, 'Palatino Linotype', Palatino, Baskerville, 'Book Antiqua', 'New York', 'DejaVu serif', serif; font-size: 100%%; margin:1em 2em;">
 		<div style="font-size: 1.2em;">
 			<p>Confirm your subscription to <a href="` + c.CanonicalURL() + `">` + c.DisplayTitle() + `</a> to start receiving future posts:</p>
@@ -456,7 +468,10 @@ If you didn't subscribe to this site or you're not sure why you're getting this 
         </div>
 	</body>
 </html>`)
-	gun.Send(m)
+	err = mlr.Send(m)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
