@@ -29,6 +29,17 @@ func (app *App) InitStaticRoutes(r *mux.Router) {
 	// Handle static files
 	fs := http.FileServer(http.Dir(filepath.Join(app.cfg.Server.StaticParentDir, staticDir)))
 	fs = cacheControl(fs)
+	// blockedFS := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// 	if strings.HasSuffix(r.URL.Path, "config.ini") {
+	// 		http.NotFound(w, r)
+	// 		return
+	// 	}
+	// 	fs.ServeHTTP(w, r)
+	// })
+
+	// app.shttp = http.NewServeMux()
+	// app.shttp.Handle("/", blockedFS)
+	// r.PathPrefix("/").Handler(blockedFS)
 	app.shttp = http.NewServeMux()
 	app.shttp.Handle("/", fs)
 	r.PathPrefix("/").Handler(fs)

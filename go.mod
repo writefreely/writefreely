@@ -53,7 +53,9 @@ require (
 	golang.org/x/net v0.30.0
 )
 
+require github.com/capnspacehook/go-acl v0.0.0-20191017210724-28a28d1b4c77
 require github.com/xhit/go-simple-mail/v2 v2.16.0
+
 
 require (
 	code.as/core/socks v1.0.0 // indirect
@@ -73,6 +75,7 @@ require (
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
+	github.com/hectane/go-acl v0.0.0-20230122075934-ca0b05cb1adb // indirect
 	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -95,4 +98,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-go 1.21
+go 1.23.0
+
+toolchain go1.24.4

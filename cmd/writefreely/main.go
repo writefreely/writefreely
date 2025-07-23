@@ -12,19 +12,40 @@ package main
 
 import (
 	"fmt"
+	stdlog "log"
 	"os"
+	"runtime"
 	"strings"
-
 	"github.com/gorilla/mux"
 	"github.com/urfave/cli/v2"
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/writefreely"
 )
 
+
+
 func main() {
 	cli.VersionPrinter = func(c *cli.Context) {
 		fmt.Printf("%s\n", c.App.Version)
 	}
+	cfgPath := "config.ini" // Set your config path logic here
+
+	if runtime.GOOS == "windows" {
+		if err := checkWindowsACL(cfgPath); err != nil {
+			stdlog.Fatalf("insecure config ACL: %v\nPlease run the following in an Administrator command prompt to restrict access:\n  icacls config.ini /inheritance:r\n  icacls config.ini /grant %USERNAME%:R\n  icacls config.ini /remove \"Users\" \"Everyone\"")
+		}
+	} else {
+		// Attempt to fix permissions automatically
+		_ = os.Chmod(cfgPath, 0600)
+		info, err := os.Stat(cfgPath)
+		if err != nil {
+			stdlog.Fatalf("cannot stat config: %v", err)
+		}
+		if perm := info.Mode().Perm(); perm&0o077 != 0 {
+			stdlog.Fatalf("insecure permissions %v: config must be owner‑only", perm)
+		}
+	}
+
 	app := &cli.App{
 		Name:    "WriteFreely",
 		Usage:   "A beautifully pared-down blogging platform",
