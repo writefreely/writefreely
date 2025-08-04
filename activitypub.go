@@ -349,9 +349,22 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	var m map[string]interface{}
-	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+	// Only call impart.RenderActivityJSON here if NO callback has already written a response.
+	// Track whether a callback has written a response
+	var responseWritten bool
+
+	// Read raw body for debugging before decoding
+	var rawBody bytes.Buffer
+	tee := io.TeeReader(r.Body, &rawBody)
+
+	var m map[string]any
+	if err := json.NewDecoder(tee).Decode(&m); err != nil {
+		log.Error("Failed decoding JSON: %v", err)
+		log.Error("Raw body: %s", rawBody.String())
 		return err
+	}
+	if debugging {
+		log.Info("Decoded JSON: %v", m)
 	}
 
 	a := streams.NewAccept()
@@ -409,6 +422,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			if err != nil {
 				return err
 			}
+			responseWritten = true
 			return nil
 		},
 		FollowCallback: func(f *streams.Follow) error {
@@ -457,6 +471,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			if err != nil {
 				return err
 			}
+			responseWritten = true
 			return impart.RenderActivityJSON(w, m, http.StatusOK)
 		},
 		UndoCallback: func(u *streams.Undo) error {
@@ -518,16 +533,30 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			} else {
 				log.Error("No to on Undo!")
 			}
+			responseWritten = true
 			return impart.RenderActivityJSON(w, m, http.StatusOK)
+		},
+		DeleteCallback: func(d *streams.Delete) error {
+			if debugging {
+				b, _ := json.Marshal(m)
+				log.Info("Delete: %s", b)
+			}
+			impart.RenderActivityJSON(w, m, http.StatusOK)
+			responseWritten = true
+			return nil
 		},
 	}
 	if err := res.Deserialize(m); err != nil {
 		// 3) Any errors from #2 can be handled, or the payload is an unknown type.
-		log.Error("Unable to resolve Follow: %v", err)
+		log.Error("Unable to resolve Activity: %v", err)
 		if debugging {
 			log.Error("Map: %s", m)
 		}
-		return err
+		if t, ok := m["type"]; ok {
+			log.Error("Unhandled activity type: %v", t)
+		}
+		impart.RenderActivityJSON(w, "", http.StatusOK)
+		return nil
 	}
 
 	// Handle synchronous activities
@@ -569,7 +598,8 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		if debugging {
 			log.Info("Successfully liked post %s by remote user %s", likePostID, remoteUser.URL)
 		}
-		return impart.RenderActivityJSON(w, "", http.StatusOK)
+		impart.RenderActivityJSON(w, "", http.StatusOK)
+		return nil
 	} else if isUnlike {
 		t, err := app.db.Begin()
 		if err != nil {
@@ -602,13 +632,14 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		if debugging {
 			log.Info("Successfully un-liked post %s by remote user %s", unlikePostID, remoteUser.URL)
 		}
-		return impart.RenderActivityJSON(w, "", http.StatusOK)
+		impart.RenderActivityJSON(w, "", http.StatusOK)
+		return nil
 	}
 
 	go func() {
 		if to == nil {
 			if debugging {
-				log.Error("No `to` value!")
+				log.Info("No `to` value: likely not needed for this activity type.")
 			}
 			return
 		}
@@ -620,6 +651,9 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			return
 		}
 		am["@context"] = []string{activitystreams.Namespace}
+		if debugging {
+			logOutgoingActivity("Accept", am)
+		}
 
 		err = makeActivityPost(app.cfg.App.Host, p, fullActor.Inbox, am)
 		if err != nil {
@@ -693,10 +727,22 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		}
 	}()
 
+	if !responseWritten {
+		if debugging {
+			log.Info("Received unhandled activity type, returning OK")
+		}
+		impart.RenderActivityJSON(w, "", http.StatusOK)
+	}
+
 	return nil
 }
 
 func makeActivityPost(hostName string, p *activitystreams.Person, url string, m interface{}) error {
+	if url == "" {
+        log.Error("Target POST URL is empty! Person: %+v, Activity: %+v", p, m)
+        return fmt.Errorf("target POST URL is empty")
+    }
+
 	log.Info("POST %s", url)
 	b, err := json.Marshal(m)
 	if err != nil {
@@ -902,7 +948,9 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 		na.CC = append(na.CC, instFolls...)
 		// create a new "Create" activity
 		// with our article as object
+		label := "Create"
 		if isUpdate {
+			label = "Update"
 			na.Updated = &p.Updated
 			activity = activitystreams.NewUpdateActivity(na)
 		} else {
@@ -911,6 +959,9 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			activity.CC = na.CC
 		}
 		// and post it to that sharedInbox
+		if debugging {
+			logOutgoingActivity(label, activity)
+		}
 		err = makeActivityPost(app.cfg.App.Host, actor, si, activity)
 		if err != nil {
 			log.Error("Couldn't post! %v", err)
@@ -1165,4 +1216,13 @@ func parsePostIDFromURL(app *App, u *url.URL) (string, error) {
 
 func setCacheControl(w http.ResponseWriter, ttl time.Duration) {
 	w.Header().Set("Cache-Control", fmt.Sprintf("public, max-age=%.0f", ttl.Seconds()))
+}
+
+func logOutgoingActivity(label string, activity any) {
+	b, err := json.MarshalIndent(activity, "", "  ")
+	if err != nil {
+		log.Error("Failed to marshal %s activity: %v", label, err)
+		return
+	}
+	log.Info("%s outgoing ActivityPub payload:\n%s", label, string(b))
 }
