@@ -124,8 +124,6 @@ release : clean ui
 	mv build/$(BINARY_NAME)-windows-4.0-amd64.exe $(BUILDPATH)/$(BINARY_NAME).exe
 	cd build; zip -r ../$(BINARY_NAME)_$(GITREV)_windows_amd64.zip ./$(BINARY_NAME)
 	rm $(BUILDPATH)/$(BINARY_NAME).exe
-	$(MAKE) build-docker
-	$(MAKE) release-docker
 
 # This assumes you're on linux/amd64
 release-linux : clean ui
