@@ -609,7 +609,7 @@ func ConnectToDatabase(app *App) error {
 		log.Info("Database version: %v", ver)
 		if app.cfg.Database.Type == driverMySQL && strings.HasPrefix(ver, "5.") {
 			log.Info("Enabling compatibility for MySQL v5.x")
-			app.db.isSpencerRegex = true
+			app.db.useSpencerRegex = true
 		}
 	}
 

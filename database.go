@@ -152,7 +152,7 @@ type datastore struct {
 	*sql.DB
 	driverName string
 
-	isSpencerRegex bool
+	useSpencerRegex bool
 }
 
 var _ writestore = &datastore{}
@@ -1448,7 +1448,7 @@ func (db *datastore) GetPostsTagged(cfg *config.Config, c *Collection, tag strin
 		rows, err = db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND LOWER(content) regexp ? "+timeCondition+" ORDER BY created "+order+limitStr, collID, `.*#`+strings.ToLower(tag)+`\b.*`)
 	} else {
 		var boundaryRegex string
-		if db.isSpencerRegex {
+		if db.useSpencerRegex {
 			// MySQL earlier than 8.0.4, Henry Spencer's regex implementation
 			boundaryRegex = "[[:>:]]"
 		} else {
