@@ -1,5 +1,6 @@
 GITREV=`git describe | cut -c 2-`
 LDFLAGS=-ldflags="-s -w -X 'github.com/writefreely/writefreely.softwareVer=$(GITREV)' -extldflags '-static'"
+BASELDFLAGS=-ldflags="-s -w -X 'github.com/writefreely/writefreely.softwareVer=$(GITREV)'"
 
 GOCMD=go
 GOINSTALL=$(GOCMD) install $(LDFLAGS)
@@ -39,13 +40,13 @@ build-darwin: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=darwin/amd64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.23.x -out writefreely -pkg ./cmd/writefreely .
+	xgo --targets=darwin/amd64, -dest build/ $(BASELDFLAGS) -tags='netgo sqlite' -go go-1.23.x -out writefreely -pkg ./cmd/writefreely .
 
 build-darwin-arm64: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=darwin/arm64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.23.x -out writefreely -pkg ./cmd/writefreely .
+	xgo --targets=darwin/arm64, -dest build/ $(BASELDFLAGS) -tags='netgo sqlite' -go go-1.23.x -out writefreely -pkg ./cmd/writefreely .
 
 build-arm6: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
