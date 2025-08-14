@@ -600,6 +600,18 @@ func ConnectToDatabase(app *App) error {
 	if err != nil {
 		return fmt.Errorf("Database ping failed: %s", err)
 	}
+	log.Info("Connected to database.")
+
+	ver, err := app.db.version()
+	if err != nil {
+		log.Error("Unable to get DB version: %v", err)
+	} else {
+		log.Info("Database version: %v", ver)
+		if app.cfg.Database.Type == driverMySQL && strings.HasPrefix(ver, "5.") {
+			log.Info("Enabling compatibility for MySQL v5.x")
+			app.db.isSpencerRegex = true
+		}
+	}
 
 	return nil
 }
@@ -859,7 +871,7 @@ func connectToDatabase(app *App) {
 		log.Error("%s", err)
 		os.Exit(1)
 	}
-	app.db = &datastore{db, app.cfg.Database.Type}
+	app.db = &datastore{DB: db, driverName: app.cfg.Database.Type}
 }
 
 func shutdown(app *App) {
