@@ -1,5 +1,5 @@
 # Build image
-FROM golang:1.21-alpine3.18 as build
+FROM golang:1.21-alpine3.18 AS build
 
 LABEL org.opencontainers.image.source="https://github.com/writefreely/writefreely"
 LABEL org.opencontainers.image.description="WriteFreely is a clean, minimalist publishing platform made for writers. Start a blog, share knowledge within your organization, or build a community around the shared act of writing."
