@@ -2075,6 +2075,12 @@ func (db *datastore) GetTopPosts(u *User, alias string, hostName string) (*[]Pub
 			c.hostName = hostName
 			pubPost.Collection = &CollectionObj{Collection: c}
 		}
+		p.LikeCount, err = db.GetPostLikeCounts(p.ID)
+		if err != nil {
+			log.Error("Failed GetPostLikeCounts(%s): %v", p.ID, err)
+			gotErr = true
+			break
+		}
 
 		posts = append(posts, pubPost)
 	}
