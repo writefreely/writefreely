@@ -145,16 +145,17 @@ type (
 	CollectionPostPage struct {
 		*PublicPost
 		page.StaticPage
-		IsOwner        bool
-		IsPinned       bool
-		IsCustomDomain bool
-		Monetization   string
-		Verification   string
-		PinnedPosts    *[]PublicPost
-		IsFound        bool
-		IsAdmin        bool
-		CanInvite      bool
-		Silenced       bool
+		IsOwner         bool
+		IsPinned        bool
+		IsCustomDomain  bool
+		Monetization    string
+		Verification    string
+		FediverseAuthor string
+		PinnedPosts     *[]PublicPost
+		IsFound         bool
+		IsAdmin         bool
+		CanInvite       bool
+		Silenced        bool
 
 		// Helper field for Chorus mode
 		CollAlias string
@@ -1649,6 +1650,18 @@ Are you sure it was ever here?`,
 		tp.IsPinned = len(*tp.PinnedPosts) > 0 && PostsContains(tp.PinnedPosts, p)
 		tp.Monetization = coll.Monetization
 		tp.Verification = coll.Verification
+		if tp.Verification != "" {
+			// Fetch info for fediverse:creator tag
+			ru, err := getRemoteUserFromURL(app, coll.Verification)
+			if err != nil {
+				if debugging {
+					log.Info("showing rel=me tag, but no local handle for %s", coll.Verification)
+				}
+			} else {
+				// Though we don't store handles with leading @, strip it here just in case
+				tp.FediverseAuthor = "@" + strings.TrimLeft(ru.Handle, "@")
+			}
+		}
 
 		if !postFound {
 			w.WriteHeader(http.StatusNotFound)

@@ -4,6 +4,7 @@
 		<meta name="monetization" content="{{.DisplayMonetization}}" />
 	{{- end}}
 	{{if .Verification -}}
+		{{if .FediverseAuthor}}<meta name="fediverse:creator" content="{{.FediverseAuthor}}">{{end}}
 		<link rel="me" href="{{.Verification}}" />
 	{{- end}}
 {{end}}
