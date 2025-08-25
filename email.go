@@ -11,6 +11,7 @@
 package writefreely
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -178,6 +179,40 @@ func handleCreateEmailSubscription(app *App, w http.ResponseWriter, r *http.Requ
 		return impart.HTTPError{http.StatusFound, from}
 	}
 	return impart.WriteSuccess(w, "", http.StatusAccepted)
+}
+
+func handleExportEmailSubscriptions(app *App, w http.ResponseWriter, r *http.Request) ([]byte, string, error) {
+	vars := mux.Vars(r)
+	var err error
+	alias := vars["alias"]
+	filename := ""
+	u := getUserSession(app, r)
+	if u == nil {
+		return nil, filename, ErrNotLoggedIn
+	}
+	c, err := app.db.GetCollection(alias)
+	if err != nil {
+		return nil, filename, err
+	}
+
+	// Verify permissions / ownership
+	if u.ID != c.OwnerID {
+		return nil, filename, ErrForbiddenCollectionAccess
+	}
+
+	filename = "subscribers-" + alias + "-" + time.Now().Truncate(time.Second).UTC().Format("200601021504")
+
+	subs, err := app.db.GetEmailSubscribers(c.ID, true)
+	if err != nil {
+		return nil, filename, err
+	}
+
+	var data []byte
+	for _, sub := range subs {
+		data = append(data, []byte(sub.Email.String+"\n")...)
+	}
+	data = bytes.TrimRight(data, "\n")
+	return data, filename, err
 }
 
 func handleDeleteEmailSubscription(app *App, w http.ResponseWriter, r *http.Request) error {

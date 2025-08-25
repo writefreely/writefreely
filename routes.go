@@ -148,6 +148,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	apiColls.HandleFunc("/{alias}/collect", handler.All(addPost)).Methods("POST")
 	apiColls.HandleFunc("/{alias}/pin", handler.All(pinPost)).Methods("POST")
 	apiColls.HandleFunc("/{alias}/unpin", handler.All(pinPost)).Methods("POST")
+	apiColls.HandleFunc("/{alias}/email/subscribers/export.csv", handler.Download(handleExportEmailSubscriptions, UserLevelUser)).Methods("GET")
 	apiColls.HandleFunc("/{alias}/email/subscribe", handler.All(handleCreateEmailSubscription)).Methods("POST")
 	apiColls.HandleFunc("/{alias}/email/subscribe", handler.All(handleDeleteEmailSubscription)).Methods("DELETE")
 	apiColls.HandleFunc("/{collection}/email/unsubscribe", handler.All(handleDeleteEmailSubscription)).Methods("GET")
