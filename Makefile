@@ -117,7 +117,7 @@ release : clean ui
 	tar -cvzf $(BINARY_NAME)_$(GITREV)_macos_amd64.tar.gz -C build $(BINARY_NAME)
 	rm $(BUILDPATH)/$(BINARY_NAME)
 	$(MAKE) build-darwin-arm64
-	mv build/$(BINARY_NAME)-darwin-arm64 $(BUILDPATH)/$(BINARY_NAME)
+	mv build/$(BINARY_NAME)-darwin-10.12-arm64 $(BUILDPATH)/$(BINARY_NAME)
 	tar -cvzf $(BINARY_NAME)_$(GITREV)_macos_arm64.tar.gz -C build $(BINARY_NAME)
 	rm $(BUILDPATH)/$(BINARY_NAME)
 	$(MAKE) build-windows
