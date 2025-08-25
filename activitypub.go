@@ -436,6 +436,17 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			a.AppendObject(f.Raw())
 			_, to = f.GetActor(0)
 			obj := f.Raw().GetObjectIRI(0)
+			if obj == nil {
+				if debugging {
+					log.Error("GetObjectIRI on Follow for actor is empty; trying object")
+				}
+				ao := f.Raw().GetObject(0)
+				if ao == nil {
+					log.Error("Fell back to GetObject and none parsed, so no actor ID! Follow request probably FAILED!")
+				} else {
+					obj = ao.GetId()
+				}
+			}
 			a.AppendActor(obj)
 
 			// First get actor information
