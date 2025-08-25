@@ -1319,7 +1319,7 @@ func (p *PublicPost) PreviewObject(app *App, art *activitystreams.Object) *activ
 		exc = strings.Index(p.Content, "\n\n")
 	}
 	if exc > -1 {
-		p.HTMLExcerpt = template.HTML(applyMarkdown([]byte(p.Content[:exc]), baseURL, app.cfg))
+		p.HTMLExcerpt = template.HTML(applyMarkdown([]byte(p.Content[:exc]+" [...]"), baseURL, app.cfg))
 	} else {
 		p.HTMLExcerpt = p.HTMLContent
 	}
