@@ -14,7 +14,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/writefreely/writefreely/spam"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -39,6 +38,7 @@ import (
 	"github.com/writeas/web-core/tags"
 	"github.com/writefreely/writefreely/page"
 	"github.com/writefreely/writefreely/parse"
+	"github.com/writefreely/writefreely/spam"
 )
 
 const (
