@@ -26,6 +26,7 @@ var (
 	ErrNotLoggedIn    = impart.HTTPError{http.StatusUnauthorized, "Not logged in."}
 
 	ErrForbiddenCollection        = impart.HTTPError{http.StatusForbidden, "You don't have permission to add to this collection."}
+	ErrForbiddenCollectionAccess  = impart.HTTPError{http.StatusForbidden, "You don't have permission to access this collection."}
 	ErrForbiddenEditPost          = impart.HTTPError{http.StatusForbidden, "You don't have permission to update this post."}
 	ErrUnauthorizedEditPost       = impart.HTTPError{http.StatusUnauthorized, "Invalid editing credentials."}
 	ErrUnauthorizedGeneral        = impart.HTTPError{http.StatusUnauthorized, "You don't have permission to do that."}
