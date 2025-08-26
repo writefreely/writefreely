@@ -56,8 +56,9 @@ type PostType string
 const (
 	postArch PostType = "archive"
 
-	shortCodeMore = "<!--more-->"
-	shortCodePaid = "<!--paid-->"
+	shortCodeMore  = "<!--more-->"
+	shortCodePaid  = "<!--paid-->"
+	shortCodeNoSig = "<!--nosig-->"
 )
 
 type (
@@ -1565,7 +1566,7 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 				RTL:      zero.NewBool(false, true),
 				Content: `<p class="msg">This page is missing.</p>
 
-Are you sure it was ever here?`,
+Are you sure it was ever here?` + shortCodeNoSig,
 			}
 			pp := po.processPost()
 			p = &pp
