@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 
 		<title>{{.DisplayTitle}}{{if not .SingleUser}} &mdash; {{.SiteName}}{{end}}</title>
-		
+
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
 		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
 		<link rel="shortcut icon" href="/favicon.ico" />
@@ -78,7 +78,7 @@
 				</li>
 			</ul></nav>
 		{{end}}
-		
+
 		<header>
 		{{if .Silenced}}
 			{{template "user-silenced"}}
@@ -92,7 +92,7 @@
 			{{range .PinnedPosts}}<a class="pinned" href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}</nav>
 		{{end}}
 		</header>
-		
+
 		{{if .Posts}}<section id="wrapper" itemscope itemtype="http://schema.org/Blog">{{else}}<div id="wrapper">{{end}}
 
 			{{if .IsWelcome}}
