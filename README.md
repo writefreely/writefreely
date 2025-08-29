@@ -7,9 +7,6 @@
 	<a href="https://github.com/writefreely/writefreely/releases/">
 		<img src="https://img.shields.io/github/release/writefreely/writefreely.svg" alt="Latest release" />
 	</a>
-	<a href="https://travis-ci.org/writeas/writefreely">
-		<img src="https://travis-ci.org/writefreely/writefreely.svg" alt="Build status" />
-	</a>
 	<a href="https://github.com/writefreely/writefreely/releases/latest">
 		<img src="https://img.shields.io/github/downloads/writefreely/writefreely/total.svg" />
 	</a>
@@ -18,6 +15,9 @@
 	</a>
 	<a href="https://ghcr.io/writefreely/writefreely">
 		<img src="https://img.shields.io/badge/docker-%230db7ed.svg?logo=docker&logoColor=white" />
+	</a>
+	<a href="https://github.com/writefreely/writefreely/actions/workflows/docker-publish.yml">
+		<img src="https://github.com/writefreely/writefreely/actions/workflows/docker-publish.yml/badge.svg" alt="Build container image, publish as GitHub-package" />
 	</a>
 </p>
 &nbsp;
