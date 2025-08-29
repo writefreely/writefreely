@@ -14,7 +14,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/writefreely/writefreely/spam"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -23,6 +22,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gosimple/slug"
 	"github.com/guregu/null"
 	"github.com/guregu/null/zero"
 	"github.com/kylemcc/twitter-text-go/extract"
@@ -30,7 +30,6 @@ import (
 	stripmd "github.com/writeas/go-strip-markdown/v2"
 	"github.com/writeas/impart"
 	"github.com/writeas/monday"
-	"github.com/writeas/slug"
 	"github.com/writeas/web-core/activitystreams"
 	"github.com/writeas/web-core/bots"
 	"github.com/writeas/web-core/converter"
@@ -39,6 +38,7 @@ import (
 	"github.com/writeas/web-core/tags"
 	"github.com/writefreely/writefreely/page"
 	"github.com/writefreely/writefreely/parse"
+	"github.com/writefreely/writefreely/spam"
 )
 
 const (
@@ -49,8 +49,16 @@ const (
 	postIDLen     = 10
 
 	postMetaDateFormat = "2006-01-02 15:04:05"
+)
 
-	shortCodePaid = "<!--paid-->"
+type PostType string
+
+const (
+	postArch PostType = "archive"
+
+	shortCodeMore  = "<!--more-->"
+	shortCodePaid  = "<!--paid-->"
+	shortCodeNoSig = "<!--nosig-->"
 )
 
 type (
@@ -105,6 +113,7 @@ type (
 		Created        time.Time     `db:"created" json:"created"`
 		Updated        time.Time     `db:"updated" json:"updated"`
 		ViewCount      int64         `db:"view_count" json:"-"`
+		LikeCount      int64         `db:"like_count" json:"likes"`
 		Title          zero.String   `db:"title" json:"title"`
 		HTMLTitle      template.HTML `db:"title" json:"-"`
 		Content        string        `db:"content" json:"body"`
@@ -127,6 +136,7 @@ type (
 		IsTopLevel  bool           `json:"-"`
 		DisplayDate string         `json:"-"`
 		Views       int64          `json:"views"`
+		Likes       int64          `json:"likes"`
 		Owner       *PublicUser    `json:"-"`
 		IsOwner     bool           `json:"-"`
 		URL         string         `json:"url,omitempty"`
@@ -136,16 +146,17 @@ type (
 	CollectionPostPage struct {
 		*PublicPost
 		page.StaticPage
-		IsOwner        bool
-		IsPinned       bool
-		IsCustomDomain bool
-		Monetization   string
-		Verification   string
-		PinnedPosts    *[]PublicPost
-		IsFound        bool
-		IsAdmin        bool
-		CanInvite      bool
-		Silenced       bool
+		IsOwner         bool
+		IsPinned        bool
+		IsCustomDomain  bool
+		Monetization    string
+		Verification    string
+		FediverseAuthor string
+		PinnedPosts     *[]PublicPost
+		IsFound         bool
+		IsAdmin         bool
+		CanInvite       bool
+		Silenced        bool
 
 		// Helper field for Chorus mode
 		CollAlias string
@@ -1184,6 +1195,7 @@ func fetchPostProperty(app *App, w http.ResponseWriter, r *http.Request) error {
 func (p *Post) processPost() PublicPost {
 	res := &PublicPost{Post: p, Views: 0}
 	res.Views = p.ViewCount
+	res.Likes = p.LikeCount
 	// TODO: move to own function
 	loc := monday.FuzzyLocale(p.Language.String)
 	res.DisplayDate = monday.Format(p.Created, monday.LongFormatsByLocale[loc], loc)
@@ -1280,6 +1292,40 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 		o.CC = append(o.CC, iri)
 		o.Tag = append(o.Tag, activitystreams.Tag{Type: "Mention", HRef: iri, Name: handle})
 	}
+
+	// Add shortened Note as the `preview` property if this is an Article
+	if o.Type == "Article" {
+		o.Preview = p.PreviewObject(app, o)
+		o.Summary = &o.Preview.Content
+	}
+
+	return o
+}
+
+// PreviewObject returns an activitystreams.Object that can be used as an Article's `preview` property.
+func (p *PublicPost) PreviewObject(app *App, art *activitystreams.Object) *activitystreams.Object {
+	o := activitystreams.NewNoteObject()
+	o.To = nil
+	o.ID = art.ID
+	o.URL = art.URL
+	o.Published = art.Published
+	o.Updated = art.Updated
+	o.Tag = art.Tag
+	o.Attachment = art.Attachment
+
+	baseURL := p.Collection.CanonicalURL()
+	// Try to truncate at user-defined excerpt, if exists
+	exc := strings.Index(p.Content, shortCodeMore)
+	if exc == -1 {
+		// No excerpt; fall back to truncating at first paragraph
+		exc = strings.Index(p.Content, "\n\n")
+	}
+	if exc > -1 {
+		p.HTMLExcerpt = template.HTML(applyMarkdown([]byte(p.Content[:exc]+" [...]"), baseURL, app.cfg))
+	} else {
+		p.HTMLExcerpt = p.HTMLContent
+	}
+	o.Content = strings.TrimRight(string(p.Excerpt()), "\n")
 	return o
 }
 
@@ -1507,6 +1553,10 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 				// User tried to access blog feed without a trailing slash, and
 				// there's no post with a slug "feed"
 				return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "feed/"}
+			} else if slug == "archive" {
+				// User tried to access blog Archive without a trailing slash, and
+				// there's no post with a slug "archive"
+				return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "archive/"}
 			}
 
 			po := &Post{
@@ -1516,7 +1566,7 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 				RTL:      zero.NewBool(false, true),
 				Content: `<p class="msg">This page is missing.</p>
 
-Are you sure it was ever here?`,
+Are you sure it was ever here?` + shortCodeNoSig,
 			}
 			pp := po.processPost()
 			p = &pp
@@ -1601,6 +1651,18 @@ Are you sure it was ever here?`,
 		tp.IsPinned = len(*tp.PinnedPosts) > 0 && PostsContains(tp.PinnedPosts, p)
 		tp.Monetization = coll.Monetization
 		tp.Verification = coll.Verification
+		if tp.Verification != "" {
+			// Fetch info for fediverse:creator tag
+			ru, err := getRemoteUserFromURL(app, coll.Verification)
+			if err != nil {
+				if debugging {
+					log.Info("showing rel=me tag, but no local handle for %s", coll.Verification)
+				}
+			} else {
+				// Though we don't store handles with leading @, strip it here just in case
+				tp.FediverseAuthor = "@" + strings.TrimLeft(ru.Handle, "@")
+			}
+		}
 
 		if !postFound {
 			w.WriteHeader(http.StatusNotFound)

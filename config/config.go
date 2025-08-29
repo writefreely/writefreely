@@ -171,8 +171,17 @@ type (
 	}
 
 	EmailCfg struct {
+		// SMTP configuration values
+		Host           string `ini:"smtp_host"`
+		Port           int    `ini:"smtp_port"`
+		Username       string `ini:"smtp_username"`
+		Password       string `ini:"smtp_password"`
+		EnableStartTLS bool   `ini:"smtp_enable_start_tls"`
+
+		// Mailgun configuration values
 		Domain         string `ini:"domain"`
 		MailgunPrivate string `ini:"mailgun_private"`
+		MailgunEurope  bool   `ini:"mailgun_europe"`
 	}
 
 	// Config holds the complete configuration for running a writefreely instance
@@ -242,7 +251,8 @@ func (ac *AppCfg) LandingPath() string {
 }
 
 func (lc EmailCfg) Enabled() bool {
-	return lc.Domain != "" && lc.MailgunPrivate != ""
+	return (lc.Domain != "" && lc.MailgunPrivate != "") ||
+		lc.Username != "" && lc.Password != "" && lc.Host != "" && lc.Port > 0
 }
 
 func (ac AppCfg) SignupPath() string {

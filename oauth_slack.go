@@ -13,7 +13,7 @@ package writefreely
 import (
 	"context"
 	"errors"
-	"github.com/writeas/slug"
+	"github.com/gosimple/slug"
 	"net/http"
 	"net/url"
 	"strings"

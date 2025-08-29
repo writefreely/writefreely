@@ -7,24 +7,24 @@
 	<a href="https://github.com/writefreely/writefreely/releases/">
 		<img src="https://img.shields.io/github/release/writefreely/writefreely.svg" alt="Latest release" />
 	</a>
-	<a href="https://travis-ci.org/writeas/writefreely">
-		<img src="https://travis-ci.org/writefreely/writefreely.svg" alt="Build status" />
-	</a>
 	<a href="https://github.com/writefreely/writefreely/releases/latest">
 		<img src="https://img.shields.io/github/downloads/writefreely/writefreely/total.svg" />
 	</a>
 	<a href="https://goreportcard.com/report/github.com/writefreely/writefreely">
 		<img src="https://goreportcard.com/badge/github.com/writefreely/writefreely" alt="Go Report Card" />
 	</a>
-	<a href="https://hub.docker.com/r/writeas/writefreely/">
-		<img src="https://img.shields.io/docker/pulls/writeas/writefreely.svg" />
+	<a href="https://ghcr.io/writefreely/writefreely">
+		<img src="https://img.shields.io/badge/docker-%230db7ed.svg?logo=docker&logoColor=white" />
+	</a>
+	<a href="https://github.com/writefreely/writefreely/actions/workflows/docker-publish.yml">
+		<img src="https://github.com/writefreely/writefreely/actions/workflows/docker-publish.yml/badge.svg" alt="Build container image, publish as GitHub-package" />
 	</a>
 </p>
 &nbsp;
 
 WriteFreely is a clean, minimalist publishing platform made for writers. Start a blog, share knowledge within your organization, or build a community around the shared act of writing.
 
-![](https://writefreely.org/img/screens/pencil-reader.png)
+![Screenshot of the Reader view of a WriteFreely instance, pen.writefree.ly.](https://files.writefreely.org/img/screens/pen-reader.png)
 
 [Try the writing experience](https://write.as/new)
 
@@ -69,6 +69,7 @@ For common platforms, start with our [pre-built binaries](https://github.com/wri
 You can also find WriteFreely in these package repositories, thanks to our wonderful community!
 
 * [Arch User Repository](https://aur.archlinux.org/packages/writefreely/)
+* [Nanos Repository](https://repo.ops.city/v2/packages/eyberg/writefreely/show)
 
 ## Documentation
 
@@ -86,4 +87,4 @@ Before contributing anything, please read our [Contributing Guide](https://githu
 
 ## License
 
-Copyright © 2018-2022 [Musing Studio LLC](https://musing.studio) and contributing authors. Licensed under the [AGPL](https://github.com/writefreely/writefreely/blob/develop/LICENSE).
+Copyright © 2018-2025 [Musing Studio LLC](https://musing.studio) and contributing authors. Licensed under the [AGPL](https://github.com/writefreely/writefreely/blob/develop/LICENSE).
