@@ -1,0 +1,78 @@
+name: Build container image, publish as GitHub-package (Pro)
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+# Trigger the workflow on version tags (v*.*.*) for production builds
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+env:
+  # Use GitHub Container Registry for publishing
+  REGISTRY: ghcr.io
+  # Define image name based on the repository without any suffix for production
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # Step 1: Checkout the code from the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up QEMU for cross-platform builds
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3.0.0
+
+      # Step 3: Set up Docker Buildx, required for multi-platform builds
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.0.0
+
+      # Step 4: Log into the container registry unless it's a pull request
+      # https://github.com/docker/login-action
+      - name: Log into registry ${{ env.REGISTRY }}
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3.0.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 5: Extract metadata (tags, labels) for Docker
+      # https://github.com/docker/metadata-action
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v4.6.0
+        with:
+          # Production image name without the -dev suffix
+          images: |
+            ghcr.io/${{ env.IMAGE_NAME }}
+          # Set 'latest' tag for the current production build
+          flavor: latest=true
+
+      # Step 6: Build and push Docker production image
+      # https://github.com/docker/build-push-action
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v5.0.0
+        with:
+          # Context is the root directory
+          context: .
+          # Use the production Dockerfile
+          file: Dockerfile.prod
+          # Set platforms for multi-architecture builds
+          platforms: linux/amd64,linux/arm64
+          # Push the image unless it's a pull request
+          push: true
+          # Apply tags from metadata, including 'latest' and version tag
+          tags: ${{ steps.meta.outputs.tags }}
+          # Apply labels from metadata
+          labels: ${{ steps.meta.outputs.labels }}

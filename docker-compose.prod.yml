@@ -1,6 +1,7 @@
+version: '3'
 services:
   app:
-    image: writefreely
+    image: ghcr.io/writefreely/writefreely:latest
     container_name: writefreely
     volumes:
       - ./data:/data

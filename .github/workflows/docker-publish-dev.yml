@@ -1,4 +1,4 @@
-name: Build container image, publish as GitHub-package
+name: Build container image, publish as GitHub-package (Dev)
 
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
@@ -6,39 +6,37 @@ name: Build container image, publish as GitHub-package
 # documentation.
 
 on:
+  # Trigger the workflow on pushes to 'main' and 'develop' branches for development builds
   push:
     branches: [ main, develop ]
-    # Publish semver tags as releases.
-    tags:
-      - 'v*.*.*'
 
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
+  # Define image name based on the repository and suffix for development
+  IMAGE_NAME: ${{ github.repository }}-dev
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
 
     steps:
+      # Step 1: Checkout the code from the repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Set up QEMU for cross-building
+      # Step 2: Set up QEMU for cross-platform builds
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3.0.0
 
-      # Set up Docker Buildx
+      # Step 3: Set up Docker Buildx, required for multi-platform builds
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.0.0
 
-      # Login against a Docker registry except on PR
+      # Step 4: Log into the container registry unless it's a pull request
       # https://github.com/docker/login-action
       - name: Log into registry ${{ env.REGISTRY }}
         if: github.event_name != 'pull_request'
@@ -48,23 +46,30 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Extract metadata (tags, labels) for Docker
+      # Step 5: Extract metadata (tags, labels) for Docker
       # https://github.com/docker/metadata-action
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v4.6.0
         with:
+          # Image name will have a -dev suffix for development builds
           images: |
-            ghcr.io/${{ github.repository }}
+            ghcr.io/${{ env.IMAGE_NAME }}
+          # Set 'latest' tag for the current build
           flavor: latest=true
 
-      # Build and push Docker image with Buildx (don't push on PR)
+      # Step 6: Build and push Docker development image
       # https://github.com/docker/build-push-action
       - name: Build and push Docker images
         uses: docker/build-push-action@v5.0.0
         with:
+          # Context is the root directory
           context: .
+          # Set platforms for multi-architecture builds
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
+          # Push the image unless it's a pull request
+          push: true
+          # Apply tags from metadata
           tags: ${{ steps.meta.outputs.tags }}
+          # Apply labels from metadata
           labels: ${{ steps.meta.outputs.labels }}
