@@ -16,8 +16,8 @@
 	<a href="https://goreportcard.com/report/github.com/writefreely/writefreely">
 		<img src="https://goreportcard.com/badge/github.com/writefreely/writefreely" alt="Go Report Card" />
 	</a>
-	<a href="https://hub.docker.com/r/writeas/writefreely/">
-		<img src="https://img.shields.io/docker/pulls/writeas/writefreely.svg" />
+	<a href="https://ghcr.io/writefreely/writefreely">
+		<img src="https://img.shields.io/badge/docker-%230db7ed.svg?logo=docker&logoColor=white" />
 	</a>
 </p>
 &nbsp;
