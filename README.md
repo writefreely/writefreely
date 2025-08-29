@@ -24,7 +24,7 @@
 
 WriteFreely is a clean, minimalist publishing platform made for writers. Start a blog, share knowledge within your organization, or build a community around the shared act of writing.
 
-![](https://writefreely.org/img/screens/pencil-reader.png)
+![Screenshot of the Reader view of a WriteFreely instance, pen.writefree.ly.](https://files.writefreely.org/img/screens/pen-reader.png)
 
 [Try the writing experience](https://write.as/new)
 
