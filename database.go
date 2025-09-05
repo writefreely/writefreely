@@ -156,6 +156,8 @@ type writestore interface {
 type datastore struct {
 	*sql.DB
 	driverName string
+
+	useSpencerRegex bool
 }
 
 var _ writestore = &datastore{}
@@ -231,6 +233,20 @@ func (db *datastore) dateSub(l int, unit string) string {
 	}
 
 	return "" // placeholder
+}
+
+func (db *datastore) version() (string, error) {
+	var v string
+	var err error
+	if db.driverName == driverSQLite {
+		err = db.QueryRow("SELECT sqlite_version()").Scan(&v)
+	} else {
+		err = db.QueryRow("SELECT version()").Scan(&v)
+	}
+	if err != nil {
+		return "", err
+	}
+	return v, nil
 }
 
 // CreateUser creates a new user in the database from the given User, UPDATING it in the process with the user's ID.
@@ -1492,7 +1508,15 @@ func (db *datastore) GetPostsTagged(cfg *config.Config, c *Collection, tag strin
 	if db.driverName == driverSQLite {
 		rows, err = db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND LOWER(content) regexp ? "+timeCondition+" ORDER BY created "+order+limitStr, collID, `.*#`+strings.ToLower(tag)+`\b.*`)
 	} else {
-		rows, err = db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND LOWER(content) RLIKE ? "+timeCondition+" ORDER BY created "+order+limitStr, collID, "#"+strings.ToLower(tag)+"[[:>:]]")
+		var boundaryRegex string
+		if db.useSpencerRegex {
+			// MySQL earlier than 8.0.4, Henry Spencer's regex implementation
+			boundaryRegex = "[[:>:]]"
+		} else {
+			// MySQL 8.0.4+, International Components for Unicode (ICU) syntax
+			boundaryRegex = "\\b"
+		}
+		rows, err = db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND LOWER(content) RLIKE ? "+timeCondition+" ORDER BY created "+order+limitStr, collID, "#"+strings.ToLower(tag)+boundaryRegex)
 	}
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)
@@ -2139,6 +2163,12 @@ func (db *datastore) GetTopPosts(u *User, alias string, hostName string) (*[]Pub
 			c.Views = views.Int64
 			c.hostName = hostName
 			pubPost.Collection = &CollectionObj{Collection: c}
+		}
+		p.LikeCount, err = db.GetPostLikeCounts(p.ID)
+		if err != nil {
+			log.Error("Failed GetPostLikeCounts(%s): %v", p.ID, err)
+			gotErr = true
+			break
 		}
 
 		posts = append(posts, pubPost)

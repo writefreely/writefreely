@@ -1,5 +1,6 @@
 GITREV=`git describe | cut -c 2-`
 LDFLAGS=-ldflags="-s -w -X 'github.com/writefreely/writefreely.softwareVer=$(GITREV)' -extldflags '-static'"
+BASELDFLAGS=-ldflags="-s -w -X 'github.com/writefreely/writefreely.softwareVer=$(GITREV)'"
 
 GOCMD=go
 GOINSTALL=$(GOCMD) install $(LDFLAGS)
@@ -27,43 +28,43 @@ build-linux: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=linux/amd64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.21.x -out writefreely -pkg ./cmd/writefreely .
+	xgo --targets=linux/amd64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.23.x -out writefreely -pkg ./cmd/writefreely .
 
 build-windows: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=windows/amd64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.21.x -out writefreely -pkg ./cmd/writefreely .
+	xgo --targets=windows/amd64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.23.x -out writefreely -pkg ./cmd/writefreely .
 
 build-darwin: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=darwin/amd64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.21.x -out writefreely -pkg ./cmd/writefreely .
+	xgo --targets=darwin/amd64, -dest build/ $(BASELDFLAGS) -tags='netgo sqlite' -go go-1.23.x -out writefreely -pkg ./cmd/writefreely .
 
 build-darwin-arm64: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=darwin/arm64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.21.x -out writefreely -pkg ./cmd/writefreely .
+	xgo --targets=darwin/arm64, -dest build/ $(BASELDFLAGS) -tags='netgo sqlite' -go go-1.23.x -out writefreely -pkg ./cmd/writefreely .
 
 build-arm6: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=linux/arm-6, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.21.x -out writefreely -pkg ./cmd/writefreely .
+	xgo --targets=linux/arm-6, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.23.x -out writefreely -pkg ./cmd/writefreely .
 
 build-arm7: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=linux/arm-7, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.21.x -out writefreely -pkg ./cmd/writefreely .
+	xgo --targets=linux/arm-7, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.23.x -out writefreely -pkg ./cmd/writefreely .
 
 build-arm64: deps
 	@hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOCMD) install src.techknowlogick.com/xgo@latest; \
 	fi
-	xgo --targets=linux/arm64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.21.x -out writefreely -pkg ./cmd/writefreely .
+	xgo --targets=linux/arm64, -dest build/ $(LDFLAGS) -tags='netgo sqlite' -go go-1.23.x -out writefreely -pkg ./cmd/writefreely .
 
 build-docker :
 	$(DOCKERCMD) build -t $(IMAGE_NAME):latest -t $(IMAGE_NAME):$(GITREV) .
@@ -116,15 +117,13 @@ release : clean ui
 	tar -cvzf $(BINARY_NAME)_$(GITREV)_macos_amd64.tar.gz -C build $(BINARY_NAME)
 	rm $(BUILDPATH)/$(BINARY_NAME)
 	$(MAKE) build-darwin-arm64
-	mv build/$(BINARY_NAME)-darwin-arm64 $(BUILDPATH)/$(BINARY_NAME)
+	mv build/$(BINARY_NAME)-darwin-10.12-arm64 $(BUILDPATH)/$(BINARY_NAME)
 	tar -cvzf $(BINARY_NAME)_$(GITREV)_macos_arm64.tar.gz -C build $(BINARY_NAME)
 	rm $(BUILDPATH)/$(BINARY_NAME)
 	$(MAKE) build-windows
 	mv build/$(BINARY_NAME)-windows-4.0-amd64.exe $(BUILDPATH)/$(BINARY_NAME).exe
 	cd build; zip -r ../$(BINARY_NAME)_$(GITREV)_windows_amd64.zip ./$(BINARY_NAME)
 	rm $(BUILDPATH)/$(BINARY_NAME).exe
-	$(MAKE) build-docker
-	$(MAKE) release-docker
 
 # This assumes you're on linux/amd64
 release-linux : clean ui
