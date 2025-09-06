@@ -216,6 +216,17 @@ func (db *datastore) boolFalse() string {
 	return "" // placeholder
 }
 
+func (db *datastore) limit(offset int, size int) string {
+	switch db.driverName {
+	case driverSQLite, driverMySQL:
+		return fmt.Sprintf(" LIMIT %d, %d", offset, size)
+	case driverPostgres:
+		return fmt.Sprintf(" LIMIT %d OFFSET %d", size, offset)
+	}
+
+	return "" // placeholder
+}
+
 func (db *datastore) QueryWrap(q string) string {
 	if db.driverName != driverPostgres {
 		return q
