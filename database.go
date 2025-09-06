@@ -1374,11 +1374,7 @@ func (db *datastore) GetPosts(cfg *config.Config, c *Collection, page int, inclu
 
 	limitStr := ""
 	if page > 0 {
-		if db.driverName == driverPostgres {
-			limitStr = fmt.Sprintf(" LIMIT %d OFFSET %d", pagePosts, start)
-		} else {
-			limitStr = fmt.Sprintf(" LIMIT %d, %d", start, pagePosts)
-		}
+		limitStr = db.Limit(start, pagePosts)
 	}
 	timeCondition := ""
 	if !includeFuture {
@@ -3459,6 +3455,17 @@ func (db *datastore) BoolFalse() string {
 		return "0"
 	case driverPostgres:
 		return "FALSE"
+	}
+
+	return "" // placeholder
+}
+
+func (db *datastore) Limit(offset int, size int) string {
+	switch db.driverName {
+	case driverSQLite, driverMySQL:
+		return fmt.Sprintf(" LIMIT %d, %d", offset, size)
+	case driverPostgres:
+		return fmt.Sprintf(" LIMIT %d OFFSET %d", size, offset)
 	}
 
 	return "" // placeholder
