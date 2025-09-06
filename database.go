@@ -166,9 +166,7 @@ func (db *datastore) now() string {
 	switch db.driverName {
 	case driverSQLite:
 		return "strftime('%Y-%m-%d %H:%M:%S','now')"
-	case driverMySQL:
-		return "NOW()"
-	case driverPostgres:
+	case driverMySQL, driverPostgres:
 		return "NOW()"
 	}
 
