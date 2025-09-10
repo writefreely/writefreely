@@ -19,9 +19,7 @@ func (db *datastore) now() string {
 	switch db.driverName {
 	case driverSQLite:
 		return "strftime('%Y-%m-%d %H:%M:%S','now')"
-	case driverMySQL:
-		return "NOW()"
-	case driverPostgres:
+	case driverMySQL, driverPostgres:
 		return "NOW()"
 	}
 
@@ -30,12 +28,8 @@ func (db *datastore) now() string {
 
 func (db *datastore) typeInt() string {
 	switch db.driverName {
-	case driverSQLite:
+	case driverSQLite, driverMySQL, driverPostgres:
 		return "INTEGER"
-	case driverMySQL:
-		return "INT"
-	case driverPostgres:
-		return "INT"
 	}
 
 	return "" // placeholder
@@ -45,9 +39,7 @@ func (db *datastore) typeSmallInt() string {
 	switch db.driverName {
 	case driverSQLite:
 		return "INTEGER"
-	case driverMySQL:
-		return "SMALLINT"
-	case driverPostgres:
+	case driverMySQL, driverPostgres:
 		return "SMALLINT"
 	}
 
