@@ -144,68 +144,32 @@ func (db *datastore) typeIntPrimaryKey() string {
 }
 
 func (db *datastore) collateMultiByte() string {
-	switch db.driverName {
-	case driverSQLite:
-		return ""
-	case driverMySQL:
+	if db.driverName == driverMySQL {
 		return " COLLATE utf8_bin"
-	case driverPostgres:
-		return ""
 	}
-
-	return "" // placeholder
+	return ""
 }
 
 func (db *datastore) engine() string {
-	switch db.driverName {
-	case driverSQLite:
-		return ""
-	case driverMySQL:
+	if db.driverName == driverMySQL {
 		return " ENGINE = InnoDB"
-	case driverPostgres:
-		return ""
 	}
-
-	return "" // placeholder
+	return ""
 }
 
 func (db *datastore) after(colName string) string {
-	switch db.driverName {
-	case driverSQLite:
-		return ""
-	case driverMySQL:
+	if db.driverName == driverMySQL {
 		return fmt.Sprintf(" AFTER %s", colName)
-	case driverPostgres:
-		return ""
 	}
-
-	return "" // placeholder
+	return ""
 }
 
 func (db *datastore) boolTrue() string {
-	switch db.driverName {
-	case driverSQLite:
-		return "1"
-	case driverMySQL:
-		return "1"
-	case driverPostgres:
-		return "TRUE"
-	}
-
-	return "" // placeholder
+	return "TRUE"
 }
 
 func (db *datastore) boolFalse() string {
-	switch db.driverName {
-	case driverSQLite:
-		return "0"
-	case driverMySQL:
-		return "0"
-	case driverPostgres:
-		return "FALSE"
-	}
-
-	return "" // placeholder
+	return "FALSE"
 }
 
 func (db *datastore) limit(offset int, size int) string {

@@ -177,9 +177,7 @@ func (db *datastore) clip(field string, l int) string {
 	switch db.driverName {
 	case driverSQLite:
 		return fmt.Sprintf("SUBSTR(%s, 0, %d)", field, l)
-	case driverMySQL:
-		return fmt.Sprintf("LEFT(%s, %d)", field, l)
-	case driverPostgres:
+	case driverMySQL, driverPostgres:
 		return fmt.Sprintf("LEFT(%s, %d)", field, l)
 	}
 
@@ -190,14 +188,12 @@ func (db *datastore) upsert(indexedCols ...string) string {
 	cc := strings.Join(indexedCols, ", ")
 
 	switch db.driverName {
-	case driverSQLite:
+	case driverSQLite, driverPostgres:
 		// NOTE: SQLite UPSERT syntax only works in v3.24.0 (2018-06-04) or later
 		// Leaving this for whenever we can upgrade and include it in our binary
 		return "ON CONFLICT(" + cc + ") DO UPDATE SET"
 	case driverMySQL:
 		return "ON DUPLICATE KEY UPDATE"
-	case driverPostgres:
-		return "ON CONFLICT(" + cc + ") DO UPDATE SET"
 	}
 
 	return "" // placeholder
@@ -206,8 +202,6 @@ func (db *datastore) upsert(indexedCols ...string) string {
 func (db *datastore) dateAdd(l int, unit string) string {
 	switch db.driverName {
 	case driverSQLite:
-		// NOTE: SQLite UPSERT syntax only works in v3.24.0 (2018-06-04) or later
-		// Leaving this for whenever we can upgrade and include it in our binary
 		return fmt.Sprintf("DATETIME('now', '%d %s')", l, unit)
 	case driverMySQL:
 		return fmt.Sprintf("DATE_ADD(NOW(), INTERVAL %d %s)", l, unit)
@@ -221,8 +215,6 @@ func (db *datastore) dateAdd(l int, unit string) string {
 func (db *datastore) dateSub(l int, unit string) string {
 	switch db.driverName {
 	case driverSQLite:
-		// NOTE: SQLite UPSERT syntax only works in v3.24.0 (2018-06-04) or later
-		// Leaving this for whenever we can upgrade and include it in our binary
 		return fmt.Sprintf("DATETIME('now', '-%d %s')", l, unit)
 	case driverMySQL:
 		return fmt.Sprintf("DATE_SUB(NOW(), INTERVAL %d %s)", l, unit)
