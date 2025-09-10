@@ -88,12 +88,10 @@ func (d ColumnType) Format(dialect DialectType, size OptionalInt) (string, error
 		}
 	case ColumnTypeInteger:
 		switch dialect {
-		case DialectSQLite:
+		case DialectSQLite, DialectPostgres:
 			return "INTEGER", nil
 		case DialectMySQL:
 			return "INT" + mod, nil
-		case DialectPostgres:
-			return "INT", nil
 		}
 	case ColumnTypeChar:
 		switch dialect {
@@ -133,11 +131,7 @@ func (d ColumnType) Format(dialect DialectType, size OptionalInt) (string, error
 		}
 	case ColumnTypeText:
 		switch dialect {
-		case DialectSQLite:
-			return "TEXT", nil
-		case DialectMySQL:
-			return "TEXT", nil
-		case DialectPostgres:
+		case DialectSQLite, DialectMySQL, DialectPostgres:
 			return "TEXT", nil
 		}
 	}
@@ -168,11 +162,9 @@ func (c *Column) SetDefaultCurrentTimestamp() *Column {
 	def := ""
 
 	switch c.Dialect {
-	case DialectSQLite:
+	case DialectSQLite, DialectPostgres:
 		def = "CURRENT_TIMESTAMP"
 	case DialectMySQL:
-		def = "NOW()"
-	case DialectPostgres:
 		def = "NOW()"
 	}
 	c.Default = OptionalString{Set: true, Value: def}
