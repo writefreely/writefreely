@@ -986,7 +986,7 @@ func adminInitDatabase(app *App) error {
 		if _, err := app.db.Exec(q); err != nil {
 			log.Error("Error %s executing:\n%s\n", err, q)
 		} else {
-			log.Info("Successfully executing:\n%s\n", q)
+			log.Info("Successfully executed:\n%s\n", q)
 		}
 	}
 
