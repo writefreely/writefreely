@@ -35,7 +35,7 @@ func (b *AlterTableSqlBuilder) ChangeColumn(name string, col *Column) *AlterTabl
 		b.Changes = append(b.Changes, change{queryType: alter, queryString: fmt.Sprintf("RENAME COLUMN %s TO %s_old", name, name)})
 		b.Changes = append(b.Changes, change{queryType: alter, queryString: fmt.Sprintf("ADD COLUMN %s", colVal)})
 		b.Changes = append(b.Changes, change{queryType: update, queryString: fmt.Sprintf("SET %s = %s_old", col.Name, name)})
-		b.Changes = append(b.Changes, change{queryType: alter, queryString: fmt.Sprintf("DROP COLUMN %s", name)})
+		b.Changes = append(b.Changes, change{queryType: alter, queryString: fmt.Sprintf("DROP COLUMN %s_old", name)})
 	}
 	return b
 }
