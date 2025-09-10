@@ -57,6 +57,8 @@ const (
 	driverSQLite   = "sqlite3"
 )
 
+const INVALID_DRIVER_MSG = "Invalid database driver, check configuration file"
+
 var (
 	SQLiteEnabled bool
 )
@@ -171,7 +173,7 @@ func (db *datastore) now() string {
 		return "NOW()"
 	}
 
-	return "" // placeholder
+	panic(INVALID_DRIVER_MSG)
 }
 
 func (db *datastore) clip(field string, l int) string {
@@ -182,7 +184,7 @@ func (db *datastore) clip(field string, l int) string {
 		return fmt.Sprintf("LEFT(%s, %d)", field, l)
 	}
 
-	return "" // placeholder
+	panic(INVALID_DRIVER_MSG)
 }
 
 func (db *datastore) upsert(indexedCols ...string) string {
@@ -197,7 +199,7 @@ func (db *datastore) upsert(indexedCols ...string) string {
 		return "ON DUPLICATE KEY UPDATE"
 	}
 
-	return "" // placeholder
+	panic(INVALID_DRIVER_MSG)
 }
 
 func (db *datastore) dateAdd(l int, unit string) string {
@@ -210,7 +212,7 @@ func (db *datastore) dateAdd(l int, unit string) string {
 		return fmt.Sprintf("NOW() + INTERVAL '%d %s')", l, unit)
 	}
 
-	return "" // placeholder
+	panic(INVALID_DRIVER_MSG)
 }
 
 func (db *datastore) dateSub(l int, unit string) string {
@@ -223,7 +225,7 @@ func (db *datastore) dateSub(l int, unit string) string {
 		return fmt.Sprintf("NOW() - INTERVAL '%d %s')", l, unit)
 	}
 
-	return "" // placeholder
+	panic(INVALID_DRIVER_MSG)
 }
 
 func (db *datastore) version() (string, error) {
@@ -3528,7 +3530,7 @@ func (db *datastore) BoolTrue() string {
 		return "TRUE"
 	}
 
-	return "" // placeholder
+	panic(INVALID_DRIVER_MSG)
 }
 
 func (db *datastore) BoolFalse() string {
@@ -3541,7 +3543,7 @@ func (db *datastore) BoolFalse() string {
 		return "FALSE"
 	}
 
-	return "" // placeholder
+	panic(INVALID_DRIVER_MSG)
 }
 
 func (db *datastore) Limit(offset int, size int) string {
@@ -3552,7 +3554,7 @@ func (db *datastore) Limit(offset int, size int) string {
 		return fmt.Sprintf(" LIMIT %d OFFSET %d", size, offset)
 	}
 
-	return "" // placeholder
+	panic(INVALID_DRIVER_MSG)
 }
 
 func (db *datastore) Query(query string, args ...any) (*sql.Rows, error) {
