@@ -227,7 +227,7 @@ func (db *datastore) dateSub(l int, unit string) string {
 	case driverMySQL:
 		return fmt.Sprintf("DATE_SUB(NOW(), INTERVAL %d %s)", l, unit)
 	case driverPostgres:
-		return fmt.Sprintf("DATE_SUBTRACT(NOW(), %d %s)", l, unit)
+		return fmt.Sprintf("NOW() - INTERVAL '%d %s')", l, unit)
 	}
 
 	return "" // placeholder
