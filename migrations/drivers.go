@@ -183,6 +183,13 @@ func (db *datastore) limit(offset int, size int) string {
 	return "" // placeholder
 }
 
+/**
+ * MySQL/SQLite use '?' as placeholders in prepared statments
+ * while PostgreSQL use '$1', '$2' ... '$n' instead
+ *
+ * this function converts a prepared statement in MySQL/SQLite 
+ * format into PostgreSQL format
+ */
 func (db *datastore) QueryWrap(q string) string {
 	if db.driverName != driverPostgres {
 		return q
