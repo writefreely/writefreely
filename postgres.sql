@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS "collections" (
     "style_sheet" TEXT,
     "script" TEXT DEFAULT NULL,
     "format" VARCHAR(8) DEFAULT NULL,
-    "privacy" INT NOT NULL,
+    "privacy" BOOLEAN NOT NULL,
     "owner_id" INT NOT NULL,
     "view_count" INT NOT NULL
 );
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS "posts" (
     "text_appearance" CHAR(4) NOT NULL DEFAULT 'norm',
     "language" CHAR(2) DEFAULT NULL,
     "rtl" BOOLEAN DEFAULT NULL,
-    "privacy" INT NOT NULL,
+    "privacy" BOOLEAN NOT NULL,
     "owner_id" INT DEFAULT NULL,
     "collection_id" INT DEFAULT NULL,
     "pinned_position" SMALLINT NULL,
