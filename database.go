@@ -785,13 +785,13 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 		return nil, err
 	}
 	defer stmt.Close()
-	_, err = stmt.Exec(friendlyID, slug, post.Title, post.Content, appearance, post.Language, post.IsRTL, db.BoolFalse(), ownerID, ownerCollID, created, 0)
+	_, err = stmt.Exec(friendlyID, slug, post.Title, post.Content, appearance, post.Language, post.IsRTL, 0, ownerID, ownerCollID, created, 0)
 	if err != nil {
 		if db.isDuplicateKeyErr(err) {
 			// Duplicate entry error; try a new slug
 			// TODO: make this a little more robust
 			slug = sql.NullString{id.GenSafeUniqueSlug(slug.String), true}
-			_, err = stmt.Exec(friendlyID, slug, post.Title, post.Content, appearance, post.Language, post.IsRTL, db.BoolFalse(), ownerID, ownerCollID, created, 0)
+			_, err = stmt.Exec(friendlyID, slug, post.Title, post.Content, appearance, post.Language, post.IsRTL, 0, ownerID, ownerCollID, created, 0)
 			if err != nil {
 				return nil, handleFailedPostInsert(fmt.Errorf("Retried slug generation, still failed: %v", err))
 			}
@@ -2031,11 +2031,11 @@ func (db *datastore) GetPublishableCollections(u *User, hostName string) (*[]Col
 }
 
 func (db *datastore) GetPublicCollections(hostName string) (*[]Collection, error) {
-	rows, err := db.Query(fmt.Sprintf(`SELECT c.id, alias, title, description, privacy, view_count
+	rows, err := db.Query(`SELECT c.id, alias, title, description, privacy, view_count
 		FROM collections c
 		LEFT JOIN users u ON u.id = c.owner_id
-		WHERE c.privacy = %s AND u.status = 0
-		ORDER BY title ASC`, db.BoolTrue()))
+		WHERE c.privacy = 1 AND u.status = 0
+		ORDER BY title ASC`)
 	if err != nil {
 		log.Error("Failed selecting public collections: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve public collections."}
