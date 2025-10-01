@@ -29,19 +29,10 @@ func displayMonetization(monetization, alias string) string {
 	}
 
 	ptrURL, err := url.Parse(strings.Replace(monetization, "$", "https://", 1))
-	if err == nil {
-		if strings.HasSuffix(ptrURL.Host, ".xrptipbot.com") {
-			// xrp tip bot doesn't support stream receipts, so return plain pointer
-			return monetization
-		}
+	if err != nil {
+		return ""
 	}
-
-	u := os.Getenv("PAYMENT_HOST")
-	if u == "" {
-		return "$webmonetization.org/api/receipts/" + url.PathEscape(monetization)
-	}
-	u += "/" + alias
-	return u
+	return ptrURL.String()
 }
 
 func handleSPSPEndpoint(app *App, w http.ResponseWriter, r *http.Request) error {
