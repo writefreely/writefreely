@@ -17,8 +17,8 @@ function showWMPaywall($content, $split) {
     $readmoreSell.id = 'readmore-sell';
     $content.insertAdjacentElement('beforeend', $readmoreSell);
     $readmoreSell.appendChild($split);
-    $readmoreSell.insertAdjacentHTML("beforeend", '\n\n<p class="font sans">For <strong>$5 per month</strong>, you can read this and other great writing across our site and other websites that support Web Monetization.</p>')
-    $readmoreSell.insertAdjacentHTML("beforeend", '\n\n<p class="font sans"><a href="https://coil.com/signup?ref=writefreely" class="btn cta" target="coil">Get started</a> <a href="https://coil.com/?ref=writefreely" class="btn cta secondary">Learn more</a></p>')
+    $readmoreSell.insertAdjacentHTML("beforeend", '\n\n<p class="font sans">With a Web Monetization wallet, you can read this and other great writing across our site and other websites that support Web Monetization.</p>')
+    $readmoreSell.insertAdjacentHTML("beforeend", '\n\n<p class="font sans"><a href="https://webmonetization.org" class="btn cta secondary">Learn more</a></p>')
 }
 
 function initMonetization() {
