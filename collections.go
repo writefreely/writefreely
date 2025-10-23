@@ -345,6 +345,10 @@ func (c *Collection) PersonObject(ids ...int64) *activitystreams.Person {
 		}
 	}
 
+	if c.Monetization != "" {
+		p.AddWebMonetization(c.Monetization)
+	}
+
 	collID := c.ID
 	if len(ids) > 0 {
 		collID = ids[0]
