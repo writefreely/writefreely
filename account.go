@@ -13,8 +13,6 @@ package writefreely
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/writefreely/writefreely/mailer"
-	"github.com/writefreely/writefreely/spam"
 	"html/template"
 	"net/http"
 	"regexp"
@@ -33,7 +31,9 @@ import (
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/writefreely/author"
 	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/mailer"
 	"github.com/writefreely/writefreely/page"
+	"github.com/writefreely/writefreely/spam"
 )
 
 type (
