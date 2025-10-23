@@ -862,6 +862,7 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		return err
 	}
+	c.hostName = app.cfg.App.Host
 	if c.OwnerID != u.ID {
 		return ErrCollectionNotFound
 	}
