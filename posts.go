@@ -219,8 +219,9 @@ func (p *Post) DisplayTitle() string {
 	return t
 }
 
-// PlainDisplayTitle dynamically generates a title from the Post's contents if it
-// doesn't already have an explicit title.
+// PlainDisplayTitle strips away Markdown from the generated Post's title (if
+// any), for use in places like RSS feeds and ActivityStreams objects, where
+// the raw Markdown would be unwanted.
 func (p *Post) PlainDisplayTitle() string {
 	if t := stripmd.Strip(p.DisplayTitle()); t != "" {
 		return t
@@ -1234,13 +1235,18 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 	o.CC = []string{
 		p.Collection.FederatedAccount() + "/followers",
 	}
-	o.Name = p.DisplayTitle()
+	o.Name = p.PlainDisplayTitle()
 	p.augmentContent()
 	if p.HTMLContent == template.HTML("") {
 		p.formatContent(cfg, false, false)
 		p.augmentReadingDestination()
 	}
 	o.Content = string(p.HTMLContent)
+	if o.Type == "Note" && p.Title.String != "" {
+		// Render the explicitly-set title inside the Note, since Mastodon (at least) doesn't show the `name`
+		// property on Notes.
+		o.Content = "<h1>" + applyBasicMarkdown([]byte(p.DisplayTitle())) + "</h1>\n\n" + o.Content
+	}
 	if p.Language.Valid {
 		o.ContentMap = map[string]string{
 			p.Language.String: string(p.HTMLContent),
