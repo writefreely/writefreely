@@ -50,7 +50,7 @@ require (
 	github.com/writefreely/go-gopher v0.0.0-20220429181814-40127126f83b
 	github.com/writefreely/go-nodeinfo v1.2.0
 	golang.org/x/crypto v0.43.0
-	golang.org/x/net v0.45.0
+	golang.org/x/net v0.46.0
 )
 
 require github.com/xhit/go-simple-mail/v2 v2.16.0
