@@ -1024,8 +1024,12 @@ func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias st
 		if *c.Monetization != "" {
 			// Strip away any excess spaces
 			trimmed := strings.TrimSpace(*c.Monetization)
-			// Only update value when it starts with "$", per spec: https://paymentpointers.org
-			if strings.HasPrefix(trimmed, "$") {
+			// Only update value when it starts with "$" or "https" URL, per spec: https://paymentpointers.org
+			if strings.HasPrefix(trimmed, "$") || strings.HasPrefix(trimmed, "https://") {
+				if strings.HasPrefix(trimmed, "https://") {
+					// Standardize to pointer that begins with "$"
+					trimmed = strings.Replace(trimmed, "https://", "$", 1)
+				}
 				c.Monetization = &trimmed
 			} else {
 				// Value appears invalid, so don't update
