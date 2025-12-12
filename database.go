@@ -2923,9 +2923,9 @@ func (db *datastore) GetAllUsers(page uint) (*[]User, error) {
 		}
 	} else {
 		if db.driverName == driverPostgres {
-			limitStr = fmt.Sprintf(" LIMIT 0, %d", adminUsersPerPage)
-		} else {
 			limitStr = fmt.Sprintf(" LIMIT %d OFFSET 0", adminUsersPerPage)
+		} else {
+			limitStr = fmt.Sprintf(" LIMIT 0, %d", adminUsersPerPage)
 		}
 	}
 
