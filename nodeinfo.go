@@ -11,10 +11,11 @@
 package writefreely
 
 import (
+	"strings"
+
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/go-nodeinfo"
 	"github.com/writefreely/writefreely/config"
-	"strings"
 )
 
 type nodeInfoResolver struct {

@@ -11,12 +11,13 @@
 package writefreely
 
 import (
-	"github.com/writeas/web-core/log"
 	"io"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/writeas/web-core/log"
 )
 
 // updatesCacheTime is the default interval between cache updates for new

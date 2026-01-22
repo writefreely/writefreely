@@ -14,10 +14,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/writeas/web-core/log"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/writeas/web-core/log"
 )
 
 type genericOauthClient struct {

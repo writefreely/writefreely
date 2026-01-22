@@ -13,16 +13,17 @@ package writefreely
 import (
 	"context"
 	"fmt"
-	"github.com/gorilla/sessions"
-	"github.com/stretchr/testify/assert"
-	"github.com/writeas/impart"
-	"github.com/writeas/web-core/id"
-	"github.com/writefreely/writefreely/config"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/gorilla/sessions"
+	"github.com/stretchr/testify/assert"
+	"github.com/writeas/impart"
+	"github.com/writeas/web-core/id"
+	"github.com/writefreely/writefreely/config"
 )
 
 type MockOAuthDatastoreProvider struct {

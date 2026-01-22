@@ -15,7 +15,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/writefreely/writefreely/mailer"
 	"html/template"
 	"net/http"
 	"strings"
@@ -28,6 +27,7 @@ import (
 	"github.com/writeas/web-core/data"
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/writefreely/key"
+	"github.com/writefreely/writefreely/mailer"
 	"github.com/writefreely/writefreely/spam"
 )
 
