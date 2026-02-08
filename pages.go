@@ -12,8 +12,9 @@ package writefreely
 
 import (
 	"database/sql"
-	"github.com/writefreely/writefreely/config"
 	"time"
+
+	"github.com/writefreely/writefreely/config"
 )
 
 var defaultPageUpdatedTime = time.Date(2018, 11, 8, 12, 0, 0, 0, time.Local)

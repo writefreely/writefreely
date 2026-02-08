@@ -12,11 +12,12 @@ package mailer
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/mailgun/mailgun-go"
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/writefreely/config"
 	mail "github.com/xhit/go-simple-mail/v2"
-	"strings"
 )
 
 type (
