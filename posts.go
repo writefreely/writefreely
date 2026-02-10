@@ -1287,7 +1287,7 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 
 	for _, handle := range mentions {
 		actorIRI, err := app.db.GetProfilePageFromHandle(app, handle)
-		if err != nil {
+		if err != nil || actorIRI == "" {
 			log.Info("Couldn't find user '%s' locally or remotely", handle)
 			continue
 		}
