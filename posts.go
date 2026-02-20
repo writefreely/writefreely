@@ -1308,6 +1308,7 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 // PreviewObject returns an activitystreams.Object that can be used as an Article's `preview` property.
 func (p *PublicPost) PreviewObject(app *App, art *activitystreams.Object) *activitystreams.Object {
 	o := activitystreams.NewNoteObject()
+	o.Context = nil
 	o.To = nil
 	o.ID = art.ID
 	o.URL = art.URL

@@ -46,7 +46,7 @@ require (
 	github.com/writeas/import v0.2.1
 	github.com/writeas/monday v1.3.0
 	github.com/writeas/saturday v1.7.2-0.20200427193424-392b95a03320
-	github.com/writeas/web-core v1.7.1-0.20260220193454-e9abfc34c1d2
+	github.com/writeas/web-core v1.7.1-0.20260220200703-91ebade091c4
 	github.com/writefreely/go-gopher v0.0.0-20220429181814-40127126f83b
 	github.com/writefreely/go-nodeinfo v1.2.0
 	golang.org/x/crypto v0.45.0
