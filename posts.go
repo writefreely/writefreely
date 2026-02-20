@@ -1174,7 +1174,6 @@ func fetchPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 		p.Collection = &CollectionObj{Collection: *coll}
 		po := p.ActivityObject(app)
-		po.Context = []interface{}{activitystreams.Namespace}
 		setCacheControl(w, apCacheTime)
 		return impart.RenderActivityJSON(w, po, http.StatusOK)
 	}
@@ -1297,6 +1296,10 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 	if o.Type == "Article" {
 		o.Preview = p.PreviewObject(app, o)
 		o.Summary = &o.Preview.Content
+	}
+
+	if p.Collection.Monetization != "" {
+		o.AddWebMonetization(p.Collection.Monetization)
 	}
 
 	return o
@@ -1619,7 +1622,6 @@ Are you sure it was ever here?` + shortCodeNoSig,
 		}
 		p.extractData()
 		ap := p.ActivityObject(app)
-		ap.Context = []interface{}{activitystreams.Namespace}
 		setCacheControl(w, apCacheTime)
 		return impart.RenderActivityJSON(w, ap, http.StatusOK)
 	} else {
