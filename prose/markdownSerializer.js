@@ -36,6 +36,9 @@ export const writeFreelyMarkdownSerializer = new MarkdownSerializer(
       state.write("<!--emailsub-->\n");
       state.closeBlock(node);
     },
+    comment(state, node) {
+      state.write("<!--comment-->");
+    },
     html_block(state, node) {
       state.write(node.attrs.content);
       state.closeBlock(node);

@@ -30,6 +30,14 @@ export const writeFreelySchema = new Schema({
       ],
       parseDOM: [{ tag: "div#emailsub" }],
     })
+    .addToEnd("comment", {
+      inline: true,
+      content: "",
+      group: "inline",
+      draggable: false,
+      toDOM: () => ["a", { class: "editor-comment" }, "Discuss..."],
+      parseDOM: [{ tag: "a.editor-comment" }],
+    })
     .addToEnd("html_block", {
       attrs: { content: { default: "" } },
       content: "",
