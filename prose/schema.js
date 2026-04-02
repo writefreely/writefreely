@@ -23,7 +23,6 @@ export const writeFreelySchema = new Schema({
       toDOM: () => [
         "div", { id: "emailsub", contenteditable: "false" },
         ["form", {},
-          ["p", {}, "Enter your email to subscribe to updates."],
           ["input", { type: "email", disabled: true, placeholder: "me@example.com" }],
           ["input", { type: "submit", disabled: true, value: "Subscribe" }],
         ],
