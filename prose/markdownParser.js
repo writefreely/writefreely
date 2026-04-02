@@ -3,9 +3,22 @@ import markdownit from "markdown-it";
 
 import { writeFreelySchema } from "./schema";
 
+const md = markdownit("commonmark", { html: true });
+
+// Re-type <!--more--> html_block tokens so they can be handled distinctly
+// from other HTML blocks.
+md.core.ruler.push("readmore", (state) => {
+  for (let i = 0; i < state.tokens.length; i++) {
+    const token = state.tokens[i];
+    if (token.type === "html_block" && token.content.trim() === "<!--more-->") {
+      token.type = "readmore_block";
+    }
+  }
+});
+
 export const writeFreelyMarkdownParser = new MarkdownParser(
   writeFreelySchema,
-  markdownit("commonmark", { html: true }),
+  md,
   {
     blockquote: { block: "blockquote" },
     paragraph: { block: "paragraph" },
@@ -46,12 +59,14 @@ export const writeFreelyMarkdownParser = new MarkdownParser(
       }),
     },
     code_inline: { mark: "code", noCloseToken: true },
+    readmore_block: { node: "readmore" },
     html_block: {
-      node: "readmore",
-      getAttrs(token) {
-        // TODO: Give different attributes depending on the token content
-        return {};
-      },
+      node: "html_block",
+      getAttrs: (tok) => ({ content: tok.content }),
+    },
+    html_inline: {
+      node: "html_inline",
+      getAttrs: (tok) => ({ content: tok.content }),
     },
   }
 );

@@ -32,6 +32,13 @@ export const writeFreelyMarkdownSerializer = new MarkdownSerializer(
       state.write("<!--more-->\n");
       state.closeBlock(node);
     },
+    html_block(state, node) {
+      state.write(node.attrs.content);
+      state.closeBlock(node);
+    },
+    html_inline(state, node) {
+      state.write(node.attrs.content);
+    },
     blockquote(state, node) {
       state.wrapBlock("> ", null, node, () => state.renderContent(node));
     },

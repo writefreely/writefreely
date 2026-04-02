@@ -14,6 +14,27 @@ export const writeFreelySchema = new Schema({
         "Read more...",
       ],
       parseDOM: [{ tag: "div.editorreadmore" }],
+    })
+    .addToEnd("html_block", {
+      attrs: { content: { default: "" } },
+      content: "",
+      group: "block",
+      marks: "",
+      draggable: true,
+      toDOM: (node) => [
+        "div",
+        { class: "editor-html-block", contenteditable: "false" },
+        node.attrs.content,
+      ],
+      parseDOM: [{ tag: "div.editor-html-block", getAttrs: (dom) => ({ content: dom.textContent }) }],
+    })
+    .addToEnd("html_inline", {
+      attrs: { content: { default: "" } },
+      inline: true,
+      content: "",
+      group: "inline",
+      toDOM: (node) => ["code", { class: "editor-html-inline" }, node.attrs.content],
+      parseDOM: [{ tag: "code.editor-html-inline", getAttrs: (dom) => ({ content: dom.textContent }) }],
     }),
   marks: schema.spec.marks,
 });
