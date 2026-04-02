@@ -15,6 +15,21 @@ export const writeFreelySchema = new Schema({
       ],
       parseDOM: [{ tag: "div.editorreadmore" }],
     })
+    .addToEnd("emailsub", {
+      inline: false,
+      content: "",
+      group: "block",
+      draggable: true,
+      toDOM: () => [
+        "div", { id: "emailsub", contenteditable: "false" },
+        ["form", {},
+          ["p", {}, "Enter your email to subscribe to updates."],
+          ["input", { type: "email", name: "email", placeholder: "me@example.com" }],
+          ["input", { type: "submit", id: "subscribe-btn", value: "Subscribe" }],
+        ],
+      ],
+      parseDOM: [{ tag: "div#emailsub" }],
+    })
     .addToEnd("html_block", {
       attrs: { content: { default: "" } },
       content: "",

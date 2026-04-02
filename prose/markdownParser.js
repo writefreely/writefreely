@@ -5,13 +5,19 @@ import { writeFreelySchema } from "./schema";
 
 const md = markdownit("commonmark", { html: true });
 
-// Re-type <!--more--> html_block tokens so they can be handled distinctly
-// from other HTML blocks.
-md.core.ruler.push("readmore", (state) => {
+// Map HTML comment shortcodes to their own token types so they are handled
+// as special blocks rather than generic HTML.
+const SHORTCODE_TOKENS = {
+  "<!--more-->": "readmore_block",
+  "<!--emailsub-->": "emailsub_block",
+};
+
+md.core.ruler.push("shortcodes", (state) => {
   for (let i = 0; i < state.tokens.length; i++) {
     const token = state.tokens[i];
-    if (token.type === "html_block" && token.content.trim() === "<!--more-->") {
-      token.type = "readmore_block";
+    if (token.type === "html_block") {
+      const mapped = SHORTCODE_TOKENS[token.content.trim()];
+      if (mapped) token.type = mapped;
     }
   }
 });
@@ -60,6 +66,7 @@ export const writeFreelyMarkdownParser = new MarkdownParser(
     },
     code_inline: { mark: "code", noCloseToken: true },
     readmore_block: { node: "readmore" },
+    emailsub_block: { node: "emailsub" },
     html_block: {
       node: "html_block",
       getAttrs: (tok) => ({ content: tok.content }),
