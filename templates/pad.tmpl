@@ -3,7 +3,7 @@
 	<head>
 
 		<title>{{if .Editing}}Editing {{if .Post.Title}}{{.Post.Title}}{{else}}{{.Post.Id}}{{end}}{{else}}New Post{{end}} &mdash; {{.SiteName}}</title>
-		
+
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
 		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,7 +13,7 @@
 	<body id="pad" class="light">
 
 		<div id="overlay"></div>
-		
+
 		<div id="modal-preview" class="modal fullscreen">
 			<div style="text-transform: uppercase; font-size: 0.75em; color: #999; position: absolute; top: 2em; right: 3em;">Preview</div>
 			<article id="post"><div class="e-content">Generating...</div></article>
@@ -160,7 +160,7 @@
 		}
 		var defaultTimeSet = false;
 		updateWordCount();
-		
+
 		var typingTimer;
 		var doneTypingInterval = 200;
 
@@ -445,7 +445,7 @@
             http.send(JSON.stringify(params));
         }
 
-		try {
+        try {
 		  (function() {
 			var wf=document.createElement('script');
 			wf.src = '/js/webfont.js';
