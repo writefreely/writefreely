@@ -294,7 +294,7 @@ func viewLocalTimelineFeed(app *App, w http.ResponseWriter, req *http.Request) e
 		return impart.HTTPError{http.StatusNotFound, "Page doesn't exist."}
 	}
 	if !strings.HasSuffix(req.URL.Path, "/") {
-		return impart.HTTPError{http.StatusFound, "/read/feed/"}
+		return impart.HTTPError{http.StatusMovedPermanently, "/read/feed/"}
 	}
 
 	updateTimelineCache(app.timeline, false)
