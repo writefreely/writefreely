@@ -273,6 +273,8 @@ func getSanitizationPolicy() *bluemonday.Policy {
 	policy.AllowAttrs("style", "class", "id").Globally()
 	policy.AllowAttrs("alt").OnElements("img")
 	policy.AllowElements("header", "footer")
+	policy.AllowAttrs("method", "action").OnElements("form")
+	policy.AllowAttrs("type", "name", "value", "placeholder").OnElements("input")
 	policy.AllowURLSchemes("http", "https", "mailto", "xmpp", "gopher", "gophers", "gemini", "spartan")
 	return policy
 }
