@@ -324,6 +324,11 @@ body#pad {
 		margin-top: 0;
 	}
 
+	&.fullscreen {
+		width: 40em;
+		margin-left: -20em;
+	}
+
 	input[type=text], input[type=email], input[type=password] {
 		background: transparent;
 		border: 0;
@@ -356,6 +361,9 @@ body#pad {
 	.form-hint {
 		font-size: 0.78em;
 		color: #888;
+	}
+	&#modal-preview {
+		font-size: 1.2em;
 	}
 }
 
@@ -451,6 +459,15 @@ body#pad .alert {
 	#target-name {
 		max-width: 98px;
 		display: inline-block;
+	}
+}
+
+@media all and (max-width: 50em) {
+	.modal.fullscreen {
+		margin-left: 0;
+		width: auto;
+		left: 0;
+		right: 0;
 	}
 }
 

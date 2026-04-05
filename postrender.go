@@ -354,10 +354,16 @@ func handleRenderMarkdown(app *App, w http.ResponseWriter, r *http.Request) erro
 		return ErrBadJSON
 	}
 
+	body := in.RawBody
+	if in.CollectionURL != "" {
+		body = strings.Replace(body, shortCodeMore, `<a href="/">Read more...</a>`, 1)
+		body = alterShortCodeEmailSubForm(body, "example", "slug", true)
+	}
+	rendered := applyMarkdown([]byte(in.RawBody), in.CollectionURL, app.cfg)
 	out := struct {
 		Body string `json:"body"`
 	}{
-		Body: applyMarkdown([]byte(in.RawBody), in.CollectionURL, app.cfg),
+		Body: rendered,
 	}
 
 	return impart.WriteSuccess(w, out, http.StatusOK)
