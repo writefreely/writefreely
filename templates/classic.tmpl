@@ -34,19 +34,19 @@
 						<ul>
 							<li class="menu-heading">Publish to...</li>
 							{{if .Blogs}}{{range $idx, $el := .Blogs}}
-								<li class="target{{if eq $idx 0}} selected{{end}}" id="blog-{{$el.Alias}}"><a href="#{{$el.Alias}}"><i class="material-icons md-18">public</i> {{if $el.Title}}{{$el.Title}}{{else}}{{$el.Alias}}{{end}}</a></li>
+								<li class="target{{if eq $idx 0}} selected{{end}}" id="blog-{{$el.Alias}}"><a href="#{{$el.Alias}}"><i class="material-symbols-outlined">public</i> {{if $el.Title}}{{$el.Title}}{{else}}{{$el.Alias}}{{end}}</a></li>
 							{{end}}{{end}}
-							<li class="target" id="blog-anonymous"><a href="#anonymous"><i class="material-icons md-18">description</i> <em>Draft</em></a></li>
+							<li class="target" id="blog-anonymous"><a href="#anonymous"><i class="material-symbols-outlined">description</i> <em>Draft</em></a></li>
 							<li id="user-separator" class="separator"><hr /></li>
 						{{ if .SingleUser }}
-							<li><a href="/"><i class="material-icons md-18">launch</i> View Blog</a></li>
-							<li><a href="/me/c/{{.Username}}"><i class="material-icons md-18">palette</i> Customize</a></li>
-							<li><a href="/me/c/{{.Username}}/stats"><i class="material-icons md-18">trending_up</i> Stats</a></li>
+							<li><a href="/"><i class="material-symbols-outlined">launch</i> View Blog</a></li>
+							<li><a href="/me/c/{{.Username}}"><i class="material-symbols-outlined">palette</i> Customize</a></li>
+							<li><a href="/me/c/{{.Username}}/stats"><i class="material-symbols-outlined">trending_up</i> Stats</a></li>
 						{{ else }}
-							<li><a href="/me/c/"><i class="material-icons md-18">library_books</i> View Blogs</a></li>
+							<li><a href="/me/c/"><i class="material-symbols-outlined">library_books</i> View Blogs</a></li>
 						{{ end }}
-							<li><a href="/me/posts/"><i class="material-icons md-18">view_list</i> View Drafts</a></li>
-							<li><a href="/me/logout"><i class="material-icons md-18">power_settings_new</i>  Log out</a></li>
+							<li><a href="/me/posts/"><i class="material-symbols-outlined">view_list</i> View Drafts</a></li>
+							<li><a href="/me/logout"><i class="material-symbols-outlined">power_settings_new</i>  Log out</a></li>
 						</ul>
 					</li>{{end}}
 				</ul></nav>
