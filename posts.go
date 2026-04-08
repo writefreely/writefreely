@@ -38,7 +38,6 @@ import (
 	"github.com/writeas/web-core/tags"
 	"github.com/writefreely/writefreely/page"
 	"github.com/writefreely/writefreely/parse"
-	"github.com/writefreely/writefreely/spam"
 )
 
 const (
@@ -56,9 +55,10 @@ type PostType string
 const (
 	postArch PostType = "archive"
 
-	shortCodeMore  = "<!--more-->"
-	shortCodePaid  = "<!--paid-->"
-	shortCodeNoSig = "<!--nosig-->"
+	shortCodeMore     = "<!--more-->"
+	shortCodePaid     = "<!--paid-->"
+	shortCodeNoSig    = "<!--nosig-->"
+	shortCodeEmailSub = "<!--emailsub-->"
 )
 
 type (
@@ -1634,9 +1634,9 @@ Are you sure it was ever here?` + shortCodeNoSig,
 		if app.cfg.Email.Enabled() && c.EmailSubsEnabled() {
 			// TODO: indicate plan is inactive or subs disabled when OWNER is viewing their own post.
 			if u != nil && u.IsEmailSubscriber(app, c.ID) {
-				p.Content = strings.Replace(p.Content, "<!--emailsub-->", `<p id="emailsub">You're subscribed to email updates. <a href="/api/collections/`+c.Alias+`/email/unsubscribe?slug=`+p.Slug.String+`">Unsubscribe</a>.</p>`, -1)
+				p.Content = strings.Replace(p.Content, shortCodeEmailSub, `<p id="emailsub">You're subscribed to email updates. <a href="/api/collections/`+c.Alias+`/email/unsubscribe?slug=`+p.Slug.String+`">Unsubscribe</a>.</p>`, -1)
 			} else {
-				p.Content = strings.Replace(p.Content, "<!--emailsub-->", `<form method="post" id="emailsub" action="/api/collections/`+c.Alias+`/email/subscribe"><input type="hidden" name="slug" value="`+p.Slug.String+`" /><input type="hidden" name="web" value="1" /><div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="email" name="`+spam.HoneypotFieldName()+`" tabindex="-1" value="" /><input type="password" name="fake_password" tabindex="-1" placeholder="password" autocomplete="new-password" /></div><input type="email" name="email" placeholder="me@example.com" /><input type="submit" id="subscribe-btn" value="Subscribe" /></form>`, -1)
+				p.Content = alterShortCodeEmailSubForm(p.Content, c.Alias, p.Slug.String, false)
 			}
 		}
 		p.Content = strings.Replace(p.Content, "&lt;!--emailsub-->", "<!--emailsub-->", 1)
