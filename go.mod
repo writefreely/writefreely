@@ -45,7 +45,7 @@ require (
 	github.com/writeas/impart v1.1.1
 	github.com/writeas/import v0.2.1
 	github.com/writeas/monday v1.3.0
-	github.com/writeas/saturday v1.7.2-0.20200427193424-392b95a03320
+	github.com/writeas/saturday v2.0.0+incompatible
 	github.com/writeas/web-core v1.7.0
 	github.com/writefreely/go-gopher v0.0.0-20220429181814-40127126f83b
 	github.com/writefreely/go-nodeinfo v1.2.0
