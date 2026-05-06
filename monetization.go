@@ -13,14 +13,15 @@ package writefreely
 import (
 	"bytes"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/writeas/impart"
-	"github.com/writeas/web-core/log"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/gorilla/mux"
+	"github.com/writeas/impart"
+	"github.com/writeas/web-core/log"
 )
 
 func displayMonetization(monetization, alias string) string {
@@ -68,7 +69,7 @@ func handleSPSPEndpoint(app *App, w http.ResponseWriter, r *http.Request) error 
 		return err
 	}
 
-	fmt.Fprintf(w, pointer)
+	fmt.Fprintf(w, "%s", pointer)
 	return nil
 }
 

@@ -498,7 +498,7 @@ func (db *datastore) GetUserDataFromToken(accessToken string) (int64, string, er
 func (db *datastore) GetAPIUser(header string) (*User, error) {
 	uID := db.GetUserID(header)
 	if uID == -1 {
-		return nil, fmt.Errorf(ErrUserNotFound.Error())
+		return nil, fmt.Errorf("%s", ErrUserNotFound.Error())
 	}
 	return db.GetUserByID(uID)
 }

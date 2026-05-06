@@ -63,7 +63,7 @@ func showUserPage(w http.ResponseWriter, name string, obj interface{}) {
 
 func initTemplate(parentDir, name string) {
 	if debugging {
-		log.Info("  " + filepath.Join(parentDir, templatesDir, name+".tmpl"))
+		log.Info("  %s", filepath.Join(parentDir, templatesDir, name+".tmpl"))
 	}
 
 	files := []string{

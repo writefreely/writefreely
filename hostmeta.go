@@ -25,7 +25,7 @@ func handleViewHostMeta(app *App, w http.ResponseWriter, r *http.Request) error 
 <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
   <Link rel="lrdd" type="application/xrd+xml" template="` + app.cfg.App.AbsoluteURL(webfinger.WebFingerPath) + `?resource={uri}"/>
 </XRD>`
-	fmt.Fprintf(w, meta)
+	fmt.Fprintf(w, "%s", meta)
 
 	return nil
 }

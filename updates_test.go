@@ -41,27 +41,33 @@ func TestUpdatesRoundTrip(t *testing.T) {
 		// ensure time between init and next check
 		time.Sleep(1 * time.Second)
 
+		cache.mu.Lock()
 		prevLastCheck := cache.lastCheck
-
 		// force to known older version for latest and current
 		prevLatestVer := "v0.8.1"
 		cache.latestVersion = prevLatestVer
 		cache.currentVersion = "v0.8.0"
+		cache.mu.Unlock()
 
 		err := cache.CheckNow()
 		if err != nil {
 			t.Fatalf("Error should be nil, got: %v", err)
 		}
 
-		if prevLastCheck == cache.lastCheck {
+		cache.mu.Lock()
+		lastCheck := cache.lastCheck
+		latestVersion := cache.latestVersion
+		cache.mu.Unlock()
+
+		if prevLastCheck == lastCheck {
 			t.Fatal("Expected lastCheck to update")
 		}
 
-		if cache.lastCheck.Before(prevLastCheck) {
+		if lastCheck.Before(prevLastCheck) {
 			t.Fatal("Last check should be newer than previous")
 		}
 
-		if prevLatestVer == cache.latestVersion {
+		if prevLatestVer == latestVersion {
 			t.Fatal("expected latestVersion to update")
 		}
 
@@ -69,14 +75,20 @@ func TestUpdatesRoundTrip(t *testing.T) {
 
 	t.Run("Are Available", func(t *testing.T) {
 		if !cache.AreAvailable() {
-			t.Fatalf("Cache reports not updates but Current is %s and Latest is %s", cache.currentVersion, cache.latestVersion)
+			cache.mu.Lock()
+			current, latest := cache.currentVersion, cache.latestVersion
+			cache.mu.Unlock()
+			t.Fatalf("Cache reports no updates but Current is %s and Latest is %s", current, latest)
 		}
 	})
 
 	t.Run("Latest Version", func(t *testing.T) {
 		gotLatest := cache.LatestVersion()
-		if gotLatest != cache.latestVersion {
-			t.Fatalf("Malformed latest version. Expected: %s but got: %s", cache.latestVersion, gotLatest)
+		cache.mu.Lock()
+		expected := cache.latestVersion
+		cache.mu.Unlock()
+		if gotLatest != expected {
+			t.Fatalf("Malformed latest version. Expected: %s but got: %s", expected, gotLatest)
 		}
 	})
 }
