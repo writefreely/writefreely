@@ -1557,7 +1557,7 @@ ORDER BY created `+order+limitStr, collID, lang)
 }
 
 func (db *datastore) GetAPFollowers(c *Collection) (*[]RemoteUser, error) {
-	rows, err := db.Query("SELECT actor_id, inbox, shared_inbox, f.created FROM remotefollows f INNER JOIN remoteusers u ON f.remote_user_id = u.id WHERE collection_id = ?", c.ID)
+	rows, err := db.Query("SELECT u.id, actor_id, inbox, shared_inbox, f.created FROM remotefollows f INNER JOIN remoteusers u ON f.remote_user_id = u.id WHERE collection_id = ?", c.ID)
 	if err != nil {
 		log.Error("Failed selecting from followers: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve followers."}
@@ -1567,7 +1567,7 @@ func (db *datastore) GetAPFollowers(c *Collection) (*[]RemoteUser, error) {
 	followers := []RemoteUser{}
 	for rows.Next() {
 		f := RemoteUser{}
-		err = rows.Scan(&f.ActorID, &f.Inbox, &f.SharedInbox, &f.Created)
+		err = rows.Scan(&f.ID, &f.ActorID, &f.Inbox, &f.SharedInbox, &f.Created)
 		followers = append(followers, f)
 	}
 	return &followers, nil

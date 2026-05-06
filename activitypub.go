@@ -621,7 +621,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		}
 		am["@context"] = []string{activitystreams.Namespace}
 
-		err = makeActivityPost(app.cfg.App.Host, p, fullActor.Inbox, am)
+		err = makeActivityPost(app.cfg.App.AbsoluteHost(), p, fullActor.Inbox, am)
 		if err != nil {
 			log.Error("Unable to make activity POST: %v", err)
 			return
@@ -759,6 +759,7 @@ func resolveIRI(hostName, url string) ([]byte, error) {
 	r, _ := http.NewRequest("GET", url, nil)
 	r.Header.Add("Accept", "application/activity+json")
 	r.Header.Set("User-Agent", ServerUserAgent(hostName))
+	r.Header.Set("Date", time.Now().UTC().Format(http.TimeFormat))
 
 	p := instanceColl.PersonObject()
 	h := sha256.New()
@@ -815,7 +816,7 @@ func federateActor(app *App, c *Collection) error {
 		return nil
 	}
 
-	c.hostName = app.cfg.App.Host
+	c.hostName = app.cfg.App.AbsoluteHost()
 	actor := c.PersonObject()
 
 	followers, err := app.db.GetAPFollowers(c)
@@ -847,7 +848,7 @@ func federateActor(app *App, c *Collection) error {
 			"to":       []string{"https://www.w3.org/ns/activitystreams#Public"},
 			"object":   actor,
 		}
-		err = makeActivityPost(app.cfg.App.Host, actor, si, activity)
+		err = makeActivityPost(app.cfg.App.AbsoluteHost(), actor, si, activity)
 		if err != nil {
 			log.Error("Couldn't federate actor update! %v", err)
 		}
@@ -859,7 +860,7 @@ func deleteFederatedPost(app *App, p *PublicPost, collID int64) error {
 	if debugging {
 		log.Info("Deleting federated post!")
 	}
-	p.Collection.hostName = app.cfg.App.Host
+	p.Collection.hostName = app.cfg.App.AbsoluteHost()
 	actor := p.Collection.PersonObject(collID)
 	na := p.ActivityObject(app)
 
@@ -892,7 +893,7 @@ func deleteFederatedPost(app *App, p *PublicPost, collID int64) error {
 		// See: https://git.pleroma.social/pleroma/pleroma/issues/1481
 		da.ID += "#Delete"
 
-		err = makeActivityPost(app.cfg.App.Host, actor, si, da)
+		err = makeActivityPost(app.cfg.App.AbsoluteHost(), actor, si, da)
 		if err != nil {
 			log.Error("Couldn't delete post! %v", err)
 		}
@@ -918,6 +919,8 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			log.Info("Federating new post!")
 		}
 	}
+
+	p.Collection.hostName = app.cfg.App.AbsoluteHost()
 
 	actor := p.Collection.PersonObject(collID)
 	na := p.ActivityObject(app)
@@ -964,7 +967,7 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			activity.CC = na.CC
 		}
 		// and post it to that sharedInbox
-		err = makeActivityPost(app.cfg.App.Host, actor, si, activity)
+		err = makeActivityPost(app.cfg.App.AbsoluteHost(), actor, si, activity)
 		if err != nil {
 			log.Error("Couldn't post! %v", err)
 		}
@@ -990,7 +993,7 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 				log.Error("Unable to find remote user %s. Skipping: %v", tag.HRef, err)
 				continue
 			}
-			err = makeActivityPost(app.cfg.App.Host, actor, remoteUser.Inbox, activity)
+			err = makeActivityPost(app.cfg.App.AbsoluteHost(), actor, remoteUser.Inbox, activity)
 			if err != nil {
 				log.Error("Couldn't post! %v", err)
 			}
@@ -1061,7 +1064,7 @@ func getActor(app *App, actorIRI string) (*activitystreams.Person, *RemoteUser, 
 			if iErr.Status == http.StatusNotFound {
 				// Fetch remote actor
 				log.Info("Not found; fetching actor %s remotely", actorIRI)
-				actorResp, err := resolveIRI(app.cfg.App.Host, actorIRI)
+				actorResp, err := resolveIRI(app.cfg.App.AbsoluteHost(), actorIRI)
 				if err != nil {
 					log.Error("Unable to get base actor! %v", err)
 					return nil, nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't fetch actor."}
@@ -1076,7 +1079,7 @@ func getActor(app *App, actorIRI string) (*activitystreams.Person, *RemoteUser, 
 					return nil, nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't parse actual actor."}
 				}
 				// Fetch the actual actor using the owner field from the publicKey object
-				actualActorResp, err := resolveIRI(app.cfg.App.Host, baseActor.PublicKey.Owner)
+				actualActorResp, err := resolveIRI(app.cfg.App.AbsoluteHost(), baseActor.PublicKey.Owner)
 				if err != nil {
 					log.Error("Unable to get actual actor! %v", err)
 					return nil, nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't fetch actual actor."}
