@@ -14,15 +14,14 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"html/template"
-	"net/http"
-	"strings"
-	"time"
-
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/writefreely/page"
+	"html/template"
+	"net/http"
+	"strings"
+	"time"
 )
 
 type viewOauthSignupVars struct {
@@ -146,7 +145,7 @@ func (h oauthHandler) viewOauthSignup(app *App, w http.ResponseWriter, r *http.R
 		return h.showOauthSignupPage(app, w, r, tp, err)
 	}
 
-	if err := loginOrFail(h.Store, w, r, newUser); err != nil {
+	if err := loginOrFail(h.Store, w, r, newUser, app.cfg.App.PrefixPath("/")); err != nil {
 		return h.showOauthSignupPage(app, w, r, tp, err)
 	}
 	return nil

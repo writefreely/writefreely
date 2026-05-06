@@ -37,7 +37,7 @@ func nodeInfoConfig(db *datastore, cfg *config.Config) *nodeinfo.Config {
 		}
 	}
 	return &nodeinfo.Config{
-		BaseURL: cfg.App.Host,
+		BaseURL: cfg.App.AbsoluteHost(),
 		InfoURL: "/api/nodeinfo",
 
 		Metadata: nodeinfo.Metadata{

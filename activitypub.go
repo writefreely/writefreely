@@ -47,20 +47,20 @@ const (
 )
 
 var (
-	apCollectionPostIRIRegex = regexp.MustCompile("/api/collections/([a-z0-9\\-]+)/posts/([a-z0-9\\-]+)$")
-	apDraftPostIRIRegex      = regexp.MustCompile("/api/posts/([a-z0-9\\-]+)$")
+	apCollectionPostIRIRegex = regexp.MustCompile("^/api/collections/([a-z0-9\\-]+)/posts/([a-z0-9\\-]+)$")
+	apDraftPostIRIRegex      = regexp.MustCompile("^/api/posts/([a-z0-9\\-]+)$")
 )
 
 var instanceColl *Collection
 
 func initActivityPub(app *App) {
-	ur, _ := url.Parse(app.cfg.App.Host)
+	ur, _ := url.Parse(app.cfg.App.AbsoluteHost())
 	instanceColl = &Collection{
 		ID:       0,
 		Alias:    ur.Host,
 		Title:    ur.Host,
 		db:       app.db,
-		hostName: app.cfg.App.Host,
+		hostName: app.cfg.App.AbsoluteHost(),
 	}
 }
 
@@ -132,7 +132,7 @@ func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return err
 	}
-	c.hostName = app.cfg.App.Host
+	c.hostName = app.cfg.App.AbsoluteHost()
 
 	if !c.IsInstanceColl() {
 		silenced, err := app.db.IsUserSilenced(c.OwnerID)
@@ -177,7 +177,7 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 	if silenced {
 		return ErrCollectionNotFound
 	}
-	c.hostName = app.cfg.App.Host
+	c.hostName = app.cfg.App.AbsoluteHost()
 
 	if app.cfg.App.SingleUser {
 		if alias != c.Alias {
@@ -240,7 +240,7 @@ func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Req
 	if silenced {
 		return ErrCollectionNotFound
 	}
-	c.hostName = app.cfg.App.Host
+	c.hostName = app.cfg.App.AbsoluteHost()
 
 	accountRoot := c.FederatedAccount()
 
@@ -295,7 +295,7 @@ func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Req
 	if silenced {
 		return ErrCollectionNotFound
 	}
-	c.hostName = app.cfg.App.Host
+	c.hostName = app.cfg.App.AbsoluteHost()
 
 	accountRoot := c.FederatedAccount()
 
@@ -338,7 +338,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 	if silenced {
 		return ErrCollectionNotFound
 	}
-	c.hostName = app.cfg.App.Host
+	c.hostName = app.cfg.App.AbsoluteHost()
 
 	if debugging {
 		dump, err := httputil.DumpRequest(r, true)
@@ -349,22 +349,9 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	// Only call impart.RenderActivityJSON here if NO callback has already written a response.
-	// Track whether a callback has written a response
-	var responseWritten bool
-
-	// Read raw body for debugging before decoding
-	var rawBody bytes.Buffer
-	tee := io.TeeReader(r.Body, &rawBody)
-
-	var m map[string]any
-	if err := json.NewDecoder(tee).Decode(&m); err != nil {
-		log.Error("Failed decoding JSON: %v", err)
-		log.Error("Raw body: %s", rawBody.String())
+	var m map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		return err
-	}
-	if debugging {
-		log.Info("Decoded JSON: %v", m)
 	}
 
 	a := streams.NewAccept()
@@ -422,7 +409,6 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			if err != nil {
 				return err
 			}
-			responseWritten = true
 			return nil
 		},
 		FollowCallback: func(f *streams.Follow) error {
@@ -471,7 +457,6 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			if err != nil {
 				return err
 			}
-			responseWritten = true
 			return impart.RenderActivityJSON(w, m, http.StatusOK)
 		},
 		UndoCallback: func(u *streams.Undo) error {
@@ -533,30 +518,16 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			} else {
 				log.Error("No to on Undo!")
 			}
-			responseWritten = true
 			return impart.RenderActivityJSON(w, m, http.StatusOK)
-		},
-		DeleteCallback: func(d *streams.Delete) error {
-			if debugging {
-				b, _ := json.Marshal(m)
-				log.Info("Delete: %s", b)
-			}
-			impart.RenderActivityJSON(w, m, http.StatusOK)
-			responseWritten = true
-			return nil
 		},
 	}
 	if err := res.Deserialize(m); err != nil {
 		// 3) Any errors from #2 can be handled, or the payload is an unknown type.
-		log.Error("Unable to resolve Activity: %v", err)
+		log.Error("Unable to resolve Follow: %v", err)
 		if debugging {
 			log.Error("Map: %s", m)
 		}
-		if t, ok := m["type"]; ok {
-			log.Error("Unhandled activity type: %v", t)
-		}
-		impart.RenderActivityJSON(w, "", http.StatusOK)
-		return nil
+		return err
 	}
 
 	// Handle synchronous activities
@@ -598,8 +569,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		if debugging {
 			log.Info("Successfully liked post %s by remote user %s", likePostID, remoteUser.URL)
 		}
-		impart.RenderActivityJSON(w, "", http.StatusOK)
-		return nil
+		return impart.RenderActivityJSON(w, "", http.StatusOK)
 	} else if isUnlike {
 		t, err := app.db.Begin()
 		if err != nil {
@@ -632,14 +602,13 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		if debugging {
 			log.Info("Successfully un-liked post %s by remote user %s", unlikePostID, remoteUser.URL)
 		}
-		impart.RenderActivityJSON(w, "", http.StatusOK)
-		return nil
+		return impart.RenderActivityJSON(w, "", http.StatusOK)
 	}
 
 	go func() {
 		if to == nil {
 			if debugging {
-				log.Info("No `to` value: likely not needed for this activity type.")
+				log.Error("No `to` value!")
 			}
 			return
 		}
@@ -651,9 +620,6 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			return
 		}
 		am["@context"] = []string{activitystreams.Namespace}
-		if debugging {
-			logOutgoingActivity("Accept", am)
-		}
 
 		err = makeActivityPost(app.cfg.App.Host, p, fullActor.Inbox, am)
 		if err != nil {
@@ -727,22 +693,10 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		}
 	}()
 
-	if !responseWritten {
-		if debugging {
-			log.Info("Received unhandled activity type, returning OK")
-		}
-		impart.RenderActivityJSON(w, "", http.StatusOK)
-	}
-
 	return nil
 }
 
 func makeActivityPost(hostName string, p *activitystreams.Person, url string, m interface{}) error {
-	if url == "" {
-        log.Error("Target POST URL is empty! Person: %+v, Activity: %+v", p, m)
-        return fmt.Errorf("target POST URL is empty")
-    }
-
 	log.Info("POST %s", url)
 	b, err := json.Marshal(m)
 	if err != nil {
@@ -752,6 +706,7 @@ func makeActivityPost(hostName string, p *activitystreams.Person, url string, m 
 	r, _ := http.NewRequest("POST", url, bytes.NewBuffer(b))
 	r.Header.Add("Content-Type", "application/activity+json")
 	r.Header.Set("User-Agent", ServerUserAgent(hostName))
+	r.Header.Set("Date", time.Now().UTC().Format(http.TimeFormat))
 	h := sha256.New()
 	h.Write(b)
 	r.Header.Add("Digest", "SHA-256="+base64.StdEncoding.EncodeToString(h.Sum(nil)))
@@ -788,7 +743,9 @@ func makeActivityPost(hostName string, p *activitystreams.Person, url string, m 
 	if err != nil {
 		return err
 	}
-	if debugging {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		log.Error("Response status %s from %s: %s", resp.Status, url, body)
+	} else if debugging {
 		log.Info("Status  : %s", resp.Status)
 		log.Info("Response: %s", body)
 	}
@@ -846,6 +803,56 @@ func resolveIRI(hostName, url string) ([]byte, error) {
 	}
 
 	return body, nil
+}
+
+// federateActor sends an Update{Person} activity to all followers of the
+// given collection, notifying them of profile changes (bio, name, icon, etc.).
+func federateActor(app *App, c *Collection) error {
+	if app.cfg.App.Private {
+		return nil
+	}
+	if c.Visibility == CollPrivate || c.Visibility == CollProtected {
+		return nil
+	}
+
+	c.hostName = app.cfg.App.Host
+	actor := c.PersonObject()
+
+	followers, err := app.db.GetAPFollowers(c)
+	if err != nil {
+		return err
+	}
+
+	inboxes := map[string][]string{}
+	for _, f := range *followers {
+		inbox := f.SharedInbox
+		if inbox == "" {
+			inbox = f.Inbox
+		}
+		if _, ok := inboxes[inbox]; ok {
+			inboxes[inbox] = append(inboxes[inbox], f.ActorID)
+		} else {
+			inboxes[inbox] = []string{f.ActorID}
+		}
+	}
+
+	for si := range inboxes {
+		// Build the Update{Person} activity as a plain map so the full
+		// actor object serialises correctly as the activity's object field.
+		activity := map[string]interface{}{
+			"@context": activitystreams.Namespace,
+			"id":       actor.ID + "#Update",
+			"type":     "Update",
+			"actor":    actor.ID,
+			"to":       []string{"https://www.w3.org/ns/activitystreams#Public"},
+			"object":   actor,
+		}
+		err = makeActivityPost(app.cfg.App.Host, actor, si, activity)
+		if err != nil {
+			log.Error("Couldn't federate actor update! %v", err)
+		}
+	}
+	return nil
 }
 
 func deleteFederatedPost(app *App, p *PublicPost, collID int64) error {
@@ -948,9 +955,7 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 		na.CC = append(na.CC, instFolls...)
 		// create a new "Create" activity
 		// with our article as object
-		label := "Create"
 		if isUpdate {
-			label = "Update"
 			na.Updated = &p.Updated
 			activity = activitystreams.NewUpdateActivity(na)
 		} else {
@@ -959,9 +964,6 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			activity.CC = na.CC
 		}
 		// and post it to that sharedInbox
-		if debugging {
-			logOutgoingActivity(label, activity)
-		}
 		err = makeActivityPost(app.cfg.App.Host, actor, si, activity)
 		if err != nil {
 			log.Error("Couldn't post! %v", err)
@@ -1206,10 +1208,19 @@ func unmarshalActor(actorResp []byte, actor *activitystreams.Person) error {
 func parsePostIDFromURL(app *App, u *url.URL) (string, error) {
 	// Get post ID from URL
 	var collAlias, slug, postID string
-	if m := apCollectionPostIRIRegex.FindStringSubmatch(u.String()); len(m) == 3 {
+	path := u.Path
+	if subdir := app.cfg.App.SubdirectoryPath(); subdir != "" {
+		if path == subdir {
+			path = "/"
+		} else if strings.HasPrefix(path, subdir+"/") {
+			path = strings.TrimPrefix(path, subdir)
+		}
+	}
+
+	if m := apCollectionPostIRIRegex.FindStringSubmatch(path); len(m) == 3 {
 		collAlias = m[1]
 		slug = m[2]
-	} else if m = apDraftPostIRIRegex.FindStringSubmatch(u.String()); len(m) == 2 {
+	} else if m = apDraftPostIRIRegex.FindStringSubmatch(path); len(m) == 2 {
 		postID = m[1]
 	} else {
 		return "", fmt.Errorf("unable to match objectIRI: %s", u)
@@ -1233,13 +1244,4 @@ func parsePostIDFromURL(app *App, u *url.URL) (string, error) {
 
 func setCacheControl(w http.ResponseWriter, ttl time.Duration) {
 	w.Header().Set("Cache-Control", fmt.Sprintf("public, max-age=%.0f", ttl.Seconds()))
-}
-
-func logOutgoingActivity(label string, activity any) {
-	b, err := json.MarshalIndent(activity, "", "  ")
-	if err != nil {
-		log.Error("Failed to marshal %s activity: %v", label, err)
-		return
-	}
-	log.Info("%s outgoing ActivityPub payload:\n%s", label, string(b))
 }

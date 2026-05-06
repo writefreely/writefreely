@@ -1,11 +1,12 @@
 {{define "pad"}}<!DOCTYPE HTML>
 <html>
 	<head>
+		{{template "head-base" .}}
 
 		<title>{{if .Editing}}Editing {{if .Post.Title}}{{.Post.Title}}{{else}}{{.Post.Id}}{{end}}{{else}}New Post{{end}} &mdash; {{.SiteName}}</title>
 		
-		<link rel="stylesheet" type="text/css" href="/css/write.css" />
-		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
+		<link rel="stylesheet" type="text/css" href="css/write.css" />
+		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="local/custom.css" />{{end}}
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 		<meta name="google" value="notranslate">
@@ -22,7 +23,7 @@
 		
 		<header id="tools">
 			<div id="clip">
-				{{if not .SingleUser}}<h1>{{if .Chorus}}<a href="/" title="Home">{{else}}<a href="/me/c/" title="View blogs">{{end}}{{.SiteName}}</a></h1>{{end}}
+				{{if not .SingleUser}}<h1>{{if .Chorus}}<a href="" title="Home">{{else}}<a href="me/c/" title="View blogs">{{end}}{{.SiteName}}</a></h1>{{end}}
 				<nav id="target" {{if .SingleUser}}style="margin-left:0"{{end}}><ul>
 						<li>{{if .Blogs}}<a href="{{$c := index .Blogs 0}}{{$c.CanonicalURL}}">My Posts</a>{{else}}<a>Draft</a>{{end}}</li>
 				</ul></nav>
@@ -30,12 +31,12 @@
 			</div>
 			<noscript style="margin-left: 2em;"><strong>NOTE</strong>: for now, you'll need JavaScript enabled to post.</noscript>
 			<div id="belt">
-				{{if .Editing}}<div class="tool hidden if-room"><a href="{{if .EditCollection}}{{.EditCollection.CanonicalURL}}{{.Post.Slug}}/edit/meta{{else}}/{{if .SingleUser}}d/{{end}}{{.Post.Id}}/meta{{end}}" title="Edit post metadata" id="edit-meta"><img class="ic-24dp" src="/img/ic_info_dark@2x.png" /></a></div>{{end}}
+				{{if .Editing}}<div class="tool hidden if-room"><a href="{{if .EditCollection}}{{.EditCollection.CanonicalURL}}{{.Post.Slug}}/edit/meta{{else}}{{if .SingleUser}}d/{{.Post.Id}}/meta{{else}}{{.Post.Id}}/meta{{end}}{{end}}" title="Edit post metadata" id="edit-meta"><img class="ic-24dp" src="img/ic_info_dark@2x.png" /></a></div>{{end}}
 				<div class="tool"><button title="Publish your writing" id="publish" style="font-weight: bold">Post</button></div>
 			</div>
 		</header>
 
-		<script src="/js/h.js"></script>
+		<script src="js/h.js"></script>
 		<script>
 		var $writer = H.getEl('writer');
 		var $btnPublish = H.getEl('publish');
@@ -114,9 +115,9 @@
 				font: font
 			};
 			{{ if .Post.Slug }}
-			var url = "/api/collections/{{.EditCollection.Alias}}/posts/{{.Post.Id}}";
+			var url = "{{subdir}}/api/collections/{{.EditCollection.Alias}}/posts/{{.Post.Id}}";
 			{{ else if .Post.Id }}
-			var url = "/api/posts/{{.Post.Id}}";
+			var url = "{{subdir}}/api/posts/{{.Post.Id}}";
 			if (typeof token === 'undefined' || !token) {
 				token = "";
 			}
@@ -126,10 +127,10 @@
 			lang = lang.substring(0, 2);
 			params.lang = lang;
 
-			var url = "/api/posts";
+			var url = "{{subdir}}/api/posts";
 			var postTarget = '{{if .Blogs}}{{$c := index .Blogs 0}}{{$c.Alias}}{{else}}anonymous{{end}}';
 			if (postTarget != 'anonymous') {
-				url = "/api/collections/" + postTarget + "/posts";
+				url = "{{subdir}}/api/collections/" + postTarget + "/posts";
 			}
 			{{ end }}
 
@@ -144,13 +145,13 @@
 					if (http.status == 200 || http.status == 201) {
 						data = JSON.parse(http.responseText);
 						id = data.data.id;
-						nextURL = '{{if .SingleUser}}/d{{end}}/'+id;
+						nextURL = '{{subdir}}{{if .SingleUser}}/d{{end}}/'+id;
 						localStorage.setItem('draft'+id+'-published', new Date().toISOString());
 
 						{{ if not .Post.Id }}
 							// Post created
 							if (postTarget != 'anonymous') {
-							  nextURL = {{if not .SingleUser}}'/'+postTarget+{{end}}'/'+data.data.slug;
+						  nextURL = '{{subdir}}'{{if not .SingleUser}}+'/'+postTarget{{end}}+'/'+data.data.slug;
 							}
 							editToken = data.data.token;
 
@@ -166,7 +167,7 @@
 										break;
 									}
 								}
-								nextURL = "/pad/posts";{{else}}posts.push(H.createPost(id, editToken, content));{{end}}
+							nextURL = "{{subdir}}/pad/posts";{{else}}posts.push(H.createPost(id, editToken, content));{{end}}
 
 								H.set('posts', JSON.stringify(posts));
 							}
@@ -223,7 +224,7 @@
 		});
 
 		WebFontConfig = {
-			custom: { families: [ 'Lora:400,700:latin' ], urls: [ '/css/fonts.css' ] }
+			custom: { families: [ 'Lora:400,700:latin' ], urls: [ 'css/fonts.css' ] }
 		};
 		var selectedFont = H.get('{{if .Editing}}draft{{.Post.Id}}font{{else}}padFont{{end}}', '{{.Post.Font}}');
 
@@ -252,7 +253,7 @@
 		try {
 		  (function() {
 			var wf=document.createElement('script');
-			wf.src = '/js/webfont.js';
+			wf.src = 'js/webfont.js';
 			wf.type='text/javascript';
 			wf.async='true';
 			var s=document.getElementsByTagName('script')[0];

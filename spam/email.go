@@ -11,9 +11,8 @@
 package spam
 
 import (
-	"strings"
-
 	"github.com/writeas/web-core/id"
+	"strings"
 )
 
 var honeypotField string

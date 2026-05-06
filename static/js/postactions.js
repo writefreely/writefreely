@@ -1,4 +1,5 @@
 var postActions = function() {
+	var basePath = window.WF_BASE_PATH || "";
 	var $container = He.get('moving');
 	var MultiMove = function(el, id, singleUser) {
 		var lbl = el.options[el.selectedIndex].textContent;
@@ -35,7 +36,7 @@ var postActions = function() {
 								if (typeof singleUser !== 'undefined' && singleUser) {
 									draftPre = "d/";
 								}
-								$article.innerHTML = '<p><a href="/'+draftPre+resp.data[i].post.id+'">Unpublished post</a>.</p>';
+								$article.innerHTML = '<p><a href="'+basePath+'/'+draftPre+resp.data[i].post.id+'">Unpublished post</a>.</p>';
 							} else {
 								$article.innerHTML = '<p>Moved to <a style="font-weight:bold" href="'+newPostURL+'">'+lbl+'</a>.</p>';
 							}
@@ -47,9 +48,9 @@ var postActions = function() {
 			}
 		};
 		if (collAlias == '|anonymous|') {
-			He.postJSON("/api/posts/disperse", params, callback);
+			He.postJSON(basePath + "{{subdir}}/api/posts/disperse", params, callback);
 		} else {
-			He.postJSON("/api/collections/"+collAlias+"/collect", params, callback);
+			He.postJSON(basePath + "{{subdir}}/api/collections/"+collAlias+"/collect", params, callback);
 		}
 	};
 	var Move = function(el, id, collAlias, singleUser) {
@@ -96,7 +97,7 @@ var postActions = function() {
 								if (typeof singleUser !== 'undefined' && singleUser) {
 									draftPre = "d/";
 								}
-								$article.innerHTML = '<p><a href="/'+draftPre+resp.data[i].post.id+'">Unpublished post</a>.</p>';
+								$article.innerHTML = '<p><a href="'+basePath+'/'+draftPre+resp.data[i].post.id+'">Unpublished post</a>.</p>';
 							} else {
 								$article.innerHTML = '<p>Moved to <a style="font-weight:bold" href="'+newPostURL+'">'+lbl+'</a>.</p>';
 							}
@@ -108,9 +109,9 @@ var postActions = function() {
 			}
 		}
 		if (collAlias == '|anonymous|') {
-			He.postJSON("/api/posts/disperse", params, callback);
+			He.postJSON(basePath + "{{subdir}}/api/posts/disperse", params, callback);
 		} else {
-			He.postJSON("/api/collections/"+collAlias+"/collect", params, callback);
+			He.postJSON(basePath + "{{subdir}}/api/collections/"+collAlias+"/collect", params, callback);
 		}
 	};
 

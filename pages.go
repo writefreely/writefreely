@@ -12,9 +12,8 @@ package writefreely
 
 import (
 	"database/sql"
-	"time"
-
 	"github.com/writefreely/writefreely/config"
+	"time"
 )
 
 var defaultPageUpdatedTime = time.Date(2018, 11, 8, 12, 0, 0, 0, time.Local)
@@ -98,7 +97,7 @@ func defaultContactPage(app *App) string {
 	if err != nil {
 		return ""
 	}
-	return `_` + app.cfg.App.SiteName + `_ is administered by: [**` + c.Alias + `**](/` + c.Alias + `/).
+	return `_` + app.cfg.App.SiteName + `_ is administered by: [**` + c.Alias + `**](` + app.cfg.App.PrefixPath("/"+c.Alias+"/") + `).
 
 Contact them at this email address: _EMAIL GOES HERE_.
 

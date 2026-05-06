@@ -877,6 +877,7 @@ func (db *datastore) GetCollectionBy(condition string, value interface{}) (*Coll
 	c.Public = c.IsPublic()
 	c.Monetization = db.GetCollectionAttribute(c.ID, "monetization_pointer")
 	c.Verification = db.GetCollectionAttribute(c.ID, "verification_link")
+	c.hostName = canonicalAppHost
 
 	c.db = db
 
@@ -901,6 +902,7 @@ func (db *datastore) GetCollectionForPad(alias string) (*Collection, error) {
 		return c, ErrInternalGeneral
 	}
 	c.Public = c.IsPublic()
+	c.hostName = canonicalAppHost
 
 	return c, nil
 }
@@ -1555,12 +1557,7 @@ ORDER BY created `+order+limitStr, collID, lang)
 }
 
 func (db *datastore) GetAPFollowers(c *Collection) (*[]RemoteUser, error) {
-	rows, err := db.Query(`SELECT actor_id, inbox, shared_inbox, f.created
-FROM remotefollows f
-INNER JOIN remoteusers u
-  ON f.remote_user_id = u.id
-WHERE collection_id = ?
-ORDER BY created DESC`, c.ID)
+	rows, err := db.Query("SELECT actor_id, inbox, shared_inbox, f.created FROM remotefollows f INNER JOIN remoteusers u ON f.remote_user_id = u.id WHERE collection_id = ?", c.ID)
 	if err != nil {
 		log.Error("Failed selecting from followers: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve followers."}

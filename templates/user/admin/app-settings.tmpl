@@ -31,7 +31,7 @@ select {
 
 	{{if .ConfigMessage}}<p class="success" style="text-align: center">{{.ConfigMessage}}</p>{{end}}
 
-	<form action="/admin/update/config" method="post">
+	<form action="admin/update/config" method="post">
 		<div class="features row">
 			<div{{if .Config.SingleUser}} class="invisible"{{end}}>
 				Site Title

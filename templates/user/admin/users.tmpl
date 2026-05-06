@@ -12,7 +12,7 @@
 	{{end}}
 	<div class="row admin-actions" style="justify-content: space-between;">
 		<span style="font-style: italic; font-size: 1.2em">{{.TotalUsers}} {{pluralize "user" "users" .TotalUsers}}</span>
-		<a class="btn cta" href="/me/invites">+ Invite people</a>
+		<a class="btn cta" href="me/invites">+ Invite people</a>
 	</div>
 
 	<table class="classy export" style="width:100%">
@@ -24,7 +24,7 @@
 		</tr>
 		{{range .Users}}
 		<tr>
-			<td><a href="/admin/user/{{.Username}}">{{.Username}}</a></td>
+			<td><a href="admin/user/{{.Username}}">{{.Username}}</a></td>
 			<td>{{.CreatedFriendly}}</td>
 			<td style="text-align:center">{{if .IsAdmin}}Admin{{else}}User{{end}}</td>
 			<td style="text-align:center">{{if .IsSilenced}}Silenced{{else}}Active{{end}}</td>
@@ -33,7 +33,7 @@
 	</table>
 
 	<nav class="pager pages">
-		{{range $n := .TotalPages}}<a href="/admin/users{{if ne $n 1}}?p={{$n}}{{end}}" {{if eq $.CurPage $n}}class="selected"{{end}}>{{$n}}</a>{{end}}
+		{{range $n := .TotalPages}}<a href="admin/users{{if ne $n 1}}?p={{$n}}{{end}}" {{if eq $.CurPage $n}}class="selected"{{end}}>{{$n}}</a>{{end}}
 	</nav>
 
 </div>

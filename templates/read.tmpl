@@ -1,6 +1,6 @@
 {{define "head"}}<title>{{.SiteName}} Reader</title>
 		
-		<link rel="alternate" type="application/rss+xml" title="{{.SiteName}} Reader" href="/read/feed/" />
+		<link rel="alternate" type="application/rss+xml" title="{{.SiteName}} Reader" href="read/feed/" />
 		{{if gt .CurrentPage 1}}<link rel="prev" href="{{.PrevPageURL .CurrentPage}}">{{end}}
 		{{if lt .CurrentPage .TotalPages}}<link rel="next" href="{{.NextPageURL .CurrentPage}}">{{end}}
 
@@ -122,7 +122,7 @@
 		</nav>{{end}}
 
 		</div>
-		<script src="/js/localdate.js">
+		<script src="js/localdate.js">
 <script type="text/javascript">
 (function() {
 	var $articles = document.querySelectorAll('article');

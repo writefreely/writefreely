@@ -11,13 +11,12 @@
 package writefreely
 
 import (
+	"github.com/writeas/web-core/log"
 	"io"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/writeas/web-core/log"
 )
 
 // updatesCacheTime is the default interval between cache updates for new
@@ -89,6 +88,9 @@ func (uc updatesCache) ReleaseNotesURL() string {
 
 func wfReleaseNotesURL(v string) string {
 	ver := strings.TrimPrefix(v, "v")
+	if ver == "" {
+		ver = softwareVer
+	}
 	ver = strings.TrimSuffix(ver, ".0")
 	// hack until go 1.12 in build/travis
 	seg := strings.Split(ver, ".")

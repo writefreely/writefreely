@@ -73,7 +73,7 @@ form dd {
 			{{template "oauth-buttons" .}}
 
 			{{if not .DisablePasswordAuth}}
-			<form action="/auth/signup" method="POST" id="signup-form" onsubmit="return signup()">
+			<form action="auth/signup" method="POST" id="signup-form" onsubmit="return signup()">
 				<input type="hidden" name="invite_code" value="{{.Invite}}" />
 				<dl class="billing">
 					<label>
@@ -102,7 +102,7 @@ form dd {
 	</div>
 </div>
 
-<script type="text/javascript" src="/js/h.js"></script>
+<script type="text/javascript" src="js/h.js"></script>
 <script type="text/javascript">
 function signup() {
 	var $pass = document.getElementById('password');

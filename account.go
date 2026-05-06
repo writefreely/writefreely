@@ -13,6 +13,8 @@ package writefreely
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/writefreely/writefreely/mailer"
+	"github.com/writefreely/writefreely/spam"
 	"html/template"
 	"net/http"
 	"regexp"
@@ -31,9 +33,7 @@ import (
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/writefreely/author"
 	"github.com/writefreely/writefreely/config"
-	"github.com/writefreely/writefreely/mailer"
 	"github.com/writefreely/writefreely/page"
-	"github.com/writefreely/writefreely/spam"
 )
 
 type (
@@ -557,7 +557,9 @@ func login(app *App, w http.ResponseWriter, r *http.Request) error {
 	if reqJSON {
 		return impart.WriteSuccess(w, &AuthUser{User: u}, http.StatusOK)
 	}
+	redirectTo = app.cfg.App.PrefixPath(redirectTo)
 	log.Info("Login: Redirecting to %s", redirectTo)
+	redirectTo = app.cfg.App.PrefixPath(redirectTo)
 	w.Header().Set("Location", redirectTo)
 	w.WriteHeader(http.StatusFound)
 	return nil
@@ -862,7 +864,6 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		return err
 	}
-	c.hostName = app.cfg.App.Host
 	if c.OwnerID != u.ID {
 		return ErrCollectionNotFound
 	}
@@ -1345,7 +1346,7 @@ func handleResetPasswordInit(app *App, w http.ResponseWriter, r *http.Request) e
 		return returnLoc
 	}
 	if u.Email.String == "" {
-		err := impart.HTTPError{http.StatusPreconditionFailed, "User doesn't have an email address. Please contact us (" + app.cfg.App.Host + "/contact) to reset your password."}
+		err := impart.HTTPError{http.StatusPreconditionFailed, "User doesn't have an email address. Please contact us (" + app.cfg.App.AbsoluteURL("/contact") + ") to reset your password."}
 		addSessionFlash(app, w, r, err.Message, nil)
 		return returnLoc
 	}

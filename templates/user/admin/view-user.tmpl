@@ -75,7 +75,7 @@ input.copy-text {
 			<td>{{if .LastPost}}{{.LastPost}}{{else}}Never{{end}}</td>
 		</tr>
 		<tr>
-			<form action="/admin/user/{{.User.Username}}/status" method="POST" {{if not .User.IsSilenced}}onsubmit="return confirmSilence()"{{end}}>
+			<form action="admin/user/{{.User.Username}}/status" method="POST" {{if not .User.IsSilenced}}onsubmit="return confirmSilence()"{{end}}>
 				<th><a id="status"></a>Status</th>
 				<td class="active-silence">
 				{{if .User.IsSilenced}}
@@ -92,12 +92,12 @@ input.copy-text {
 			<th>Password</th>
 			<td>
 				{{if ne .Username .User.Username}}
-				<form id="reset-form" action="/admin/user/{{.User.Username}}/passphrase" method="post" autocomplete="false">
+				<form id="reset-form" action="admin/user/{{.User.Username}}/passphrase" method="post" autocomplete="false">
 					<input type="hidden" name="user" value="{{.User.ID}}"/>
 					<button type="submit">Reset</button>
 				</form>
 				{{else}}
-				<a href="/me/settings" title="Go to reset password page">Change your password</a>
+				<a href="me/settings" title="Go to reset password page">Change your password</a>
 				{{end}}
 			</td>
 		</tr>
@@ -106,7 +106,7 @@ input.copy-text {
 	<h2>Blogs</h2>
 
 	{{range .Colls}}
-	<h3><a href="/{{.Alias}}/">{{.Title}}</a></h3>
+	<h3><a href="{{.Alias}}/">{{.Title}}</a></h3>
 	<table class="classy export">
 		<tr>
 			<th>Alias</th>
@@ -167,7 +167,7 @@ input.copy-text {
 
 		<ul id="delete-errors" class="errors"></ul>
 
-		<form action="/admin/user/{{.User.Username}}/delete" method="post" onsubmit="confirmDeletion()">
+		<form action="admin/user/{{.User.Username}}/delete" method="post" onsubmit="confirmDeletion()">
 			<input id="confirm-text" placeholder="{{.User.Username}}" type="text" class="confirm boxy" name="confirm-username" style="margin-top: 0.5em;" />
 			<div style="text-align:right; margin-top: 1em;">
 				<a id="cancel-delete" style="margin-right:2em" href="#">Cancel</a>
@@ -176,8 +176,8 @@ input.copy-text {
 	</div>
 </div>
 
-<script src="/js/h.js"></script>
-<script src="/js/modals.js"></script>
+<script src="js/h.js"></script>
+<script src="js/modals.js"></script>
 <script type="text/javascript">
 H.getEl('cancel-delete').on('click', closeModals);
 

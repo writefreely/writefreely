@@ -1,13 +1,14 @@
 {{define "collection-tags"}}<!DOCTYPE HTML>
 <html>
 	<head prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article#">
+		{{template "head-base" .}}
 		<meta charset="utf-8">
 
 		<title>{{.Tag}} &mdash; {{.Collection.DisplayTitle}}</title>
 		
-		<link rel="stylesheet" type="text/css" href="/css/write.css" />
-		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
-		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" type="text/css" href="css/write.css" />
+		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="local/custom.css" />{{end}}
+		<link rel="shortcut icon" href="favicon.ico" />
 		{{if not .Collection.IsPrivate}}<link rel="alternate" type="application/rss+xml" title="{{.Tag}} posts on {{.DisplayTitle}}" href="{{.CanonicalURL}}tag:{{.Tag}}/feed/" />{{end}}
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="canonical" href="{{.CanonicalURL}}tag:{{.Tag | tolower}}" />
@@ -47,10 +48,10 @@
 		<div id="overlay"></div>
 
 		<header>
-		<h1 dir="{{.Direction}}" id="blog-title"><a href="{{if .IsTopLevel}}/{{else}}/{{.Collection.Alias}}/{{end}}" class="h-card p-author">{{.Collection.DisplayTitle}}</a></h1>
+		<h1 dir="{{.Direction}}" id="blog-title"><a href="{{if .IsTopLevel}}{{else}}{{.Collection.Alias}}/{{end}}" class="h-card p-author">{{.Collection.DisplayTitle}}</a></h1>
 			<nav>
 				{{if .PinnedPosts}}
-				{{range .PinnedPosts}}<a class="pinned" href="{{if not $.SingleUser}}/{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.DisplayTitle}}</a>{{end}}
+				{{range .PinnedPosts}}<a class="pinned" href="{{if not $.SingleUser}}{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.DisplayTitle}}</a>{{end}}
 				{{end}}
 			</nav>
 		</header>
@@ -78,7 +79,7 @@
 		<footer dir="ltr">
 			<hr>
 			<nav>
-				<p style="font-size: 0.9em"><a class="home pubd" href="/">{{.SiteName}}</a> &middot; powered by <a style="margin-left:0" href="https://writefreely.org">writefreely</a></p>
+				<p style="font-size: 0.9em"><a class="home pubd" href="">{{.SiteName}}</a> &middot; powered by <a style="margin-left:0" href="https://writefreely.org">writefreely</a></p>
 			</nav>
 		</footer>
 		{{ end }}
@@ -88,10 +89,10 @@
 		{{range .ExternalScripts}}<script type="text/javascript" src="{{.}}" async></script>{{end}}
 		{{if .Collection.Script}}<script type="text/javascript">{{.ScriptDisplay}}</script>{{end}}
 	{{end}}
-	<script src="/js/localdate.js"></script>
+	<script src="js/localdate.js"></script>
 	{{if .IsOwner}}
-	<script src="/js/h.js"></script>
-	<script src="/js/postactions.js"></script>
+	<script src="js/h.js"></script>
+	<script src="js/postactions.js"></script>
 	{{end}}
 	<script type="text/javascript">
 {{if .IsOwner}}
@@ -121,7 +122,7 @@ var deletePost = function(postID, token, callback) {
 	$delBtn.innerHTML = '...';
 
 	var http = new XMLHttpRequest();
-	var url = "/api/posts/" + postID;
+	var url = "{{subdir}}/api/posts/" + postID;
 	http.open("DELETE", url, true);
 	http.onreadystatechange = function() {
 		if (http.readyState == 4) {
@@ -158,7 +159,7 @@ function pinPost(e, postID, slug, title) {
 		var $header = document.getElementsByTagName('header')[0];
 		var $pinnedNavs = $header.getElementsByTagName('nav');
 		// Add link to nav
-		var link = '<a class="pinned" href="{{if not .SingleUser}}/{{.Alias}}/{{end}}'+slug+'">'+title+'</a>';
+		var link = '<a class="pinned" href="{{if not .SingleUser}}{{.Alias}}/{{end}}'+slug+'">'+title+'</a>';
 		if ($pinnedNavs.length == 0) {
 			$header.insertAdjacentHTML("beforeend", '<nav>'+link+'</nav>');
 		} else {
@@ -170,7 +171,7 @@ function pinPost(e, postID, slug, title) {
 	$pinBtn.innerHTML = '...';
 
 	var http = new XMLHttpRequest();
-	var url = "/api/collections/{{.Alias}}/pin";
+	var url = "{{subdir}}/api/collections/{{.Alias}}/pin";
 	var params = [ { "id": postID } ];
 	http.open("POST", url, true);
 	http.setRequestHeader("Content-type", "application/json");
@@ -196,11 +197,11 @@ function pinPost(e, postID, slug, title) {
 {{end}}
 	try { // Fonts
 	  WebFontConfig = {
-		custom: { families: [ 'Lora:400,700:latin', 'Open+Sans:400,700:latin' ], urls: [ '/css/fonts.css' ] }
+		custom: { families: [ 'Lora:400,700:latin', 'Open+Sans:400,700:latin' ], urls: [ 'css/fonts.css' ] }
 	  };
 	  (function() {
 		var wf = document.createElement('script');
-		wf.src = '/js/webfont.js';
+		wf.src = 'js/webfont.js';
 		wf.type = 'text/javascript';
 		wf.async = 'true';
 		var s = document.getElementsByTagName('script')[0];

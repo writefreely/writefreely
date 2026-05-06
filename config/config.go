@@ -121,9 +121,10 @@ type (
 
 	// AppCfg holds values that affect how the application functions
 	AppCfg struct {
-		SiteName string `ini:"site_name"`
-		SiteDesc string `ini:"site_description"`
-		Host     string `ini:"host"`
+		SiteName     string `ini:"site_name"`
+		SiteDesc     string `ini:"site_description"`
+		Host         string `ini:"host"`
+		Subdirectory string `ini:"subdirectory"`
 
 		// Site appearance
 		Theme      string `ini:"theme"`
@@ -176,6 +177,7 @@ type (
 		Port           int    `ini:"smtp_port"`
 		Username       string `ini:"smtp_username"`
 		Password       string `ini:"smtp_password"`
+		EnableSSL      bool   `ini:"smtp_ssl"`
 		EnableStartTLS bool   `ini:"smtp_enable_start_tls"`
 
 		// Mailgun configuration values
@@ -245,9 +247,80 @@ func (cfg *Config) IsSecureStandalone() bool {
 
 func (ac *AppCfg) LandingPath() string {
 	if !strings.HasPrefix(ac.Landing, "/") {
-		return "/" + ac.Landing
+		return ac.PrefixPath("/" + ac.Landing)
 	}
-	return ac.Landing
+	return ac.PrefixPath(ac.Landing)
+}
+
+func (ac AppCfg) SubdirectoryPath() string {
+	p := strings.TrimSpace(ac.Subdirectory)
+	if p == "" || p == "/" {
+		return ""
+	}
+	if !strings.HasPrefix(p, "/") {
+		p = "/" + p
+	}
+	return strings.TrimSuffix(p, "/")
+}
+
+func (ac AppCfg) PrefixPath(path string) string {
+	if path == "" {
+		path = "/"
+	}
+	if strings.Contains(path, "://") || strings.HasPrefix(path, "//") {
+		return path
+	}
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+
+	basePath := ac.SubdirectoryPath()
+	if basePath == "" || path == basePath || strings.HasPrefix(path, basePath+"/") {
+		return path
+	}
+	if path == "/" {
+		return basePath + "/"
+	}
+	return basePath + path
+}
+
+func (ac AppCfg) AbsoluteHost() string {
+	host := strings.TrimSuffix(strings.TrimSpace(ac.Host), "/")
+	if host == "" {
+		return ""
+	}
+	if basePath := ac.SubdirectoryPath(); basePath != "" && !strings.HasSuffix(host, basePath) {
+		host += basePath
+	}
+	return host
+}
+
+func (ac AppCfg) AbsoluteURL(path string) string {
+	host := strings.TrimSuffix(strings.TrimSpace(ac.Host), "/")
+	if host == "" {
+		return ac.PrefixPath(path)
+	}
+	return host + ac.PrefixPath(path)
+}
+
+func (ac AppCfg) StripSubdirectory(path string) string {
+	basePath := ac.SubdirectoryPath()
+	if basePath == "" {
+		if path == "" {
+			return "/"
+		}
+		return path
+	}
+	if path == basePath {
+		return "/"
+	}
+	if strings.HasPrefix(path, basePath+"/") {
+		return strings.TrimPrefix(path, basePath)
+	}
+	if path == "" {
+		return "/"
+	}
+	return path
 }
 
 func (lc EmailCfg) Enabled() bool {
@@ -260,9 +333,9 @@ func (ac AppCfg) SignupPath() string {
 		return ""
 	}
 	if ac.Chorus || ac.Private || (ac.Landing != "" && ac.Landing != "/") {
-		return "/signup"
+		return ac.PrefixPath("/signup")
 	}
-	return "/"
+	return ac.PrefixPath("/")
 }
 
 // Load reads the given configuration file, then parses and returns it as a Config.
@@ -295,6 +368,17 @@ func Load(fname string) (*Config, error) {
 	uc.App.Host = u.Scheme + "://" + d
 	if u.Port() != "" {
 		uc.App.Host += ":" + u.Port()
+	}
+
+	// Keep host as scheme://domain[:port] only, and treat any host path as
+	// a subdirectory setting (unless an explicit subdirectory already differs).
+	hostPath := strings.TrimSuffix(u.EscapedPath(), "/")
+	if hostPath != "" && hostPath != "/" {
+		if uc.App.SubdirectoryPath() == "" {
+			uc.App.Subdirectory = hostPath
+		} else if uc.App.SubdirectoryPath() != hostPath {
+			log.Info("Config warning: ignoring host path %q because app.subdirectory is set to %q", hostPath, uc.App.SubdirectoryPath())
+		}
 	}
 
 	return uc, nil

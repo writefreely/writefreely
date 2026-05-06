@@ -20,8 +20,8 @@
 		{{template "collection-nav" .Collection}}
 
 		<nav class="pager sub">
-			<a href="/me/c/{{.Collection.Alias}}/subscribers" {{if eq .Filter ""}}class="selected"{{end}}>Email ({{len .EmailSubs}})</a>
-			<a href="/me/c/{{.Collection.Alias}}/subscribers?filter=fediverse" {{if eq .Filter "fediverse"}}class="selected"{{end}}>Followers ({{len .Followers}})</a>
+			<a href="me/c/{{.Collection.Alias}}/subscribers" {{if eq .Filter ""}}class="selected"{{end}}>Email ({{len .EmailSubs}})</a>
+			<a href="me/c/{{.Collection.Alias}}/subscribers?filter=fediverse" {{if eq .Filter "fediverse"}}class="selected"{{end}}>Followers ({{len .Followers}})</a>
 		</nav>
 	{{end}}
 
@@ -65,11 +65,11 @@
 			{{end}}
 			{{if .EmailSubsEnabled}}
 				<div class="row toolbar ends">
-					<a href="/api/collections/{{.Collection.Alias}}/email/subscribers/export.csv">Export list</a>
+					<a href="api/collections/{{.Collection.Alias}}/email/subscribers/export.csv">Export list</a>
 				</div>
 			{{else}}
 				<div class="alert info">
-					<p><strong>Email subscriptions are disabled</strong>. {{if .EmailSubs}}No new emails will be sent out.{{end}} To enable email subscriptions, turn the option on from your blog's <a href="/me/c/{{.Collection.Alias}}#updates">Customize</a> page.</p>
+					<p><strong>Email subscriptions are disabled</strong>. {{if .EmailSubs}}No new emails will be sent out.{{end}} To enable email subscriptions, turn the option on from your blog's <a href="me/c/{{.Collection.Alias}}#updates">Customize</a> page.</p>
 				</div>
 			{{end}}
 			<table class="classy export">

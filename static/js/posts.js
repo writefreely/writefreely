@@ -189,11 +189,12 @@ var movePostHTML = function(postID) {
 	return $tmpl.innerHTML.replace(/POST_ID/g, postID);
 }
 var createPostEl = function(post, owned, singleUser) {
+	var basePath = window.WF_BASE_PATH || "";
 	var $post = document.createElement('div');
 	let p = H.createPost(post.id, "", post.body)
 	var title = (post.title || p.title || post.id);
 	title = title.replace(/</g, "&lt;");
-	var postLink = (singleUser ? '/d/' : '/') + post.id
+	var postLink = basePath + (singleUser ? '/d/' : '/') + post.id
 	$post.id = 'post-' + post.id;
 	$post.className = 'post';
 	$post.innerHTML = '<h3><a href="' + postLink + '">' + title + '</a></h3>';
@@ -203,7 +204,7 @@ var createPostEl = function(post, owned, singleUser) {
 		posted = getFormattedDate(new Date(post.created))
 	}
 	var hasDraft = H.exists('draft' + post.id);
-	$post.innerHTML += '<h4><date>' + posted + '</date> <a class="action" href="' + postLink + '/edit">edit' + (hasDraft ? 'ed' : '') + '</a> <a class="delete action" href="/' + post.id + '" onclick="delPost(event, \'' + post.id + '\'' + (owned === true ? ', true' : '') + ')">delete</a> '+movePostHTML(post.id)+'</h4>';
+	$post.innerHTML += '<h4><date>' + posted + '</date> <a class="action" href="' + postLink + '/edit">edit' + (hasDraft ? 'ed' : '') + '</a> <a class="delete action" href="' + basePath + '/' + post.id + '" onclick="delPost(event, \'' + post.id + '\'' + (owned === true ? ', true' : '') + ')">delete</a> '+movePostHTML(post.id)+'</h4>';
 
 	if (post.error) {
 		$post.innerHTML += '<p class="error"><strong>Sync error:</strong> ' + post.error + ' <nav><a href="#" onclick="localPosts.dismissError(event, this)">dismiss</a> <a href="#" onclick="localPosts.deletePost(event, this, \''+post.id+'\')">remove post</a></nav></p>';
@@ -280,7 +281,8 @@ var deletePost = function(postID, token, callback) {
 	$delBtn.innerHTML = '...';
 
 	var http = new XMLHttpRequest();
-	var url = "/api/posts/" + postID + (typeof token !== 'undefined' ? "?token=" + encodeURIComponent(token) : '');
+	var basePath = window.WF_BASE_PATH || "";
+	var url = basePath + "/api/posts/" + postID + (typeof token !== 'undefined' ? "?token=" + encodeURIComponent(token) : '');
 	http.open("DELETE", url, true);
 	http.onreadystatechange = function() {
 		if (http.readyState == 4) {

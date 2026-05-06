@@ -33,7 +33,7 @@ textarea.section.norm {
 		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 	</ul>{{end}}
 
-<form name="customize-form" action="/api/collections/{{.Alias}}" method="post" onsubmit="return disableSubmit()">
+<form name="customize-form" action="api/collections/{{.Alias}}" method="post" onsubmit="return disableSubmit()">
 <div id="collection-options">
 	<div style="text-align:center">
 		<h1><input type="text" name="title" id="title" value="{{.DisplayTitle}}" placeholder="Title" maxlength="255" /></h1>
@@ -43,10 +43,10 @@ textarea.section.norm {
 	<div class="option">
 		<h2><a name="preferred-url"></a>URL</h2>
 		<div class="section">
-			{{if eq .Alias .Username}}<p style="font-size: 0.8em">This blog uses your username in its URL{{if .Federation}} and fediverse handle{{end}}. You can change it in your <a href="/me/settings">Account Settings</a>.</p>{{end}}
+			{{if eq .Alias .Username}}<p style="font-size: 0.8em">This blog uses your username in its URL{{if .Federation}} and fediverse handle{{end}}. You can change it in your <a href="me/settings">Account Settings</a>.</p>{{end}}
 			<ul style="list-style:none">
 				<li>
-					{{.FriendlyHost}}/{{if not .SingleUser}}<strong>{{.Alias}}</strong>/{{end}}
+					{{.FriendlyHost}}/<strong>{{.Alias}}</strong>/
 				</li>
 				<li>
 					<strong id="normal-handle-env" class="fedi-handle" {{if not .Federation}}style="display:none"{{end}}>@<span id="fedi-handle">{{.Alias}}</span>@<span id="fedi-domain">{{.FriendlyHost}}</span></strong>
@@ -82,7 +82,7 @@ textarea.section.norm {
 					<label class="option-text{{if not .LocalTimeline}} disabled{{end}}"><input type="radio" name="visibility" id="visibility-public" value="1" {{if .IsPublic}}checked="checked"{{end}} {{if not .LocalTimeline}}disabled="disabled"{{end}} />
 						Public
 					</label>
-					{{if .LocalTimeline}}<p>This blog is displayed on the public <a href="/read">reader</a>, and is visible to {{if .Private}}any registered user on this instance{{else}}anyone with its link{{end}}.</p>
+					{{if .LocalTimeline}}<p>This blog is displayed on the public <a href="read">reader</a>, and is visible to {{if .Private}}any registered user on this instance{{else}}anyone with its link{{end}}.</p>
 					{{else}}<p>The public reader is currently turned off for this community.</p>{{end}}
 				</li>
 				{{end}}
@@ -212,7 +212,7 @@ textarea.section.norm {
 
 	<div class="option" style="text-align: center; margin-top: 4em;">
 		<input type="submit" id="save-changes" value="Save changes" />
-		<p><a href="{{if .SingleUser}}/{{else}}/{{.Alias}}/{{end}}">View Blog</a></p>
+		<p><a href="{{if .SingleUser}}{{else}}{{.Alias}}/{{end}}">View Blog</a></p>
 		{{if ne .Alias .Username}}<p><a class="danger" href="#modal-delete" onclick="promptDelete();">Delete Blog...</a></p>{{end}}
 	</div>
 </div>
@@ -222,7 +222,7 @@ textarea.section.norm {
 		<div id="modal-delete" class="modal">
 			<h2>Are you sure you want to delete this blog?</h2>
 			<div class="body short">
-				<p style="text-align:left">This will permanently erase <strong>{{.DisplayTitle}}</strong> ({{.FriendlyHost}}/{{.Alias}}) from the internet. Any posts on this blog will be saved and made into drafts (found on your <a href="/me/posts/">Drafts</a> page).</p>
+				<p style="text-align:left">This will permanently erase <strong>{{.DisplayTitle}}</strong> ({{.FriendlyHost}}/{{.Alias}}) from the internet. Any posts on this blog will be saved and made into drafts (found on your <a href="me/posts/">Drafts</a> page).</p>
 				<p>If you're sure you want to delete this blog, enter its name in the box below and press <strong>Delete</strong>.</p>
 
 				<ul id="delete-errors" class="errors"></ul>
@@ -235,9 +235,9 @@ textarea.section.norm {
 			</div>
 		</div>
 
-<script src="/js/h.js"></script>
-<script src="/js/modals.js"></script>
-<script src="/js/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/h.js"></script>
+<script src="js/modals.js"></script>
+<script src="js/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
 H.getEl('cancel-delete').on('click', closeModals);
 var deleteBlog = function(e) {
@@ -250,7 +250,7 @@ var deleteBlog = function(e) {
 	document.getElementById('btn-delete').innerHTML = 'Deleting...';
 
 	var http = new XMLHttpRequest();
-	var url = "/api/collections/{{.Alias}}?web=1";
+	var url = "{{subdir}}/api/collections/{{.Alias}}?web=1";
 	http.open("DELETE", url, true);
 	http.setRequestHeader("Content-type", "application/json");
 	http.onreadystatechange = function() {

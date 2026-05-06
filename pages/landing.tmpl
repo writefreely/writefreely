@@ -83,7 +83,7 @@ form dd {
 		</ul>{{end}}
 
 		<div id="billing">
-			<form action="/auth/signup" method="POST" id="signup-form" onsubmit="return signup()">
+			<form action="auth/signup" method="POST" id="signup-form" onsubmit="return signup()">
 				<dl class="billing">
 					<label>
 						<dt>Username</dt>
@@ -125,7 +125,7 @@ form dd {
 </div>
 {{ end }}
 
-<script type="text/javascript" src="/js/h.js"></script>
+<script type="text/javascript" src="js/h.js"></script>
 <script type="text/javascript">
 function signup() {
 	var $pass = document.getElementById('password');

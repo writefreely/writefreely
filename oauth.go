@@ -165,13 +165,13 @@ func (h oauthHandler) viewOauthInit(app *App, w http.ResponseWriter, r *http.Req
 
 func configureSlackOauth(parentHandler *Handler, r *mux.Router, app *App) {
 	if app.Config().SlackOauth.ClientID != "" {
-		callbackLocation := app.Config().App.Host + "/oauth/callback/slack"
+		callbackLocation := app.Config().App.AbsoluteURL("/oauth/callback/slack")
 
 		var stateRegisterClient *callbackProxyClient = nil
 		if app.Config().SlackOauth.CallbackProxyAPI != "" {
 			stateRegisterClient = &callbackProxyClient{
 				server:           app.Config().SlackOauth.CallbackProxyAPI,
-				callbackLocation: app.Config().App.Host + "/oauth/callback/slack",
+				callbackLocation: app.Config().App.AbsoluteURL("/oauth/callback/slack"),
 				httpClient:       config.DefaultHTTPClient(),
 			}
 			callbackLocation = app.Config().SlackOauth.CallbackProxy
@@ -189,13 +189,13 @@ func configureSlackOauth(parentHandler *Handler, r *mux.Router, app *App) {
 
 func configureWriteAsOauth(parentHandler *Handler, r *mux.Router, app *App) {
 	if app.Config().WriteAsOauth.ClientID != "" {
-		callbackLocation := app.Config().App.Host + "/oauth/callback/write.as"
+		callbackLocation := app.Config().App.AbsoluteURL("/oauth/callback/write.as")
 
 		var callbackProxy *callbackProxyClient = nil
 		if app.Config().WriteAsOauth.CallbackProxy != "" {
 			callbackProxy = &callbackProxyClient{
 				server:           app.Config().WriteAsOauth.CallbackProxyAPI,
-				callbackLocation: app.Config().App.Host + "/oauth/callback/write.as",
+				callbackLocation: app.Config().App.AbsoluteURL("/oauth/callback/write.as"),
 				httpClient:       config.DefaultHTTPClient(),
 			}
 			callbackLocation = app.Config().WriteAsOauth.CallbackProxy
@@ -216,13 +216,13 @@ func configureWriteAsOauth(parentHandler *Handler, r *mux.Router, app *App) {
 
 func configureGitlabOauth(parentHandler *Handler, r *mux.Router, app *App) {
 	if app.Config().GitlabOauth.ClientID != "" {
-		callbackLocation := app.Config().App.Host + "/oauth/callback/gitlab"
+		callbackLocation := app.Config().App.AbsoluteURL("/oauth/callback/gitlab")
 
 		var callbackProxy *callbackProxyClient = nil
 		if app.Config().GitlabOauth.CallbackProxy != "" {
 			callbackProxy = &callbackProxyClient{
 				server:           app.Config().GitlabOauth.CallbackProxyAPI,
-				callbackLocation: app.Config().App.Host + "/oauth/callback/gitlab",
+				callbackLocation: app.Config().App.AbsoluteURL("/oauth/callback/gitlab"),
 				httpClient:       config.DefaultHTTPClient(),
 			}
 			callbackLocation = app.Config().GitlabOauth.CallbackProxy
@@ -244,13 +244,13 @@ func configureGitlabOauth(parentHandler *Handler, r *mux.Router, app *App) {
 
 func configureGenericOauth(parentHandler *Handler, r *mux.Router, app *App) {
 	if app.Config().GenericOauth.ClientID != "" {
-		callbackLocation := app.Config().App.Host + "/oauth/callback/generic"
+		callbackLocation := app.Config().App.AbsoluteURL("/oauth/callback/generic")
 
 		var callbackProxy *callbackProxyClient = nil
 		if app.Config().GenericOauth.CallbackProxy != "" {
 			callbackProxy = &callbackProxyClient{
 				server:           app.Config().GenericOauth.CallbackProxyAPI,
-				callbackLocation: app.Config().App.Host + "/oauth/callback/generic",
+				callbackLocation: app.Config().App.AbsoluteURL("/oauth/callback/generic"),
 				httpClient:       config.DefaultHTTPClient(),
 			}
 			callbackLocation = app.Config().GenericOauth.CallbackProxy
@@ -276,13 +276,13 @@ func configureGenericOauth(parentHandler *Handler, r *mux.Router, app *App) {
 
 func configureGiteaOauth(parentHandler *Handler, r *mux.Router, app *App) {
 	if app.Config().GiteaOauth.ClientID != "" {
-		callbackLocation := app.Config().App.Host + "/oauth/callback/gitea"
+		callbackLocation := app.Config().App.AbsoluteURL("/oauth/callback/gitea")
 
 		var callbackProxy *callbackProxyClient = nil
 		if app.Config().GiteaOauth.CallbackProxy != "" {
 			callbackProxy = &callbackProxyClient{
 				server:           app.Config().GiteaOauth.CallbackProxyAPI,
-				callbackLocation: app.Config().App.Host + "/oauth/callback/gitea",
+				callbackLocation: app.Config().App.AbsoluteURL("/oauth/callback/gitea"),
 				httpClient:       config.DefaultHTTPClient(),
 			}
 			callbackLocation = app.Config().GiteaOauth.CallbackProxy
@@ -372,7 +372,7 @@ func (h oauthHandler) viewOauthCallback(app *App, w http.ResponseWriter, r *http
 			log.Error("Unable to GetUserByID %d: %s", localUserID, err)
 			return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 		}
-		if err = loginOrFail(h.Store, w, r, user); err != nil {
+		if err = loginOrFail(h.Store, w, r, user, app.cfg.App.PrefixPath("/")); err != nil {
 			log.Error("Unable to loginOrFail %d: %s", localUserID, err)
 			return impart.HTTPError{http.StatusInternalServerError, err.Error()}
 		}
@@ -459,7 +459,7 @@ func limitedJsonUnmarshal(body io.ReadCloser, n int, thing interface{}) error {
 	return json.Unmarshal(data, thing)
 }
 
-func loginOrFail(store sessions.Store, w http.ResponseWriter, r *http.Request, user *User) error {
+func loginOrFail(store sessions.Store, w http.ResponseWriter, r *http.Request, user *User, redirectTo string) error {
 	// An error may be returned, but a valid session should always be returned.
 	session, _ := store.Get(r, cookieName)
 	session.Values[cookieUserVal] = user.Cookie()
@@ -467,6 +467,6 @@ func loginOrFail(store sessions.Store, w http.ResponseWriter, r *http.Request, u
 		fmt.Println("error saving session", err)
 		return err
 	}
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, redirectTo, http.StatusTemporaryRedirect)
 	return nil
 }

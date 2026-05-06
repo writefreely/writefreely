@@ -31,7 +31,40 @@ func (app *App) InitStaticRoutes(r *mux.Router) {
 	fs = cacheControl(fs)
 	app.shttp = http.NewServeMux()
 	app.shttp.Handle("/", fs)
-	r.PathPrefix("/").Handler(fs)
+	staticPrefixes := []string{
+		"/css/",
+		"/fonts/",
+		"/img/",
+		"/js/",
+		"/local/",
+	}
+	for _, prefix := range staticPrefixes {
+		r.PathPrefix(prefix).Handler(fs)
+	}
+	r.Handle("/favicon.ico", fs)
+}
+
+// MountSubdirectory mounts the application router under the configured subdirectory.
+func MountSubdirectory(apper Apper, r *mux.Router, h http.Handler) {
+	basePath := apper.App().cfg.App.SubdirectoryPath()
+	if basePath == "" {
+		r.PathPrefix("/").Handler(h)
+		return
+	}
+
+	r.HandleFunc(basePath, func(w http.ResponseWriter, req *http.Request) {
+		http.Redirect(w, req, basePath+"/", http.StatusMovedPermanently)
+	})
+	r.PathPrefix(basePath + "/").Handler(http.StripPrefix(basePath, h))
+
+	// Ensure requests that miss the configured subdirectory are redirected under it.
+	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		target := apper.App().cfg.App.PrefixPath(req.URL.Path)
+		if req.URL.RawQuery != "" {
+			target += "?" + req.URL.RawQuery
+		}
+		http.Redirect(w, req, target, http.StatusTemporaryRedirect)
+	})
 }
 
 // InitRoutes adds dynamic routes for the given mux.Router.
@@ -242,7 +275,6 @@ func RouteCollections(handler *Handler, r *mux.Router) {
 func RouteRead(handler *Handler, readPerm UserLevelFunc, r *mux.Router) {
 	r.HandleFunc("/api/posts", handler.Web(viewLocalTimelineAPI, readPerm))
 	r.HandleFunc("/p/{page}", handler.Web(viewLocalTimeline, readPerm))
-	r.HandleFunc("/feed", handler.Web(viewLocalTimelineFeed, readPerm))
 	r.HandleFunc("/feed/", handler.Web(viewLocalTimelineFeed, readPerm))
 	r.HandleFunc("/t/{tag}", handler.Web(viewLocalTimeline, readPerm))
 	r.HandleFunc("/a/{post}", handler.Web(handlePostIDRedirect, readPerm))

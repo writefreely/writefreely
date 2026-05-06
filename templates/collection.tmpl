@@ -1,13 +1,14 @@
 {{define "collection"}}<!DOCTYPE HTML>
 <html {{if .Language}}lang="{{.Language}}"{{end}} dir="{{.Direction}}">
 	<head>
+		{{template "head-base" .}}
 		<meta charset="utf-8">
 
 		<title>{{.DisplayTitle}}{{if not .SingleUser}} &mdash; {{.SiteName}}{{end}}</title>
 
-		<link rel="stylesheet" type="text/css" href="/css/write.css" />
-		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
-		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" type="text/css" href="css/write.css" />
+		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="local/custom.css" />{{end}}
+		<link rel="shortcut icon" href="favicon.ico" />
 		<link rel="canonical" href="{{.CanonicalURL}}">
 		{{if gt .CurrentPage 1}}<link rel="prev" href="{{.PrevPageURL .Prefix .NavSuffix .CurrentPage .IsTopLevel}}">{{end}}
 		{{if lt .CurrentPage .TotalPages}}<link rel="next" href="{{.NextPageURL .Prefix .NavSuffix .CurrentPage .IsTopLevel}}">{{end}}
@@ -47,22 +48,22 @@
 					<ul>
 						{{ if .IsOwner }}
 							{{if .SingleUser}}
-							<li><a href="/me/new">New Post</a></li>
+							<li><a href="me/new">New Post</a></li>
 							{{else}}
-							<li><a href="/#{{.Alias}}" class="write">{{.SiteName}}</a></li>
+							<li><a href="#{{.Alias}}" class="write">{{.SiteName}}</a></li>
 							{{end}}
-							{{if .SimpleNav}}<li><a href="/new#{{.Alias}}">New Post</a></li>{{end}}
-							<li><a href="/me/c/{{.Alias}}">Customize</a></li>
-							<li><a href="/me/c/{{.Alias}}/stats">Stats</a></li>
-							<li><a href="/me/c/{{.Alias}}/subscribers">Subscribers</a></li>
+							{{if .SimpleNav}}<li><a href="new#{{.Alias}}">New Post</a></li>{{end}}
+							<li><a href="me/c/{{.Alias}}">Customize</a></li>
+							<li><a href="me/c/{{.Alias}}/stats">Stats</a></li>
+							<li><a href="me/c/{{.Alias}}/subscribers">Subscribers</a></li>
 							<li class="separator"><hr /></li>
-							{{if not .SingleUser}}<li><a href="/me/c/"><img class="ic-18dp" src="/img/ic_blogs_dark@2x.png" /> View Blogs</a></li>{{end}}
-							<li><a href="/me/posts/"><img class="ic-18dp" src="/img/ic_list_dark@2x.png" /> View Drafts</a></li>
+							{{if not .SingleUser}}<li><a href="me/c/"><img class="ic-18dp" src="img/ic_blogs_dark@2x.png" /> View Blogs</a></li>{{end}}
+							<li><a href="me/posts/"><img class="ic-18dp" src="img/ic_list_dark@2x.png" /> View Drafts</a></li>
 						{{ else }}
-							<li><a href="/login">Log in{{if .IsProtected}} to {{.DisplayTitle}}{{end}}</a></li>
+							<li><a href="login">Log in{{if .IsProtected}} to {{.DisplayTitle}}{{end}}</a></li>
 							{{if .IsProtected}}
 								<li class="separator"><hr /></li>
-								<li><a href="/logout">Log out</a></li>
+								<li><a href="logout">Log out</a></li>
 							{{end}}
 						{{ end }}
 					</ul>
@@ -83,7 +84,7 @@
 		{{if .Silenced}}
 			{{template "user-silenced"}}
 		{{end}}
-		<h1 dir="{{.Direction}}" id="blog-title">{{if .Posts}}{{else}}<span class="writeas-prefix"><a href="/">write.as</a></span> {{end}}<a href="/{{if .IsTopLevel}}{{else}}{{.Prefix}}{{.Alias}}/{{end}}" class="h-card p-author u-url" rel="me author">{{.DisplayTitle}}</a></h1>
+		<h1 dir="{{.Direction}}" id="blog-title">{{if .Posts}}{{else}}<span class="writeas-prefix"><a href="">write.as</a></span> {{end}}<a href="{{if .IsTopLevel}}{{else}}{{.Prefix}}{{.Alias}}/{{end}}" class="h-card p-author u-url" rel="me author">{{.DisplayTitle}}</a></h1>
 		{{if .Description}}<p class="description p-note">{{.DisplayDescription}}</p>{{end}}
 		{{/*if not .Public/*}}
 			<!--p class="meta-note"><span>Private collection</span>. Only you can see this page.</p-->
@@ -99,8 +100,8 @@
 			<div id="welcome">
 				<h2>Welcome, <strong>{{.Username}}</strong>!</h2>
 				<p>This is your new blog.</p>
-				<p><a class="simple-cta" href="/#{{.Alias}}">Start writing</a>, or <a class="simple-cta" href="/me/c/{{.Alias}}">customize</a> your blog.</p>
-				<p>Check out our <a class="simple-cta" href="https://writefreely.org/docs/latest/writer/writing">writing guide</a> to see what else you can do, and <a class="simple-cta" href="/contact">get in touch</a> anytime with questions or feedback.</p>
+				<p><a class="simple-cta" href="#{{.Alias}}">Start writing</a>, or <a class="simple-cta" href="me/c/{{.Alias}}">customize</a> your blog.</p>
+				<p>Check out our <a class="simple-cta" href="https://writefreely.org/docs/latest/writer/writing">writing guide</a> to see what else you can do, and <a class="simple-cta" href="contact">get in touch</a> anytime with questions or feedback.</p>
 			</div>
 			{{end}}
 
@@ -130,7 +131,7 @@
 		<footer>
 			<hr />
 			<nav dir="ltr">
-				{{if not .SingleUser}}<a class="home pubd" href="/">{{.SiteName}}</a> &middot; {{end}}powered by <a style="margin-left:0" href="https://writefreely.org">writefreely</a>
+				{{if not .SingleUser}}<a class="home pubd" href="">{{.SiteName}}</a> &middot; {{end}}powered by <a style="margin-left:0" href="https://writefreely.org">writefreely</a>
 			</nav>
 		</footer>
 		{{ end }}
@@ -140,10 +141,10 @@
 		{{range .ExternalScripts}}<script type="text/javascript" src="{{.}}" async></script>{{end}}
 		{{if .Script}}<script type="text/javascript">{{.ScriptDisplay}}</script>{{end}}
 	{{end}}
-	<script src="/js/h.js"></script>
-	<script src="/js/postactions.js"></script>
-	<script src="/js/localdate.js"></script>
-	<script type="text/javascript" src="/js/menu.js"></script>
+	<script src="js/h.js"></script>
+	<script src="js/postactions.js"></script>
+	<script src="js/localdate.js"></script>
+	<script type="text/javascript" src="js/menu.js"></script>
 	<script type="text/javascript">
 var deleting = false;
 function delPost(e, id, owned) {
@@ -171,7 +172,7 @@ var deletePost = function(postID, token, callback) {
 	$delBtn.innerHTML = '...';
 
 	var http = new XMLHttpRequest();
-	var url = "/api/posts/" + postID;
+	var url = "{{subdir}}/api/posts/" + postID;
 	http.open("DELETE", url, true);
 	http.onreadystatechange = function() {
 		if (http.readyState == 4) {
@@ -220,7 +221,7 @@ function pinPost(e, postID, slug, title) {
 	$pinBtn.innerHTML = '...';
 
 	var http = new XMLHttpRequest();
-	var url = "/api/collections/{{.Alias}}/pin";
+	var url = "{{subdir}}/api/collections/{{.Alias}}/pin";
 	var params = [ { "id": postID } ];
 	http.open("POST", url, true);
 	http.setRequestHeader("Content-type", "application/json");
@@ -246,11 +247,11 @@ function pinPost(e, postID, slug, title) {
 
 	try {
 	  WebFontConfig = {
-		custom: { families: [ 'Lora:400,700:latin', 'Open+Sans:400,700:latin' ], urls: [ '/css/fonts.css' ] }
+		custom: { families: [ 'Lora:400,700:latin', 'Open+Sans:400,700:latin' ], urls: [ 'css/fonts.css' ] }
 	  };
 	  (function() {
 		var wf = document.createElement('script');
-		wf.src = '/js/webfont.js';
+		wf.src = 'js/webfont.js';
 		wf.type = 'text/javascript';
 		wf.async = 'true';
 		var s = document.getElementsByTagName('script')[0];

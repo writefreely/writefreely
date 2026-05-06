@@ -272,11 +272,22 @@ func (c *Collection) RedirectingCanonicalURL(isRedir bool) string {
 		// If this is true, the human programmers screwed up. So ask for a bug report and fail, fail, fail
 		log.Error("[PROGRAMMER ERROR] WARNING: Collection.hostName is empty! Federation and many other things will fail! If you're seeing this in the wild, please report this bug and let us know what you were doing just before this: https://github.com/writefreely/writefreely/issues/new?template=bug_report.md")
 	}
+	hostName := strings.TrimSuffix(c.hostName, "/")
+	if canonicalSubdir != "" && canonicalAppHost != "" {
+		hostU, hostErr := url.Parse(hostName)
+		appU, appErr := url.Parse(canonicalAppHost)
+		if hostErr == nil && appErr == nil && strings.EqualFold(hostU.Host, appU.Host) {
+			if hostU.Path == "" || hostU.Path == "/" {
+				hostU.Path = canonicalSubdir
+				hostName = strings.TrimSuffix(hostU.String(), "/")
+			}
+		}
+	}
 	if isSingleUser {
-		return c.hostName + "/"
+		return hostName + "/"
 	}
 
-	return fmt.Sprintf("%s/%s/", c.hostName, c.Alias)
+	return fmt.Sprintf("%s/%s/", hostName, c.Alias)
 }
 
 // PrevPageURL provides a full URL for the previous page of collection posts,
@@ -657,22 +668,22 @@ type TagCollectionPage struct {
 }
 
 func (tcp TagCollectionPage) PrevPageURL(prefix string, n int, tl bool) string {
-	u := fmt.Sprintf("/tag:%s", tcp.Tag)
+	u := fmt.Sprintf("tag:%s", tcp.Tag)
 	if n > 2 {
 		u += fmt.Sprintf("/page/%d", n-1)
 	}
 	if tl {
 		return u
 	}
-	return "/" + prefix + tcp.Alias + u
+	return prefix + tcp.Alias + "/" + u
 
 }
 
 func (tcp TagCollectionPage) NextPageURL(prefix string, n int, tl bool) string {
 	if tl {
-		return fmt.Sprintf("/tag:%s/page/%d", tcp.Tag, n+1)
+		return fmt.Sprintf("tag:%s/page/%d", tcp.Tag, n+1)
 	}
-	return fmt.Sprintf("/%s%s/tag:%s/page/%d", prefix, tcp.Alias, tcp.Tag, n+1)
+	return fmt.Sprintf("%s%s/tag:%s/page/%d", prefix, tcp.Alias, tcp.Tag, n+1)
 }
 
 func NewCollectionObj(c *Collection) *CollectionObj {
@@ -909,9 +920,9 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 
 	coll.TotalPages = int(math.Ceil(float64(coll.TotalPosts) / float64(ppp)))
 	if coll.TotalPages > 0 && page > coll.TotalPages {
-		redirURL := fmt.Sprintf("/page/%d", coll.TotalPages)
+		redirURL := fmt.Sprintf("{{subdir}}/page/%d", coll.TotalPages)
 		if !app.cfg.App.SingleUser {
-			redirURL = fmt.Sprintf("/%s%s%s", cr.prefix, coll.Alias, redirURL)
+			redirURL = fmt.Sprintf("{{subdir}}/%s%s%s", cr.prefix, coll.Alias, redirURL)
 		}
 		return impart.HTTPError{http.StatusFound, redirURL}
 	}
@@ -1054,9 +1065,9 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 	pagePosts := coll.Format.PostsPerPage()
 	coll.TotalPages = int(math.Ceil(float64(ttlPosts) / float64(pagePosts)))
 	if coll.TotalPages > 0 && page > coll.TotalPages {
-		redirURL := fmt.Sprintf("/page/%d", coll.TotalPages)
+		redirURL := fmt.Sprintf("{{subdir}}/tag:%s/page/%d", tag, coll.TotalPages)
 		if !app.cfg.App.SingleUser {
-			redirURL = fmt.Sprintf("/%s%s%s", cr.prefix, coll.Alias, redirURL)
+			redirURL = fmt.Sprintf("{{subdir}}/%s%s%s", cr.prefix, coll.Alias, redirURL)
 		}
 		return impart.HTTPError{http.StatusFound, redirURL}
 	}
@@ -1152,9 +1163,9 @@ func handleViewCollectionLang(app *App, w http.ResponseWriter, r *http.Request) 
 	pagePosts := coll.Format.PostsPerPage()
 	coll.TotalPages = int(math.Ceil(float64(ttlPosts) / float64(pagePosts)))
 	if coll.TotalPages > 0 && page > coll.TotalPages {
-		redirURL := fmt.Sprintf("/lang:%s/page/%d", lang, coll.TotalPages)
+		redirURL := fmt.Sprintf("{{subdir}}/lang:%s/page/%d", lang, coll.TotalPages)
 		if !app.cfg.App.SingleUser {
-			redirURL = fmt.Sprintf("/%s%s%s", cr.prefix, coll.Alias, redirURL)
+			redirURL = fmt.Sprintf("{{subdir}}/%s%s%s", cr.prefix, coll.Alias, redirURL)
 		}
 		return impart.HTTPError{http.StatusFound, redirURL}
 	}
@@ -1319,6 +1330,14 @@ func existingCollection(app *App, w http.ResponseWriter, r *http.Request) error 
 		} else {
 			log.Error("Couldn't update collection: %v\n", err)
 			return err
+		}
+	}
+
+	// Federate profile update to followers so remote servers (e.g. Mastodon)
+	// pick up bio / title changes immediately.
+	if coll, ferr := app.db.GetCollection(collAlias); ferr == nil {
+		if ferr = federateActor(app, coll); ferr != nil {
+			log.Error("Couldn't federate actor update: %v", ferr)
 		}
 	}
 

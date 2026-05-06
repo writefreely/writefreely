@@ -18,14 +18,14 @@ table.classy.export .disabled, table.classy.export a {
 			<th>Last Modified</th>
 		</tr>
 		<tr>
-			<td colspan="2"><a href="/admin/page/landing">Home</a></td>
+			<td colspan="2"><a href="admin/page/landing">Home</a></td>
 		</tr>
 		{{if .LocalTimeline}}<tr>
-			<td colspan="2"><a href="/admin/page/reader">Reader</a></td>
+			<td colspan="2"><a href="admin/page/reader">Reader</a></td>
 		</tr>{{end}}
 		{{range .Pages}}
 		<tr>
-			<td><a href="/admin/page/{{.ID}}">{{if .Title.Valid}}{{.Title.String}}{{else}}{{.ID}}{{end}}</a></td>
+			<td><a href="admin/page/{{.ID}}">{{if .Title.Valid}}{{.Title.String}}{{else}}{{.ID}}{{end}}</a></td>
 			<td style="text-align:right">{{.UpdatedFriendly}}</td>
 		</tr>
 		{{end}}

@@ -43,7 +43,7 @@ func (wfr wfResolver) FindUser(username string, host, requestHost string, r []we
 		log.Error("Unable to get blog: %v", err)
 		return nil, err
 	}
-	c.hostName = wfr.cfg.App.Host
+	c.hostName = wfr.cfg.App.AbsoluteHost()
 
 	if !c.IsInstanceColl() {
 		silenced, err := wfr.db.IsUserSilenced(c.OwnerID)

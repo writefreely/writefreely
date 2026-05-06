@@ -12,10 +12,9 @@
 package parse
 
 import (
+	"github.com/writeas/web-core/stringmanip"
 	"regexp"
 	"strings"
-
-	"github.com/writeas/web-core/stringmanip"
 )
 
 var (

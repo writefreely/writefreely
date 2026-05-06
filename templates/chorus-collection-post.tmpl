@@ -1,13 +1,14 @@
 {{define "post"}}<!DOCTYPE HTML>
 <html {{if .Language.Valid}}lang="{{.Language.String}}"{{end}} dir="{{.Direction}}">
 	<head prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article#">
+		{{template "head-base" .}}
 		<meta charset="utf-8">
 
 		<title>{{.PlainDisplayTitle}} {{localhtml "title dash" .Language.String}} {{.Collection.DisplayTitle}}</title>
 		
-		<link rel="stylesheet" type="text/css" href="/css/write.css" />
-		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
-		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" type="text/css" href="css/write.css" />
+		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="local/custom.css" />{{end}}
+		<link rel="shortcut icon" href="favicon.ico" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="canonical" href="{{.CanonicalURL .Host}}" />
 		<meta name="generator" content="WriteFreely">
@@ -64,15 +65,15 @@ body#post header {
 
 		{{ if .Collection.ShowFooterBranding }}
 		<footer dir="ltr">
-			<p style="text-align: left">Published by <a rel="author" href="{{if .IsTopLevel}}/{{else}}/{{.Collection.Alias}}/{{end}}" class="h-card p-author">{{.Collection.DisplayTitle}}</a>
+			<p style="text-align: left">Published by <a rel="author" href="{{if .IsTopLevel}}{{else}}{{.Collection.Alias}}/{{end}}" class="h-card p-author">{{.Collection.DisplayTitle}}</a>
 				{{ if .IsOwner }} &middot; <span class="views" dir="ltr"><strong>{{largeNumFmt .Views}}</strong> {{pluralize "view" "views" .Views}}</span>
-				&middot; <a class="xtra-feature" href="/{{if not .SingleUser}}{{.Collection.Alias}}/{{end}}{{.Slug.String}}/edit" dir="{{.Direction}}">Edit</a>
-				{{if .IsPinned}} &middot; <a class="xtra-feature unpin" href="/{{.Collection.Alias}}/{{.Slug.String}}/unpin" dir="{{.Direction}}" onclick="unpinPost(event, '{{.ID}}')">Unpin</a>{{end}}
+				&middot; <a class="xtra-feature" href="{{if not .SingleUser}}{{.Collection.Alias}}/{{.Slug.String}}/edit{{else}}{{.Slug.String}}/edit{{end}}" dir="{{.Direction}}">Edit</a>
+				{{if .IsPinned}} &middot; <a class="xtra-feature unpin" href="{{.Collection.Alias}}/{{.Slug.String}}/unpin" dir="{{.Direction}}" onclick="unpinPost(event, '{{.ID}}')">Unpin</a>{{end}}
 				{{ end }}
 			</p>
 			<nav>
 				{{if .PinnedPosts}}
-				{{range .PinnedPosts}}<a class="pinned{{if eq .Slug.String $.Slug.String}} selected{{end}}" href="{{if not $.SingleUser}}/{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}
+				{{range .PinnedPosts}}<a class="pinned{{if eq .Slug.String $.Slug.String}} selected{{end}}" href="{{if not $.SingleUser}}{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}
 				{{end}}
 			</nav>
 			<hr>
@@ -85,7 +86,7 @@ body#post header {
 		{{range .Collection.ExternalScripts}}<script type="text/javascript" src="{{.}}" async></script>{{end}}
 		{{if .Collection.Script}}<script type="text/javascript">{{.Collection.ScriptDisplay}}</script>{{end}}
 	{{end}}
-	<script src="/js/localdate.js"></script>
+	<script src="js/localdate.js"></script>
 	<script type="text/javascript">
 
 var pinning = false;
@@ -107,7 +108,7 @@ function unpinPost(e, postID) {
 	$pinBtn.innerHTML = '...';
 
 	var http = new XMLHttpRequest();
-	var url = "/api/collections/{{.Collection.Alias}}/unpin";
+	var url = "{{subdir}}/api/collections/{{.Collection.Alias}}/unpin";
 	var params = [ { "id": postID } ];
 	http.open("POST", url, true);
 	http.setRequestHeader("Content-type", "application/json");
@@ -131,11 +132,11 @@ function unpinPost(e, postID) {
 
 	try { // Fonts
 	  WebFontConfig = {
-		custom: { families: [ 'Lora:400,700:latin', 'Open+Sans:400,700:latin' ], urls: [ '/css/fonts.css' ] }
+		custom: { families: [ 'Lora:400,700:latin', 'Open+Sans:400,700:latin' ], urls: [ 'css/fonts.css' ] }
 	  };
 	  (function() {
 		var wf = document.createElement('script');
-		wf.src = '/js/webfont.js';
+		wf.src = 'js/webfont.js';
 		wf.type = 'text/javascript';
 		wf.async = 'true';
 		var s = document.getElementsByTagName('script')[0];
@@ -145,7 +146,7 @@ function unpinPost(e, postID) {
 	</script>
 
     {{if and .Monetization (not .IsOwner)}}
-		<script src="/js/webmonetization.js"></script>
+		<script src="js/webmonetization.js"></script>
 		<script>
             window.collAlias = '{{.Collection.Alias}}'
             window.postSlug = '{{.Slug.String}}'
