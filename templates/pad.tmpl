@@ -14,7 +14,12 @@
 	<body id="pad" class="light">
 
 		<div id="overlay"></div>
-		
+
+		<div id="modal-preview" class="modal fullscreen">
+			<div style="text-transform: uppercase; font-size: 0.75em; color: #999; position: absolute; top: 2em; right: 3em;">Preview</div>
+			<article id="post"><div class="e-content">Generating...</div></article>
+		</div>
+
 		<textarea dir="auto" id="writer" placeholder="Write..." class="{{.Post.Font}}" autofocus>{{if .Post.Title}}# {{.Post.Title}}
 
 {{end}}{{.Post.Content}}</textarea>
@@ -63,11 +68,13 @@
 					{{if .Editing}}<div class="tool hidden if-room"><a href="{{if .EditCollection}}{{.EditCollection.CanonicalURL}}{{.Post.Slug}}/edit/meta{{else}}{{if .SingleUser}}d/{{.Post.Id}}/meta{{else}}{{.Post.Id}}/meta{{end}}{{end}}" title="Edit post metadata" id="edit-meta"><img class="ic-24dp" src="img/ic_info_dark@2x.png" /></a></div>{{end}}
 				<div class="tool hidden if-room room-2"><a href="#theme" title="Toggle theme" id="toggle-theme"><img class="ic-24dp" src="img/ic_brightness_dark@2x.png" /></a></div>
 					<div class="tool if-room room-1"><a href="{{if not .User}}pad/posts{{else}}me/posts/{{end}}" title="View posts" id="view-posts"><img class="ic-24dp" src="img/ic_list_dark@2x.png" /></a></div>
+				<div class="tool if-room room-1"><a href="#" title="Preview" id="toggle-preview"><img class="ic-24dp" src="img/ic_preview_dark@2x.png" /></a></div>
 				<div class="tool"><a href="#publish" title="Publish" id="publish"><img class="ic-24dp" src="img/ic_send_dark@2x.png" /></a></div>
 			</div>
 		</header>
 
 		<script src="js/h.js"></script>
+		<script src="js/modals.js"></script>
 		<script type="text/javascript" src="js/menu.js"></script>
 		<script>
 		function toggleTheme() {
@@ -78,6 +85,11 @@
 			}
 			H.set('padTheme', newTheme);
 		}
+
+		H.getEl('toggle-preview').on('click', function(e) {
+			e.preventDefault();
+			togglePreview();
+		});
 
 		function setTheme(newTheme) {
 			document.body.classList.remove('light');
@@ -368,6 +380,7 @@
 				e.preventDefault();
 				selectedFont = this.href.substring(this.href.indexOf('#')+1);
 				$writer.el.className = selectedFont;
+			document.getElementById('post').className = selectedFont;
 				document.querySelector('nav#font-picker li.selected').classList.remove('selected');
 				this.parentElement.classList.add('selected');
 				H.set('{{if .Editing}}draft{{.Post.Id}}font{{else}}padFont{{end}}', selectedFont);
@@ -403,6 +416,33 @@
 				doneTyping();
 			}
 		});
+
+		let previewBody = document.querySelector('.e-content');
+		let togglePreview = function() {
+			showModal('preview');
+
+			var http = new XMLHttpRequest();
+			var url = "{{subdir}}/api/markdown";
+			var params = {
+				raw_body: $writer.el.value,
+			};
+			var postTarget = H.get('postTarget', 'anonymous');
+			if (postTarget != 'anonymous') {
+				params.collection_url = '{{subdir}}/'+postTarget+'/'
+			}
+			http.open("POST", url, true);
+			http.setRequestHeader("Content-type", "application/json");
+			http.onreadystatechange = function() {
+				let data;
+				if (http.readyState === 4) {
+					data = JSON.parse(http.responseText);
+					if (http.status == 200) {
+						previewBody.innerHTML = data.data.body;
+					}
+				}
+			};
+			http.send(JSON.stringify(params));
+		};
 
 		try {
 		  (function() {
