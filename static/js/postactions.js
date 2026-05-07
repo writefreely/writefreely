@@ -23,7 +23,7 @@ var postActions = function() {
 						if (typeof singleUser !== 'undefined' && singleUser) {
 							pre = "";
 						}
-						var newPostURL = pre+"/"+resp.data[i].post.slug;
+					var newPostURL = basePath+pre+"/"+resp.data[i].post.slug;
 						try {
 							// Posts page
 							He.$('#post-'+resp.data[i].post.id+' > h3 > a')[0].href = newPostURL;
@@ -82,7 +82,7 @@ var postActions = function() {
 						if (typeof singleUser !== 'undefined' && singleUser) {
 							pre = "";
 						}
-						var newPostURL = pre+"/"+resp.data[i].post.slug;
+					var newPostURL = basePath+pre+"/"+resp.data[i].post.slug;
 						el.href = newPostURL;
 						el.title = "View on "+lbl;
 						try {
