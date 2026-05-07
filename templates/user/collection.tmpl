@@ -200,6 +200,30 @@ textarea.section.norm {
 		</div>
 	</div>
 
+	<div class="option">
+		<h2>Branding</h2>
+		<div class="section">
+			<p class="explain">Customize the visual identity of your blog.</p>
+			<ul style="list-style:none">
+				<li style="margin-bottom: 1em;">
+					<label for="favicon"><strong>Favicon URL</strong></label>
+					<p class="describe">Link to a custom favicon image (e.g. <code>https://example.com/favicon.ico</code>). Shown in browser tabs.</p>
+					<input type="url" id="favicon" name="favicon" style="width:100%" value="{{.Collection.Favicon}}" placeholder="https://example.com/favicon.ico" />
+				</li>
+				<li style="margin-bottom: 1em;">
+					<label for="profile_pic"><strong>Profile Picture URL</strong></label>
+					<p class="describe">Link to a custom profile image. Used as your avatar in the fediverse and social media previews.</p>
+					<input type="url" id="profile_pic" name="profile_pic" style="width:100%" value="{{.Collection.ProfilePic}}" placeholder="https://example.com/avatar.png" />
+				</li>
+				<li>
+					<label for="thumbnail"><strong>Thumbnail URL</strong></label>
+					<p class="describe">Link to a thumbnail image used in social sharing previews (Open Graph / Twitter Card).</p>
+					<input type="url" id="thumbnail" name="thumbnail" style="width:100%" value="{{.Collection.Thumbnail}}" placeholder="https://example.com/thumbnail.png" />
+				</li>
+			</ul>
+		</div>
+	</div>
+
 	{{if .UserPage.StaticPage.AppCfg.Monetization}}
 	<div class="option">
 		<h2>Web Monetization</h2>

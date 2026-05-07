@@ -877,6 +877,9 @@ func (db *datastore) GetCollectionBy(condition string, value interface{}) (*Coll
 	c.Public = c.IsPublic()
 	c.Monetization = db.GetCollectionAttribute(c.ID, "monetization_pointer")
 	c.Verification = db.GetCollectionAttribute(c.ID, "verification_link")
+	c.Favicon = db.GetCollectionAttribute(c.ID, "favicon")
+	c.ProfilePic = db.GetCollectionAttribute(c.ID, "profile_pic")
+	c.Thumbnail = db.GetCollectionAttribute(c.ID, "thumbnail")
 	c.hostName = canonicalAppHost
 
 	c.db = db
@@ -949,7 +952,7 @@ func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias st
 	// WHERE values
 	q.Where("alias = ? AND owner_id = ?", alias, c.OwnerID)
 
-	if q.Updates == "" && c.Monetization == nil {
+	if q.Updates == "" && c.Monetization == nil && c.Favicon == nil && c.ProfilePic == nil && c.Thumbnail == nil {
 		return ErrPostNoUpdatableVals
 	}
 
@@ -1077,6 +1080,33 @@ func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias st
 		}
 	}
 
+	// Update Favicon value
+	if c.Favicon != nil {
+		err = db.SetCollectionAttribute(collID, "favicon", strings.TrimSpace(*c.Favicon))
+		if err != nil {
+			log.Error("Unable to insert favicon value: %v", err)
+			return err
+		}
+	}
+
+	// Update ProfilePic value
+	if c.ProfilePic != nil {
+		err = db.SetCollectionAttribute(collID, "profile_pic", strings.TrimSpace(*c.ProfilePic))
+		if err != nil {
+			log.Error("Unable to insert profile_pic value: %v", err)
+			return err
+		}
+	}
+
+	// Update Thumbnail value
+	if c.Thumbnail != nil {
+		err = db.SetCollectionAttribute(collID, "thumbnail", strings.TrimSpace(*c.Thumbnail))
+		if err != nil {
+			log.Error("Unable to insert thumbnail value: %v", err)
+			return err
+		}
+	}
+
 	// Update rest of the collection data
 	if q.Updates != "" {
 		res, err = db.Exec("UPDATE collections SET "+q.Updates+" WHERE "+q.Conditions, q.Params...)
@@ -1084,21 +1114,21 @@ func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias st
 			log.Error("Unable to update collection: %v", err)
 			return err
 		}
-	}
 
-	rowsAffected, _ = res.RowsAffected()
-	if !changed || rowsAffected == 0 {
-		// Show the correct error message if nothing was updated
-		var dummy int
-		err := db.QueryRow("SELECT 1 FROM collections WHERE alias = ? AND owner_id = ?", alias, c.OwnerID).Scan(&dummy)
-		switch {
-		case err == sql.ErrNoRows:
-			return ErrUnauthorizedEditPost
-		case err != nil:
-			log.Error("Failed selecting from collections: %v", err)
-		}
-		if !updatePass {
-			return nil
+		rowsAffected, _ = res.RowsAffected()
+		if !changed || rowsAffected == 0 {
+			// Show the correct error message if nothing was updated
+			var dummy int
+			err := db.QueryRow("SELECT 1 FROM collections WHERE alias = ? AND owner_id = ?", alias, c.OwnerID).Scan(&dummy)
+			switch {
+			case err == sql.ErrNoRows:
+				return ErrUnauthorizedEditPost
+			case err != nil:
+				log.Error("Failed selecting from collections: %v", err)
+			}
+			if !updatePass {
+				return nil
+			}
 		}
 	}
 

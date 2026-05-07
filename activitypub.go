@@ -53,6 +53,14 @@ var (
 
 var instanceColl *Collection
 
+// ExtendedPerson wraps activitystreams.Person to add the `image` property
+// (header/banner) which is supported by Mastodon and the AP spec but absent
+// from the upstream library.
+type ExtendedPerson struct {
+	*activitystreams.Person
+	Image *activitystreams.Image `json:"image,omitempty"`
+}
+
 func initActivityPub(app *App) {
 	ur, _ := url.Parse(app.cfg.App.AbsoluteHost())
 	instanceColl = &Collection{
@@ -696,7 +704,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 	return nil
 }
 
-func makeActivityPost(hostName string, p *activitystreams.Person, url string, m interface{}) error {
+func makeActivityPost(hostName string, p *ExtendedPerson, url string, m interface{}) error {
 	log.Info("POST %s", url)
 	b, err := json.Marshal(m)
 	if err != nil {

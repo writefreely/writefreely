@@ -8,7 +8,7 @@
 
 		<link rel="stylesheet" type="text/css" href="css/write.css" />
 		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="local/custom.css" />{{end}}
-		<link rel="shortcut icon" href="favicon.ico" />
+		{{if .Collection.Favicon}}<link rel="shortcut icon" href="{{.Collection.Favicon}}" />{{else}}<link rel="shortcut icon" href="favicon.ico" />{{end}}
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		{{ if .IsFound }}
 		<link rel="canonical" href="{{.CanonicalURL .Host}}" />
@@ -23,14 +23,14 @@
 		<meta name="twitter:card" content="summary">
 		<meta name="twitter:description" content="{{.Summary}}">
 		<meta name="twitter:title" content="{{.PlainDisplayTitle}} {{localhtml "title dash" .Language.String}} {{if .Collection.Title}}{{.Collection.Title}}{{else}}{{.Collection.Alias}}{{end}}">
-		{{if gt (len .Images) 0}}<meta name="twitter:image" content="{{index .Images 0}}">{{else}}<meta name="twitter:image" content="{{.Collection.AvatarURL}}">{{end}}
+		{{if gt (len .Images) 0}}<meta name="twitter:image" content="{{index .Images 0}}">{{else}}<meta name="twitter:image" content="{{if .Collection.Thumbnail}}{{.Collection.Thumbnail}}{{else}}{{.Collection.AvatarURL}}{{end}}">{{end}}
 		<meta property="og:title" content="{{.PlainDisplayTitle}}" />
 		<meta property="og:description" content="{{.Summary}}" />
 		<meta property="og:site_name" content="{{.Collection.DisplayTitle}}" />
 		<meta property="og:type" content="article" />
 		<meta property="og:url" content="{{.CanonicalURL .Host}}" />
 		<meta property="og:updated_time" content="{{.Created8601}}" />
-		{{range .Images}}<meta property="og:image" content="{{.}}" />{{else}}<meta property="og:image" content="{{.Collection.AvatarURL}}">{{end}}
+		{{range .Images}}<meta property="og:image" content="{{.}}" />{{else}}<meta property="og:image" content="{{if .Collection.Thumbnail}}{{.Collection.Thumbnail}}{{else}}{{.Collection.AvatarURL}}{{end}}">{{end}}
 		<meta property="article:published_time" content="{{.Created8601}}">
 		{{ end }}
 		{{template "collection-meta" .}}

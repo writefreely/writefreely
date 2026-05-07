@@ -70,6 +70,10 @@ type (
 		Monetization string `json:"monetization_pointer,omitempty"`
 		Verification string `json:"verification_link"`
 
+		Favicon    string `json:"favicon,omitempty"`
+		ProfilePic string `json:"profile_pic,omitempty"`
+		Thumbnail  string `json:"thumbnail,omitempty"`
+
 		db       *datastore
 		hostName string
 	}
@@ -122,6 +126,10 @@ type (
 		LetterReply  *string         `schema:"letter_reply" json:"letter_reply"`
 		Visibility   *int            `schema:"visibility" json:"public"`
 		Format       *sql.NullString `schema:"format" json:"format"`
+
+		Favicon    *string `schema:"favicon" json:"favicon"`
+		ProfilePic *string `schema:"profile_pic" json:"profile_pic"`
+		Thumbnail  *string `schema:"thumbnail" json:"thumbnail"`
 	}
 	CollectionFormat struct {
 		Format string
@@ -338,7 +346,7 @@ func (c *Collection) ForPublic() {
 
 var isAvatarChar = regexp.MustCompile("[a-z0-9]").MatchString
 
-func (c *Collection) PersonObject(ids ...int64) *activitystreams.Person {
+func (c *Collection) PersonObject(ids ...int64) *ExtendedPerson {
 	accountRoot := c.FederatedAccount()
 	p := activitystreams.NewPerson(accountRoot)
 	p.URL = c.CanonicalURL()
@@ -356,6 +364,15 @@ func (c *Collection) PersonObject(ids ...int64) *activitystreams.Person {
 		}
 	}
 
+	ep := &ExtendedPerson{Person: p}
+	if c.Thumbnail != "" {
+		ep.Image = &activitystreams.Image{
+			Type:      "Image",
+			MediaType: "image/png",
+			URL:       c.Thumbnail,
+		}
+	}
+
 	collID := c.ID
 	if len(ids) > 0 {
 		collID = ids[0]
@@ -366,10 +383,13 @@ func (c *Collection) PersonObject(ids ...int64) *activitystreams.Person {
 		p.SetPrivKey(priv)
 	}
 
-	return p
+	return ep
 }
 
 func (c *Collection) AvatarURL() string {
+	if c.ProfilePic != "" {
+		return c.ProfilePic
+	}
 	fl := string(unicode.ToLower([]rune(c.DisplayTitle())[0]))
 	if !isAvatarChar(fl) {
 		return ""

@@ -8,7 +8,7 @@
 
 		<link rel="stylesheet" type="text/css" href="css/write.css" />
 		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="local/custom.css" />{{end}}
-		<link rel="shortcut icon" href="favicon.ico" />
+		{{if .Favicon}}<link rel="shortcut icon" href="{{.Favicon}}" />{{else}}<link rel="shortcut icon" href="favicon.ico" />{{end}}
 		<link rel="canonical" href="{{.CanonicalURL}}">
 		{{if gt .CurrentPage 1}}<link rel="prev" href="{{.PrevPageURL .Prefix .NavSuffix .CurrentPage .IsTopLevel}}">{{end}}
 		{{if lt .CurrentPage .TotalPages}}<link rel="next" href="{{.NextPageURL .Prefix .NavSuffix .CurrentPage .IsTopLevel}}">{{end}}
@@ -21,14 +21,14 @@
 		<meta itemprop="description" content="{{.PlainDescription}}">
 		<meta name="twitter:card" content="summary">
 		<meta name="twitter:title" content="{{.DisplayTitle}}">
-		<meta name="twitter:image" content="{{.AvatarURL}}">
+		<meta name="twitter:image" content="{{if .Thumbnail}}{{.Thumbnail}}{{else}}{{.AvatarURL}}{{end}}">
 		<meta name="twitter:description" content="{{.PlainDescription}}">
 		<meta property="og:title" content="{{.DisplayTitle}}" />
 		<meta property="og:site_name" content="{{.DisplayTitle}}" />
 		<meta property="og:type" content="article" />
 		<meta property="og:url" content="{{.CanonicalURL}}" />
 		<meta property="og:description" content="{{.PlainDescription}}" />
-		<meta property="og:image" content="{{.AvatarURL}}">
+		<meta property="og:image" content="{{if .Thumbnail}}{{.Thumbnail}}{{else}}{{.AvatarURL}}{{end}}">
 		{{template "collection-meta" .}}
 		{{if .StyleSheet}}<style type="text/css">{{.StyleSheetDisplay}}</style>{{end}}
 

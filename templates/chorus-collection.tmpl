@@ -8,7 +8,7 @@
 
 		<link rel="stylesheet" type="text/css" href="css/write.css" />
 		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="local/custom.css" />{{end}}
-		<link rel="shortcut icon" href="favicon.ico" />
+		{{if .Favicon}}<link rel="shortcut icon" href="{{.Favicon}}" />{{else}}<link rel="shortcut icon" href="favicon.ico" />{{end}}
 		<link rel="canonical" href="{{.CanonicalURL}}">
 		{{if gt .CurrentPage 1}}<link rel="prev" href="{{.PrevPageURL .Prefix .NavSuffix .CurrentPage .IsTopLevel}}">{{end}}
 		{{if lt .CurrentPage .TotalPages}}<link rel="next" href="{{.NextPageURL .Prefix .NavSuffix .CurrentPage .IsTopLevel}}">{{end}}
