@@ -37,6 +37,55 @@ func TestPostLede(t *testing.T) {
 	}
 }
 
+func TestTruncate(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		limit int
+		want  string
+	}{
+		{
+			name:  "shorter than limit returns unchanged",
+			input: "hello",
+			limit: 10,
+			want:  "hello",
+		},
+		{
+			name:  "exactly at limit returns unchanged",
+			input: "hello",
+			limit: 5,
+			want:  "hello",
+		},
+		{
+			name:  "longer than limit is truncated",
+			input: "hello world",
+			limit: 5,
+			want:  "hello",
+		},
+		{
+			name:  "multibyte runes counted by rune not byte",
+			input: "早安。早安。",
+			limit: 4,
+			want:  "早安。早",
+		},
+		{
+			name:  "empty string returns empty",
+			input: "",
+			limit: 5,
+			want:  "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Truncate(tt.input, tt.limit)
+			if got != tt.want {
+				t.Errorf("Truncate(%q, %d) = %q, want %q", tt.input, tt.limit, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestTruncToWord(t *testing.T) {
 	text := map[string]string{
 		"Можливо, ми можемо використовувати інтернет-інструменти, щоб виготовити якийсь текст, який би міг бути і на, і в кінцевому підсумку, буде скорочено, тому що це тривало так довго.": "Можливо, ми можемо використовувати інтернет-інструменти, щоб виготовити якийсь",

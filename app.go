@@ -65,8 +65,8 @@ var (
 	isSingleUser bool
 
 	// Canonical URL helpers for code paths that still build URLs from shared globals.
-	canonicalAppHost   string
-	canonicalSubdir    string
+	canonicalAppHost string
+	canonicalSubdir  string
 )
 
 // App holds data and configuration for an individual WriteFreely instance.
