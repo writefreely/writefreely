@@ -985,6 +985,25 @@ func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias st
 		}
 	}
 
+	// Update Mermaid value
+	if c.Mermaid {
+		if db.driverName == driverSQLite {
+			_, err = db.Exec("INSERT OR REPLACE INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?)", collID, "render_mermaid", "1")
+		} else {
+			_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) "+db.upsert("collection_id", "attribute")+" value = ?", collID, "render_mermaid", "1", "1")
+		}
+		if err != nil {
+			log.Error("Unable to insert render_mermaid value: %v", err)
+			return err
+		}
+	} else {
+		_, err = db.Exec("DELETE FROM collectionattributes WHERE collection_id = ? AND attribute = ?", collID, "render_mermaid")
+		if err != nil {
+			log.Error("Unable to delete render_mermaid value: %v", err)
+			return err
+		}
+	}
+
 	// Update Verification link value
 	if c.Verification != nil {
 		skipUpdate := false

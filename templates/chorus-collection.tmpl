@@ -57,6 +57,11 @@ body#collection header nav.tabs a:first-child {
 		  {{template "mathjax" .}}
 		{{end}}
 
+		{{if .RenderMermaid}}
+		  <!-- Add Mermaid diagram rendering -->
+		  {{template "mermaid" .}}
+		{{end}}
+
 		<!-- Add highlighting logic -->
 		{{template "highlighting" . }}
 

@@ -111,6 +111,7 @@ type (
 		Privacy   int    `schema:"privacy" json:"privacy"`
 		Pass      string `schema:"password" json:"password"`
 		MathJax   bool   `schema:"mathjax" json:"mathjax"`
+		Mermaid   bool   `schema:"mermaid" json:"mermaid"`
 		EmailSubs bool   `schema:"email_subs" json:"email_subs"`
 		Handle    string `schema:"handle" json:"handle"`
 
@@ -408,6 +409,10 @@ func (c *Collection) FederatedAccount() string {
 
 func (c *Collection) RenderMathJax() bool {
 	return c.db.CollectionHasAttribute(c.ID, "render_mathjax")
+}
+
+func (c *Collection) RenderMermaid() bool {
+	return c.db.CollectionHasAttribute(c.ID, "render_mermaid")
 }
 
 func (c *Collection) EmailSubsEnabled() bool {

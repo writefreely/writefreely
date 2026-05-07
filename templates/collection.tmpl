@@ -37,6 +37,11 @@
 		  {{template "mathjax" .}}
 		{{end}}
 
+		{{if .RenderMermaid}}
+		  <!-- Add Mermaid diagram rendering -->
+		  {{template "mermaid" .}}
+		{{end}}
+
 		<!-- Add highlighting logic -->
 		{{template "highlighting" . }}
 

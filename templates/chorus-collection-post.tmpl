@@ -48,6 +48,11 @@ body#post header {
   		  {{template "mathjax" . }}
 		{{end}}
 
+		{{if .Collection.RenderMermaid}}
+		  <!-- Add Mermaid diagram rendering -->
+		  {{template "mermaid" .}}
+		{{end}}
+
 		<!-- Add highlighting logic -->
 		{{template "highlighting" .}}
 
