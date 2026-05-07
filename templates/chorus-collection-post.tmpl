@@ -153,6 +153,7 @@ function unpinPost(e, postID) {
     {{if and .Monetization (not .IsOwner)}}
 		<script src="js/webmonetization.js"></script>
 		<script>
+            window.WF_BASE_PATH = "{{subdir}}"
             window.collAlias = '{{.Collection.Alias}}'
             window.postSlug = '{{.Slug.String}}'
             initMonetization()

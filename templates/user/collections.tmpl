@@ -26,7 +26,7 @@
 	</li>{{end}}
 	<li id="create-collection">
 		{{if not .NewBlogsDisabled}}
-		<form method="POST" action="api/collections" id="new-collection-form" onsubmit="return createCollection()">
+		<form method="POST" action="{{subdir}}/api/collections" id="new-collection-form" onsubmit="return createCollection()">
 			<h4>
 				<input type="text" name="title" placeholder="Blog name" id="blog-name">
 				<input type="hidden" name="web" value="true" />

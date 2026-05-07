@@ -285,7 +285,9 @@ var He = {
 
 		http.onreadystatechange = function() {
 			if (http.readyState == 4) {
-				callback(http.status, JSON.parse(http.responseText));
+				var resp = null;
+				try { resp = JSON.parse(http.responseText); } catch (e) {}
+				callback(http.status, resp);
 			}
 		}
 		http.send(JSON.stringify(params));

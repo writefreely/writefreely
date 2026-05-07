@@ -33,7 +33,7 @@ textarea.section.norm {
 		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 	</ul>{{end}}
 
-<form name="customize-form" action="api/collections/{{.Alias}}" method="post" onsubmit="return disableSubmit()">
+<form name="customize-form" action="{{subdir}}/api/collections/{{.Alias}}" method="post" onsubmit="return disableSubmit()">
 <div id="collection-options">
 	<div style="text-align:center">
 		<h1><input type="text" name="title" id="title" value="{{.DisplayTitle}}" placeholder="Title" maxlength="255" /></h1>
@@ -234,7 +234,7 @@ textarea.section.norm {
 	<div class="option" style="text-align: center; margin-top: 4em;">
 		<input type="submit" id="save-changes" value="Save changes" />
 		<p><a href="{{if .SingleUser}}{{else}}{{.Alias}}/{{end}}">View Blog</a></p>
-		{{if ne .Alias .Username}}<p><a class="danger" href="#modal-delete" onclick="promptDelete();">Delete Blog...</a></p>{{end}}
+		{{if ne .Alias .Username}}<p><a class="danger" href="#modal-delete" onclick="promptDelete(); return false;">Delete Blog...</a></p>{{end}}
 	</div>
 </div>
 </form>
@@ -277,10 +277,11 @@ var deleteBlog = function(e) {
 	http.onreadystatechange = function() {
 		if (http.readyState == 4) {
 			if (http.status == 204) {
-				window.location = '/me/c/';
+				window.location = '{{subdir}}/me/c/';
 			} else {
-				var data = JSON.parse(http.responseText);
-				document.getElementById('delete-errors').innerHTML = '<li class="urgent">'+data.error_msg+'</li>';
+				var data = null;
+				try { data = JSON.parse(http.responseText); } catch(e) {}
+				document.getElementById('delete-errors').innerHTML = '<li class="urgent">'+(data ? data.error_msg : 'An error occurred. Please try again.')+'</li>';
 				document.getElementById('btn-delete').innerHTML = 'Delete';
 			}
 		}
@@ -305,6 +306,7 @@ function disableSubmit() {
 }
 function promptDelete() {
 	showModal("delete");
+	window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
 var $fediDomain = document.getElementById('fedi-domain');
