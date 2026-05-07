@@ -57,6 +57,15 @@ func MountSubdirectory(apper Apper, r *mux.Router, h http.Handler) {
 	})
 	r.PathPrefix(basePath + "/").Handler(http.StripPrefix(basePath, h))
 
+	// Also serve static assets at root level so that CSS url() references
+	// (e.g. ../fonts/ from /css/icons.css) resolve correctly regardless of
+	// whether a reverse proxy or browser cache serves the CSS from root.
+	// Font sanitizers reject redirects, so fonts must be directly reachable
+	// at the path the CSS resolves to.
+	for _, prefix := range []string{"/css/", "/fonts/", "/img/", "/js/", "/local/"} {
+		r.PathPrefix(prefix).Handler(h)
+	}
+
 	// Ensure requests that miss the configured subdirectory are redirected under it.
 	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		target := apper.App().cfg.App.PrefixPath(req.URL.Path)
