@@ -95,7 +95,7 @@
 			<!--p class="meta-note"><span>Private collection</span>. Only you can see this page.</p-->
 		{{/*end*/}}
 		{{if .PinnedPosts}}<nav>
-			{{range .PinnedPosts}}<a class="pinned" href="{{if not $.SingleUser}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}</nav>
+			{{range .PinnedPosts}}<a class="pinned" href="{{if not $.SingleUser}}/{{subdir}}/{{$.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}</nav>
 		{{end}}
 		</header>
 
@@ -215,7 +215,7 @@ function pinPost(e, postID, slug, title) {
 		var $header = document.getElementsByTagName('header')[0];
 		var $pinnedNavs = $header.getElementsByTagName('nav');
 		// Add link to nav
-		var link = '<a class="pinned" href="{{if not .SingleUser}}/{{.Alias}}/{{end}}'+slug+'">'+title+'</a>';
+		var link = '<a class="pinned" href="{{if not .SingleUser}}{{subdir}}/{{.Alias}}/{{end}}'+slug+'">'+title+'</a>';
 		if ($pinnedNavs.length == 0) {
 			$header.insertAdjacentHTML("beforeend", '<nav>'+link+'</nav>');
 		} else {

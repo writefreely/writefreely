@@ -19,11 +19,11 @@ var postActions = function() {
 				for (var i=0; i<resp.data.length; i++) {
 					if (resp.data[i].code == 200) {
 						$lbl.innerHTML = "moved to <strong>"+lbl+"</strong>";
-						var pre = "/"+collAlias;
+						var pre = `${basePath}/${collAlias}`;
 						if (typeof singleUser !== 'undefined' && singleUser) {
 							pre = "";
 						}
-					var newPostURL = basePath+pre+"/"+resp.data[i].post.slug;
+						var newPostURL = pre+"/"+resp.data[i].post.slug;
 						try {
 							// Posts page
 							He.$('#post-'+resp.data[i].post.id+' > h3 > a')[0].href = newPostURL;
@@ -36,9 +36,9 @@ var postActions = function() {
 								if (typeof singleUser !== 'undefined' && singleUser) {
 									draftPre = "d/";
 								}
-								$article.innerHTML = '<p><a href="'+basePath+'/'+draftPre+resp.data[i].post.id+'">Unpublished post</a>.</p>';
+								$article.innerHTML = `<p>Moved to <a style="font-weight:bold" href=${newPostURL}>${lbl}</a>.</p>`;
 							} else {
-								$article.innerHTML = '<p>Moved to <a style="font-weight:bold" href="'+newPostURL+'">'+lbl+'</a>.</p>';
+								$article.innerHTML = `<p>Moved to <a style="font-weight:bold" href=${newPostURL}>${lbl}</a>.</p>`;
 							}
 						}
 					} else {
@@ -78,11 +78,11 @@ var postActions = function() {
 					if (resp.data[i].code == 200) {
 						el.innerHTML = "moved to <strong>"+lbl+"</strong>";
 						el.onclick = null;
-						var pre = "/"+collAlias;
+						var pre = `${basePath}/${collAlias}`;
 						if (typeof singleUser !== 'undefined' && singleUser) {
 							pre = "";
 						}
-					var newPostURL = basePath+pre+"/"+resp.data[i].post.slug;
+						var newPostURL = pre+"/"+resp.data[i].post.slug;
 						el.href = newPostURL;
 						el.title = "View on "+lbl;
 						try {
@@ -97,13 +97,13 @@ var postActions = function() {
 								if (typeof singleUser !== 'undefined' && singleUser) {
 									draftPre = "d/";
 								}
-								$article.innerHTML = '<p><a href="'+basePath+'/'+draftPre+resp.data[i].post.id+'">Unpublished post</a>.</p>';
+								$article.innerHTML = `<p><a href=${basePath}/${draftPre+resp.data[i].post.id}>Unpublished post</a>.</p>`;
 							} else {
-								$article.innerHTML = '<p>Moved to <a style="font-weight:bold" href="'+newPostURL+'">'+lbl+'</a>.</p>';
+								$article.innerHTML = `<p>Moved to <a style="font-weight:bold" href=${newPostURL}>${lbl}</a>.</p>`;
 							}
 						}
 					} else {
-						el.innerHTML = "unable to move: "+resp.data[i].error_msg;
+						el.innerHTML = `unable to move: ${resp.data[i].error_msg}`;
 					}
 				}
 			}

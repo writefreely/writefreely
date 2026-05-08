@@ -190,7 +190,7 @@ function pinPost(e, postID, slug, title) {
 		var $header = document.querySelector('header:not(.multiuser)');
 		var $pinnedNavs = $header.getElementsByTagName('nav');
 		// Add link to nav
-		var link = '<a class="pinned" href="{{.Alias}}/'+slug+'">'+title+'</a>';
+		var link = '<a class="pinned" href="{{subdir}}/{{.Alias}}/'+slug+'">'+title+'</a>';
 		if ($pinnedNavs.length == 0) {
 			$header.insertAdjacentHTML("beforeend", '<nav>'+link+'</nav>');
 		} else {

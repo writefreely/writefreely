@@ -56,7 +56,7 @@
 		<h1 dir="{{.Direction}}" id="blog-title"><a href="{{if .IsTopLevel}}{{else}}{{.Collection.Alias}}/{{end}}" class="h-card p-author">{{.Collection.DisplayTitle}}</a></h1>
 			<nav>
 				{{if .PinnedPosts}}
-				{{range .PinnedPosts}}<a class="pinned" href="{{if not $.SingleUser}}{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.DisplayTitle}}</a>{{end}}
+				{{range .PinnedPosts}}<a class="pinned" href="{{if not $.SingleUser}}{{subdir}}/{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.DisplayTitle}}</a>{{end}}
 				{{end}}
 			</nav>
 		</header>
@@ -165,7 +165,7 @@ function pinPost(e, postID, slug, title) {
 		var $header = document.getElementsByTagName('header')[0];
 		var $pinnedNavs = $header.getElementsByTagName('nav');
 		// Add link to nav
-		var link = '<a class="pinned" href="{{if not .SingleUser}}{{.Alias}}/{{end}}'+slug+'">'+title+'</a>';
+		var link = '<a class="pinned" href="{{if not .SingleUser}}{{subdir}}/{{.Alias}}/{{end}}'+slug+'">'+title+'</a>';
 		if ($pinnedNavs.length == 0) {
 			$header.insertAdjacentHTML("beforeend", '<nav>'+link+'</nav>');
 		} else {
