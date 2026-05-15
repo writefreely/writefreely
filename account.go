@@ -56,6 +56,8 @@ type (
 	}
 )
 
+const maxPassByteLen = 72
+
 func NewUserPage(app *App, r *http.Request, u *User, title string, flashes []string) *UserPage {
 	up := &UserPage{
 		StaticPage: pageForReq(app, r),

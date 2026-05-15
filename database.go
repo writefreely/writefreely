@@ -2321,6 +2321,11 @@ func (db *datastore) ChangeSettings(app *App, u *User, s *userSettings) error {
 			return errPass
 		}
 
+		if len(s.NewPass) > maxPassByteLen {
+			errPass = impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Password is longer than %d characters", maxPassByteLen)}
+			return errPass
+		}
+
 		if u.HasPass {
 			// Check if currently-set password is correct
 			hashedPass := u.HashedPass
