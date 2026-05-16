@@ -60,7 +60,7 @@ The quickest way to deploy WriteFreely is with [Write.as](https://write.as/write
 
 ## Quick start
 
-WriteFreely deploys as a static binary on any platform and architecture that Go supports. Just use our built-in SQLite support, or add a MySQL database, and you'll be up and running!
+WriteFreely deploys as a static binary on any platform and architecture that Go supports. Just use our built-in SQLite support, or add a MySQL or MariaDB database, and you'll be up and running!
 
 For common platforms, start with our [pre-built binaries](https://github.com/writefreely/writefreely/releases/) and head over to our [installation guide](https://writefreely.org/start) to get started.
 
