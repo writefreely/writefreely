@@ -15,7 +15,7 @@
 		<p style="font-style: italic">This invite link is expired.</p>
 	{{ else }}
 		<p>Copy the link below and send it to anyone that you want to join <em>{{ .SiteName }}</em>. You could paste it into an email, instant message, text message, or write it down on paper. Anyone who navigates to this special page will be able to create an account.</p>
-		<input class="copy-link" type="text" name="invite-url" value="{{$.Host}}/invite/{{.Invite.ID}}" onfocus="if (this.select) this.select(); else this.setSelectionRange(0, this.value.length);" readonly />
+		<input class="copy-link" type="text" name="invite-url" value="{{$.Host}}{{subdir}}/invite/{{.Invite.ID}}" onfocus="if (this.select) this.select(); else this.setSelectionRange(0, this.value.length);" readonly />
 		<p>
 			{{ if gt .Invite.MaxUses.Int64 0 }}
 				{{if eq .Invite.MaxUses.Int64 1}}Only <strong>one</strong> user{{else}}Up to <strong>{{.Invite.MaxUses.Int64}}</strong> users{{end}} can sign up with this link.
