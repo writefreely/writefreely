@@ -17,6 +17,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	. "github.com/gorilla/feeds"
@@ -291,6 +292,9 @@ func handlePostIDRedirect(app *App, w http.ResponseWriter, r *http.Request) erro
 func viewLocalTimelineFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 	if !app.cfg.App.LocalTimeline {
 		return impart.HTTPError{http.StatusNotFound, "Page doesn't exist."}
+	}
+	if !strings.HasSuffix(req.URL.Path, "/") {
+		return impart.HTTPError{http.StatusMovedPermanently, "/read/feed/"}
 	}
 
 	updateTimelineCache(app.timeline, false)

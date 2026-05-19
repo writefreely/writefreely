@@ -48,6 +48,7 @@ body#pad.classic {
 #title {
 	margin-left: @classicHorizMargin;
 	margin-right: @classicHorizMargin;
+	max-width: 42rem;
 }
 
 .ProseMirror {
@@ -436,11 +437,15 @@ textarea {
 	margin-bottom: 4px;
 }
 
-.editorreadmore {
+.editorreadmore, .editor-comment {
 	color: @textLinkColor;
 	text-decoration: underline;
 	text-align: center;
 	width: 100%;
+}
+
+.editor-html-block {
+	font-family: @monoFont;
 }
 
 @media all and (min-width: 50em) {

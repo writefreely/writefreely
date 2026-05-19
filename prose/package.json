@@ -23,8 +23,8 @@
     "prettier": "^2.2.1"
   },
   "scripts": {
-    "develop": "webpack --mode development --watch",
-    "build": "webpack --mode production"
+    "develop": "NODE_OPTIONS=--openssl-legacy-provider webpack --mode development --watch",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider webpack --mode production"
   },
   "keywords": [],
   "author": "",

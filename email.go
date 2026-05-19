@@ -322,7 +322,7 @@ func emailPost(app *App, p *PublicPost, collID int64) error {
 
 	// Do some shortcode replacement.
 	// Since the user is receiving this email, we can assume they're subscribed via email.
-	p.Content = strings.Replace(p.Content, "<!--emailsub-->", `<p id="emailsub">You're subscribed to email updates.</p>`, -1)
+	p.Content = strings.Replace(p.Content, shortCodeEmailSub, `<p id="emailsub">You're subscribed to email updates.</p>`, -1)
 
 	if p.HTMLContent == template.HTML("") {
 		p.formatContent(app.cfg, false, false)

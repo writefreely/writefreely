@@ -1555,7 +1555,12 @@ ORDER BY created `+order+limitStr, collID, lang)
 }
 
 func (db *datastore) GetAPFollowers(c *Collection) (*[]RemoteUser, error) {
-	rows, err := db.Query("SELECT actor_id, inbox, shared_inbox, f.created FROM remotefollows f INNER JOIN remoteusers u ON f.remote_user_id = u.id WHERE collection_id = ?", c.ID)
+	rows, err := db.Query(`SELECT actor_id, inbox, shared_inbox, f.created
+FROM remotefollows f
+INNER JOIN remoteusers u
+  ON f.remote_user_id = u.id
+WHERE collection_id = ?
+ORDER BY created DESC`, c.ID)
 	if err != nil {
 		log.Error("Failed selecting from followers: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve followers."}
@@ -2313,6 +2318,11 @@ func (db *datastore) ChangeSettings(app *App, u *User, s *userSettings) error {
 		u.HasPass, err = db.IsUserPassSet(u.ID)
 		if err != nil {
 			errPass = impart.HTTPError{http.StatusInternalServerError, "Unable to retrieve user data."}
+			return errPass
+		}
+
+		if len(s.NewPass) > maxPassByteLen {
+			errPass = impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Password is longer than %d characters", maxPassByteLen)}
 			return errPass
 		}
 

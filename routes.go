@@ -242,6 +242,7 @@ func RouteCollections(handler *Handler, r *mux.Router) {
 func RouteRead(handler *Handler, readPerm UserLevelFunc, r *mux.Router) {
 	r.HandleFunc("/api/posts", handler.Web(viewLocalTimelineAPI, readPerm))
 	r.HandleFunc("/p/{page}", handler.Web(viewLocalTimeline, readPerm))
+	r.HandleFunc("/feed", handler.Web(viewLocalTimelineFeed, readPerm))
 	r.HandleFunc("/feed/", handler.Web(viewLocalTimelineFeed, readPerm))
 	r.HandleFunc("/t/{tag}", handler.Web(viewLocalTimeline, readPerm))
 	r.HandleFunc("/a/{post}", handler.Web(handlePostIDRedirect, readPerm))
