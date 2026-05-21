@@ -44,6 +44,10 @@ func handleWebSignup(app *App, w http.ResponseWriter, r *http.Request) error {
 			return ErrBadFormData
 		}
 	}
+	if !app.cfg.App.OpenRegistration && ur.InviteCode != "" {
+		return impart.HTTPError{http.StatusForbidden, "Registrations are closed"}
+	}
+
 	ur.Web = true
 	ur.Normalize = true
 
