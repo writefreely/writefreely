@@ -20,7 +20,7 @@ label {
 	</div>
 {{ else if not .EmailEnabled }}
 	<div class="alert info">
-		<p><strong>Email is not configured on this server!</strong> Please <a href="/contact">contact your admin</a> to reset your password.</p>
+		<p><strong>Email is not configured on this server!</strong> Please <a href="contact">contact your admin</a> to reset your password.</p>
 	</div>
 {{ else }}
 	{{if .Flashes}}<ul class="errors">
@@ -28,7 +28,7 @@ label {
 	</ul>{{end}}
 
 	{{if .IsResetting}}
-		<form method="post" action="/reset" onsubmit="disableSubmit()">
+		<form method="post" action="reset" onsubmit="disableSubmit()">
 			<label>
 				<p>New Password</p>
 				<input type="password" name="new-pass" maxlength="72" autocomplete="new-password" placeholder="New password" tabindex="1" />
@@ -38,7 +38,7 @@ label {
 			{{ .CSRFField }}
 		</form>
 	{{else if not .IsSent}}
-		<form action="/reset" method="post" onsubmit="disableSubmit()">
+		<form action="reset" method="post" onsubmit="disableSubmit()">
 			<label>
 				<p>Username</p>
 				<input type="text" name="alias" placeholder="Username" autofocus />

@@ -63,6 +63,10 @@ var (
 
 	// DEPRECATED VARS
 	isSingleUser bool
+
+	// Canonical URL helpers for code paths that still build URLs from shared globals.
+	canonicalAppHost string
+	canonicalSubdir  string
 )
 
 // App holds data and configuration for an individual WriteFreely instance.
@@ -318,18 +322,19 @@ func handleTemplatedPage(app *App, w http.ResponseWriter, r *http.Request, t *te
 	}{
 		StaticPage: pageForReq(app, r),
 	}
-	if r.URL.Path == "/about" || r.URL.Path == "/contact" || r.URL.Path == "/privacy" {
+	path := app.cfg.App.StripSubdirectory(r.URL.Path)
+	if path == "/about" || path == "/contact" || path == "/privacy" {
 		var c *instanceContent
 		var err error
 
-		if r.URL.Path == "/about" {
+		if path == "/about" {
 			c, err = getAboutPage(app)
 
 			// Fetch stats
 			p.AboutStats = &InstanceStats{}
 			p.AboutStats.NumPosts, _ = app.db.GetTotalPosts()
 			p.AboutStats.NumBlogs, _ = app.db.GetTotalCollections()
-		} else if r.URL.Path == "/contact" {
+		} else if path == "/contact" {
 			c, err = getContactPage(app)
 			if c.Updated.IsZero() {
 				// Page was never set up, so return 404
@@ -361,7 +366,7 @@ func handleTemplatedPage(app *App, w http.ResponseWriter, r *http.Request, t *te
 func pageForReq(app *App, r *http.Request) page.StaticPage {
 	p := page.StaticPage{
 		AppCfg:  app.cfg.App,
-		Path:    r.URL.Path,
+		Path:    app.cfg.App.StripSubdirectory(r.URL.Path),
 		Version: "v" + softwareVer,
 	}
 
@@ -449,6 +454,8 @@ func Serve(app *App, r *mux.Router) {
 	log.Info("Going to serve...")
 
 	isSingleUser = app.cfg.App.SingleUser
+	canonicalAppHost = strings.TrimSuffix(app.cfg.App.Host, "/")
+	canonicalSubdir = app.cfg.App.SubdirectoryPath()
 	app.cfg.Server.Dev = debugging
 
 	// Handle shutdown
@@ -513,7 +520,11 @@ requests. We recommend supplying a valid host name.`)
 			go func() {
 				log.Info("Serving redirects on http://%s:80", bindAddress)
 				err = http.ListenAndServe(fmt.Sprintf("%s:80", bindAddress), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					http.Redirect(w, r, app.cfg.App.Host, http.StatusMovedPermanently)
+					loc := app.cfg.App.AbsoluteURL(r.URL.Path)
+					if r.URL.RawQuery != "" {
+						loc += "?" + r.URL.RawQuery
+					}
+					http.Redirect(w, r, loc, http.StatusMovedPermanently)
 				}))
 				log.Error("Unable to start redirect server: %v", err)
 			}()
@@ -882,13 +893,8 @@ func shutdown(app *App) {
 		log.Info("Removing socket file...")
 		err := os.Remove(app.cfg.Server.Bind)
 		if err != nil {
-			if os.IsNotExist(err) {
-				// Safely ignore, in cases like initializing / migrating DB (see #790)
-				log.Info("No socket file; ignoring...")
-			} else {
-				log.Error("Unable to remove socket: %s", err)
-				os.Exit(1)
-			}
+			log.Error("Unable to remove socket: %s", err)
+			os.Exit(1)
 		}
 		log.Info("Success.")
 	}

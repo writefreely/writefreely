@@ -43,3 +43,44 @@ lines.`), "Content in multiple lines."},
 func givenPost(content string) writefreely.Post {
 	return writefreely.Post{Title: zero.StringFrom("Title"), Content: content}
 }
+
+func givenUntitledPost(id, content string) writefreely.Post {
+	return writefreely.Post{ID: id, Content: content}
+}
+
+// TestPostSummaryNoTitle covers the untitled post branch of Summary(), where
+// the title is derived from the content itself.
+func TestPostSummaryNoTitle(t *testing.T) {
+	testCases := []struct {
+		name     string
+		given    writefreely.Post
+		expected string
+	}{
+		{
+			name:     "empty content returns empty",
+			given:    givenUntitledPost("abc123", ""),
+			expected: "",
+		},
+		{
+			name: "short single-line — title equals description, so returns empty",
+			// friendlyPostTitle returns the line itself; postDescription with
+			// title==friendlyId also returns the same content → desc==title → ""
+			given:    givenUntitledPost("abc123", "Short post."),
+			expected: "",
+		},
+		{
+			name: "two paragraphs — body after blank line becomes description",
+			given: givenUntitledPost("abc123", `First paragraph as title.
+
+Second paragraph as description that is different from the title.`),
+			expected: "Second paragraph as description that is different from the title.",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			actual := tc.given.Summary()
+			assert.Equal(t, tc.expected, actual)
+		})
+	}
+}

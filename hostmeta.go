@@ -13,6 +13,8 @@ package writefreely
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/writeas/go-webfinger"
 )
 
 func handleViewHostMeta(app *App, w http.ResponseWriter, r *http.Request) error {
@@ -21,9 +23,9 @@ func handleViewHostMeta(app *App, w http.ResponseWriter, r *http.Request) error 
 
 	meta := `<?xml version="1.0" encoding="UTF-8"?>
 <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
-  <Link rel="lrdd" type="application/xrd+xml" template="https://` + r.Host + `/.well-known/webfinger?resource={uri}"/>
+  <Link rel="lrdd" type="application/xrd+xml" template="` + app.cfg.App.AbsoluteURL(webfinger.WebFingerPath) + `?resource={uri}"/>
 </XRD>`
-	fmt.Fprintf(w, meta)
+	fmt.Fprintf(w, "%s", meta)
 
 	return nil
 }

@@ -1,9 +1,8 @@
 package db
 
 import (
-	"testing"
-
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestDialect_Column(t *testing.T) {

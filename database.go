@@ -498,7 +498,7 @@ func (db *datastore) GetUserDataFromToken(accessToken string) (int64, string, er
 func (db *datastore) GetAPIUser(header string) (*User, error) {
 	uID := db.GetUserID(header)
 	if uID == -1 {
-		return nil, fmt.Errorf(ErrUserNotFound.Error())
+		return nil, fmt.Errorf("%s", ErrUserNotFound.Error())
 	}
 	return db.GetUserByID(uID)
 }
@@ -877,6 +877,10 @@ func (db *datastore) GetCollectionBy(condition string, value interface{}) (*Coll
 	c.Public = c.IsPublic()
 	c.Monetization = db.GetCollectionAttribute(c.ID, "monetization_pointer")
 	c.Verification = db.GetCollectionAttribute(c.ID, "verification_link")
+	c.Favicon = db.GetCollectionAttribute(c.ID, "favicon")
+	c.ProfilePic = db.GetCollectionAttribute(c.ID, "profile_pic")
+	c.Thumbnail = db.GetCollectionAttribute(c.ID, "thumbnail")
+	c.hostName = canonicalAppHost
 
 	c.db = db
 
@@ -901,6 +905,7 @@ func (db *datastore) GetCollectionForPad(alias string) (*Collection, error) {
 		return c, ErrInternalGeneral
 	}
 	c.Public = c.IsPublic()
+	c.hostName = canonicalAppHost
 
 	return c, nil
 }
@@ -947,7 +952,7 @@ func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias st
 	// WHERE values
 	q.Where("alias = ? AND owner_id = ?", alias, c.OwnerID)
 
-	if q.Updates == "" && c.Monetization == nil {
+	if q.Updates == "" && c.Monetization == nil && c.Favicon == nil && c.ProfilePic == nil && c.Thumbnail == nil {
 		return ErrPostNoUpdatableVals
 	}
 
@@ -976,6 +981,25 @@ func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias st
 		_, err = db.Exec("DELETE FROM collectionattributes WHERE collection_id = ? AND attribute = ?", collID, "render_mathjax")
 		if err != nil {
 			log.Error("Unable to delete render_mathjax value: %v", err)
+			return err
+		}
+	}
+
+	// Update Mermaid value
+	if c.Mermaid {
+		if db.driverName == driverSQLite {
+			_, err = db.Exec("INSERT OR REPLACE INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?)", collID, "render_mermaid", "1")
+		} else {
+			_, err = db.Exec("INSERT INTO collectionattributes (collection_id, attribute, value) VALUES (?, ?, ?) "+db.upsert("collection_id", "attribute")+" value = ?", collID, "render_mermaid", "1", "1")
+		}
+		if err != nil {
+			log.Error("Unable to insert render_mermaid value: %v", err)
+			return err
+		}
+	} else {
+		_, err = db.Exec("DELETE FROM collectionattributes WHERE collection_id = ? AND attribute = ?", collID, "render_mermaid")
+		if err != nil {
+			log.Error("Unable to delete render_mermaid value: %v", err)
 			return err
 		}
 	}
@@ -1075,6 +1099,33 @@ func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias st
 		}
 	}
 
+	// Update Favicon value
+	if c.Favicon != nil {
+		err = db.SetCollectionAttribute(collID, "favicon", strings.TrimSpace(*c.Favicon))
+		if err != nil {
+			log.Error("Unable to insert favicon value: %v", err)
+			return err
+		}
+	}
+
+	// Update ProfilePic value
+	if c.ProfilePic != nil {
+		err = db.SetCollectionAttribute(collID, "profile_pic", strings.TrimSpace(*c.ProfilePic))
+		if err != nil {
+			log.Error("Unable to insert profile_pic value: %v", err)
+			return err
+		}
+	}
+
+	// Update Thumbnail value
+	if c.Thumbnail != nil {
+		err = db.SetCollectionAttribute(collID, "thumbnail", strings.TrimSpace(*c.Thumbnail))
+		if err != nil {
+			log.Error("Unable to insert thumbnail value: %v", err)
+			return err
+		}
+	}
+
 	// Update rest of the collection data
 	if q.Updates != "" {
 		res, err = db.Exec("UPDATE collections SET "+q.Updates+" WHERE "+q.Conditions, q.Params...)
@@ -1082,21 +1133,21 @@ func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias st
 			log.Error("Unable to update collection: %v", err)
 			return err
 		}
-	}
 
-	rowsAffected, _ = res.RowsAffected()
-	if !changed || rowsAffected == 0 {
-		// Show the correct error message if nothing was updated
-		var dummy int
-		err := db.QueryRow("SELECT 1 FROM collections WHERE alias = ? AND owner_id = ?", alias, c.OwnerID).Scan(&dummy)
-		switch {
-		case err == sql.ErrNoRows:
-			return ErrUnauthorizedEditPost
-		case err != nil:
-			log.Error("Failed selecting from collections: %v", err)
-		}
-		if !updatePass {
-			return nil
+		rowsAffected, _ = res.RowsAffected()
+		if !changed || rowsAffected == 0 {
+			// Show the correct error message if nothing was updated
+			var dummy int
+			err := db.QueryRow("SELECT 1 FROM collections WHERE alias = ? AND owner_id = ?", alias, c.OwnerID).Scan(&dummy)
+			switch {
+			case err == sql.ErrNoRows:
+				return ErrUnauthorizedEditPost
+			case err != nil:
+				log.Error("Failed selecting from collections: %v", err)
+			}
+			if !updatePass {
+				return nil
+			}
 		}
 	}
 
@@ -1555,12 +1606,7 @@ ORDER BY created `+order+limitStr, collID, lang)
 }
 
 func (db *datastore) GetAPFollowers(c *Collection) (*[]RemoteUser, error) {
-	rows, err := db.Query(`SELECT actor_id, inbox, shared_inbox, f.created
-FROM remotefollows f
-INNER JOIN remoteusers u
-  ON f.remote_user_id = u.id
-WHERE collection_id = ?
-ORDER BY created DESC`, c.ID)
+	rows, err := db.Query("SELECT u.id, actor_id, inbox, shared_inbox, f.created FROM remotefollows f INNER JOIN remoteusers u ON f.remote_user_id = u.id WHERE collection_id = ?", c.ID)
 	if err != nil {
 		log.Error("Failed selecting from followers: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve followers."}
@@ -1570,7 +1616,7 @@ ORDER BY created DESC`, c.ID)
 	followers := []RemoteUser{}
 	for rows.Next() {
 		f := RemoteUser{}
-		err = rows.Scan(&f.ActorID, &f.Inbox, &f.SharedInbox, &f.Created)
+		err = rows.Scan(&f.ID, &f.ActorID, &f.Inbox, &f.SharedInbox, &f.Created)
 		followers = append(followers, f)
 	}
 	return &followers, nil

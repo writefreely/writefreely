@@ -6,14 +6,13 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
+	uuid "github.com/nu7hatch/gouuid"
+	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"os"
 	"strings"
 	"testing"
 	"time"
-
-	uuid "github.com/nu7hatch/gouuid"
-	"github.com/stretchr/testify/assert"
 )
 
 var testDB *sql.DB

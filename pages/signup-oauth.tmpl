@@ -63,7 +63,7 @@ form dd {
 	</ul>{{end}}
 
     <div id="billing">
-	    <form action="/oauth/signup" method="post" style="text-align: center;margin-top:1em;" onsubmit="return disableSubmit()">
+	    <form action="oauth/signup" method="post" style="text-align: center;margin-top:1em;" onsubmit="return disableSubmit()">
 	        <input type="hidden" name="access_token" value="{{ .AccessToken }}" />
 	        <input type="hidden" name="token_username" value="{{ .TokenUsername }}" />
 	        <input type="hidden" name="token_alias" value="{{ .TokenAlias }}" />
@@ -101,7 +101,7 @@ form dd {
         </form>
     </div>
 
-<script type="text/javascript" src="/js/h.js"></script>
+<script type="text/javascript" src="js/h.js"></script>
 <script type="text/javascript">
 // Copied from signup.tmpl
 // NOTE: this element is named "alias" on signup.tmpl and "username" here

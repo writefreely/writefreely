@@ -1,6 +1,5 @@
 import { MenuItem } from "prosemirror-menu";
 import { buildMenuItems } from "prosemirror-example-setup";
-import { NodeSelection } from "prosemirror-state";
 
 import { writeFreelySchema } from "./schema";
 
@@ -25,25 +24,9 @@ const ReadMoreItem = new MenuItem({
 });
 
 export const getMenu = () => {
-  const builtItems = buildMenuItems(writeFreelySchema);
-  const { toggleLink } = builtItems;
-
-  const patchedLink = new MenuItem({
-    ...toggleLink.spec,
-    select(state) {
-      if (
-        state.selection instanceof NodeSelection &&
-        state.selection.node.type === writeFreelySchema.nodes.comment
-      ) {
-        return false;
-      }
-      return toggleLink.spec.select ? toggleLink.spec.select(state) : true;
-    },
-  });
-
-  const fullMenu = builtItems.fullMenu.map((group) =>
-    group.map((item) => (item === toggleLink ? patchedLink : item))
-  );
-
-  return [...fullMenu, [ReadMoreItem]];
+  const menuContent = [
+    ...buildMenuItems(writeFreelySchema).fullMenu,
+    [ReadMoreItem],
+  ];
+  return menuContent;
 };

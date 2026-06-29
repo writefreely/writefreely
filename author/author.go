@@ -11,12 +11,11 @@
 package author
 
 import (
+	"github.com/writeas/web-core/log"
+	"github.com/writefreely/writefreely/config"
 	"os"
 	"path/filepath"
 	"regexp"
-
-	"github.com/writeas/web-core/log"
-	"github.com/writefreely/writefreely/config"
 )
 
 // Regex pattern for valid usernames

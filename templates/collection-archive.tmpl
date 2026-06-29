@@ -1,13 +1,14 @@
 {{define "collection"}}<!DOCTYPE HTML>
 <html>
 <head prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article#">
+	{{template "head-base" .}}
 	<meta charset="utf-8">
 
 	<title>Archive &mdash; {{.Collection.DisplayTitle}}</title>
 
-	<link rel="stylesheet" type="text/css" href="/css/write.css" />
-    {{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
-	<link rel="shortcut icon" href="/favicon.ico" />
+	<link rel="stylesheet" type="text/css" href="css/write.css" />
+    {{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="local/custom.css" />{{end}}
+	{{if .Favicon}}<link rel="shortcut icon" href="{{.Favicon}}" />{{else}}<link rel="shortcut icon" href="favicon.ico" />{{end}}
 	<link rel="canonical" href="{{.CanonicalURL}}">
     {{if gt .CurrentPage 1}}<link rel="prev" href="{{.PrevPageURL .Prefix .NavSuffix .CurrentPage .IsTopLevel}}">{{end}}
     {{if lt .CurrentPage .TotalPages}}<link rel="next" href="{{.NextPageURL .Prefix .NavSuffix .CurrentPage .IsTopLevel}}">{{end}}
@@ -37,10 +38,10 @@
 <div id="overlay"></div>
 
 <header>
-	<h1 dir="{{.Direction}}" id="blog-title"><a href="{{if .IsTopLevel}}/{{else}}/{{.Collection.Alias}}/{{end}}" class="h-card p-author">{{.Collection.DisplayTitle}}</a></h1>
+	<h1 dir="{{.Direction}}" id="blog-title"><a href="{{if .IsTopLevel}}{{else}}{{.Collection.Alias}}/{{end}}" class="h-card p-author">{{.Collection.DisplayTitle}}</a></h1>
 	<nav>
         {{if .PinnedPosts}}
-            {{range .PinnedPosts}}<a class="pinned" href="{{if $.IsOwner}}/{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL}}{{end}}">{{.DisplayTitle}}</a>{{end}}
+			{{range .PinnedPosts}}<a class="pinned" href="{{if $.IsOwner}}{{subdir}}/{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL}}{{end}}">{{.DisplayTitle}}</a>{{end}}
         {{end}}
 	</nav>
 </header>
@@ -67,7 +68,7 @@
                     {{if .HasTitleLink -}}
                         {{.HTMLTitleArrow}}
                     {{- else -}}
-						<a href="{{if $.SingleUser}}/{{else}}/{{$.Alias}}/{{end}}{{.Slug.String}}" itemprop="url" class="u-url">
+						<a href="{{if $.SingleUser}}{{.Slug.String}}{{else}}{{$.Alias}}/{{.Slug.String}}{{end}}" itemprop="url" class="u-url">
                             {{- if .DisplayTitle -}}
                                 {{- .DisplayTitle -}}
                             {{- else -}}
@@ -79,7 +80,7 @@
                     {{if $.Format.ShowDates -}}
 						<time class="dt-published" datetime="{{.Created8601}}" pubdate itemprop="datePublished" content="{{.Created}}">
                             {{- if .HasTitleLink -}}
-							<a href="{{if $.SingleUser}}/{{else}}/{{$.Alias}}/{{end}}{{.Slug.String}}" itemprop="url">
+							<a href="{{if $.SingleUser}}{{.Slug.String}}{{else}}{{$.Alias}}/{{.Slug.String}}{{end}}" itemprop="url">
                                 {{- end -}}
                                 {{.DisplayDate}}
                                 {{- if .HasTitleLink -}}
@@ -88,7 +89,7 @@
 						</time>
                     {{- else -}}
                         {{- if .HasTitleLink -}}
-							<a href="{{if $.SingleUser}}/{{else}}/{{$.Alias}}/{{end}}{{.Slug.String}}" itemprop="url">view</a>
+							<a href="{{if $.SingleUser}}{{.Slug.String}}{{else}}{{$.Alias}}/{{.Slug.String}}{{end}}" itemprop="url">view</a>
                         {{- end -}}
                     {{- end}}
 				</li>
@@ -103,7 +104,7 @@
 		<footer>
 			<hr />
 			<nav dir="ltr">
-				{{if not .SingleUser}}<a class="home pubd" href="/">{{.SiteName}}</a> &middot; {{end}}powered by <a style="margin-left:0" href="https://writefreely.org">writefreely</a>
+				{{if not .SingleUser}}<a class="home pubd" href="">{{.SiteName}}</a> &middot; {{end}}powered by <a style="margin-left:0" href="https://writefreely.org">writefreely</a>
 			</nav>
 		</footer>
 	{{ end }}
@@ -114,5 +115,5 @@
     {{range .ExternalScripts}}<script type="text/javascript" src="{{.}}" async></script>{{end}}
     {{if .Collection.Script}}<script type="text/javascript">{{.ScriptDisplay}}</script>{{end}}
 {{end}}
-<script src="/js/localdate.js"></script>
+<script src="js/localdate.js"></script>
 </html>{{end}}

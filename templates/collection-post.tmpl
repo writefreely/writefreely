@@ -1,13 +1,14 @@
 {{define "post"}}<!DOCTYPE HTML>
 <html {{if .Language.Valid}}lang="{{.Language.String}}"{{end}} dir="{{.Direction}}">
 	<head prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article#">
+		{{template "head-base" .}}
 		<meta charset="utf-8">
 
 		<title>{{.PlainDisplayTitle}} {{localhtml "title dash" .Language.String}} {{.Collection.DisplayTitle}}</title>
 
-		<link rel="stylesheet" type="text/css" href="/css/write.css" />
-		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
-		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" type="text/css" href="css/write.css" />
+		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="local/custom.css" />{{end}}
+		{{if .Collection.Favicon}}<link rel="shortcut icon" href="{{.Collection.Favicon}}" />{{else}}<link rel="shortcut icon" href="favicon.ico" />{{end}}
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		{{ if .IsFound }}
 		<link rel="canonical" href="{{.CanonicalURL .Host}}" />
@@ -22,14 +23,14 @@
 		<meta name="twitter:card" content="summary">
 		<meta name="twitter:description" content="{{.Summary}}">
 		<meta name="twitter:title" content="{{.PlainDisplayTitle}} {{localhtml "title dash" .Language.String}} {{if .Collection.Title}}{{.Collection.Title}}{{else}}{{.Collection.Alias}}{{end}}">
-		{{if gt (len .Images) 0}}<meta name="twitter:image" content="{{index .Images 0}}">{{else}}<meta name="twitter:image" content="{{.Collection.AvatarURL}}">{{end}}
+		{{if gt (len .Images) 0}}<meta name="twitter:image" content="{{index .Images 0}}">{{else}}<meta name="twitter:image" content="{{if .Collection.Thumbnail}}{{.Collection.Thumbnail}}{{else}}{{.Collection.AvatarURL}}{{end}}">{{end}}
 		<meta property="og:title" content="{{.PlainDisplayTitle}}" />
 		<meta property="og:description" content="{{.Summary}}" />
 		<meta property="og:site_name" content="{{.Collection.DisplayTitle}}" />
 		<meta property="og:type" content="article" />
 		<meta property="og:url" content="{{.CanonicalURL .Host}}" />
 		<meta property="og:updated_time" content="{{.Created8601}}" />
-		{{range .Images}}<meta property="og:image" content="{{.}}" />{{else}}<meta property="og:image" content="{{.Collection.AvatarURL}}">{{end}}
+		{{range .Images}}<meta property="og:image" content="{{.}}" />{{else}}<meta property="og:image" content="{{if .Collection.Thumbnail}}{{.Collection.Thumbnail}}{{else}}{{.Collection.AvatarURL}}{{end}}">{{end}}
 		<meta property="article:published_time" content="{{.Created8601}}">
 		{{ end }}
 		{{template "collection-meta" .}}
@@ -38,6 +39,11 @@
 		{{if .Collection.RenderMathJax}}
 		  <!-- Add mathjax logic -->
   		  {{template "mathjax" . }}
+		{{end}}
+
+		{{if .Collection.RenderMermaid}}
+		  <!-- Add Mermaid diagram rendering -->
+		  {{template "mermaid" .}}
 		{{end}}
 
 		<!-- Add highlighting logic -->
@@ -49,15 +55,15 @@
 		<div id="overlay"></div>
 
 		<header>
-		<h1 dir="{{.Direction}}" id="blog-title"><a rel="author" href="{{if .IsTopLevel}}/{{else}}/{{.Collection.Alias}}/{{end}}" class="h-card p-author">{{.Collection.DisplayTitle}}</a></h1>
+		<h1 dir="{{.Direction}}" id="blog-title"><a rel="author" href="{{if .IsTopLevel}}{{else}}{{.Collection.Alias}}/{{end}}" class="h-card p-author">{{.Collection.DisplayTitle}}</a></h1>
 			<nav>
 				{{if .PinnedPosts}}
-				{{range .PinnedPosts}}<a class="pinned{{if eq .Slug.String $.Slug.String}} selected{{end}}" href="{{if not $.SingleUser}}/{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}
+				{{range .PinnedPosts}}<a class="pinned{{if eq .Slug.String $.Slug.String}} selected{{end}}" href="{{if not $.SingleUser}}{{$.Collection.Alias}}/{{.Slug.String}}{{else}}{{.CanonicalURL $.Host}}{{end}}">{{.PlainDisplayTitle}}</a>{{end}}
 				{{end}}
 				{{ if and .IsOwner .IsFound }}<span class="views" dir="ltr"><strong>{{largeNumFmt .Views}}</strong> {{pluralize "view" "views" .Views}}</span>
                 {{if .Likes}}<span class="views" dir="ltr"><strong>{{largeNumFmt .Likes}}</strong> {{pluralize "like" "likes" .Likes}}</span>{{end}}
-				<a href="/{{if not .SingleUser}}{{.Collection.Alias}}/{{end}}{{.Slug.String}}/edit" dir="{{.Direction}}">Edit</a>
-				{{if .IsPinned}}<a class="xtra-feature unpin" href="/{{.Collection.Alias}}/{{.Slug.String}}/unpin" dir="{{.Direction}}" onclick="unpinPost(event, '{{.ID}}')">Unpin</a>{{end}}
+				<a href="{{if not .SingleUser}}{{.Collection.Alias}}/{{.Slug.String}}/edit{{else}}{{.Slug.String}}/edit{{end}}" dir="{{.Direction}}">Edit</a>
+				{{if .IsPinned}}<a class="xtra-feature unpin" href="{{.Collection.Alias}}/{{.Slug.String}}/unpin" dir="{{.Direction}}" onclick="unpinPost(event, '{{.ID}}')">Unpin</a>{{end}}
 				{{ end }}
 			</nav>
 		</header>
@@ -76,7 +82,7 @@
 		{{range .Collection.ExternalScripts}}<script type="text/javascript" src="{{.}}" async></script>{{end}}
 		{{if .Collection.Script}}<script type="text/javascript">{{.Collection.ScriptDisplay}}</script>{{end}}
 	{{end}}
-	<script src="/js/localdate.js"></script>
+	<script src="js/localdate.js"></script>
 	<script type="text/javascript">
 
 var pinning = false;
@@ -98,7 +104,7 @@ function unpinPost(e, postID) {
 	$pinBtn.innerHTML = '...';
 
 	var http = new XMLHttpRequest();
-	var url = "/api/collections/{{.Collection.Alias}}/unpin";
+	var url = "api/collections/{{.Collection.Alias}}/unpin";
 	var params = [ { "id": postID } ];
 	http.open("POST", url, true);
 	http.setRequestHeader("Content-type", "application/json");
@@ -122,11 +128,11 @@ function unpinPost(e, postID) {
 
 	try { // Fonts
 	  WebFontConfig = {
-		custom: { families: [ 'Lora:400,700:latin', 'Open+Sans:400,700:latin' ], urls: [ '/css/fonts.css' ] }
+		custom: { families: [ 'Lora:400,700:latin', 'Open+Sans:400,700:latin' ], urls: [ 'css/fonts.css' ] }
 	  };
 	  (function() {
 		var wf = document.createElement('script');
-		wf.src = '/js/webfont.js';
+		wf.src = 'js/webfont.js';
 		wf.type = 'text/javascript';
 		wf.async = 'true';
 		var s = document.getElementsByTagName('script')[0];
@@ -136,8 +142,9 @@ function unpinPost(e, postID) {
 	</script>
 
     {{if and .Monetization (not .IsOwner)}}
-		<script src="/js/webmonetization.js"></script>
+		<script src="js/webmonetization.js"></script>
 		<script>
+            window.WF_BASE_PATH = "{{subdir}}"
             window.collAlias = '{{.Collection.Alias}}'
             window.postSlug = '{{.Slug.String}}'
             initMonetization()

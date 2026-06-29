@@ -11,11 +11,10 @@
 package writefreely
 
 import (
-	"os"
-	"path/filepath"
-
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/writefreely/key"
+	"os"
+	"path/filepath"
 )
 
 const (

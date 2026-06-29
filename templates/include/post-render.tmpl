@@ -103,7 +103,96 @@
       },
     };
 </script>
-<script type="text/javascript" id="MathJax-script" src="/js/mathjax/tex-svg-full.js" async>
+<script type="text/javascript" id="MathJax-script" src="js/mathjax/tex-svg-full.js" async>
+</script>
+{{end}}
+
+<!-- Mermaid diagram rendering -->
+{{define "mermaid"}}
+<style>
+  .mermaid {
+    display: block;
+    /* Break out of the article's max-width and stretch to full viewport */
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    overflow-x: auto;
+    margin: 1.5em 0;
+    padding: 1em 0;
+    text-align: center;
+  }
+  .mermaid svg { max-width: none !important; height: auto; }
+  .mermaid svg text, .mermaid svg tspan { fill: #1a1a1a !important; }
+  .mermaid svg .title, .mermaid svg text.title { fill: #888888 !important; font-weight: normal !important; }
+  .mermaid svg foreignObject * { color: #1a1a1a !important; }
+  .mermaid svg .branch-label text, .mermaid svg .branch-label tspan { fill: #ffffff !important; }
+</style>
+<script>
+  addEventListener('DOMContentLoaded', function () {
+    var nodes = document.querySelectorAll('code.language-mermaid');
+    if (nodes.length === 0) return;
+
+    nodes.forEach(function (code) {
+      var div = document.createElement('div');
+      div.className = 'mermaid';
+      div.textContent = code.textContent;
+      var pre = code.parentNode;
+      pre.parentNode.replaceChild(div, pre);
+    });
+
+    var sc = document.createElement('script');
+    sc.src = '{{subdir}}/js/mermaid.min.js';
+    sc.onload = function () {
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'strict',
+        theme: 'base',
+        themeVariables: {
+          fontSize: '18px',
+          primaryColor:      '#dbeafe', primaryBorderColor: '#2563eb',
+          secondaryColor:    '#dcfce7', tertiaryColor:      '#fef9c3',
+          lineColor:         '#334155', textColor:          '#1a1a1a',
+          edgeLabelBackground: '#f1f5f9',
+          clusterBkg:        '#f8fafc', clusterBorder:      '#94a3b8',
+          actorBkg:          '#dbeafe', actorBorder:        '#2563eb',
+          noteBkgColor:      '#fef9c3', noteBorderColor:    '#ca8a04',
+          activationBkgColor: '#bfdbfe',
+          pie1:  '#bfdbfe', pie2:  '#ddd6fe', pie3:  '#bbf7d0',
+          pie4:  '#fde68a', pie5:  '#fecaca', pie6:  '#a5f3fc',
+          pie7:  '#fbcfe8', pie8:  '#d9f99d', pie9:  '#fed7aa',
+          pie10: '#99f6e4', pie11: '#c7d2fe', pie12: '#e9d5ff',
+          git0: '#1d4ed8', git1: '#6d28d9', git2: '#065f46',
+          git3: '#92400e', git4: '#991b1b', git5: '#0e7490',
+          git6: '#9d174d', git7: '#3f6212',
+        }
+      });
+      mermaid.run({ querySelector: '.mermaid' }).then(function () {
+        document.querySelectorAll('.mermaid svg').forEach(function (svg) {
+          svg.style.maxWidth = '';
+          // Scale up to 1.5x natural size; container scrolls if wider than column
+          var vb = svg.getAttribute('viewBox');
+          if (vb) {
+            var parts = vb.trim().split(/[\s,]+/);
+            if (parts.length === 4) {
+              var w = parseFloat(parts[2]);
+              var h = parseFloat(parts[3]);
+              svg.setAttribute('width',  Math.round(w * 1.5));
+              svg.setAttribute('height', Math.round(h * 1.5));
+            }
+          }
+        });
+        document.querySelectorAll('.mermaid svg text, .mermaid svg tspan').forEach(function (el) {
+          if (!el.closest('.branch-label')) el.style.fill = '#1a1a1a';
+          if (el.classList.contains('title')) el.style.fill = '#888888';
+        });
+        document.querySelectorAll('.mermaid svg foreignObject *').forEach(function (el) {
+          el.style.color = '#1a1a1a';
+        });
+      });
+    };
+    document.head.appendChild(sc);
+  });
 </script>
 {{end}}
 
@@ -111,9 +200,9 @@
     {{if .EmailSubsEnabled}}
 		<div id="emailsub">
             {{if .IsSubscriber}}
-			<p>You're subscribed to email updates. <a href="/api/collections/{{.Alias}}/email/unsubscribe">Unsubscribe</a>.</p>
+			<p>You're subscribed to email updates. <a href="api/collections/{{.Alias}}/email/unsubscribe">Unsubscribe</a>.</p>
             {{else}}
-			<form method="post" action="/api/collections/{{.Alias}}/email/subscribe">
+			<form method="post" action="api/collections/{{.Alias}}/email/subscribe">
 				<input type="hidden" name="web" value="1" />
 				<p>Enter your email to subscribe to updates.</p> <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="email" name="{{.Honeypot}}" tabindex="-1" value="" /><input type="password" name="fake_password" tabindex="-1" placeholder="password" autocomplete="new-password" /></div>
 				<input type="email" name="email" placeholder="me@example.com" />

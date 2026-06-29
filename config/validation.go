@@ -49,3 +49,19 @@ func validateNonEmpty(i string) error {
 	}
 	return nil
 }
+
+func validateSubdirectory(i string) error {
+	if i == "" {
+		return nil
+	}
+	if i == "/" {
+		return nil
+	}
+	if regexp.MustCompile(`://`).MatchString(i) {
+		return fmt.Errorf("Must be a path like /blog, not a full URL")
+	}
+	if regexp.MustCompile(`[?#\s]`).MatchString(i) {
+		return fmt.Errorf("Must not include query, fragment, or spaces")
+	}
+	return nil
+}

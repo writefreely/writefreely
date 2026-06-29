@@ -13,17 +13,16 @@ package writefreely
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
-	"net/url"
-	"strings"
-	"testing"
-
 	"github.com/gorilla/sessions"
 	"github.com/stretchr/testify/assert"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/id"
 	"github.com/writefreely/writefreely/config"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"strings"
+	"testing"
 )
 
 type MockOAuthDatastoreProvider struct {
@@ -217,7 +216,15 @@ func TestViewOauthInit(t *testing.T) {
 
 func TestViewOauthCallback(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		app := &MockOAuthDatastoreProvider{}
+		app := &MockOAuthDatastoreProvider{
+			DoDB: func() OAuthDatastore {
+				return &MockOAuthDatastore{
+					DoGetIDForRemoteUser: func(ctx context.Context, remoteUserID, provider, clientID string) (int64, error) {
+						return 1, nil
+					},
+				}
+			},
+		}
 		h := oauthHandler{
 			Config:   app.Config(),
 			DB:       app.DB(),
@@ -258,5 +265,6 @@ func TestViewOauthCallback(t *testing.T) {
 		err = h.viewOauthCallback(&App{cfg: app.Config(), sessionStore: app.SessionStore()}, rr, req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
+		assert.Equal(t, "/", rr.Header().Get("Location"))
 	})
 }

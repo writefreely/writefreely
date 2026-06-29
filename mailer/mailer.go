@@ -62,7 +62,9 @@ func New(eCfg config.EmailCfg) (*Mailer, error) {
 		m.smtp.Port = eCfg.Port
 		m.smtp.Username = eCfg.Username
 		m.smtp.Password = eCfg.Password
-		if eCfg.EnableStartTLS {
+		if eCfg.EnableSSL {
+			m.smtp.Encryption = mail.EncryptionSSLTLS
+		} else if eCfg.EnableStartTLS {
 			m.smtp.Encryption = mail.EncryptionSTARTTLS
 		}
 		// To allow sending multiple email
@@ -84,7 +86,7 @@ func (m *Mailer) NewMessage(from, subject, text string, to ...string) (*Message,
 			from:       from,
 			replyTo:    "",
 			subject:    subject,
-			recipients: make([]Recipient, len(to)),
+			recipients: make([]Recipient, 0, len(to)),
 			html:       "",
 			text:       text,
 		}

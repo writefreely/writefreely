@@ -332,6 +332,17 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 			return data, err
 		}
 
+		prompt = promptui.Prompt{
+			Templates: tmpls,
+			Label:     "Subdirectory (optional, e.g. /blog)",
+			Validate:  validateSubdirectory,
+			Default:   data.Config.App.Subdirectory,
+		}
+		data.Config.App.Subdirectory, err = prompt.Run()
+		if err != nil {
+			return data, err
+		}
+
 		if !data.Config.App.SingleUser {
 			selPrompt = promptui.Select{
 				Templates: selTmpls,

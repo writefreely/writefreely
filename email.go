@@ -17,8 +17,11 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
+
+	"github.com/writefreely/writefreely/mailer"
 
 	"github.com/aymerick/douceur/inliner"
 	"github.com/gorilla/mux"
@@ -27,7 +30,6 @@ import (
 	"github.com/writeas/web-core/data"
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/writefreely/key"
-	"github.com/writefreely/writefreely/mailer"
 	"github.com/writefreely/writefreely/spam"
 )
 
@@ -76,6 +78,16 @@ func (es *EmailSubscriber) SubscribedFriendly() string {
 	return es.Subscribed.Format("January 2, 2006")
 }
 
+func sanitizeSubscriptionForm(form url.Values) url.Values {
+	cleanForm := make(url.Values, len(form))
+	for k, v := range form {
+		cleanForm[k] = v
+	}
+	delete(cleanForm, spam.HoneypotFieldName())
+	delete(cleanForm, "fake_password")
+	return cleanForm
+}
+
 func handleCreateEmailSubscription(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r)
 	vars := mux.Vars(r)
@@ -103,7 +115,8 @@ func handleCreateEmailSubscription(app *App, w http.ResponseWriter, r *http.Requ
 			return ErrBadFormData
 		}
 
-		err = app.formDecoder.Decode(&ss, r.PostForm)
+		decodedForm := sanitizeSubscriptionForm(r.PostForm)
+		err = app.formDecoder.Decode(&ss, decodedForm)
 		if err != nil {
 			log.Error("Continuing, but error decoding new subscription form request: %v\n", err)
 			//return ErrBadFormData
@@ -322,7 +335,7 @@ func emailPost(app *App, p *PublicPost, collID int64) error {
 
 	// Do some shortcode replacement.
 	// Since the user is receiving this email, we can assume they're subscribed via email.
-	p.Content = strings.Replace(p.Content, shortCodeEmailSub, `<p id="emailsub">You're subscribed to email updates.</p>`, -1)
+	p.Content = strings.Replace(p.Content, "<!--emailsub-->", `<p id="emailsub">You're subscribed to email updates.</p>`, -1)
 
 	if p.HTMLContent == template.HTML("") {
 		p.formatContent(app.cfg, false, false)

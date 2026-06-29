@@ -16,7 +16,7 @@
 		<div class="row lineitem">
 			<div>
 				<h3>
-					<a class="title" href="/{{.Alias}}/" >{{if .Title}}{{.Title}}{{else}}{{.Alias}}{{end}}</a>
+					<a class="title" href="{{.Alias}}/" >{{if .Title}}{{.Title}}{{else}}{{.Alias}}{{end}}</a>
 					<span class="electron" {{if .IsPrivate}}style="font-style: italic"{{end}}>{{if .IsPrivate}}private{{else}}{{.DisplayCanonicalURL}}{{end}}</span>
 				</h3>
 				{{template "collection-nav" (dict "Alias" .Alias "Path" $.Path "SingleUser" $.SingleUser "CanPost" true	)}}
@@ -26,7 +26,7 @@
 	</li>{{end}}
 	<li id="create-collection">
 		{{if not .NewBlogsDisabled}}
-		<form method="POST" action="/api/collections" id="new-collection-form" onsubmit="return createCollection()">
+		<form method="POST" action="{{subdir}}/api/collections" id="new-collection-form" onsubmit="return createCollection()">
 			<h4>
 				<input type="text" name="title" placeholder="Blog name" id="blog-name">
 				<input type="hidden" name="web" value="true" />
@@ -42,7 +42,7 @@
 
 {{template "foot" .}}
 
-<script src="/js/h.js"></script>
+<script src="js/h.js"></script>
 <script>
 function createCollection() {
 	var input = He.get('blog-name');
@@ -53,7 +53,7 @@ function createCollection() {
 	var submit = He.get('create-collection-btn');
 	submit.value = "Creating...";
 	submit.disabled = "disabled";
-	He.postJSON("/api/collections", {
+	He.postJSON("{{subdir}}/api/collections", {
 		title: input.value,
 		web: true
 	}, function(code, data) {

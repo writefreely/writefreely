@@ -26,7 +26,7 @@ table td {
 	<h1>Invite people</h1>
 	<p>Invite others to join <em>{{.SiteName}}</em> by generating and sharing invite links below.</p>
 
-	<form style="margin: 2em 0" class="prominent" action="/api/me/invites" method="post">
+	<form style="margin: 2em 0" class="prominent" action="api/me/invites" method="post">
 		<div class="row">
 			<div class="half">
 				<label for="uses">Maximum number of uses:</label>
@@ -67,7 +67,7 @@ table td {
 		</tr>
 		{{range .Invites}}
 		<tr>
-			<td><a href="{{$.Host}}/invite/{{.ID}}">{{$.Host}}/invite/{{.ID}}</a></td>
+			<td><a href="{{$.Host}}{{subdir}}/invite/{{.ID}}">{{$.Host}}{{subdir}}/invite/{{.ID}}</a></td>
 			<td>{{.Uses}}{{if gt .MaxUses.Int64 0}} / {{.MaxUses.Int64}}{{end}}</td>
 			<td>{{ if .Expires }}{{if .Expired}}Expired{{else}}{{.ExpiresFriendly}}{{end}}{{ else }}&infin;{{ end }}</td>
 		</tr>

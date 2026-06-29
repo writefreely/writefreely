@@ -17,7 +17,6 @@ import (
 	"math"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	. "github.com/gorilla/feeds"
@@ -276,7 +275,7 @@ func handlePostIDRedirect(app *App, w http.ResponseWriter, r *http.Request) erro
 	if !p.CollectionID.Valid {
 		// No collection; send to normal URL
 		// NOTE: not handling single user blogs here since this handler is only used for the Reader
-		return impart.HTTPError{http.StatusFound, app.cfg.App.Host + "/" + postID + ".md"}
+		return impart.HTTPError{http.StatusFound, app.cfg.App.AbsoluteHost() + "/" + postID + ".md"}
 	}
 
 	c, err := app.db.GetCollectionBy("id = ?", fmt.Sprintf("%d", p.CollectionID.Int64))
@@ -293,15 +292,12 @@ func viewLocalTimelineFeed(app *App, w http.ResponseWriter, req *http.Request) e
 	if !app.cfg.App.LocalTimeline {
 		return impart.HTTPError{http.StatusNotFound, "Page doesn't exist."}
 	}
-	if !strings.HasSuffix(req.URL.Path, "/") {
-		return impart.HTTPError{http.StatusMovedPermanently, "/read/feed/"}
-	}
 
 	updateTimelineCache(app.timeline, false)
 
 	feed := &Feed{
 		Title:       app.cfg.App.SiteName + " Reader",
-		Link:        &Link{Href: app.cfg.App.Host},
+		Link:        &Link{Href: app.cfg.App.AbsoluteHost() + "/"},
 		Description: "Read the latest posts from " + app.cfg.App.SiteName + ".",
 		Created:     time.Now(),
 	}
@@ -314,14 +310,14 @@ func viewLocalTimelineFeed(app *App, w http.ResponseWriter, req *http.Request) e
 		}
 
 		title = p.PlainDisplayTitle()
-		permalink = p.CanonicalURL(app.cfg.App.Host)
+		permalink = p.CanonicalURL(app.cfg.App.AbsoluteHost())
 		if p.Collection != nil {
 			author = p.Collection.Title
 		} else {
 			author = "Anonymous"
 		}
 		i := &Item{
-			Id:          app.cfg.App.Host + "/read/a/" + p.ID,
+			Id:          app.cfg.App.AbsoluteHost() + "/read/a/" + p.ID,
 			Title:       title,
 			Link:        &Link{Href: permalink},
 			Description: "<![CDATA[" + stripmd.Strip(p.Content) + "]]>",

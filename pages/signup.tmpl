@@ -73,14 +73,14 @@ form dd {
 			{{template "oauth-buttons" .}}
 
 			{{if not .DisablePasswordAuth}}
-			<form action="/auth/signup" method="POST" id="signup-form" onsubmit="return signup()">
+			<form action="auth/signup" method="POST" id="signup-form" onsubmit="return signup()">
 				<input type="hidden" name="invite_code" value="{{.Invite}}" />
 				<dl class="billing">
 					<label>
 						<dt>Username</dt>
 						<dd>
 							<input type="text" id="alias" name="alias" style="width: 100%; box-sizing: border-box;" tabindex="1" autofocus />
-							{{if .Federation}}<p id="alias-site" class="demo">@<strong>your-username</strong>@{{.FriendlyHost}}</p>{{else}}<p id="alias-site" class="demo">{{.FriendlyHost}}/<strong>your-username</strong></p>{{end}}
+							{{if .Federation}}<p id="alias-site" class="demo">@<strong>your-username</strong>@{{.FriendlyHost}}</p>{{else}}<p id="alias-site" class="demo">{{.FriendlyHost}}{{subdir}}/<strong>your-username</strong></p>{{end}}
 						</dd>
 					</label>
 					<label>
@@ -102,7 +102,7 @@ form dd {
 	</div>
 </div>
 
-<script type="text/javascript" src="/js/h.js"></script>
+<script type="text/javascript" src="js/h.js"></script>
 <script type="text/javascript">
 function signup() {
 	var $pass = document.getElementById('password');

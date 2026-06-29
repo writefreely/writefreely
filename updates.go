@@ -59,36 +59,52 @@ func (uc *updatesCache) CheckNow() error {
 
 // AreAvailable updates the cache if the frequency duration has passed
 // then returns if the latest release is newer than the current running version.
-func (uc updatesCache) AreAvailable() bool {
-	if time.Since(uc.lastCheck) > uc.frequency {
+func (uc *updatesCache) AreAvailable() bool {
+	uc.mu.Lock()
+	needsCheck := time.Since(uc.lastCheck) > uc.frequency
+	uc.mu.Unlock()
+	if needsCheck {
 		uc.CheckNow()
 	}
+	uc.mu.Lock()
+	defer uc.mu.Unlock()
 	return CompareSemver(uc.latestVersion, uc.currentVersion) == 1
 }
 
 // AreAvailableNoCheck returns if the latest release is newer than the current
 // running version.
-func (uc updatesCache) AreAvailableNoCheck() bool {
+func (uc *updatesCache) AreAvailableNoCheck() bool {
+	uc.mu.Lock()
+	defer uc.mu.Unlock()
 	return CompareSemver(uc.latestVersion, uc.currentVersion) == 1
 }
 
 // LatestVersion returns the latest stored version available.
-func (uc updatesCache) LatestVersion() string {
+func (uc *updatesCache) LatestVersion() string {
+	uc.mu.Lock()
+	defer uc.mu.Unlock()
 	return uc.latestVersion
 }
 
-func (uc updatesCache) ReleaseURL() string {
+func (uc *updatesCache) ReleaseURL() string {
+	uc.mu.Lock()
+	defer uc.mu.Unlock()
 	return "https://writefreely.org/releases/" + uc.latestVersion
 }
 
 // ReleaseNotesURL returns the full URL to the blog.writefreely.org release notes
 // for the latest version as stored in the cache.
-func (uc updatesCache) ReleaseNotesURL() string {
+func (uc *updatesCache) ReleaseNotesURL() string {
+	uc.mu.Lock()
+	defer uc.mu.Unlock()
 	return wfReleaseNotesURL(uc.latestVersion)
 }
 
 func wfReleaseNotesURL(v string) string {
 	ver := strings.TrimPrefix(v, "v")
+	if ver == "" {
+		ver = softwareVer
+	}
 	ver = strings.TrimSuffix(ver, ".0")
 	// hack until go 1.12 in build/travis
 	seg := strings.Split(ver, ".")

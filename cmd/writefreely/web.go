@@ -38,8 +38,10 @@ func serveAction(c *cli.Context) error {
 
 	// Set app routes
 	r := mux.NewRouter()
-	writefreely.InitRoutes(app, r)
-	app.InitStaticRoutes(r)
+	appRouter := mux.NewRouter()
+	app.InitStaticRoutes(appRouter)
+	writefreely.InitRoutes(app, appRouter)
+	writefreely.MountSubdirectory(app, r, appRouter)
 
 	// Serve the application
 	writefreely.Serve(app, r)

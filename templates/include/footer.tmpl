@@ -3,13 +3,13 @@
 			<hr />
 			{{if or .SingleUser .WFModesty}}
 			<nav>
-				<a class="home" href="/">{{.SiteName}}</a>
+				<a class="home" href="">{{.SiteName}}</a>
 				{{if not .SingleUser}}
-					<a href="/about">about</a>
-					{{if and .LocalTimeline .CanViewReader}}<a href="/read">reader</a>{{end}}
+					<a href="about">about</a>
+					{{if and .LocalTimeline .CanViewReader}}<a href="read">reader</a>{{end}}
 					{{if .Username}}<a href="https://writefreely.org/guide/{{.OfficialVersion}}" target="guide">writer's guide</a>{{end}}
-					<a href="/contact">contact</a>
-					<a href="/privacy">privacy</a>
+					<a href="contact">contact</a>
+					<a href="privacy">privacy</a>
 					<p style="font-size: 0.9em">powered by <a href="https://writefreely.org">writefreely</a></p>
 				{{else}}
 					<a href="https://writefreely.org/guide/{{.OfficialVersion}}" target="guide">writer's guide</a>
@@ -22,12 +22,12 @@
 			<div class="marketing-section">
 				<div class="clearfix blurbs">
 					<div class="half">
-						<h3><a class="home" href="/">{{.SiteName}}</a></h3>
+						<h3><a class="home" href="">{{.SiteName}}</a></h3>
 						<ul>
-							<li><a href="/about">about</a></li>
-							{{if and (and (not .SingleUser) .LocalTimeline) .CanViewReader}}<a href="/read">reader</a>{{end}}
-							<li><a href="/contact">contact</a></li>
-							<li><a href="/privacy">privacy</a></li>
+							<li><a href="about">about</a></li>
+							{{if and (and (not .SingleUser) .LocalTimeline) .CanViewReader}}<a href="read">reader</a>{{end}}
+							<li><a href="contact">contact</a></li>
+							<li><a href="privacy">privacy</a></li>
 						</ul>
 					</div>
 					<div class="half">

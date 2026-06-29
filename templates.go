@@ -26,10 +26,11 @@ import (
 )
 
 var (
-	templates = map[string]*template.Template{}
-	pages     = map[string]*template.Template{}
-	userPages = map[string]*template.Template{}
-	funcMap   = template.FuncMap{
+	templates            = map[string]*template.Template{}
+	pages                = map[string]*template.Template{}
+	userPages            = map[string]*template.Template{}
+	templateSubdirectory = ""
+	funcMap              = template.FuncMap{
 		"largeNumFmt": largeNumFmt,
 		"pluralize":   pluralize,
 		"isRTL":       isRTL,
@@ -40,6 +41,7 @@ var (
 		"title":       strings.Title,
 		"hasPrefix":   strings.HasPrefix,
 		"hasSuffix":   strings.HasSuffix,
+		"subdir":      templateSubdir,
 		"dict":        dict,
 	}
 )
@@ -61,11 +63,12 @@ func showUserPage(w http.ResponseWriter, name string, obj interface{}) {
 
 func initTemplate(parentDir, name string) {
 	if debugging {
-		log.Info("  " + filepath.Join(parentDir, templatesDir, name+".tmpl"))
+		log.Info("  %s", filepath.Join(parentDir, templatesDir, name+".tmpl"))
 	}
 
 	files := []string{
 		filepath.Join(parentDir, templatesDir, name+".tmpl"),
+		filepath.Join(parentDir, templatesDir, "include", "head-base.tmpl"),
 		filepath.Join(parentDir, templatesDir, "include", "footer.tmpl"),
 		filepath.Join(parentDir, templatesDir, "base.tmpl"),
 		filepath.Join(parentDir, templatesDir, "user", "include", "silenced.tmpl"),
@@ -90,6 +93,7 @@ func initPage(parentDir, path, key string) {
 
 	files := []string{
 		path,
+		filepath.Join(parentDir, templatesDir, "include", "head-base.tmpl"),
 		filepath.Join(parentDir, templatesDir, "include", "footer.tmpl"),
 		filepath.Join(parentDir, templatesDir, "base.tmpl"),
 		filepath.Join(parentDir, templatesDir, "user", "include", "silenced.tmpl"),
@@ -109,6 +113,7 @@ func initUserPage(parentDir, path, key string) {
 
 	userPages[key] = template.Must(template.New(key).Funcs(funcMap).ParseFiles(
 		path,
+		filepath.Join(parentDir, templatesDir, "include", "head-base.tmpl"),
 		filepath.Join(parentDir, templatesDir, "user", "include", "header.tmpl"),
 		filepath.Join(parentDir, templatesDir, "user", "include", "footer.tmpl"),
 		filepath.Join(parentDir, templatesDir, "user", "include", "silenced.tmpl"),
@@ -119,6 +124,7 @@ func initUserPage(parentDir, path, key string) {
 // InitTemplates loads all template files from the configured parent dir.
 func InitTemplates(cfg *config.Config) error {
 	log.Info("Loading templates...")
+	templateSubdirectory = cfg.App.SubdirectoryPath()
 	tmplFiles, err := os.ReadDir(filepath.Join(cfg.Server.TemplatesParentDir, templatesDir))
 	if err != nil {
 		return err
@@ -175,6 +181,10 @@ func InitTemplates(cfg *config.Config) error {
 	}
 
 	return nil
+}
+
+func templateSubdir() string {
+	return templateSubdirectory
 }
 
 // renderPage retrieves the given template and renders it to the given io.Writer.

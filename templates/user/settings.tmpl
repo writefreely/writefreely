@@ -38,7 +38,7 @@ h3 { font-weight: normal; }
 		<p>Change your account settings here.</p>
 	</div>
 
-	<form method="post" action="/api/me/self" autocomplete="false">
+	<form method="post" action="api/me/self" autocomplete="false">
 		<div class="option">
 			<h3>Username</h3>
 			<div class="section">
@@ -50,7 +50,7 @@ h3 { font-weight: normal; }
 	{{ end }}
 
 	{{if not .DisablePasswordAuth}}
-	<form method="post" action="/api/me/self" autocomplete="false">
+	<form method="post" action="api/me/self" autocomplete="false">
 		<input type="hidden" name="logout" value="{{.IsLogOut}}" />
 		<div class="option">
 			<h3>Passphrase</h3>
@@ -89,7 +89,7 @@ h3 { font-weight: normal; }
 			<h2>Linked Accounts</h2>
 			<p>These are your linked external accounts.</p>
 			{{ range $oauth_account := .OauthAccounts }}
-				<form method="post" action="/api/me/oauth/remove" autocomplete="false">
+				<form method="post" action="api/me/oauth/remove" autocomplete="false">
 					<input type="hidden" name="provider" value="{{ $oauth_account.Provider }}" />
 					<input type="hidden" name="client_id" value="{{ $oauth_account.ClientID }}" />
 					<input type="hidden" name="remote_user_id" value="{{ $oauth_account.RemoteUserID }}" />
@@ -101,7 +101,7 @@ h3 { font-weight: normal; }
 							<a class="btn cta"><strong>{{.DisplayName}}</strong></a>
 							{{end}}
 						{{else}}
-							<img src="/img/mark/{{$oauth_account.Provider}}.png" alt="{{ $oauth_account.Provider | title }}" />
+							<img src="img/mark/{{$oauth_account.Provider}}.png" alt="{{ $oauth_account.Provider | title }}" />
 							<input type="submit" value="Remove {{ $oauth_account.Provider | title }}" />
 						{{end}}
 					</div>
@@ -116,39 +116,39 @@ h3 { font-weight: normal; }
 			<div class="row signinbtns">
 			{{ if .OauthWriteAs }}
 				<div class="section oauth-provider">
-					<a class="btn cta loginbtn" id="writeas-login" href="/oauth/write.as?attach=t">
-						<img src="/img/mark/writeas-white.png" alt="Write.as" />
+					<a class="btn cta loginbtn" id="writeas-login" href="oauth/write.as?attach=t">
+						<img src="img/mark/writeas-white.png" alt="Write.as" />
 						Link <strong>Write.as</strong>
 					</a>
 				</div>
 			{{ end }}
 			{{ if .OauthSlack }}
 				<div class="section oauth-provider">
-					<a class="btn cta loginbtn" id="slack-login" href="/oauth/slack?attach=t">
-						<img src="/img/mark/slack.png" alt="Slack" />
+					<a class="btn cta loginbtn" id="slack-login" href="oauth/slack?attach=t">
+						<img src="img/mark/slack.png" alt="Slack" />
 						Link <strong>Slack</strong>
 					</a>
 				</div>
 			{{ end }}
 			{{ if .OauthGitLab }}
 				<div class="section oauth-provider">
-					<a class="btn cta loginbtn" id="gitlab-login" href="/oauth/gitlab?attach=t">
-						<img src="/img/mark/gitlab.png" alt="GitLab" />
+					<a class="btn cta loginbtn" id="gitlab-login" href="oauth/gitlab?attach=t">
+						<img src="img/mark/gitlab.png" alt="GitLab" />
 						Link <strong>{{.GitLabDisplayName}}</strong>
 					</a>
 				</div>
 			{{ end }}
 			{{ if .OauthGitea }}
 				<div class="section oauth-provider">
-					<a class="btn cta loginbtn" id="gitea-login" href="/oauth/gitea?attach=t">
-						<img src="/img/mark/gitea.png" alt="Gitea" />
+					<a class="btn cta loginbtn" id="gitea-login" href="oauth/gitea?attach=t">
+						<img src="img/mark/gitea.png" alt="Gitea" />
 						Link <strong>{{.GiteaDisplayName}}</strong>
 					</a>
 				</div>
 			{{ end }}
 			{{ if .OauthGeneric }}
 				<div class="section oauth-provider">
-					<a class="btn cta loginbtn" id="generic-oauth-login" href="/oauth/generic?attach=t">
+					<a class="btn cta loginbtn" id="generic-oauth-login" href="oauth/generic?attach=t">
 						Link <strong>{{ .OauthGenericDisplayName }}</strong>
 					</a>
 				</div>
@@ -175,12 +175,12 @@ h3 { font-weight: normal; }
 <div id="modal-delete-user" class="modal">
 	<h2>Are you sure?</h2>
 	<div class="body">
-		<p style="text-align:left">This action <strong>cannot</strong> be undone. It will immediately and permanently erase your account, including your blogs and posts. Before continuing, you might want to <a href="/me/export">export your data</a>.</p>
+		<p style="text-align:left">This action <strong>cannot</strong> be undone. It will immediately and permanently erase your account, including your blogs and posts. Before continuing, you might want to <a href="me/export">export your data</a>.</p>
 		<p>If you're sure, please type <strong>{{.Username}}</strong> to confirm.</p>
 
 		<ul id="delete-errors" class="errors"></ul>
 
-		<form action="/me/delete" method="post" onsubmit="confirmDeletion()">
+		<form action="me/delete" method="post" onsubmit="confirmDeletion()">
 			{{ .CSRFField }}
 			<input id="confirm-text" placeholder="{{.Username}}" type="text" class="confirm boxy" name="confirm-username" style="margin-top: 0.5em;" />
 			<div style="text-align:right; margin-top: 1em;">
@@ -190,8 +190,8 @@ h3 { font-weight: normal; }
 	</div>
 </div>
 
-<script src="/js/h.js"></script>
-<script src="/js/modals.js"></script>
+<script src="js/h.js"></script>
+<script src="js/modals.js"></script>
 <script>
 var showChecks = document.querySelectorAll('input.show');
 for (var i=0; i<showChecks.length; i++) {
