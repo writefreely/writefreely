@@ -700,7 +700,7 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 			ownerCollID.Valid = true
 			var slugVal string
 			if post.Slug != nil && *post.Slug != "" {
-				slugVal = *post.Slug
+				slugVal = getSlug(*post.Slug, post.Language.String)
 			} else {
 				if post.Title != nil && *post.Title != "" {
 					slugVal = getSlug(*post.Title, post.Language.String)
