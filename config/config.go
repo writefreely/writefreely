@@ -311,5 +311,9 @@ func Save(uc *Config, fname string) error {
 	if fname == "" {
 		fname = FileName
 	}
-	return cfg.SaveTo(fname)
+	err = cfg.SaveTo(fname)
+	if err != nil {
+		return err
+	}
+	return os.Chmod(fname, 0600)
 }
