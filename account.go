@@ -1107,6 +1107,9 @@ func handleViewSubscribers(app *App, u *User, w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return err
 	}
+	if u.ID != c.OwnerID {
+		return ErrCollectionNotFound
+	}
 
 	filter := r.FormValue("filter")
 
