@@ -32,6 +32,13 @@ function initMonetization() {
         return
     }
 
+    const link = document.querySelector('link[rel="monetization"]')
+    if (link.relList.supports('monetization')) {
+        link.addEventListener('monetization', (ev) => {
+            document.getElementById('exclusive').classList.remove('hidden')
+        })
+    }
+
     document.monetization.addEventListener('monetizationstop', function(event) {
         if (pendingSplitContent) {
             // We've seen the 'pending' activity, so we can assume things will work
