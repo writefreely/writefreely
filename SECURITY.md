@@ -2,4 +2,4 @@
 
 ## Reporting a Vulnerability
 
-To report a vulnerability, send an email to security@writefreely.org.
+You can report a vulnerability using GitHub's [Security advisory](https://github.com/writefreely/writefreely/security) tools.

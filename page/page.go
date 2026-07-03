@@ -12,8 +12,9 @@
 package page
 
 import (
-	"github.com/writefreely/writefreely/config"
 	"strings"
+
+	"github.com/writefreely/writefreely/config"
 )
 
 type StaticPage struct {

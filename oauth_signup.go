@@ -14,14 +14,15 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/writeas/impart"
-	"github.com/writeas/web-core/auth"
-	"github.com/writeas/web-core/log"
-	"github.com/writefreely/writefreely/page"
 	"html/template"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/writeas/impart"
+	"github.com/writeas/web-core/auth"
+	"github.com/writeas/web-core/log"
+	"github.com/writefreely/writefreely/page"
 )
 
 type viewOauthSignupVars struct {

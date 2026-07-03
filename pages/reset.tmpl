@@ -31,7 +31,7 @@ label {
 		<form method="post" action="/reset" onsubmit="disableSubmit()">
 			<label>
 				<p>New Password</p>
-				<input type="password" name="new-pass" autocomplete="new-password" placeholder="New password" tabindex="1" />
+				<input type="password" name="new-pass" maxlength="72" autocomplete="new-password" placeholder="New password" tabindex="1" />
 			</label>
 			<input type="hidden" name="t" value="{{.Token}}" />
 			<input type="submit" id="btn-login" value="Reset Password" />

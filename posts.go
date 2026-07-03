@@ -38,7 +38,6 @@ import (
 	"github.com/writeas/web-core/tags"
 	"github.com/writefreely/writefreely/page"
 	"github.com/writefreely/writefreely/parse"
-	"github.com/writefreely/writefreely/spam"
 )
 
 const (
@@ -48,7 +47,7 @@ const (
 	userPostIDLen = 10
 	postIDLen     = 10
 
-	postMetaDateFormat = "2006-01-02 15:04:05"
+	postMetaDateFormat = "2006-01-02T15:04:05Z"
 )
 
 type PostType string
@@ -56,9 +55,10 @@ type PostType string
 const (
 	postArch PostType = "archive"
 
-	shortCodeMore  = "<!--more-->"
-	shortCodePaid  = "<!--paid-->"
-	shortCodeNoSig = "<!--nosig-->"
+	shortCodeMore     = "<!--more-->"
+	shortCodePaid     = "<!--paid-->"
+	shortCodeNoSig    = "<!--nosig-->"
+	shortCodeEmailSub = "<!--emailsub-->"
 )
 
 type (
@@ -219,8 +219,9 @@ func (p *Post) DisplayTitle() string {
 	return t
 }
 
-// PlainDisplayTitle dynamically generates a title from the Post's contents if it
-// doesn't already have an explicit title.
+// PlainDisplayTitle strips away Markdown from the generated Post's title (if
+// any), for use in places like RSS feeds and ActivityStreams objects, where
+// the raw Markdown would be unwanted.
 func (p *Post) PlainDisplayTitle() string {
 	if t := stripmd.Strip(p.DisplayTitle()); t != "" {
 		return t
@@ -1233,13 +1234,18 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 	o.CC = []string{
 		p.Collection.FederatedAccount() + "/followers",
 	}
-	o.Name = p.DisplayTitle()
+	o.Name = p.PlainDisplayTitle()
 	p.augmentContent()
 	if p.HTMLContent == template.HTML("") {
 		p.formatContent(cfg, false, false)
 		p.augmentReadingDestination()
 	}
 	o.Content = string(p.HTMLContent)
+	if o.Type == "Note" && p.Title.String != "" {
+		// Render the explicitly-set title inside the Note, since Mastodon (at least) doesn't show the `name`
+		// property on Notes.
+		o.Content = "<h1>" + applyBasicMarkdown([]byte(p.DisplayTitle())) + "</h1>\n\n" + o.Content
+	}
 	if p.Language.Valid {
 		o.ContentMap = map[string]string{
 			p.Language.String: string(p.HTMLContent),
@@ -1280,7 +1286,7 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 
 	for _, handle := range mentions {
 		actorIRI, err := app.db.GetProfilePageFromHandle(app, handle)
-		if err != nil {
+		if err != nil || actorIRI == "" {
 			log.Info("Couldn't find user '%s' locally or remotely", handle)
 			continue
 		}
@@ -1631,9 +1637,9 @@ Are you sure it was ever here?` + shortCodeNoSig,
 		if app.cfg.Email.Enabled() && c.EmailSubsEnabled() {
 			// TODO: indicate plan is inactive or subs disabled when OWNER is viewing their own post.
 			if u != nil && u.IsEmailSubscriber(app, c.ID) {
-				p.Content = strings.Replace(p.Content, "<!--emailsub-->", `<p id="emailsub">You're subscribed to email updates. <a href="/api/collections/`+c.Alias+`/email/unsubscribe?slug=`+p.Slug.String+`">Unsubscribe</a>.</p>`, -1)
+				p.Content = strings.Replace(p.Content, shortCodeEmailSub, `<p id="emailsub">You're subscribed to email updates. <a href="/api/collections/`+c.Alias+`/email/unsubscribe?slug=`+p.Slug.String+`">Unsubscribe</a>.</p>`, -1)
 			} else {
-				p.Content = strings.Replace(p.Content, "<!--emailsub-->", `<form method="post" id="emailsub" action="/api/collections/`+c.Alias+`/email/subscribe"><input type="hidden" name="slug" value="`+p.Slug.String+`" /><input type="hidden" name="web" value="1" /><div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="email" name="`+spam.HoneypotFieldName()+`" tabindex="-1" value="" /><input type="password" name="fake_password" tabindex="-1" placeholder="password" autocomplete="new-password" /></div><input type="email" name="email" placeholder="me@example.com" /><input type="submit" id="subscribe-btn" value="Subscribe" /></form>`, -1)
+				p.Content = alterShortCodeEmailSubForm(p.Content, c.Alias, p.Slug.String, false)
 			}
 		}
 		p.Content = strings.Replace(p.Content, "&lt;!--emailsub-->", "<!--emailsub-->", 1)

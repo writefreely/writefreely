@@ -8,18 +8,18 @@ require (
 	github.com/facebookgo/ensure v0.0.0-20200202191622-63f1cf65ac4c // indirect
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 // indirect
-	github.com/fatih/color v1.17.0
+	github.com/fatih/color v1.19.0
 	github.com/go-ini/ini v1.67.0
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/go-test/deep v1.0.1 // indirect
 	github.com/gobuffalo/envy v1.9.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
-	github.com/gorilla/csrf v1.7.2
+	github.com/gorilla/csrf v1.7.3
 	github.com/gorilla/feeds v1.1.2
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/schema v1.4.1
 	github.com/gorilla/sessions v1.3.0
-	github.com/gosimple/slug v1.14.0
+	github.com/gosimple/slug v1.15.0
 	github.com/guregu/null v4.0.0+incompatible
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/ikeikeikeike/go-sitemap-generator/v2 v2.0.2
@@ -49,8 +49,8 @@ require (
 	github.com/writeas/web-core v1.7.1-0.20260220200703-91ebade091c4
 	github.com/writefreely/go-gopher v0.0.0-20220429181814-40127126f83b
 	github.com/writefreely/go-nodeinfo v1.2.0
-	golang.org/x/crypto v0.45.0
-	golang.org/x/net v0.47.0
+	golang.org/x/crypto v0.53.0
+	golang.org/x/net v0.55.0
 )
 
 require github.com/xhit/go-simple-mail/v2 v2.16.0
@@ -75,7 +75,7 @@ require (
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -89,12 +89,10 @@ require (
 	github.com/writeas/openssl-go v1.0.0 // indirect
 	github.com/writeas/slug v1.2.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
-	golang.org/x/sys v0.38.0 // indirect
-	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-go 1.24.0
-
-toolchain go1.24.5
+go 1.25.0

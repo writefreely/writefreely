@@ -3,7 +3,7 @@
 	<head>
 
 		<title>Edit metadata: {{if .Post.Title}}{{.Post.Title}}{{else}}{{.Post.Id}}{{end}} &mdash; {{.SiteName}}</title>
-		
+
 		<link rel="stylesheet" type="text/css" href="/css/write.css" />
 		{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -36,7 +36,7 @@
 
 	</head>
 	<body id="pad-sub" class="light">
-		
+
 		<header id="tools">
 			<div id="clip">
 				<h1><a href="/me/c/" title="View blogs"><img class="ic-24dp" src="/img/ic_blogs_dark@2x.png" /></a></h1>
@@ -50,7 +50,7 @@
 				<div class="tool if-room room-1"><a href="/me/posts/" title="View posts" id="view-posts"><img class="ic-24dp" src="/img/ic_list_dark@2x.png" /></a></div>
 			</div>
 		</header>
-		
+
 		<div class="content-container tight">
 			<form action="/api/{{if .EditCollection}}collections/{{.EditCollection.Alias}}/{{end}}posts/{{.Post.Id}}" method="post" onsubmit="return updateMeta()">
 				<h2>Edit metadata: {{if .Post.Title}}{{.Post.Title}}{{else}}{{.Post.Id}}{{end}} <a href="/{{if .EditCollection}}{{if not .SingleUser}}{{.EditCollection.Alias}}/{{end}}{{.Post.Slug}}{{else}}{{if .SingleUser}}d/{{end}}{{.Post.Id}}{{end}}">view post</a></h2>
@@ -258,15 +258,25 @@
 					<dd><input type="checkbox" id="rtl" name="rtl" {{if .Post.IsRTL.Bool}}checked="checked"{{end}} /><label for="rtl"> right-to-left</label></dd>
 					<dt><label for="created">Created</label></dt>
 					<dd>
-						<input type="text" id="created" name="created" value="{{.Post.UserFacingCreated}}" data-time="{{.Post.Created8601}}" placeholder="YYYY-MM-DD HH:MM:SS" maxlength="19" /> <span id="tz">UTC</span> <a href="#" id="set-now">now</a>
+                        <input type="datetime-local" id="created" name="created" value="{{.Post.UserFacingCreated}}" data-time="{{.Post.Created8601}}" step="1" /> <span id="tz">UTC</span> <a href="#" id="set-now">now</a>
 						<p class="error" id="create-error">Date format should be: <span class="mono"><abbr title="The full year">YYYY</abbr>-<abbr title="The numeric month of the year, where January = 1, with a zero in front if less than 10">MM</abbr>-<abbr title="The day of the month, with a zero in front if less than 10">DD</abbr> <abbr title="The hour (00-23), with a zero in front if less than 10.">HH</abbr>:<abbr title="The minute of the hour (00-59), with a zero in front if less than 10.">MM</abbr>:<abbr title="The seconds (00-59), with a zero in front if less than 10.">SS</abbr></span></p>
 					</dd>
+                    <dt><label for="lang">Font</label></dt>
+                    <dd>
+                        <select name="font" id="font" dir="auto" class="inputform">
+                            <option value="norm" {{if eq .Post.Font "norm"}}selected="selected"{{end}}>Serif</option>
+                            <option class="sans" value="sans" {{if eq .Post.Font "sans"}}selected="selected"{{end}}>Sans-Serif</option>
+                            <option class="mono" value="wrap" {{if eq .Post.Font "wrap"}}selected="selected"{{end}}>Monospace</option>
+                            <option class="mono" value="mono" {{if eq .Post.Font "mono"}}selected="selected"{{end}}>No-wrap Monospace</option>
+                            <option class="mono" value="code" {{if eq .Post.Font "code"}}selected="selected"{{end}}>Code</option>
+                        </select>
+                    </dd>
 					<dt>&nbsp;</dt><dd><input type="submit" value="Save changes" /></dd>
 				</dl>
 				<input type="hidden" name="web" value="true" />
 			</form>
 		</div>
-		
+
 		<script src="/js/h.js"></script>
 		<script>
 function updateMeta() {
@@ -276,16 +286,10 @@ function updateMeta() {
 	}
 	document.getElementById('create-error').style.display = 'none';
 	var $created = document.getElementById('created');
-	var dateStr = $created.value.trim();
-	var m = dateStr.match(/^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}( [0-9]{1,2}:[0-9]{1,2}(:[0-9]{1,2})?)?$/);
-	if (!m) {
-		document.getElementById('create-error').style.display = 'block';
-		return false;
-	}
-	// Break up the date and parse. This ensures cross-browser compatibility
-	var p = dateStr.split(/[^0-9]/);
-	var d = new Date(p[0], p[1]-1, p[2], p[3] ? p[3] : 0, p[4] ? p[4] : 0, p[5] ? p[5] : 0);
-	$created.value = d.getUTCFullYear() + '-' + ('0' + (d.getUTCMonth()+1)).slice(-2) + '-' + ('0' + d.getUTCDate()).slice(-2)+' '+('0'+d.getUTCHours()).slice(-2)+':'+('0'+d.getUTCMinutes()).slice(-2)+':'+('0'+d.getUTCSeconds()).slice(-2);
+    let finalDate = (new Date($created.value)).toISOString().slice(0,-5);
+    // Change the type to ensure the browser doesn't complain about adding the "Z" for UTC and conforming to our API
+    $created.type = "text";
+    $created.value = finalDate+"Z";
 	var $tz = document.getElementById('tz');
 	$tz.style.display = "inline";
 	var $submit = document.querySelector('input[type=submit]');

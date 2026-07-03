@@ -882,8 +882,13 @@ func shutdown(app *App) {
 		log.Info("Removing socket file...")
 		err := os.Remove(app.cfg.Server.Bind)
 		if err != nil {
-			log.Error("Unable to remove socket: %s", err)
-			os.Exit(1)
+			if os.IsNotExist(err) {
+				// Safely ignore, in cases like initializing / migrating DB (see #790)
+				log.Info("No socket file; ignoring...")
+			} else {
+				log.Error("Unable to remove socket: %s", err)
+				os.Exit(1)
+			}
 		}
 		log.Info("Success.")
 	}
@@ -922,6 +927,10 @@ func CreateUser(apper Apper, username, password string, isAdmin bool) error {
 
 	if !author.IsValidUsername(apper.App().cfg, username) {
 		return fmt.Errorf("Username %s is invalid, reserved, or shorter than configured minimum length (%d characters).", usernameDesc, apper.App().cfg.App.MinUsernameLen)
+	}
+
+	if len(password) > maxPassByteLen {
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Password is longer than %d characters", maxPassByteLen)}
 	}
 
 	// Hash the password
