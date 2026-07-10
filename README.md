@@ -64,6 +64,10 @@ WriteFreely deploys as a static binary on any platform and architecture that Go 
 
 For common platforms, start with our [pre-built binaries](https://github.com/writefreely/writefreely/releases/) and head over to our [installation guide](https://writefreely.org/start) to get started.
 
+Prefer not to run a server? Deploy a fully managed instance with one click:
+
+[![Deploy with Zenith](https://cdn.zenith.hosting/buttons/deploy-with-zenith.svg)](https://zenith.hosting/host/writefreely)
+
 ### Packages
 
 You can also find WriteFreely in these package repositories, thanks to our wonderful community!
