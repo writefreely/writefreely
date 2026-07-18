@@ -2910,14 +2910,18 @@ func (db *datastore) GetAllUsersCount() int64 {
 	return count
 }
 
-// GetUsersFiltered returns all non-admin users matching the given filters,
-// each paired with their post count. It intentionally omits pagination: it's
-// used by the `users` moderation command, which needs the full matching set in
-// a single pass. Admins are always excluded so bulk actions can never affect
-// them.
+// GetUsersFiltered returns users matching the given filters, each paired with
+// their post count. It intentionally omits pagination: it's used by the `users`
+// moderation command, which needs the full matching set in a single pass.
+// Admins are excluded unless f.IncludeAdmins is set (listing only) so bulk
+// silence/delete actions can never affect them.
 func (db *datastore) GetUsersFiltered(f UserFilter) ([]FilteredUser, error) {
-	where := []string{"u.id != 1"}
+	var where []string
 	var params []interface{}
+
+	if !f.IncludeAdmins {
+		where = append(where, "u.id != 1")
+	}
 
 	if f.Since != nil {
 		where = append(where, "u.created >= ?")
@@ -2940,7 +2944,11 @@ func (db *datastore) GetUsersFiltered(f UserFilter) ([]FilteredUser, error) {
 
 	q := "SELECT u.id, u.username, u.created, u.status, " +
 		"(SELECT COUNT(*) FROM posts p WHERE p.owner_id = u.id) AS post_count " +
-		"FROM users u WHERE " + strings.Join(where, " AND ") + " ORDER BY u.created ASC"
+		"FROM users u"
+	if len(where) > 0 {
+		q += " WHERE " + strings.Join(where, " AND ")
+	}
+	q += " ORDER BY u.created ASC"
 
 	rows, err := db.Query(q, params...)
 	if err != nil {

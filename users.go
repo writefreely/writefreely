@@ -93,10 +93,11 @@ type (
 	// moderation actions (see ModerateUsers). A zero value matches all
 	// non-admin users.
 	UserFilter struct {
-		Since, Until *time.Time // account creation window
-		NoInvite     bool       // only users who signed up without an invite
-		NoOAuth      bool       // only users who didn't register via OAuth
-		MaxPosts     int        // only users with at most this many posts; -1 = no limit
+		Since, Until  *time.Time // account creation window
+		NoInvite      bool       // only users who signed up without an invite
+		NoOAuth       bool       // only users who didn't register via OAuth
+		MaxPosts      int        // only users with at most this many posts; -1 = no limit
+		IncludeAdmins bool       // include admins in results (listing only; never for silence/delete)
 	}
 
 	// FilteredUser pairs a matched user with their post count, for display

@@ -869,6 +869,10 @@ func ModerateUsers(apper Apper, filter UserFilter, action UserAction) error {
 
 	app := apper.App()
 
+	// Admins are only ever included when listing; silence/delete must never
+	// touch them, regardless of the filter passed in.
+	filter.IncludeAdmins = action == ActionList
+
 	users, err := app.db.GetUsersFiltered(filter)
 	if err != nil {
 		log.Error("%s", err)
@@ -882,7 +886,9 @@ func ModerateUsers(apper Apper, filter UserFilter, action UserAction) error {
 		fmt.Fprintln(w, "ID\tUSERNAME\tCREATED\tPOSTS\tSTATUS")
 		for _, u := range users {
 			status := ""
-			if u.IsSilenced() {
+			if u.IsAdmin() {
+				status = "admin"
+			} else if u.IsSilenced() {
 				status = "silenced"
 			}
 			fmt.Fprintf(w, "%d\t%s\t%s\t%d\t%s\n", u.ID, u.Username, u.Created.Format("2006-01-02 15:04 MST"), u.PostCount, status)
