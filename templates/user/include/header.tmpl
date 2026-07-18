@@ -105,13 +105,13 @@
 		<a href="/admin" {{if eq .Path "/admin"}}class="selected"{{end}}>Dashboard</a>
 		<a href="/admin/settings" {{if eq .Path "/admin/settings"}}class="selected"{{end}}>Settings</a>
 		{{if not .SingleUser}}
-		<a href="/admin/users" {{if eq .Path "/admin/users"}}class="selected"{{end}}>Users</a>
-		<a href="/admin/pages" {{if eq .Path "/admin/pages"}}class="selected"{{end}}>Pages</a>
+			<a href="/admin/users" {{if eq .Path "/admin/users"}}class="selected"{{end}}>Users</a>
+			<a href="/admin/pages" {{if eq .Path "/admin/pages"}}class="selected"{{end}}>Pages</a>
 		{{end}}
 		{{if .UpdateChecks}}<a href="/admin/updates" {{if eq .Path "/admin/updates"}}class="selected"{{end}}>Updates{{if .UpdateAvailable}}<span class="blip">!</span>{{end}}</a>{{end}}
-		{{if not .Forest}}
-		<a href="/admin/monitor" {{if eq .Path "/admin/monitor"}}class="selected"{{end}}>Monitor</a>
-		{{end}}
+		{{if not .Forest -}}
+			<a href="/admin/monitor" {{if eq .Path "/admin/monitor"}}class="selected"{{end}}>Monitor</a>
+		{{- end}}
 	</nav>
 </header>
 {{end}}
