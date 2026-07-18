@@ -2940,7 +2940,7 @@ func (db *datastore) GetUsersFiltered(f UserFilter) ([]FilteredUser, error) {
 
 	q := "SELECT u.id, u.username, u.created, u.status, " +
 		"(SELECT COUNT(*) FROM posts p WHERE p.owner_id = u.id) AS post_count " +
-		"FROM users u WHERE " + strings.Join(where, " AND ") + " ORDER BY u.created DESC"
+		"FROM users u WHERE " + strings.Join(where, " AND ") + " ORDER BY u.created ASC"
 
 	rows, err := db.Query(q, params...)
 	if err != nil {
