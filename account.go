@@ -596,7 +596,11 @@ func getVerboseAuthUser(app *App, token string, u *User, verbose bool) *AuthUser
 
 func viewExportOptions(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	// Fetch extra user data
-	p := NewUserPage(app, r, u, "Export", nil)
+	p := struct {
+		*UserPage
+	}{
+		UserPage: NewUserPage(app, r, u, "Export", nil),
+	}
 
 	showUserPage(w, "export", p)
 	return nil
