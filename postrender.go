@@ -31,6 +31,7 @@ import (
 	"github.com/writeas/web-core/stringmanip"
 	"github.com/writefreely/writefreely/config"
 	"github.com/writefreely/writefreely/parse"
+	"github.com/writefreely/writefreely/spam"
 )
 
 var (
@@ -272,7 +273,9 @@ func getSanitizationPolicy() *bluemonday.Policy {
 	policy.AllowAttrs("style", "class", "id").Globally()
 	policy.AllowAttrs("alt").OnElements("img")
 	policy.AllowElements("header", "footer")
-	policy.AllowURLSchemes("http", "https", "mailto", "xmpp")
+	policy.AllowAttrs("method", "action").OnElements("form")
+	policy.AllowAttrs("type", "name", "value", "placeholder").OnElements("input")
+	policy.AllowURLSchemes("http", "https", "mailto", "xmpp", "gopher", "gophers", "gemini", "spartan")
 	return policy
 }
 
@@ -353,11 +356,26 @@ func handleRenderMarkdown(app *App, w http.ResponseWriter, r *http.Request) erro
 		return ErrBadJSON
 	}
 
+	body := in.RawBody
+	if in.CollectionURL != "" {
+		body = strings.Replace(body, shortCodeMore, `<a href="/">Read more...</a>`, 1)
+		body = alterShortCodeEmailSubForm(body, "example", "slug", true)
+	}
+	rendered := applyMarkdown([]byte(in.RawBody), in.CollectionURL, app.cfg)
 	out := struct {
 		Body string `json:"body"`
 	}{
-		Body: applyMarkdown([]byte(in.RawBody), in.CollectionURL, app.cfg),
+		Body: rendered,
 	}
 
 	return impart.WriteSuccess(w, out, http.StatusOK)
+}
+
+func alterShortCodeEmailSubForm(postContent, alias, slug string, isDisabled bool) string {
+	subURL := `/api/collections/` + alias + `/email/subscribe`
+	if isDisabled {
+		subURL = ""
+	}
+	formHTML := `<form method="post" id="emailsub" action="` + subURL + `"><input type="hidden" name="slug" value="` + slug + `" /><input type="hidden" name="web" value="1" /><div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="email" name="` + spam.HoneypotFieldName() + `" tabindex="-1" value="" /><input type="password" name="fake_password" tabindex="-1" placeholder="password" autocomplete="new-password" /></div><input type="email" name="email" placeholder="me@example.com" /><input type="submit" id="subscribe-btn" value="Subscribe" /></form>`
+	return strings.Replace(postContent, shortCodeEmailSub, formHTML, -1)
 }

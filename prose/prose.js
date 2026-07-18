@@ -118,3 +118,4 @@ class ProseMirrorView {
 
 let place = document.querySelector("#editor");
 let view = new ProseMirrorView(place, $content.value);
+window.editorView = view;

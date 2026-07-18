@@ -12,10 +12,11 @@ package writefreely
 
 import (
 	"encoding/gob"
-	"github.com/gorilla/sessions"
-	"github.com/writeas/web-core/log"
 	"net/http"
 	"strings"
+
+	"github.com/gorilla/sessions"
+	"github.com/writeas/web-core/log"
 )
 
 const (

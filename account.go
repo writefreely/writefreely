@@ -13,8 +13,6 @@ package writefreely
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/writefreely/writefreely/mailer"
-	"github.com/writefreely/writefreely/spam"
 	"html/template"
 	"net/http"
 	"regexp"
@@ -33,7 +31,9 @@ import (
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/writefreely/author"
 	"github.com/writefreely/writefreely/config"
+	"github.com/writefreely/writefreely/mailer"
 	"github.com/writefreely/writefreely/page"
+	"github.com/writefreely/writefreely/spam"
 )
 
 type (
@@ -55,6 +55,8 @@ type (
 		CollAlias string
 	}
 )
+
+const maxPassByteLen = 72
 
 func NewUserPage(app *App, r *http.Request, u *User, title string, flashes []string) *UserPage {
 	up := &UserPage{
@@ -862,6 +864,7 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		return err
 	}
+	c.hostName = app.cfg.App.Host
 	if c.OwnerID != u.ID {
 		return ErrCollectionNotFound
 	}
@@ -1103,6 +1106,9 @@ func handleViewSubscribers(app *App, u *User, w http.ResponseWriter, r *http.Req
 	c, err := app.db.GetCollection(vars["collection"])
 	if err != nil {
 		return err
+	}
+	if u.ID != c.OwnerID {
+		return ErrCollectionNotFound
 	}
 
 	filter := r.FormValue("filter")

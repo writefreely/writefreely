@@ -1,8 +1,9 @@
 package writefreely
 
 import (
-	"github.com/writeas/web-core/log"
 	"time"
+
+	"github.com/writeas/web-core/log"
 )
 
 type PostJob struct {

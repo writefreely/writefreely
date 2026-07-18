@@ -1555,7 +1555,12 @@ ORDER BY created `+order+limitStr, collID, lang)
 }
 
 func (db *datastore) GetAPFollowers(c *Collection) (*[]RemoteUser, error) {
-	rows, err := db.Query("SELECT actor_id, inbox, shared_inbox, f.created FROM remotefollows f INNER JOIN remoteusers u ON f.remote_user_id = u.id WHERE collection_id = ?", c.ID)
+	rows, err := db.Query(`SELECT actor_id, inbox, shared_inbox, f.created
+FROM remotefollows f
+INNER JOIN remoteusers u
+  ON f.remote_user_id = u.id
+WHERE collection_id = ?
+ORDER BY created DESC`, c.ID)
 	if err != nil {
 		log.Error("Failed selecting from followers: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve followers."}
@@ -1928,17 +1933,18 @@ func (db *datastore) GetPinnedPosts(coll *CollectionObj, includeFuture bool) (*[
 }
 
 func (db *datastore) GetCollections(u *User, hostName string) (*[]Collection, error) {
-	rows, err := db.Query("SELECT id, alias, title, description, privacy, view_count FROM collections WHERE owner_id = ? ORDER BY id ASC", u.ID)
+	rows, err := db.Query("SELECT id, alias, title, description, style_sheet, script, privacy, view_count FROM collections WHERE owner_id = ? ORDER BY id ASC", u.ID)
 	if err != nil {
 		log.Error("Failed selecting from collections: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve user collections."}
 	}
 	defer rows.Close()
 
+	var styleVal, scriptVal sql.NullString
 	colls := []Collection{}
 	for rows.Next() {
 		c := Collection{}
-		err = rows.Scan(&c.ID, &c.Alias, &c.Title, &c.Description, &c.Visibility, &c.Views)
+		err = rows.Scan(&c.ID, &c.Alias, &c.Title, &c.Description, &styleVal, &scriptVal, &c.Visibility, &c.Views)
 		if err != nil {
 			log.Error("Failed scanning row: %v", err)
 			break
@@ -1946,6 +1952,8 @@ func (db *datastore) GetCollections(u *User, hostName string) (*[]Collection, er
 		c.hostName = hostName
 		c.URL = c.CanonicalURL()
 		c.Public = c.IsPublic()
+		c.StyleSheet = styleVal.String
+		c.Script = scriptVal.String
 
 		/*
 			// NOTE: future functionality
@@ -2313,6 +2321,11 @@ func (db *datastore) ChangeSettings(app *App, u *User, s *userSettings) error {
 		u.HasPass, err = db.IsUserPassSet(u.ID)
 		if err != nil {
 			errPass = impart.HTTPError{http.StatusInternalServerError, "Unable to retrieve user data."}
+			return errPass
+		}
+
+		if len(s.NewPass) > maxPassByteLen {
+			errPass = impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Password is longer than %d characters", maxPassByteLen)}
 			return errPass
 		}
 
