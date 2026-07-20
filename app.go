@@ -389,6 +389,9 @@ func pageForReq(app *App, r *http.Request) page.StaticPage {
 			p.Username = u.Username
 			p.IsAdmin = u != nil && u.IsAdmin()
 			p.CanInvite = canUserInvite(app.cfg, p.IsAdmin)
+			if p.IsAdmin && app.updates != nil {
+				p.UpdateAvailable = app.updates.AreAvailableNoCheck()
+			}
 		}
 	}
 	p.CanViewReader = !app.cfg.App.Private || u != nil
