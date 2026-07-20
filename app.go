@@ -25,6 +25,7 @@ import (
 	"regexp"
 	"strings"
 	"syscall"
+	"text/tabwriter"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -841,6 +842,118 @@ func DoDeleteAccount(apper Apper, username string) error {
 		os.Exit(1)
 	}
 	log.Info("Success.")
+	return nil
+}
+
+// UserAction is a bulk moderation action applied to a filtered set of users.
+type UserAction int
+
+const (
+	// ActionList only prints matching users, changing nothing.
+	ActionList UserAction = iota
+	// ActionSilence silences all matching users.
+	ActionSilence
+	// ActionDelete permanently deletes all matching users and their content.
+	ActionDelete
+)
+
+// ModerateUsers lists users matching the given filter and, when action is
+// ActionSilence or ActionDelete, applies that action to the whole set after a
+// single confirmation prompt. It's the backend for the `users` command,
+// intended for cleaning up waves of spam signups.
+func ModerateUsers(apper Apper, filter UserFilter, action UserAction) error {
+	// Connect to the database
+	apper.LoadConfig()
+	connectToDatabase(apper.App())
+	defer shutdown(apper.App())
+
+	app := apper.App()
+
+	// Admins are only ever included when listing; silence/delete must never
+	// touch them, regardless of the filter passed in.
+	filter.IncludeAdmins = action == ActionList
+
+	users, err := app.db.GetUsersFiltered(filter)
+	if err != nil {
+		log.Error("%s", err)
+		os.Exit(1)
+	}
+
+	// Print the matching users
+	fmt.Printf("Matched %d users:\n", len(users))
+	if len(users) > 0 {
+		w := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+		fmt.Fprintln(w, "ID\tUSERNAME\tCREATED\tPOSTS\tSTATUS")
+		for _, u := range users {
+			status := ""
+			if u.IsAdmin() {
+				status = "admin"
+			} else if u.IsSilenced() {
+				status = "silenced"
+			}
+			fmt.Fprintf(w, "%d\t%s\t%s\t%d\t%s\n", u.ID, u.Username, u.Created.Format("2006-01-02 15:04 MST"), u.PostCount, status)
+		}
+		w.Flush()
+	}
+	fmt.Printf("(%d total)\n", len(users))
+
+	// List-only: nothing more to do
+	if action == ActionList {
+		return nil
+	}
+
+	// Nothing to act on
+	if len(users) == 0 {
+		log.Info("No users to act on.")
+		return nil
+	}
+
+	// Confirm the action, echoing the count and verb
+	verb := "SILENCE"
+	if action == ActionDelete {
+		verb = "DELETE"
+	}
+	label := fmt.Sprintf("Really %s %d users", verb, len(users))
+	if action == ActionDelete {
+		label += " and all their content? This cannot be undone"
+	}
+	prompt := promptui.Prompt{
+		Templates: &promptui.PromptTemplates{
+			Success: "{{ . | bold | faint }}: ",
+		},
+		Label:     label,
+		IsConfirm: true,
+	}
+	if _, err = prompt.Run(); err != nil {
+		log.Info("Aborted...")
+		return nil
+	}
+
+	// Apply the action, isolating per-user errors so one failure doesn't
+	// halt the whole batch.
+	log.Info("Working...")
+	var done, failed int
+	for _, u := range users {
+		switch action {
+		case ActionSilence:
+			err = app.db.SetUserStatus(u.ID, UserSilenced)
+		case ActionDelete:
+			err = app.db.DeleteAccount(u.ID)
+		}
+		if err != nil {
+			log.Error("Failed on user %s (%d): %v", u.Username, u.ID, err)
+			failed++
+			continue
+		}
+		done++
+	}
+
+	// Silenced users' posts may be cached in the timeline; refresh it once.
+	if action == ActionSilence && done > 0 && app.timeline != nil {
+		updateTimelineCache(app.timeline, true)
+	}
+
+	log.Info("Done. %d/%d succeeded, %d errors.", done, len(users), failed)
 	return nil
 }
 
