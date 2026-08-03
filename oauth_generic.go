@@ -22,18 +22,19 @@ import (
 )
 
 type genericOauthClient struct {
-	ClientID         string
-	ClientSecret     string
-	AuthLocation     string
-	ExchangeLocation string
-	InspectLocation  string
-	CallbackLocation string
-	Scope            string
-	MapUserID        string
-	MapUsername      string
-	MapDisplayName   string
-	MapEmail         string
-	HttpClient       HttpClient
+	ClientID           string
+	ClientSecret       string
+	AuthUseRequestBody bool
+	AuthLocation       string
+	ExchangeLocation   string
+	InspectLocation    string
+	CallbackLocation   string
+	Scope              string
+	MapUserID          string
+	MapUsername        string
+	MapDisplayName     string
+	MapEmail           string
+	HttpClient         HttpClient
 }
 
 var _ oauthClient = genericOauthClient{}
@@ -71,8 +72,10 @@ func (c genericOauthClient) buildLoginURL(state string) (string, error) {
 
 func (c genericOauthClient) exchangeOauthCode(ctx context.Context, code string) (*TokenResponse, error) {
 	form := url.Values{}
-	form.Add("client_id", c.ClientID)
-	form.Add("client_secret", c.ClientSecret)
+	if c.AuthUseRequestBody {
+		form.Add("client_id", c.ClientID)
+		form.Add("client_secret", c.ClientSecret)
+	}
 	form.Add("grant_type", "authorization_code")
 	form.Add("redirect_uri", c.CallbackLocation)
 	form.Add("scope", c.Scope)
@@ -85,7 +88,9 @@ func (c genericOauthClient) exchangeOauthCode(ctx context.Context, code string) 
 	req.Header.Set("User-Agent", ServerUserAgent(""))
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.SetBasicAuth(c.ClientID, c.ClientSecret)
+	if !c.AuthUseRequestBody {
+		req.SetBasicAuth(c.ClientID, c.ClientSecret)
+	}
 
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {
