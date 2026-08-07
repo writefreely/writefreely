@@ -219,11 +219,11 @@ func (p *Post) DisplayTitle() string {
 	return t
 }
 
-// PlainDisplayTitle strips away Markdown from the generated Post's title (if
-// any), for use in places like RSS feeds and ActivityStreams objects, where
-// the raw Markdown would be unwanted.
+// PlainDisplayTitle strips away Markdown and HTML from the generated Post's
+// title (if any), for use in places like RSS feeds and ActivityStreams objects,
+// where only plain text is wanted.
 func (p *Post) PlainDisplayTitle() string {
-	if t := stripmd.Strip(p.DisplayTitle()); t != "" {
+	if t := stripmd.Strip(stripHTMLWithoutEscaping(p.DisplayTitle())); t != "" {
 		return t
 	}
 	return p.ID
