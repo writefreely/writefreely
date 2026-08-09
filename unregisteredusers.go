@@ -44,8 +44,18 @@ func handleWebSignup(app *App, w http.ResponseWriter, r *http.Request) error {
 			return ErrBadFormData
 		}
 	}
-	if !app.cfg.App.OpenRegistration && ur.InviteCode == "" {
-		return impart.HTTPError{http.StatusForbidden, "Registration is closed"}
+	if !app.cfg.App.OpenRegistration {
+		// Registrations are closed, so an invite is required. Verify the given
+		// code actually exists and is still usable -- otherwise any non-empty
+		// value would be enough to create an account. Mirrors the check the
+		// OAuth signup flow already performs in viewOauthCallback().
+		i, err := app.db.GetUserInvite(ur.InviteCode)
+		if err != nil {
+			return impart.HTTPError{http.StatusForbidden, "Registration is closed"}
+		}
+		if !i.Active(app.db) {
+			return impart.HTTPError{http.StatusNotFound, "Invite link has expired."}
+		}
 	}
 	ur.Web = true
 	ur.Normalize = true
