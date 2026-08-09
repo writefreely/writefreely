@@ -303,6 +303,18 @@ func (p *Post) HasTitleLink() bool {
 	return hasLink
 }
 
+// UserPage provides the fields expected by the shared "user-navigation"
+// template, which otherwise assumes it's rendering for a page that embeds
+// *UserPage (e.g. the "me" backend pages).
+func (c CollectionPostPage) UserPage() *UserPage {
+	return &UserPage{
+		StaticPage: c.StaticPage,
+		IsAdmin:    c.IsAdmin,
+		CanInvite:  c.CanInvite,
+		CollAlias:  c.CollAlias,
+	}
+}
+
 func (c CollectionPostPage) DisplayMonetization() string {
 	if c.Collection == nil {
 		log.Info("CollectionPostPage.DisplayMonetization: c.Collection is nil")
