@@ -50,8 +50,11 @@ func handleWebSignup(app *App, w http.ResponseWriter, r *http.Request) error {
 		// value would be enough to create an account. Mirrors the check the
 		// OAuth signup flow already performs in viewOauthCallback().
 		i, err := app.db.GetUserInvite(ur.InviteCode)
-		if err != nil || !i.Active(app.db) {
+		if err != nil {
 			return impart.HTTPError{http.StatusForbidden, "Registration is closed"}
+		}
+		if !i.Active(app.db) {
+			return impart.HTTPError{http.StatusNotFound, "Invite link has expired."}
 		}
 	}
 	ur.Web = true
