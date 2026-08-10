@@ -957,9 +957,12 @@ func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias st
 	var rowsAffected int64
 	var changed bool
 	var res sql.Result
-	err := db.QueryRow("SELECT id FROM collections WHERE alias = ?", alias).Scan(&collID)
-	if err != nil {
+	err := db.QueryRow("SELECT id FROM collections WHERE alias = ? AND owner_id = ?", alias, c.OwnerID).Scan(&collID)
+	if err == sql.ErrNoRows {
+		return ErrUnauthorizedEditPost
+	} else if err != nil {
 		log.Error("Failed selecting from collections: %v. Some things won't work.", err)
+		return err
 	}
 
 	// Update MathJax value
