@@ -1873,15 +1873,24 @@ func (db *datastore) UpdatePostPinState(pinned bool, postID string, collID, owne
 			pos = 1
 		}
 	}
+	var res sql.Result
 	var err error
 	if pinned {
-		_, err = db.Exec("UPDATE posts SET pinned_position = ? WHERE id = ?", pos, postID)
+		res, err = db.Exec("UPDATE posts SET pinned_position = ? WHERE id = ? AND collection_id = ? AND owner_id = ?", pos, postID, collID, ownerID)
 	} else {
-		_, err = db.Exec("UPDATE posts SET pinned_position = NULL WHERE id = ?", postID)
+		res, err = db.Exec("UPDATE posts SET pinned_position = NULL WHERE id = ? AND collection_id = ? AND owner_id = ?", postID, collID, ownerID)
 	}
 	if err != nil {
 		log.Error("Unable to update pinned post: %v", err)
 		return err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		log.Error("Unable to determine rows affected updating pinned post: %v", err)
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrForbiddenCollection
 	}
 	return nil
 }

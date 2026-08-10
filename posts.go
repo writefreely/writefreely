@@ -1125,7 +1125,11 @@ func pinPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		err = app.db.UpdatePostPinState(isPinning, p.ID, coll.ID, userID, p.Position)
 		ppr := PinPostResult{ID: p.ID}
 		if err != nil {
-			ppr.Code = http.StatusInternalServerError
+			if err == ErrForbiddenCollection {
+				ppr.Code = http.StatusForbidden
+			} else {
+				ppr.Code = http.StatusInternalServerError
+			}
 			// TODO: set error message
 		} else {
 			ppr.Code = http.StatusOK
