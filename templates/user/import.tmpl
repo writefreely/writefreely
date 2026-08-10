@@ -28,6 +28,7 @@
 	<p>Publish plain text or Markdown files to your account by uploading them below.</p>
 	<div class="formContainer">
 		<form id="importPosts" class="prominent" enctype="multipart/form-data" action="/api/me/import" method="POST">
+			{{ .CSRFField }}
 			<label>Select some files to import:
 				<input id="fileInput" class="fileInput" name="files" type="file" multiple accept="text/*"/>
 			</label>

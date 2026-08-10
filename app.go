@@ -574,6 +574,9 @@ func (app *App) InitDecoder() {
 	// TODO: do this at the package level, instead of the App level
 	// Initialize modules
 	app.formDecoder = schema.NewDecoder()
+	// Ignore fields like the CSRF token that forms submit but that don't
+	// map to any decoded struct.
+	app.formDecoder.IgnoreUnknownKeys(true)
 	app.formDecoder.RegisterConverter(converter.NullJSONString{}, converter.ConvertJSONNullString)
 	app.formDecoder.RegisterConverter(converter.NullJSONBool{}, converter.ConvertJSONNullBool)
 	app.formDecoder.RegisterConverter(sql.NullString{}, converter.ConvertSQLNullString)
