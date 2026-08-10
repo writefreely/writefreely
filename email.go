@@ -11,6 +11,7 @@
 package writefreely
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -21,12 +22,12 @@ import (
 
 	"github.com/aymerick/douceur/inliner"
 	"github.com/gorilla/mux"
-	"github.com/mailgun/mailgun-go"
 	stripmd "github.com/writeas/go-strip-markdown/v2"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/data"
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/writefreely/key"
+	"github.com/writefreely/writefreely/mailer"
 	"github.com/writefreely/writefreely/spam"
 )
 
@@ -180,6 +181,40 @@ func handleCreateEmailSubscription(app *App, w http.ResponseWriter, r *http.Requ
 	return impart.WriteSuccess(w, "", http.StatusAccepted)
 }
 
+func handleExportEmailSubscriptions(app *App, w http.ResponseWriter, r *http.Request) ([]byte, string, error) {
+	vars := mux.Vars(r)
+	var err error
+	alias := vars["alias"]
+	filename := ""
+	u := getUserSession(app, r)
+	if u == nil {
+		return nil, filename, ErrNotLoggedIn
+	}
+	c, err := app.db.GetCollection(alias)
+	if err != nil {
+		return nil, filename, err
+	}
+
+	// Verify permissions / ownership
+	if u.ID != c.OwnerID {
+		return nil, filename, ErrForbiddenCollectionAccess
+	}
+
+	filename = "subscribers-" + alias + "-" + time.Now().Truncate(time.Second).UTC().Format("200601021504")
+
+	subs, err := app.db.GetEmailSubscribers(c.ID, true)
+	if err != nil {
+		return nil, filename, err
+	}
+
+	var data []byte
+	for _, sub := range subs {
+		data = append(data, []byte(sub.Email.String+"\n")...)
+	}
+	data = bytes.TrimRight(data, "\n")
+	return data, filename, err
+}
+
 func handleDeleteEmailSubscription(app *App, w http.ResponseWriter, r *http.Request) error {
 	alias := collectionAliasFromReq(r)
 
@@ -287,7 +322,7 @@ func emailPost(app *App, p *PublicPost, collID int64) error {
 
 	// Do some shortcode replacement.
 	// Since the user is receiving this email, we can assume they're subscribed via email.
-	p.Content = strings.Replace(p.Content, "<!--emailsub-->", `<p id="emailsub">You're subscribed to email updates.</p>`, -1)
+	p.Content = strings.Replace(p.Content, shortCodeEmailSub, `<p id="emailsub">You're subscribed to email updates.</p>`, -1)
 
 	if p.HTMLContent == template.HTML("") {
 		p.formatContent(app.cfg, false, false)
@@ -307,8 +342,14 @@ Originally published on ` + p.Collection.DisplayTitle() + ` (` + p.Collection.Ca
 
 Sent to %recipient.to%. Unsubscribe: ` + p.Collection.CanonicalURL() + `email/unsubscribe/%recipient.id%?t=%recipient.token%`
 
-	gun := mailgun.NewMailgun(app.cfg.Email.Domain, app.cfg.Email.MailgunPrivate)
-	m := mailgun.NewMessage(p.Collection.DisplayTitle()+" <"+p.Collection.Alias+"@"+app.cfg.Email.Domain+">", stripmd.Strip(p.DisplayTitle()), plainMsg)
+	mlr, err := mailer.New(app.cfg.Email)
+	if err != nil {
+		return err
+	}
+	m, err := mlr.NewMessage(mailer.FormatAddress(p.Collection.DisplayTitle(), p.Collection.Alias+"@"+app.cfg.Email.Domain), stripmd.Strip(p.DisplayTitle()), plainMsg)
+	if err != nil {
+		return err
+	}
 	replyTo := app.db.GetCollectionAttribute(collID, collAttrLetterReplyTo)
 	if replyTo != "" {
 		m.SetReplyTo(replyTo)
@@ -405,13 +446,13 @@ Sent to %recipient.to%. Unsubscribe: ` + p.Collection.CanonicalURL() + `email/un
 		return err
 	}
 
-	m.SetHtml(html)
+	m.SetHTML(html)
 
 	log.Info("[email] Adding %d recipient(s)", len(subs))
 	for _, s := range subs {
 		e := s.FinalEmail(app.keys)
 		log.Info("[email] Adding %s", e)
-		err = m.AddRecipientAndVariables(e, map[string]interface{}{
+		err = m.AddRecipientAndVariables(e, map[string]string{
 			"id":    s.ID,
 			"to":    e,
 			"token": s.Token,
@@ -421,8 +462,8 @@ Sent to %recipient.to%. Unsubscribe: ` + p.Collection.CanonicalURL() + `email/un
 		}
 	}
 
-	res, _, err := gun.Send(m)
-	log.Info("[email] Send result: %s", res)
+	err = mlr.Send(m)
+	log.Info("[email] Email sent")
 	if err != nil {
 		log.Error("Unable to send post email: %v", err)
 		return err
@@ -437,17 +478,23 @@ func sendSubConfirmEmail(app *App, c *Collection, email, subID, token string) er
 	}
 
 	// Send email
-	gun := mailgun.NewMailgun(app.cfg.Email.Domain, app.cfg.Email.MailgunPrivate)
+	mlr, err := mailer.New(app.cfg.Email)
+	if err != nil {
+		return err
+	}
 
 	plainMsg := "Confirm your subscription to " + c.DisplayTitle() + ` (` + c.CanonicalURL() + `) to start receiving future posts. Simply click the following link (or copy and paste it into your browser):
 
 ` + c.CanonicalURL() + "email/confirm/" + subID + "?t=" + token + `
 
 If you didn't subscribe to this site or you're not sure why you're getting this email, you can delete it. You won't be subscribed or receive any future emails.`
-	m := mailgun.NewMessage(c.DisplayTitle()+" <"+c.Alias+"@"+app.cfg.Email.Domain+">", "Confirm your subscription to "+c.DisplayTitle(), plainMsg, fmt.Sprintf("<%s>", email))
+	m, err := mlr.NewMessage(mailer.FormatAddress(c.DisplayTitle(), c.Alias+"@"+app.cfg.Email.Domain), "Confirm your subscription to "+c.DisplayTitle(), plainMsg, fmt.Sprintf("<%s>", email))
+	if err != nil {
+		return err
+	}
 	m.AddTag("Email Verification")
 
-	m.SetHtml(`<html>
+	m.SetHTML(`<html>
 	<body style="font-family:Lora, 'Palatino Linotype', Palatino, Baskerville, 'Book Antiqua', 'New York', 'DejaVu serif', serif; font-size: 100%%; margin:1em 2em;">
 		<div style="font-size: 1.2em;">
 			<p>Confirm your subscription to <a href="` + c.CanonicalURL() + `">` + c.DisplayTitle() + `</a> to start receiving future posts:</p>
@@ -456,7 +503,10 @@ If you didn't subscribe to this site or you're not sure why you're getting this 
         </div>
 	</body>
 </html>`)
-	gun.Send(m)
+	err = mlr.Send(m)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

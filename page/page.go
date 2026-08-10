@@ -12,8 +12,9 @@
 package page
 
 import (
-	"github.com/writefreely/writefreely/config"
 	"strings"
+
+	"github.com/writefreely/writefreely/config"
 )
 
 type StaticPage struct {
@@ -24,13 +25,14 @@ type StaticPage struct {
 	CustomCSS bool
 
 	// Request values
-	Path          string
-	Username      string
-	Values        map[string]string
-	Flashes       []string
-	CanViewReader bool
-	IsAdmin       bool
-	CanInvite     bool
+	Path            string
+	Username        string
+	Values          map[string]string
+	Flashes         []string
+	CanViewReader   bool
+	IsAdmin         bool
+	CanInvite       bool
+	UpdateAvailable bool
 }
 
 // SanitizeHost alters the StaticPage to contain a real hostname. This is

@@ -17,6 +17,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	. "github.com/gorilla/feeds"
@@ -229,11 +230,9 @@ func showLocalTimeline(app *App, w http.ResponseWriter, r *http.Request, page in
 		TotalPages:  ttlPages,
 		SelTopic:    tag,
 	}
-	if app.cfg.App.Chorus {
-		u := getUserSession(app, r)
-		d.IsAdmin = u != nil && u.IsAdmin()
-		d.CanInvite = canUserInvite(app.cfg, d.IsAdmin)
-	}
+	u := getUserSession(app, r)
+	d.IsAdmin = u != nil && u.IsAdmin()
+	d.CanInvite = canUserInvite(app.cfg, d.IsAdmin)
 	c, err := getReaderSection(app)
 	if err != nil {
 		return err
@@ -293,6 +292,9 @@ func handlePostIDRedirect(app *App, w http.ResponseWriter, r *http.Request) erro
 func viewLocalTimelineFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 	if !app.cfg.App.LocalTimeline {
 		return impart.HTTPError{http.StatusNotFound, "Page doesn't exist."}
+	}
+	if !strings.HasSuffix(req.URL.Path, "/") {
+		return impart.HTTPError{http.StatusMovedPermanently, "/read/feed/"}
 	}
 
 	updateTimelineCache(app.timeline, false)

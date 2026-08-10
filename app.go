@@ -25,6 +25,7 @@ import (
 	"regexp"
 	"strings"
 	"syscall"
+	"text/tabwriter"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -46,9 +47,10 @@ import (
 )
 
 const (
-	staticDir       = "static"
-	assumedTitleLen = 80
-	postsPerPage    = 10
+	staticDir        = "static"
+	assumedTitleLen  = 80
+	postsPerPage     = 10
+	postsPerArchPage = 40
 
 	serverSoftware = "WriteFreely"
 	softwareURL    = "https://writefreely.org"
@@ -58,7 +60,7 @@ var (
 	debugging bool
 
 	// Software version can be set from git env using -ldflags
-	softwareVer = "0.15.0"
+	softwareVer = "0.17.2"
 
 	// DEPRECATED VARS
 	isSingleUser bool
@@ -387,6 +389,9 @@ func pageForReq(app *App, r *http.Request) page.StaticPage {
 			p.Username = u.Username
 			p.IsAdmin = u != nil && u.IsAdmin()
 			p.CanInvite = canUserInvite(app.cfg, p.IsAdmin)
+			if p.IsAdmin && app.updates != nil {
+				p.UpdateAvailable = app.updates.AreAvailableNoCheck()
+			}
 		}
 	}
 	p.CanViewReader = !app.cfg.App.Private || u != nil
@@ -428,15 +433,11 @@ func Initialize(apper Apper, debug bool) (*App, error) {
 
 	initActivityPub(apper.App())
 
-	if apper.App().cfg.Email.Domain != "" || apper.App().cfg.Email.MailgunPrivate != "" {
-		if apper.App().cfg.Email.Domain == "" {
-			log.Error("[FAILED] Starting publish jobs queue: no [letters]domain config value set.")
-		} else if apper.App().cfg.Email.MailgunPrivate == "" {
-			log.Error("[FAILED] Starting publish jobs queue: no [letters]mailgun_private config value set.")
-		} else {
-			log.Info("Starting publish jobs queue...")
-			go startPublishJobsQueue(apper.App())
-		}
+	if apper.App().cfg.Email.Enabled() {
+		log.Info("Starting publish jobs queue...")
+		go startPublishJobsQueue(apper.App())
+	} else {
+		log.Info("[jobs] Not starting publish jobs queue: no email provider is configured.")
 	}
 
 	// Handle local timeline, if enabled
@@ -605,6 +606,18 @@ func ConnectToDatabase(app *App) error {
 	err := app.db.Ping()
 	if err != nil {
 		return fmt.Errorf("Database ping failed: %s", err)
+	}
+	log.Info("Connected to database.")
+
+	ver, err := app.db.version()
+	if err != nil {
+		log.Error("Unable to get DB version: %v", err)
+	} else {
+		log.Info("Database version: %v", ver)
+		if app.cfg.Database.Type == driverMySQL && strings.HasPrefix(ver, "5.") {
+			log.Info("Enabling compatibility for MySQL v5.x")
+			app.db.useSpencerRegex = true
+		}
 	}
 
 	return nil
@@ -838,6 +851,118 @@ func DoDeleteAccount(apper Apper, username string) error {
 	return nil
 }
 
+// UserAction is a bulk moderation action applied to a filtered set of users.
+type UserAction int
+
+const (
+	// ActionList only prints matching users, changing nothing.
+	ActionList UserAction = iota
+	// ActionSilence silences all matching users.
+	ActionSilence
+	// ActionDelete permanently deletes all matching users and their content.
+	ActionDelete
+)
+
+// ModerateUsers lists users matching the given filter and, when action is
+// ActionSilence or ActionDelete, applies that action to the whole set after a
+// single confirmation prompt. It's the backend for the `users` command,
+// intended for cleaning up waves of spam signups.
+func ModerateUsers(apper Apper, filter UserFilter, action UserAction) error {
+	// Connect to the database
+	apper.LoadConfig()
+	connectToDatabase(apper.App())
+	defer shutdown(apper.App())
+
+	app := apper.App()
+
+	// Admins are only ever included when listing; silence/delete must never
+	// touch them, regardless of the filter passed in.
+	filter.IncludeAdmins = action == ActionList
+
+	users, err := app.db.GetUsersFiltered(filter)
+	if err != nil {
+		log.Error("%s", err)
+		os.Exit(1)
+	}
+
+	// Print the matching users
+	fmt.Printf("Matched %d users:\n", len(users))
+	if len(users) > 0 {
+		w := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+		fmt.Fprintln(w, "ID\tUSERNAME\tCREATED\tPOSTS\tSTATUS")
+		for _, u := range users {
+			status := ""
+			if u.IsAdmin() {
+				status = "admin"
+			} else if u.IsSilenced() {
+				status = "silenced"
+			}
+			fmt.Fprintf(w, "%d\t%s\t%s\t%d\t%s\n", u.ID, u.Username, u.Created.Format("2006-01-02 15:04 MST"), u.PostCount, status)
+		}
+		w.Flush()
+	}
+	fmt.Printf("(%d total)\n", len(users))
+
+	// List-only: nothing more to do
+	if action == ActionList {
+		return nil
+	}
+
+	// Nothing to act on
+	if len(users) == 0 {
+		log.Info("No users to act on.")
+		return nil
+	}
+
+	// Confirm the action, echoing the count and verb
+	verb := "SILENCE"
+	if action == ActionDelete {
+		verb = "DELETE"
+	}
+	label := fmt.Sprintf("Really %s %d users", verb, len(users))
+	if action == ActionDelete {
+		label += " and all their content? This cannot be undone"
+	}
+	prompt := promptui.Prompt{
+		Templates: &promptui.PromptTemplates{
+			Success: "{{ . | bold | faint }}: ",
+		},
+		Label:     label,
+		IsConfirm: true,
+	}
+	if _, err = prompt.Run(); err != nil {
+		log.Info("Aborted...")
+		return nil
+	}
+
+	// Apply the action, isolating per-user errors so one failure doesn't
+	// halt the whole batch.
+	log.Info("Working...")
+	var done, failed int
+	for _, u := range users {
+		switch action {
+		case ActionSilence:
+			err = app.db.SetUserStatus(u.ID, UserSilenced)
+		case ActionDelete:
+			err = app.db.DeleteAccount(u.ID)
+		}
+		if err != nil {
+			log.Error("Failed on user %s (%d): %v", u.Username, u.ID, err)
+			failed++
+			continue
+		}
+		done++
+	}
+
+	// Silenced users' posts may be cached in the timeline; refresh it once.
+	if action == ActionSilence && done > 0 && app.timeline != nil {
+		updateTimelineCache(app.timeline, true)
+	}
+
+	log.Info("Done. %d/%d succeeded, %d errors.", done, len(users), failed)
+	return nil
+}
+
 func connectToDatabase(app *App) {
 	log.Info("Connecting to %s database...", app.cfg.Database.Type)
 
@@ -865,7 +990,7 @@ func connectToDatabase(app *App) {
 		log.Error("%s", err)
 		os.Exit(1)
 	}
-	app.db = &datastore{db, app.cfg.Database.Type}
+	app.db = &datastore{DB: db, driverName: app.cfg.Database.Type}
 }
 
 func shutdown(app *App) {
@@ -876,8 +1001,13 @@ func shutdown(app *App) {
 		log.Info("Removing socket file...")
 		err := os.Remove(app.cfg.Server.Bind)
 		if err != nil {
-			log.Error("Unable to remove socket: %s", err)
-			os.Exit(1)
+			if os.IsNotExist(err) {
+				// Safely ignore, in cases like initializing / migrating DB (see #790)
+				log.Info("No socket file; ignoring...")
+			} else {
+				log.Error("Unable to remove socket: %s", err)
+				os.Exit(1)
+			}
 		}
 		log.Info("Success.")
 	}
@@ -895,12 +1025,12 @@ func CreateUser(apper Apper, username, password string, isAdmin bool) error {
 	if isAdmin {
 		// Abort if trying to create admin user, but one already exists
 		if firstUser != nil {
-			return fmt.Errorf("Admin user already exists (%s). Create a regular user with: writefreely --create-user", firstUser.Username)
+			return fmt.Errorf("Admin user already exists (%s). Create a regular user with: writefreely user create [USER]:[PASSWORD]", firstUser.Username)
 		}
 	} else {
 		// Abort if trying to create regular user, but no admin exists yet
 		if firstUser == nil {
-			return fmt.Errorf("No admin user exists yet. Create an admin first with: writefreely --create-admin")
+			return fmt.Errorf("No admin user exists yet. Create an admin first with: writefreely user create --admin [USER]:[PASSWORD]")
 		}
 	}
 
@@ -916,6 +1046,10 @@ func CreateUser(apper Apper, username, password string, isAdmin bool) error {
 
 	if !author.IsValidUsername(apper.App().cfg, username) {
 		return fmt.Errorf("Username %s is invalid, reserved, or shorter than configured minimum length (%d characters).", usernameDesc, apper.App().cfg.App.MinUsernameLen)
+	}
+
+	if len(password) > maxPassByteLen {
+		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Password is longer than %d characters", maxPassByteLen)}
 	}
 
 	// Hash the password

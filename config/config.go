@@ -13,6 +13,7 @@ package config
 
 import (
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/go-ini/ini"
@@ -102,21 +103,22 @@ type (
 	}
 
 	GenericOauthCfg struct {
-		ClientID         string `ini:"client_id"`
-		ClientSecret     string `ini:"client_secret"`
-		Host             string `ini:"host"`
-		DisplayName      string `ini:"display_name"`
-		CallbackProxy    string `ini:"callback_proxy"`
-		CallbackProxyAPI string `ini:"callback_proxy_api"`
-		TokenEndpoint    string `ini:"token_endpoint"`
-		InspectEndpoint  string `ini:"inspect_endpoint"`
-		AuthEndpoint     string `ini:"auth_endpoint"`
-		Scope            string `ini:"scope"`
-		AllowDisconnect  bool   `ini:"allow_disconnect"`
-		MapUserID        string `ini:"map_user_id"`
-		MapUsername      string `ini:"map_username"`
-		MapDisplayName   string `ini:"map_display_name"`
-		MapEmail         string `ini:"map_email"`
+		ClientID           string `ini:"client_id"`
+		ClientSecret       string `ini:"client_secret"`
+		Host               string `ini:"host"`
+		DisplayName        string `ini:"display_name"`
+		CallbackProxy      string `ini:"callback_proxy"`
+		CallbackProxyAPI   string `ini:"callback_proxy_api"`
+		TokenEndpoint      string `ini:"token_endpoint"`
+		InspectEndpoint    string `ini:"inspect_endpoint"`
+		AuthEndpoint       string `ini:"auth_endpoint"`
+		AuthUseRequestBody bool   `ini:"auth_use_basic_auth"`
+		Scope              string `ini:"scope"`
+		AllowDisconnect    bool   `ini:"allow_disconnect"`
+		MapUserID          string `ini:"map_user_id"`
+		MapUsername        string `ini:"map_username"`
+		MapDisplayName     string `ini:"map_display_name"`
+		MapEmail           string `ini:"map_email"`
 	}
 
 	// AppCfg holds values that affect how the application functions
@@ -171,8 +173,17 @@ type (
 	}
 
 	EmailCfg struct {
+		// SMTP configuration values
+		Host           string `ini:"smtp_host"`
+		Port           int    `ini:"smtp_port"`
+		Username       string `ini:"smtp_username"`
+		Password       string `ini:"smtp_password"`
+		EnableStartTLS bool   `ini:"smtp_enable_start_tls"`
+
+		// Mailgun configuration values
 		Domain         string `ini:"domain"`
 		MailgunPrivate string `ini:"mailgun_private"`
+		MailgunEurope  bool   `ini:"mailgun_europe"`
 	}
 
 	// Config holds the complete configuration for running a writefreely instance
@@ -242,7 +253,8 @@ func (ac *AppCfg) LandingPath() string {
 }
 
 func (lc EmailCfg) Enabled() bool {
-	return lc.Domain != "" && lc.MailgunPrivate != ""
+	return (lc.Domain != "" && lc.MailgunPrivate != "") ||
+		lc.Username != "" && lc.Password != "" && lc.Host != "" && lc.Port > 0
 }
 
 func (ac AppCfg) SignupPath() string {
@@ -301,5 +313,9 @@ func Save(uc *Config, fname string) error {
 	if fname == "" {
 		fname = FileName
 	}
-	return cfg.SaveTo(fname)
+	err = cfg.SaveTo(fname)
+	if err != nil {
+		return err
+	}
+	return os.Chmod(fname, 0600)
 }

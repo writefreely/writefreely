@@ -91,16 +91,12 @@ type instanceContent struct {
 	Updated time.Time
 }
 
+// AdminPage holds any additional variables needed to render Admin pages. Currently none.
 type AdminPage struct {
-	UpdateAvailable bool
 }
 
 func NewAdminPage(app *App) *AdminPage {
-	ap := &AdminPage{}
-	if app.updates != nil {
-		ap.UpdateAvailable = app.updates.AreAvailableNoCheck()
-	}
-	return ap
+	return &AdminPage{}
 }
 
 func (c instanceContent) UpdatedFriendly() template.HTML {
@@ -208,7 +204,7 @@ func handleViewAdminUsers(app *App, u *User, w http.ResponseWriter, r *http.Requ
 
 	p.Flashes, _ = getSessionFlashes(app, w, r, nil)
 	p.TotalUsers = app.db.GetAllUsersCount()
-	ttlPages := p.TotalUsers / adminUsersPerPage
+	ttlPages := (p.TotalUsers - 1) / adminUsersPerPage + 1
 	p.TotalPages = []int{}
 	for i := 1; i <= int(ttlPages); i++ {
 		p.TotalPages = append(p.TotalPages, i)

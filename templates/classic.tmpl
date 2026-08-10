@@ -348,13 +348,18 @@
 		  } catch (e) {}
 		};
 		var fonts = document.querySelectorAll('nav#font-picker a.font');
+		var setEditorFontClass = function(fontClass) {
+			if (window.editorView) {
+				window.editorView.view.dom.classList.remove("norm", "sans", "wrap");
+				window.editorView.view.dom.classList.add(fontClass);
+			}
+		};
 		for (var i=0; i<fonts.length; i++) {
 			fonts[i].addEventListener('click', function(e) {
 				e.preventDefault();
 				selectedFont = this.href.substring(this.href.indexOf('#')+1);
-				// TODO: don't change classes on the editor window
-				//$title.el.className = selectedFont;
-				//$writer.el.className = selectedFont;
+				$title.el.className = selectedFont;
+				setEditorFontClass(selectedFont);
 				document.querySelector('nav#font-picker li.selected').classList.remove('selected');
 				this.parentElement.classList.add('selected');
 				H.set('{{if .Editing}}draft{{.Post.Id}}font{{else}}padFont{{end}}', selectedFont);
@@ -364,6 +369,7 @@
 			});
 		}
 		var selectedFont = H.get('{{if .Editing}}draft{{.Post.Id}}font{{else}}padFont{{end}}', '{{.Post.Font}}');
+		document.addEventListener('DOMContentLoaded', () => {setEditorFontClass(selectedFont)});
 		var sfe = document.querySelector('nav#font-picker a.font.'+selectedFont);
 		if (sfe != null) {
 			sfe.click();

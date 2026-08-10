@@ -2,4 +2,4 @@
 
 ---
 
-- [ ] I have signed the [CLA](https://phabricator.write.as/L1)
+- [ ] I have signed the [CLA](https://todo.musing.studio/L1)

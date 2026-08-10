@@ -56,21 +56,23 @@ func (m *migration) Migrate(db *datastore) error {
 }
 
 var migrations = []Migration{
-	New("support user invites", supportUserInvites),                 // -> V1 (v0.8.0)
-	New("support dynamic instance pages", supportInstancePages),     // V1 -> V2 (v0.9.0)
-	New("support users suspension", supportUserStatus),              // V2 -> V3 (v0.11.0)
-	New("support oauth", oauth),                                     // V3 -> V4
-	New("support slack oauth", oauthSlack),                          // V4 -> v5
-	New("support ActivityPub mentions", supportActivityPubMentions), // V5 -> V6
-	New("support oauth attach", oauthAttach),                        // V6 -> V7
-	New("support oauth via invite", oauthInvites),                   // V7 -> V8 (v0.12.0)
-	New("optimize drafts retrieval", optimizeDrafts),                // V8 -> V9
-	New("support post signatures", supportPostSignatures),           // V9 -> V10 (v0.13.0)
-	New("Widen oauth_users.access_token", widenOauthAcceesToken),    // V10 -> V11
-	New("support verifying fedi profile", fediverseVerifyProfile),   // V11 -> V12 (v0.14.0)
-	New("support newsletters", supportLetters),                      // V12 -> V13
-	New("support password resetting", supportPassReset),             // V13 -> V14
-	New("speed up blog post retrieval", addPostRetrievalIndex),      // V14 -> V15
+	New("support user invites", supportUserInvites),                  // -> V1 (v0.8.0)
+	New("support dynamic instance pages", supportInstancePages),      // V1 -> V2 (v0.9.0)
+	New("support users suspension", supportUserStatus),               // V2 -> V3 (v0.11.0)
+	New("support oauth", oauth),                                      // V3 -> V4
+	New("support slack oauth", oauthSlack),                           // V4 -> v5
+	New("support ActivityPub mentions", supportActivityPubMentions),  // V5 -> V6
+	New("support oauth attach", oauthAttach),                         // V6 -> V7
+	New("support oauth via invite", oauthInvites),                    // V7 -> V8 (v0.12.0)
+	New("optimize drafts retrieval", optimizeDrafts),                 // V8 -> V9
+	New("support post signatures", supportPostSignatures),            // V9 -> V10 (v0.13.0)
+	New("Widen oauth_users.access_token", widenOauthAcceesToken),     // V10 -> V11
+	New("support verifying fedi profile", fediverseVerifyProfile),    // V11 -> V12 (v0.14.0)
+	New("support newsletters", supportLetters),                       // V12 -> V13
+	New("support password resetting", supportPassReset),              // V13 -> V14
+	New("speed up blog post retrieval", addPostRetrievalIndex),       // V14 -> V15
+	New("support ActivityPub likes", supportRemoteLikes),             // V15 -> V16 (v0.16.0)
+	New("fix post signature character set", fixPostSignatureCharset), // V16 -> V17 (v0.17.0)
 }
 
 // CurrentVer returns the current migration version the application is on

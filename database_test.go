@@ -3,8 +3,9 @@ package writefreely
 import (
 	"context"
 	"database/sql"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestOAuthDatastore(t *testing.T) {

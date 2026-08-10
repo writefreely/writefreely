@@ -22,6 +22,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -43,6 +44,11 @@ const (
 	apCustomHandleDefault = "blog"
 
 	apCacheTime = time.Minute
+)
+
+var (
+	apCollectionPostIRIRegex = regexp.MustCompile("/api/collections/([a-z0-9\\-]+)/posts/([a-z0-9\\-]+)$")
+	apDraftPostIRIRegex      = regexp.MustCompile("/api/posts/([a-z0-9\\-]+)$")
 )
 
 var instanceColl *Collection
@@ -195,7 +201,7 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 	ocp := activitystreams.NewOrderedCollectionPage(accountRoot, "outbox", res.TotalPosts, p)
 	ocp.OrderedItems = []interface{}{}
 
-	posts, err := app.db.GetPosts(app.cfg, c, p, false, true, false)
+	posts, err := app.db.GetPosts(app.cfg, c, p, false, true, false, "")
 	for _, pp := range *posts {
 		pp.Collection = res
 		o := pp.ActivityObject(app)
@@ -343,19 +349,82 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	var m map[string]interface{}
-	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+	// Only call impart.RenderActivityJSON here if NO callback has already written a response.
+	// Track whether a callback has written a response
+	var responseWritten bool
+
+	// Read raw body for debugging before decoding
+	var rawBody bytes.Buffer
+	tee := io.TeeReader(r.Body, &rawBody)
+
+	var m map[string]any
+	if err := json.NewDecoder(tee).Decode(&m); err != nil {
+		log.Error("Failed decoding JSON: %v", err)
+		log.Error("Raw body: %s", rawBody.String())
 		return err
+	}
+	if debugging {
+		log.Info("Decoded JSON: %v", m)
 	}
 
 	a := streams.NewAccept()
 	p := c.PersonObject()
 	var to *url.URL
-	var isFollow, isUnfollow bool
+	var isFollow, isUnfollow, isLike, isUnlike bool
+	var likePostID, unlikePostID string
 	fullActor := &activitystreams.Person{}
 	var remoteUser *RemoteUser
 
 	res := &streams.Resolver{
+		LikeCallback: func(l *streams.Like) error {
+			isLike = true
+
+			// 1) Use the Like concrete type here
+			// 2) Errors are propagated to res.Deserialize call below
+			m["@context"] = []string{activitystreams.Namespace}
+			b, _ := json.Marshal(m)
+			if debugging {
+				log.Info("Like: %s", b)
+			}
+
+			_, likeID := l.GetId()
+			if likeID == nil {
+				log.Error("Didn't resolve Like ID")
+			}
+			if p := l.HasObject(0); p == streams.NoPresence {
+				return fmt.Errorf("no object for Like activity at index 0")
+			}
+
+			obj := l.Raw().GetObjectIRI(0)
+			/*
+			   // TODO: handle this more robustly
+			   l.ResolveObject(&streams.Resolver{
+			     LinkCallback: func(link *streams.Link) error {
+			       return nil
+			     },
+			   }, 0)
+			*/
+
+			if obj == nil {
+				return fmt.Errorf("didn't get ObjectIRI to Like")
+			}
+			likePostID, err = parsePostIDFromURL(app, obj)
+			if err != nil {
+				return err
+			}
+
+			// Finally, get actor information
+			_, from := l.GetActor(0)
+			if from == nil {
+				return fmt.Errorf("No valid actor string")
+			}
+			fullActor, remoteUser, err = getActor(app, from.String())
+			if err != nil {
+				return err
+			}
+			responseWritten = true
+			return nil
+		},
 		FollowCallback: func(f *streams.Follow) error {
 			isFollow = true
 
@@ -381,6 +450,17 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			a.AppendObject(f.Raw())
 			_, to = f.GetActor(0)
 			obj := f.Raw().GetObjectIRI(0)
+			if obj == nil {
+				if debugging {
+					log.Error("GetObjectIRI on Follow for actor is empty; trying object")
+				}
+				ao := f.Raw().GetObject(0)
+				if ao == nil {
+					log.Error("Fell back to GetObject and none parsed, so no actor ID! Follow request probably FAILED!")
+				} else {
+					obj = ao.GetId()
+				}
+			}
 			a.AppendActor(obj)
 
 			// First get actor information
@@ -391,11 +471,10 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			if err != nil {
 				return err
 			}
+			responseWritten = true
 			return impart.RenderActivityJSON(w, m, http.StatusOK)
 		},
 		UndoCallback: func(u *streams.Undo) error {
-			isUnfollow = true
-
 			m["@context"] = []string{activitystreams.Namespace}
 			b, _ := json.Marshal(m)
 			if debugging {
@@ -403,6 +482,37 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			}
 
 			a.AppendObject(u.Raw())
+
+			// Check type -- we handle Undo:Like and Undo:Follow
+			_, err := u.ResolveObject(&streams.Resolver{
+				LikeCallback: func(like *streams.Like) error {
+					isUnlike = true
+
+					_, from := like.GetActor(0)
+					obj := like.Raw().GetObjectIRI(0)
+					if obj == nil {
+						return fmt.Errorf("didn't get ObjectIRI for Undo Like")
+					}
+					unlikePostID, err = parsePostIDFromURL(app, obj)
+					if err != nil {
+						return err
+					}
+					fullActor, remoteUser, err = getActor(app, from.String())
+					if err != nil {
+						return err
+					}
+					return nil
+				},
+				// TODO: add FollowCallback for more robust handling
+			}, 0)
+			if err != nil {
+				return err
+			}
+			if isUnlike {
+				return nil
+			}
+
+			isUnfollow = true
 			_, to = u.GetActor(0)
 			// TODO: get actor from object.object, not object
 			obj := u.Raw().GetObjectIRI(0)
@@ -423,22 +533,113 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			} else {
 				log.Error("No to on Undo!")
 			}
+			responseWritten = true
 			return impart.RenderActivityJSON(w, m, http.StatusOK)
+		},
+		DeleteCallback: func(d *streams.Delete) error {
+			if debugging {
+				b, _ := json.Marshal(m)
+				log.Info("Delete: %s", b)
+			}
+			impart.RenderActivityJSON(w, m, http.StatusOK)
+			responseWritten = true
+			return nil
 		},
 	}
 	if err := res.Deserialize(m); err != nil {
 		// 3) Any errors from #2 can be handled, or the payload is an unknown type.
-		log.Error("Unable to resolve Follow: %v", err)
+		log.Error("Unable to resolve Activity: %v", err)
 		if debugging {
 			log.Error("Map: %s", m)
 		}
-		return err
+		if t, ok := m["type"]; ok {
+			log.Error("Unhandled activity type: %v", t)
+		}
+		impart.RenderActivityJSON(w, "", http.StatusOK)
+		return nil
+	}
+
+	// Handle synchronous activities
+	if isLike {
+		t, err := app.db.Begin()
+		if err != nil {
+			log.Error("Unable to start transaction: %v", err)
+			return fmt.Errorf("unable to start transaction: %v", err)
+		}
+
+		var remoteUserID int64
+		if remoteUser != nil {
+			remoteUserID = remoteUser.ID
+		} else {
+			remoteUserID, err = apAddRemoteUser(app, t, fullActor)
+		}
+
+		// Add like
+		_, err = t.Exec("INSERT INTO remote_likes (post_id, remote_user_id, created) VALUES (?, ?, "+app.db.now()+")", likePostID, remoteUserID)
+		if err != nil {
+			if !app.db.isDuplicateKeyErr(err) {
+				t.Rollback()
+				log.Error("Couldn't add like in DB: %v\n", err)
+				return fmt.Errorf("Couldn't add like in DB: %v", err)
+			} else {
+				t.Rollback()
+				log.Error("Couldn't add like in DB: %v\n", err)
+				return fmt.Errorf("Couldn't add like in DB: %v", err)
+			}
+		}
+
+		err = t.Commit()
+		if err != nil {
+			t.Rollback()
+			log.Error("Rolling back after Commit(): %v\n", err)
+			return fmt.Errorf("Rolling back after Commit(): %v\n", err)
+		}
+
+		if debugging {
+			log.Info("Successfully liked post %s by remote user %s", likePostID, remoteUser.URL)
+		}
+		impart.RenderActivityJSON(w, "", http.StatusOK)
+		return nil
+	} else if isUnlike {
+		t, err := app.db.Begin()
+		if err != nil {
+			log.Error("Unable to start transaction: %v", err)
+			return fmt.Errorf("unable to start transaction: %v", err)
+		}
+
+		var remoteUserID int64
+		if remoteUser != nil {
+			remoteUserID = remoteUser.ID
+		} else {
+			remoteUserID, err = apAddRemoteUser(app, t, fullActor)
+		}
+
+		// Remove like
+		_, err = t.Exec("DELETE FROM remote_likes WHERE post_id = ? AND remote_user_id = ?", unlikePostID, remoteUserID)
+		if err != nil {
+			t.Rollback()
+			log.Error("Couldn't delete Like from DB: %v\n", err)
+			return fmt.Errorf("Couldn't delete Like from DB: %v", err)
+		}
+
+		err = t.Commit()
+		if err != nil {
+			t.Rollback()
+			log.Error("Rolling back after Commit(): %v\n", err)
+			return fmt.Errorf("Rolling back after Commit(): %v\n", err)
+		}
+
+		if debugging {
+			log.Info("Successfully un-liked post %s by remote user %s", unlikePostID, remoteUser.URL)
+		}
+		impart.RenderActivityJSON(w, "", http.StatusOK)
+		return nil
 	}
 
 	go func() {
 		if to == nil {
 			if debugging {
-				log.Error("No `to` value!")
+				log.Info("No `to` value: likely not needed for this activity type.")
 			}
 			return
 		}
@@ -450,6 +651,9 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			return
 		}
 		am["@context"] = []string{activitystreams.Namespace}
+		if debugging {
+			logOutgoingActivity("Accept", am)
+		}
 
 		err = makeActivityPost(app.cfg.App.Host, p, fullActor.Inbox, am)
 		if err != nil {
@@ -469,6 +673,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			if remoteUser != nil {
 				followerID = remoteUser.ID
 			} else {
+				// TODO: use apAddRemoteUser() here, instead!
 				// Add follower locally, since it wasn't found before
 				res, err := t.Exec("INSERT INTO remoteusers (actor_id, inbox, shared_inbox, url) VALUES (?, ?, ?, ?)", fullActor.ID, fullActor.Inbox, fullActor.Endpoints.SharedInbox, fullActor.URL)
 				if err != nil {
@@ -522,10 +727,22 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		}
 	}()
 
+	if !responseWritten {
+		if debugging {
+			log.Info("Received unhandled activity type, returning OK")
+		}
+		impart.RenderActivityJSON(w, "", http.StatusOK)
+	}
+
 	return nil
 }
 
 func makeActivityPost(hostName string, p *activitystreams.Person, url string, m interface{}) error {
+	if url == "" {
+        log.Error("Target POST URL is empty! Person: %+v, Activity: %+v", p, m)
+        return fmt.Errorf("target POST URL is empty")
+    }
+
 	log.Info("POST %s", url)
 	b, err := json.Marshal(m)
 	if err != nil {
@@ -731,7 +948,9 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 		na.CC = append(na.CC, instFolls...)
 		// create a new "Create" activity
 		// with our article as object
+		label := "Create"
 		if isUpdate {
+			label = "Update"
 			na.Updated = &p.Updated
 			activity = activitystreams.NewUpdateActivity(na)
 		} else {
@@ -740,6 +959,9 @@ func federatePost(app *App, p *PublicPost, collID int64, isUpdate bool) error {
 			activity.CC = na.CC
 		}
 		// and post it to that sharedInbox
+		if debugging {
+			logOutgoingActivity(label, activity)
+		}
 		err = makeActivityPost(app.cfg.App.Host, actor, si, activity)
 		if err != nil {
 			log.Error("Couldn't post! %v", err)
@@ -811,6 +1033,23 @@ func getRemoteUserFromHandle(app *App, handle string) (*RemoteUser, error) {
 	return &u, nil
 }
 
+// getRemoteUserFromURL retrieves a RemoteUser from their public profile URL.
+func getRemoteUserFromURL(app *App, urlStr string) (*RemoteUser, error) {
+	u := RemoteUser{URL: urlStr}
+	var urlVal, handle sql.NullString
+	err := app.db.QueryRow("SELECT id, actor_id, inbox, shared_inbox, url, handle FROM remoteusers WHERE url = ?", urlStr).Scan(&u.ID, &u.ActorID, &u.Inbox, &u.SharedInbox, &urlVal, &handle)
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, ErrRemoteUserNotFound
+	case err != nil:
+		log.Error("Couldn't get remote user from URL %s: %v", urlStr, err)
+		return nil, err
+	}
+	u.URL = urlVal.String
+	u.Handle = handle.String
+	return &u, nil
+}
+
 func getActor(app *App, actorIRI string) (*activitystreams.Person, *RemoteUser, error) {
 	log.Info("Fetching actor %s locally", actorIRI)
 	actor := &activitystreams.Person{}
@@ -822,12 +1061,27 @@ func getActor(app *App, actorIRI string) (*activitystreams.Person, *RemoteUser, 
 				log.Info("Not found; fetching actor %s remotely", actorIRI)
 				actorResp, err := resolveIRI(app.cfg.App.Host, actorIRI)
 				if err != nil {
-					log.Error("Unable to get actor! %v", err)
+					log.Error("Unable to get base actor! %v", err)
 					return nil, nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't fetch actor."}
 				}
 				if err := unmarshalActor(actorResp, actor); err != nil {
-					log.Error("Unable to unmarshal actor! %v", err)
+					log.Error("Unable to unmarshal base actor! %v", err)
 					return nil, nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't parse actor."}
+				}
+				baseActor := &activitystreams.Person{}
+				if err := unmarshalActor(actorResp, baseActor); err != nil {
+					log.Error("Unable to unmarshal actual actor! %v", err)
+					return nil, nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't parse actual actor."}
+				}
+				// Fetch the actual actor using the owner field from the publicKey object
+				actualActorResp, err := resolveIRI(app.cfg.App.Host, baseActor.PublicKey.Owner)
+				if err != nil {
+					log.Error("Unable to get actual actor! %v", err)
+					return nil, nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't fetch actual actor."}
+				}
+				if err := unmarshalActor(actualActorResp, actor); err != nil {
+					log.Error("Unable to unmarshal actual actor! %v", err)
+					return nil, nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't parse actual actor."}
 				}
 			} else {
 				return nil, nil, err
@@ -949,6 +1203,43 @@ func unmarshalActor(actorResp []byte, actor *activitystreams.Person) error {
 	return nil
 }
 
+func parsePostIDFromURL(app *App, u *url.URL) (string, error) {
+	// Get post ID from URL
+	var collAlias, slug, postID string
+	if m := apCollectionPostIRIRegex.FindStringSubmatch(u.String()); len(m) == 3 {
+		collAlias = m[1]
+		slug = m[2]
+	} else if m = apDraftPostIRIRegex.FindStringSubmatch(u.String()); len(m) == 2 {
+		postID = m[1]
+	} else {
+		return "", fmt.Errorf("unable to match objectIRI: %s", u)
+	}
+
+	// Get postID if all we have is collection and slug
+	if collAlias != "" && slug != "" {
+		c, err := app.db.GetCollection(collAlias)
+		if err != nil {
+			return "", err
+		}
+		p, err := app.db.GetPost(slug, c.ID)
+		if err != nil {
+			return "", err
+		}
+		postID = p.ID
+	}
+
+	return postID, nil
+}
+
 func setCacheControl(w http.ResponseWriter, ttl time.Duration) {
 	w.Header().Set("Cache-Control", fmt.Sprintf("public, max-age=%.0f", ttl.Seconds()))
+}
+
+func logOutgoingActivity(label string, activity any) {
+	b, err := json.MarshalIndent(activity, "", "  ")
+	if err != nil {
+		log.Error("Failed to marshal %s activity: %v", label, err)
+		return
+	}
+	log.Info("%s outgoing ActivityPub payload:\n%s", label, string(b))
 }

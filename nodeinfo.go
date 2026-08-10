@@ -11,10 +11,11 @@
 package writefreely
 
 import (
+	"strings"
+
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/go-nodeinfo"
 	"github.com/writefreely/writefreely/config"
-	"strings"
 )
 
 type nodeInfoResolver struct {
@@ -46,7 +47,7 @@ func nodeInfoConfig(db *datastore, cfg *config.Config) *nodeinfo.Config {
 			Software: nodeinfo.SoftwareMeta{
 				HomePage: softwareURL,
 				GitHub:   "https://github.com/writefreely/writefreely",
-				Follow:   "https://writing.exchange/@write_as",
+				Follow:   "https://writing.exchange/@writefreely",
 			},
 			MaxBlogs:     cfg.App.MaxBlogs,
 			PublicReader: cfg.App.LocalTimeline,
@@ -93,7 +94,7 @@ FROM posts
 INNER JOIN collections c
 ON collection_id = c.id
 WHERE collection_id IS NOT NULL
-	AND updated > DATE_SUB(NOW(), INTERVAL 6 MONTH)) co`).Scan(&activeHalfYear)
+	AND updated > ` + r.db.dateSub(6, "MONTH") + `) co`).Scan(&activeHalfYear)
 		if err != nil {
 			log.Error("Failed getting 6-month active user stats: %s", err)
 		}
@@ -104,7 +105,7 @@ FROM posts
 INNER JOIN collections c
 ON collection_id = c.id
 WHERE collection_id IS NOT NULL
-	AND updated > DATE_SUB(NOW(), INTERVAL 1 MONTH)) co`).Scan(&activeMonth)
+	AND updated > ` + r.db.dateSub(1, "MONTH") + `) co`).Scan(&activeMonth)
 		if err != nil {
 			log.Error("Failed getting 1-month active user stats: %s", err)
 		}

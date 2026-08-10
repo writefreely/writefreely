@@ -148,6 +148,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	apiColls.HandleFunc("/{alias}/collect", handler.All(addPost)).Methods("POST")
 	apiColls.HandleFunc("/{alias}/pin", handler.All(pinPost)).Methods("POST")
 	apiColls.HandleFunc("/{alias}/unpin", handler.All(pinPost)).Methods("POST")
+	apiColls.HandleFunc("/{alias}/email/subscribers/export.csv", handler.Download(handleExportEmailSubscriptions, UserLevelUser)).Methods("GET")
 	apiColls.HandleFunc("/{alias}/email/subscribe", handler.All(handleCreateEmailSubscription)).Methods("POST")
 	apiColls.HandleFunc("/{alias}/email/subscribe", handler.All(handleDeleteEmailSubscription)).Methods("DELETE")
 	apiColls.HandleFunc("/{collection}/email/unsubscribe", handler.All(handleDeleteEmailSubscription)).Methods("GET")
@@ -159,12 +160,12 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	// Handle posts
 	write.HandleFunc("/api/posts", handler.All(newPost)).Methods("POST")
 	posts := write.PathPrefix("/api/posts/").Subrouter()
-	posts.HandleFunc("/{post:[a-zA-Z0-9]{10}}", handler.AllReader(fetchPost)).Methods("GET")
-	posts.HandleFunc("/{post:[a-zA-Z0-9]{10}}", handler.All(existingPost)).Methods("POST", "PUT")
-	posts.HandleFunc("/{post:[a-zA-Z0-9]{10}}", handler.All(deletePost)).Methods("DELETE")
-	posts.HandleFunc("/{post:[a-zA-Z0-9]{10}}/{property}", handler.AllReader(fetchPostProperty)).Methods("GET")
 	posts.HandleFunc("/claim", handler.All(addPost)).Methods("POST")
 	posts.HandleFunc("/disperse", handler.All(dispersePost)).Methods("POST")
+	posts.HandleFunc("/{post:[a-zA-Z0-9]+}", handler.AllReader(fetchPost)).Methods("GET")
+	posts.HandleFunc("/{post:[a-zA-Z0-9]+}", handler.All(existingPost)).Methods("POST", "PUT")
+	posts.HandleFunc("/{post:[a-zA-Z0-9]+}", handler.All(deletePost)).Methods("DELETE")
+	posts.HandleFunc("/{post:[a-zA-Z0-9]+}/{property}", handler.AllReader(fetchPostProperty)).Methods("GET")
 
 	write.HandleFunc("/auth/signup", handler.Web(handleWebSignup, UserLevelNoneRequired)).Methods("POST")
 	write.HandleFunc("/auth/login", handler.Web(webLogin, UserLevelNoneRequired)).Methods("POST")
@@ -235,6 +236,8 @@ func csrfProtectForm(key []byte, next http.Handler) http.Handler {
 func RouteCollections(handler *Handler, r *mux.Router) {
 	r.HandleFunc("/logout", handler.Web(handleLogOutCollection, UserLevelOptional))
 	r.HandleFunc("/page/{page:[0-9]+}", handler.Web(handleViewCollection, UserLevelReader))
+	r.HandleFunc("/archive/", handler.Web(handleViewCollection, UserLevelReader))
+	r.HandleFunc("/{archive:archive}/page/{page:[0-9]+}", handler.Web(handleViewCollection, UserLevelReader))
 	r.HandleFunc("/lang:{lang:[a-z]{2}}", handler.Web(handleViewCollectionLang, UserLevelOptional))
 	r.HandleFunc("/lang:{lang:[a-z]{2}}/page/{page:[0-9]+}", handler.Web(handleViewCollectionLang, UserLevelOptional))
 	r.HandleFunc("/tag:{tag}", handler.Web(handleViewCollectionTag, UserLevelReader))
@@ -253,6 +256,7 @@ func RouteCollections(handler *Handler, r *mux.Router) {
 func RouteRead(handler *Handler, readPerm UserLevelFunc, r *mux.Router) {
 	r.HandleFunc("/api/posts", handler.Web(viewLocalTimelineAPI, readPerm))
 	r.HandleFunc("/p/{page}", handler.Web(viewLocalTimeline, readPerm))
+	r.HandleFunc("/feed", handler.Web(viewLocalTimelineFeed, readPerm))
 	r.HandleFunc("/feed/", handler.Web(viewLocalTimelineFeed, readPerm))
 	r.HandleFunc("/t/{tag}", handler.Web(viewLocalTimeline, readPerm))
 	r.HandleFunc("/a/{post}", handler.Web(handlePostIDRedirect, readPerm))

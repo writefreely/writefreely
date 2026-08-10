@@ -14,7 +14,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/writefreely/writefreely/spam"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -23,6 +22,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gosimple/slug"
 	"github.com/guregu/null"
 	"github.com/guregu/null/zero"
 	"github.com/kylemcc/twitter-text-go/extract"
@@ -30,7 +30,6 @@ import (
 	stripmd "github.com/writeas/go-strip-markdown/v2"
 	"github.com/writeas/impart"
 	"github.com/writeas/monday"
-	"github.com/writeas/slug"
 	"github.com/writeas/web-core/activitystreams"
 	"github.com/writeas/web-core/bots"
 	"github.com/writeas/web-core/converter"
@@ -48,9 +47,18 @@ const (
 	userPostIDLen = 10
 	postIDLen     = 10
 
-	postMetaDateFormat = "2006-01-02 15:04:05"
+	postMetaDateFormat = "2006-01-02T15:04:05Z"
+)
 
-	shortCodePaid = "<!--paid-->"
+type PostType string
+
+const (
+	postArch PostType = "archive"
+
+	shortCodeMore     = "<!--more-->"
+	shortCodePaid     = "<!--paid-->"
+	shortCodeNoSig    = "<!--nosig-->"
+	shortCodeEmailSub = "<!--emailsub-->"
 )
 
 type (
@@ -105,6 +113,7 @@ type (
 		Created        time.Time     `db:"created" json:"created"`
 		Updated        time.Time     `db:"updated" json:"updated"`
 		ViewCount      int64         `db:"view_count" json:"-"`
+		LikeCount      int64         `db:"like_count" json:"likes"`
 		Title          zero.String   `db:"title" json:"title"`
 		HTMLTitle      template.HTML `db:"title" json:"-"`
 		Content        string        `db:"content" json:"body"`
@@ -127,6 +136,7 @@ type (
 		IsTopLevel  bool           `json:"-"`
 		DisplayDate string         `json:"-"`
 		Views       int64          `json:"views"`
+		Likes       int64          `json:"likes"`
 		Owner       *PublicUser    `json:"-"`
 		IsOwner     bool           `json:"-"`
 		URL         string         `json:"url,omitempty"`
@@ -136,16 +146,17 @@ type (
 	CollectionPostPage struct {
 		*PublicPost
 		page.StaticPage
-		IsOwner        bool
-		IsPinned       bool
-		IsCustomDomain bool
-		Monetization   string
-		Verification   string
-		PinnedPosts    *[]PublicPost
-		IsFound        bool
-		IsAdmin        bool
-		CanInvite      bool
-		Silenced       bool
+		IsOwner         bool
+		IsPinned        bool
+		IsCustomDomain  bool
+		Monetization    string
+		Verification    string
+		FediverseAuthor string
+		PinnedPosts     *[]PublicPost
+		IsFound         bool
+		IsAdmin         bool
+		CanInvite       bool
+		Silenced        bool
 
 		// Helper field for Chorus mode
 		CollAlias string
@@ -208,10 +219,11 @@ func (p *Post) DisplayTitle() string {
 	return t
 }
 
-// PlainDisplayTitle dynamically generates a title from the Post's contents if it
-// doesn't already have an explicit title.
+// PlainDisplayTitle strips away Markdown and HTML from the generated Post's
+// title (if any), for use in places like RSS feeds and ActivityStreams objects,
+// where only plain text is wanted.
 func (p *Post) PlainDisplayTitle() string {
-	if t := stripmd.Strip(p.DisplayTitle()); t != "" {
+	if t := stripmd.Strip(stripHTMLWithoutEscaping(p.DisplayTitle())); t != "" {
 		return t
 	}
 	return p.ID
@@ -291,6 +303,18 @@ func (p *Post) HasTitleLink() bool {
 	return hasLink
 }
 
+// UserPage provides the fields expected by the shared "user-navigation"
+// template, which otherwise assumes it's rendering for a page that embeds
+// *UserPage (e.g. the "me" backend pages).
+func (c CollectionPostPage) UserPage() *UserPage {
+	return &UserPage{
+		StaticPage: c.StaticPage,
+		IsAdmin:    c.IsAdmin,
+		CanInvite:  c.CanInvite,
+		CollAlias:  c.CollAlias,
+	}
+}
+
 func (c CollectionPostPage) DisplayMonetization() string {
 	if c.Collection == nil {
 		log.Info("CollectionPostPage.DisplayMonetization: c.Collection is nil")
@@ -314,6 +338,8 @@ func handleViewPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	// Display reserved page if that is requested resource
 	if t, ok := pages[r.URL.Path[1:]+".tmpl"]; ok {
 		return handleTemplatedPage(app, w, r, t)
+	} else if r.URL.Path == "/sitemap.xml" && !app.cfg.App.SingleUser {
+		return impart.HTTPError{Status: http.StatusNotFound, Message: "Page not found."}
 	} else if (strings.Contains(r.URL.Path, ".") && !isRaw && !isMarkdown) || r.URL.Path == "/robots.txt" || r.URL.Path == "/manifest.json" {
 		// Serve static file
 		app.shttp.ServeHTTP(w, r)
@@ -1182,6 +1208,7 @@ func fetchPostProperty(app *App, w http.ResponseWriter, r *http.Request) error {
 func (p *Post) processPost() PublicPost {
 	res := &PublicPost{Post: p, Views: 0}
 	res.Views = p.ViewCount
+	res.Likes = p.LikeCount
 	// TODO: move to own function
 	loc := monday.FuzzyLocale(p.Language.String)
 	res.DisplayDate = monday.Format(p.Created, monday.LongFormatsByLocale[loc], loc)
@@ -1220,13 +1247,18 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 	o.CC = []string{
 		p.Collection.FederatedAccount() + "/followers",
 	}
-	o.Name = p.DisplayTitle()
+	o.Name = p.PlainDisplayTitle()
 	p.augmentContent()
 	if p.HTMLContent == template.HTML("") {
 		p.formatContent(cfg, false, false)
 		p.augmentReadingDestination()
 	}
 	o.Content = string(p.HTMLContent)
+	if o.Type == "Note" && p.Title.String != "" {
+		// Render the explicitly-set title inside the Note, since Mastodon (at least) doesn't show the `name`
+		// property on Notes.
+		o.Content = "<h1>" + applyBasicMarkdown([]byte(p.DisplayTitle())) + "</h1>\n\n" + o.Content
+	}
 	if p.Language.Valid {
 		o.ContentMap = map[string]string{
 			p.Language.String: string(p.HTMLContent),
@@ -1267,7 +1299,7 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 
 	for _, handle := range mentions {
 		actorIRI, err := app.db.GetProfilePageFromHandle(app, handle)
-		if err != nil {
+		if err != nil || actorIRI == "" {
 			log.Info("Couldn't find user '%s' locally or remotely", handle)
 			continue
 		}
@@ -1278,6 +1310,40 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 		o.CC = append(o.CC, iri)
 		o.Tag = append(o.Tag, activitystreams.Tag{Type: "Mention", HRef: iri, Name: handle})
 	}
+
+	// Add shortened Note as the `preview` property if this is an Article
+	if o.Type == "Article" {
+		o.Preview = p.PreviewObject(app, o)
+		o.Summary = &o.Preview.Content
+	}
+
+	return o
+}
+
+// PreviewObject returns an activitystreams.Object that can be used as an Article's `preview` property.
+func (p *PublicPost) PreviewObject(app *App, art *activitystreams.Object) *activitystreams.Object {
+	o := activitystreams.NewNoteObject()
+	o.To = nil
+	o.ID = art.ID
+	o.URL = art.URL
+	o.Published = art.Published
+	o.Updated = art.Updated
+	o.Tag = art.Tag
+	o.Attachment = art.Attachment
+
+	baseURL := p.Collection.CanonicalURL()
+	// Try to truncate at user-defined excerpt, if exists
+	exc := strings.Index(p.Content, shortCodeMore)
+	if exc == -1 {
+		// No excerpt; fall back to truncating at first paragraph
+		exc = strings.Index(p.Content, "\n\n")
+	}
+	if exc > -1 {
+		p.HTMLExcerpt = template.HTML(applyMarkdown([]byte(p.Content[:exc]+" [...]"), baseURL, app.cfg))
+	} else {
+		p.HTMLExcerpt = p.HTMLContent
+	}
+	o.Content = strings.TrimRight(string(p.Excerpt()), "\n")
 	return o
 }
 
@@ -1505,6 +1571,10 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 				// User tried to access blog feed without a trailing slash, and
 				// there's no post with a slug "feed"
 				return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "feed/"}
+			} else if slug == "archive" {
+				// User tried to access blog Archive without a trailing slash, and
+				// there's no post with a slug "archive"
+				return impart.HTTPError{http.StatusFound, c.CanonicalURL() + "archive/"}
 			}
 
 			po := &Post{
@@ -1514,7 +1584,7 @@ func viewCollectionPost(app *App, w http.ResponseWriter, r *http.Request) error 
 				RTL:      zero.NewBool(false, true),
 				Content: `<p class="msg">This page is missing.</p>
 
-Are you sure it was ever here?`,
+Are you sure it was ever here?` + shortCodeNoSig,
 			}
 			pp := po.processPost()
 			p = &pp
@@ -1576,9 +1646,9 @@ Are you sure it was ever here?`,
 		if app.cfg.Email.Enabled() && c.EmailSubsEnabled() {
 			// TODO: indicate plan is inactive or subs disabled when OWNER is viewing their own post.
 			if u != nil && u.IsEmailSubscriber(app, c.ID) {
-				p.Content = strings.Replace(p.Content, "<!--emailsub-->", `<p id="emailsub">You're subscribed to email updates. <a href="/api/collections/`+c.Alias+`/email/unsubscribe?slug=`+p.Slug.String+`">Unsubscribe</a>.</p>`, -1)
+				p.Content = strings.Replace(p.Content, shortCodeEmailSub, `<p id="emailsub">You're subscribed to email updates. <a href="/api/collections/`+c.Alias+`/email/unsubscribe?slug=`+p.Slug.String+`">Unsubscribe</a>.</p>`, -1)
 			} else {
-				p.Content = strings.Replace(p.Content, "<!--emailsub-->", `<form method="post" id="emailsub" action="/api/collections/`+c.Alias+`/email/subscribe"><input type="hidden" name="slug" value="`+p.Slug.String+`" /><input type="hidden" name="web" value="1" /><div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="email" name="`+spam.HoneypotFieldName()+`" tabindex="-1" value="" /><input type="password" name="fake_password" tabindex="-1" placeholder="password" autocomplete="new-password" /></div><input type="email" name="email" placeholder="me@example.com" /><input type="submit" id="subscribe-btn" value="Subscribe" /></form>`, -1)
+				p.Content = alterShortCodeEmailSubForm(p.Content, c.Alias, p.Slug.String, false)
 			}
 		}
 		p.Content = strings.Replace(p.Content, "&lt;!--emailsub-->", "<!--emailsub-->", 1)
@@ -1599,6 +1669,18 @@ Are you sure it was ever here?`,
 		tp.IsPinned = len(*tp.PinnedPosts) > 0 && PostsContains(tp.PinnedPosts, p)
 		tp.Monetization = coll.Monetization
 		tp.Verification = coll.Verification
+		if tp.Verification != "" {
+			// Fetch info for fediverse:creator tag
+			ru, err := getRemoteUserFromURL(app, coll.Verification)
+			if err != nil {
+				if debugging {
+					log.Info("showing rel=me tag, but no local handle for %s", coll.Verification)
+				}
+			} else {
+				// Though we don't store handles with leading @, strip it here just in case
+				tp.FediverseAuthor = "@" + strings.TrimLeft(ru.Handle, "@")
+			}
+		}
 
 		if !postFound {
 			w.WriteHeader(http.StatusNotFound)
@@ -1669,7 +1751,7 @@ func (rp *RawPost) Updated8601() string {
 	return rp.Updated.Format("2006-01-02T15:04:05Z")
 }
 
-var imageURLRegex = regexp.MustCompile(`(?i)[^ ]+\.(gif|png|jpg|jpeg|image)$`)
+var imageURLRegex = regexp.MustCompile(`(?i)[^ ]+\.(gif|png|jpg|jpeg|avif|avifs|webp|jxl|image)$`)
 
 func (p *Post) extractImages() {
 	p.Images = extractImages(p.Content)

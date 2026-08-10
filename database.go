@@ -19,6 +19,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/writeas/monday"
+
 	"github.com/go-sql-driver/mysql"
 	"github.com/writeas/web-core/silobridge"
 	wf_db "github.com/writefreely/writefreely/db"
@@ -115,8 +117,9 @@ type writestore interface {
 	DispersePosts(userID int64, postIDs []string) (*[]ClaimPostResult, error)
 	ClaimPosts(cfg *config.Config, userID int64, collAlias string, posts *[]ClaimPostRequest) (*[]ClaimPostResult, error)
 
-	GetPostsCount(c *CollectionObj, includeFuture bool)
-	GetPosts(cfg *config.Config, c *Collection, page int, includeFuture, forceRecentFirst, includePinned bool) (*[]PublicPost, error)
+	GetPostLikeCounts(postID string) (int64, error)
+	GetPostsCount(c *CollectionObj, includeFuture bool) error
+	GetPosts(cfg *config.Config, c *Collection, page int, includeFuture, forceRecentFirst, includePinned bool, contentType PostType) (*[]PublicPost, error)
 	GetAllPostsTaggedIDs(c *Collection, tag string, includeFuture bool) ([]string, error)
 	GetPostsTagged(cfg *config.Config, c *Collection, tag string, page int, includeFuture bool) (*[]PublicPost, error)
 
@@ -132,6 +135,7 @@ type writestore interface {
 	UpdateDynamicContent(id, title, content, contentType string) error
 	GetAllUsers(page uint) (*[]User, error)
 	GetAllUsersCount() int64
+	GetUsersFiltered(f UserFilter) ([]FilteredUser, error)
 	GetUserLastPostTime(id int64) (*time.Time, error)
 	GetCollectionLastPostTime(id int64) (*time.Time, error)
 
@@ -148,6 +152,8 @@ type writestore interface {
 type datastore struct {
 	*sql.DB
 	driverName string
+
+	useSpencerRegex bool
 }
 
 var _ writestore = &datastore{}
@@ -188,6 +194,20 @@ func (db *datastore) dateSub(l int, unit string) string {
 		return fmt.Sprintf("DATETIME('now', '-%d %s')", l, unit)
 	}
 	return fmt.Sprintf("DATE_SUB(NOW(), INTERVAL %d %s)", l, unit)
+}
+
+func (db *datastore) version() (string, error) {
+	var v string
+	var err error
+	if db.driverName == driverSQLite {
+		err = db.QueryRow("SELECT sqlite_version()").Scan(&v)
+	} else {
+		err = db.QueryRow("SELECT version()").Scan(&v)
+	}
+	if err != nil {
+		return "", err
+	}
+	return v, nil
 }
 
 // CreateUser creates a new user in the database from the given User, UPDATING it in the process with the user's ID.
@@ -1174,6 +1194,12 @@ func (db *datastore) GetPost(id string, collectionID int64) (*PublicPost, error)
 		return nil, ErrPostUnpublished
 	}
 
+	// Get additional information needed before processing post data
+	p.LikeCount, err = db.GetPostLikeCounts(p.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	res := p.processPost()
 	if ownerName.Valid {
 		res.Owner = &PublicUser{Username: ownerName.String}
@@ -1236,10 +1262,22 @@ func (db *datastore) GetPostProperty(id string, collectionID int64, property str
 	return res, nil
 }
 
+func (db *datastore) GetPostLikeCounts(postID string) (int64, error) {
+	var count int64
+	err := db.QueryRow("SELECT COUNT(*) FROM remote_likes WHERE post_id = ?", postID).Scan(&count)
+	switch {
+	case err == sql.ErrNoRows:
+		count = 0
+	case err != nil:
+		return 0, err
+	}
+	return count, nil
+}
+
 // GetPostsCount modifies the CollectionObj to include the correct number of
 // standard (non-pinned) posts. It will return future posts if `includeFuture`
 // is true.
-func (db *datastore) GetPostsCount(c *CollectionObj, includeFuture bool) {
+func (db *datastore) GetPostsCount(c *CollectionObj, includeFuture bool) error {
 	var count int64
 	timeCondition := ""
 	if !includeFuture {
@@ -1252,16 +1290,18 @@ func (db *datastore) GetPostsCount(c *CollectionObj, includeFuture bool) {
 	case err != nil:
 		log.Error("Failed selecting from collections: %v", err)
 		c.TotalPosts = 0
+		return err
 	}
 
 	c.TotalPosts = int(count)
+	return nil
 }
 
 // GetPosts retrieves all posts for the given Collection.
 // It will return future posts if `includeFuture` is true.
 // It will include only standard (non-pinned) posts unless `includePinned` is true.
 // TODO: change includeFuture to isOwner, since that's how it's used
-func (db *datastore) GetPosts(cfg *config.Config, c *Collection, page int, includeFuture, forceRecentFirst, includePinned bool) (*[]PublicPost, error) {
+func (db *datastore) GetPosts(cfg *config.Config, c *Collection, page int, includeFuture, forceRecentFirst, includePinned bool, contentType PostType) (*[]PublicPost, error) {
 	collID := c.ID
 
 	cf := c.NewFormat()
@@ -1275,6 +1315,9 @@ func (db *datastore) GetPosts(cfg *config.Config, c *Collection, page int, inclu
 	if page == 0 {
 		start = 0
 		pagePosts = 1000
+	} else if contentType == postArch {
+		pagePosts = postsPerArchPage
+		start = page*pagePosts - pagePosts
 	}
 
 	limitStr := ""
@@ -1289,6 +1332,7 @@ func (db *datastore) GetPosts(cfg *config.Config, c *Collection, page int, inclu
 	if !includePinned {
 		pinnedCondition = "AND pinned_position IS NULL"
 	}
+	// FUTURE: handle different post contentType's here
 	rows, err := db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? "+pinnedCondition+" "+timeCondition+" ORDER BY created "+order+limitStr, collID)
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)
@@ -1309,7 +1353,13 @@ func (db *datastore) GetPosts(cfg *config.Config, c *Collection, page int, inclu
 		p.augmentContent(c)
 		p.formatContent(cfg, c, includeFuture, false)
 
-		posts = append(posts, p.processPost())
+		pubPost := p.processPost()
+		if contentType == postArch {
+			// Overwrite DisplayDate with special Archive page version
+			loc := monday.FuzzyLocale(pubPost.Language.String)
+			pubPost.DisplayDate = monday.Format(pubPost.Created, monday.LongNoYrFormatsByLocale[loc], loc)
+		}
+		posts = append(posts, pubPost)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -1398,7 +1448,15 @@ func (db *datastore) GetPostsTagged(cfg *config.Config, c *Collection, tag strin
 	if db.driverName == driverSQLite {
 		rows, err = db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND LOWER(content) regexp ? "+timeCondition+" ORDER BY created "+order+limitStr, collID, `.*#`+strings.ToLower(tag)+`\b.*`)
 	} else {
-		rows, err = db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND LOWER(content) RLIKE ? "+timeCondition+" ORDER BY created "+order+limitStr, collID, "#"+strings.ToLower(tag)+"[[:>:]]")
+		var boundaryRegex string
+		if db.useSpencerRegex {
+			// MySQL earlier than 8.0.4, Henry Spencer's regex implementation
+			boundaryRegex = "[[:>:]]"
+		} else {
+			// MySQL 8.0.4+, International Components for Unicode (ICU) syntax
+			boundaryRegex = "\\b"
+		}
+		rows, err = db.Query("SELECT "+postCols+" FROM posts WHERE collection_id = ? AND LOWER(content) RLIKE ? "+timeCondition+" ORDER BY created "+order+limitStr, collID, "#"+strings.ToLower(tag)+boundaryRegex)
 	}
 	if err != nil {
 		log.Error("Failed selecting from posts: %v", err)
@@ -1498,7 +1556,12 @@ ORDER BY created `+order+limitStr, collID, lang)
 }
 
 func (db *datastore) GetAPFollowers(c *Collection) (*[]RemoteUser, error) {
-	rows, err := db.Query("SELECT actor_id, inbox, shared_inbox, f.created FROM remotefollows f INNER JOIN remoteusers u ON f.remote_user_id = u.id WHERE collection_id = ?", c.ID)
+	rows, err := db.Query(`SELECT actor_id, inbox, shared_inbox, f.created
+FROM remotefollows f
+INNER JOIN remoteusers u
+  ON f.remote_user_id = u.id
+WHERE collection_id = ?
+ORDER BY created DESC`, c.ID)
 	if err != nil {
 		log.Error("Failed selecting from followers: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve followers."}
@@ -1871,17 +1934,18 @@ func (db *datastore) GetPinnedPosts(coll *CollectionObj, includeFuture bool) (*[
 }
 
 func (db *datastore) GetCollections(u *User, hostName string) (*[]Collection, error) {
-	rows, err := db.Query("SELECT id, alias, title, description, privacy, view_count FROM collections WHERE owner_id = ? ORDER BY id ASC", u.ID)
+	rows, err := db.Query("SELECT id, alias, title, description, style_sheet, script, privacy, view_count FROM collections WHERE owner_id = ? ORDER BY id ASC", u.ID)
 	if err != nil {
 		log.Error("Failed selecting from collections: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve user collections."}
 	}
 	defer rows.Close()
 
+	var styleVal, scriptVal sql.NullString
 	colls := []Collection{}
 	for rows.Next() {
 		c := Collection{}
-		err = rows.Scan(&c.ID, &c.Alias, &c.Title, &c.Description, &c.Visibility, &c.Views)
+		err = rows.Scan(&c.ID, &c.Alias, &c.Title, &c.Description, &styleVal, &scriptVal, &c.Visibility, &c.Views)
 		if err != nil {
 			log.Error("Failed scanning row: %v", err)
 			break
@@ -1889,6 +1953,8 @@ func (db *datastore) GetCollections(u *User, hostName string) (*[]Collection, er
 		c.hostName = hostName
 		c.URL = c.CanonicalURL()
 		c.Public = c.IsPublic()
+		c.StyleSheet = styleVal.String
+		c.Script = scriptVal.String
 
 		/*
 			// NOTE: future functionality
@@ -1982,7 +2048,7 @@ func (db *datastore) GetMeStats(u *User) userMeStats {
 
 func (db *datastore) GetTotalCollections() (collCount int64, err error) {
 	err = db.QueryRow(`
-	SELECT COUNT(*) 
+	SELECT COUNT(*)
 	FROM collections c
 	LEFT JOIN users u ON u.id = c.owner_id
 	WHERE u.status = 0`).Scan(&collCount)
@@ -2041,6 +2107,12 @@ func (db *datastore) GetTopPosts(u *User, alias string, hostName string) (*[]Pub
 			c.Views = views.Int64
 			c.hostName = hostName
 			pubPost.Collection = &CollectionObj{Collection: c}
+		}
+		p.LikeCount, err = db.GetPostLikeCounts(p.ID)
+		if err != nil {
+			log.Error("Failed GetPostLikeCounts(%s): %v", p.ID, err)
+			gotErr = true
+			break
 		}
 
 		posts = append(posts, pubPost)
@@ -2250,6 +2322,11 @@ func (db *datastore) ChangeSettings(app *App, u *User, s *userSettings) error {
 		u.HasPass, err = db.IsUserPassSet(u.ID)
 		if err != nil {
 			errPass = impart.HTTPError{http.StatusInternalServerError, "Unable to retrieve user data."}
+			return errPass
+		}
+
+		if len(s.NewPass) > maxPassByteLen {
+			errPass = impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Password is longer than %d characters", maxPassByteLen)}
 			return errPass
 		}
 
@@ -2833,6 +2910,66 @@ func (db *datastore) GetAllUsersCount() int64 {
 	return count
 }
 
+// GetUsersFiltered returns users matching the given filters, each paired with
+// their post count. It intentionally omits pagination: it's used by the `users`
+// moderation command, which needs the full matching set in a single pass.
+// Admins are excluded unless f.IncludeAdmins is set (listing only) so bulk
+// silence/delete actions can never affect them.
+func (db *datastore) GetUsersFiltered(f UserFilter) ([]FilteredUser, error) {
+	var where []string
+	var params []interface{}
+
+	if !f.IncludeAdmins {
+		where = append(where, "u.id != 1")
+	}
+
+	if f.Since != nil {
+		where = append(where, "u.created >= ?")
+		params = append(params, *f.Since)
+	}
+	if f.Until != nil {
+		where = append(where, "u.created < ?")
+		params = append(params, *f.Until)
+	}
+	if f.NoInvite {
+		where = append(where, "NOT EXISTS (SELECT 1 FROM usersinvited i WHERE i.user_id = u.id)")
+	}
+	if f.NoOAuth {
+		where = append(where, "NOT EXISTS (SELECT 1 FROM oauth_users o WHERE o.user_id = u.id)")
+	}
+	if f.MaxPosts >= 0 {
+		where = append(where, "(SELECT COUNT(*) FROM posts p WHERE p.owner_id = u.id) <= ?")
+		params = append(params, f.MaxPosts)
+	}
+
+	q := "SELECT u.id, u.username, u.created, u.status, " +
+		"(SELECT COUNT(*) FROM posts p WHERE p.owner_id = u.id) AS post_count " +
+		"FROM users u"
+	if len(where) > 0 {
+		q += " WHERE " + strings.Join(where, " AND ")
+	}
+	q += " ORDER BY u.created ASC"
+
+	rows, err := db.Query(q, params...)
+	if err != nil {
+		log.Error("Failed selecting filtered users: %v", err)
+		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve users."}
+	}
+	defer rows.Close()
+
+	users := []FilteredUser{}
+	for rows.Next() {
+		fu := FilteredUser{User: &User{}}
+		err = rows.Scan(&fu.User.ID, &fu.User.Username, &fu.User.Created, &fu.User.Status, &fu.PostCount)
+		if err != nil {
+			log.Error("Failed scanning GetUsersFiltered() row: %v", err)
+			return nil, err
+		}
+		users = append(users, fu)
+	}
+	return users, nil
+}
+
 func (db *datastore) GetUserLastPostTime(id int64) (*time.Time, error) {
 	var t time.Time
 	err := db.QueryRow("SELECT created FROM posts WHERE owner_id = ? ORDER BY created DESC LIMIT 1", id).Scan(&t)
@@ -3108,10 +3245,10 @@ func (db *datastore) GetEmailSubscribers(collID int64, reqConfirmed bool) ([]*Em
 	if reqConfirmed {
 		cond = " AND confirmed = 1"
 	}
-	rows, err := db.Query(`SELECT s.id, collection_id, user_id, s.email, u.email, subscribed, token, confirmed, allow_export 
-FROM emailsubscribers s 
-LEFT JOIN users u 
-  ON u.id = user_id 
+	rows, err := db.Query(`SELECT s.id, collection_id, user_id, s.email, u.email, subscribed, token, confirmed, allow_export
+FROM emailsubscribers s
+LEFT JOIN users u
+  ON u.id = user_id
 WHERE collection_id = ?`+cond+`
 ORDER BY subscribed DESC`, collID)
 	if err != nil {

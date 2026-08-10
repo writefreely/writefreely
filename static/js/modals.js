@@ -21,4 +21,4 @@ var closeModals = function(e) {
         modals[i].style.display = 'none';
     }
 };
-H.getEl('overlay').on('click', closeModals);
+document.getElementById('overlay').addEventListener("click", (e) => closeModals(e));

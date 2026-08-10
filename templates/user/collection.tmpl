@@ -46,7 +46,7 @@ textarea.section.norm {
 			{{if eq .Alias .Username}}<p style="font-size: 0.8em">This blog uses your username in its URL{{if .Federation}} and fediverse handle{{end}}. You can change it in your <a href="/me/settings">Account Settings</a>.</p>{{end}}
 			<ul style="list-style:none">
 				<li>
-					{{.FriendlyHost}}/<strong>{{.Alias}}</strong>/
+					{{.FriendlyHost}}/{{if not .SingleUser}}<strong>{{.Alias}}</strong>/{{end}}
 				</li>
 				<li>
 					<strong id="normal-handle-env" class="fedi-handle" {{if not .Federation}}style="display:none"{{end}}>@<span id="fedi-handle">{{.Alias}}</span>@<span id="fedi-domain">{{.FriendlyHost}}</span></strong>
@@ -179,7 +179,7 @@ textarea.section.norm {
 		<h2>Custom CSS</h2>
 		<div class="section">
 			<textarea id="css-editor" class="section codable" name="style_sheet">{{.StyleSheet}}</textarea>
-			<p class="explain">See our guide on <a href="https://guides.write.as/customizing/#custom-css">customization</a>.</p>
+			<p class="explain">See our guide on <a href="https://writefreely.org/docs/latest/writer/css">customization</a>.</p>
 		</div>
 	</div>
 

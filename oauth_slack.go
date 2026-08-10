@@ -13,10 +13,11 @@ package writefreely
 import (
 	"context"
 	"errors"
-	"github.com/writeas/slug"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/gosimple/slug"
 )
 
 type slackOauthClient struct {

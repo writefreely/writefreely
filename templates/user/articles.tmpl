@@ -202,8 +202,9 @@ function loadMorePosts() {
 		if (http.readyState == 4) {
 			if (http.status == 200) {
 				var data = JSON.parse(http.responseText);
+				var singleUser = {{ .SingleUser }};
 				for (var i=0; i<data.data.length; i++) {
-					$posts.el.appendChild(createPostEl(data.data[i], true));
+					$posts.el.appendChild(createPostEl(data.data[i], true, singleUser));
 				}
 				if (data.data.length < 10) {
 					$loadMore.el.parentNode.removeChild($loadMore.el);

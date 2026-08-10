@@ -11,12 +11,13 @@
 package config
 
 import (
-	"github.com/writeas/web-core/log"
-	"golang.org/x/net/idna"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/writeas/web-core/log"
+	"golang.org/x/net/idna"
 )
 
 // FriendlyHost returns the app's Host sans any schema

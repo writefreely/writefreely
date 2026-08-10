@@ -5,7 +5,7 @@ body {
 	-moz-osx-font-smoothing: grayscale;
 	background-color: white;
 	color: #111;
-	
+
 	h1, header h2 {
 		a {
 			color: @headerTextColor;
@@ -513,7 +513,7 @@ abbr {
 	cursor: help;
 }
 
-body#collection article p, body#subpage article p {
+body#collection article p, body#subpage article p, #modal-preview article p {
 	.article-p;
 }
 pre, body#post article, #post .alert, #subpage .alert, body#collection article, body#subpage article, body#subpage #wrapper h1 {
@@ -537,7 +537,7 @@ textarea, input#title, pre, body#post article, body#collection article p {
 		word-wrap: break-word;       /* Internet Explorer 5.5+ */
 	}
 }
-textarea, input#title, pre, body#post article, body#collection article, body#subpage article, span, .font {
+textarea, input#title, pre, body#post article, body#collection article, body#subpage article, span, .font, option, #modal-preview #post {
 	&.norm {
 		font-family: @serifFont;
 	}
@@ -669,6 +669,26 @@ body#collection article, body#subpage article {
 			 font-size: 1em;
 			 margin-left: 1em;
 			 margin-bottom: 1em;
+		}
+	}
+}
+#wrapper.archive {
+	h1 {
+		margin: 0 !important;
+	}
+	ul {
+		list-style: none;
+
+		li {
+			display: flex;
+			justify-content: space-between;
+			line-height: 1.4;
+			margin: 0.5em 0;
+		}
+
+		.year {
+			font-weight: bold;
+			font-size: 1.5em;
 		}
 	}
 }
@@ -1101,7 +1121,7 @@ li {
 	}
 }
 
-ul.errors { 
+ul.errors {
 	padding: 0;
 	text-indent: 0;
 	li.urgent {
