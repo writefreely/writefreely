@@ -104,7 +104,16 @@ func RemoteLookup(handle string) string {
 	handle = strings.TrimLeft(handle, "@")
 	// let's take the server part of the handle
 	parts := strings.Split(handle, "@")
-	resp, err := http.Get("https://" + parts[1] + "/.well-known/webfinger?resource=acct:" + handle)
+	if len(parts) != 2 {
+		log.Error("Invalid handle format: %s", handle)
+		return ""
+	}
+	wfURL := "https://" + parts[1] + "/.well-known/webfinger?resource=acct:" + handle
+	if err := isPublicIRI(wfURL); err != nil {
+		log.Error("Refusing webfinger request: %v", err)
+		return ""
+	}
+	resp, err := http.Get(wfURL)
 	if err != nil {
 		log.Error("Error on webfinger request: %v", err)
 		return ""
