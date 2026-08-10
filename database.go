@@ -315,6 +315,14 @@ func (db *datastore) CreateCollection(cfg *config.Config, alias, title string, u
 		return nil, impart.HTTPError{http.StatusConflict, "Invalid collection name."}
 	}
 
+	collCount, err := db.GetUserCollectionCount(userID)
+	if err != nil {
+		return nil, err
+	}
+	if !cfg.App.CanCreateBlogs(collCount) {
+		return nil, impart.HTTPError{http.StatusForbidden, "You've reached the maximum number of blogs."}
+	}
+
 	// All good, so create new collection
 	res, err := db.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", alias, title, "", defaultVisibility(cfg), userID, 0)
 	if err != nil {
