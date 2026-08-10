@@ -11,6 +11,7 @@
 package author
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -18,6 +19,12 @@ import (
 	"github.com/writeas/web-core/log"
 	"github.com/writefreely/writefreely/config"
 )
+
+// PagesFS, when set, is used to enumerate reserved page names instead of
+// reading cfg.Server.PagesParentDir off disk. The main writefreely package
+// sets this at startup to its pages filesystem, which may be backed by
+// assets embedded in the binary rather than files on disk.
+var PagesFS fs.FS
 
 // Regex pattern for valid usernames
 var validUsernameReg = regexp.MustCompile("^[a-zA-Z0-9][a-zA-Z0-9-]*$")
@@ -115,11 +122,15 @@ func IsValidUsername(cfg *config.Config, username string) bool {
 	// Username is invalid if page with the same name exists. So traverse
 	// available pages, adding them to reservedUsernames map that'll be checked
 	// later.
-	err := filepath.Walk(filepath.Join(cfg.Server.PagesParentDir, "pages"), func(path string, i os.FileInfo, err error) error {
+	pagesFS := PagesFS
+	if pagesFS == nil {
+		pagesFS = os.DirFS(filepath.Join(cfg.Server.PagesParentDir, "pages"))
+	}
+	err := fs.WalkDir(pagesFS, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		reservedUsernames[i.Name()] = true
+		reservedUsernames[d.Name()] = true
 		return nil
 	})
 	if err != nil {

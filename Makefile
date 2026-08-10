@@ -13,14 +13,17 @@ DOCKERCMD=docker
 IMAGE_NAME=writeas/writefreely
 TMPBIN=./tmp
 
-# Build tags used for normal (disk-based) builds. Static assets -- everything
-# under static/, except file-based overrides like static/local/custom.css --
-# are read from disk at runtime, so `make ui` / editing static/ is picked up
+# Build tags used for normal (disk-based) builds. static/, templates/, and
+# pages/ -- except file-based overrides like static/local/custom.css -- are
+# read from disk at runtime, so `make ui` / editing those dirs is picked up
 # without a rebuild.
 TAGS=netgo sqlite
 NOSQLITE_TAGS=netgo
 
-# Adding the `embed` tag compiles the contents of static/ into the binary
+# Adding the `embed` tag compiles the contents of static/, templates/, and
+# pages/ into the binary. File-based overrides are still read from disk and
+# take precedence over their embedded counterparts. This is what release
+# builds use, so they produce a single self-contained binary.
 EMBED_TAGS=$(TAGS) embed
 
 all : build
@@ -31,8 +34,9 @@ ci: deps
 build: deps
 	cd cmd/writefreely; $(GOBUILD) -v -tags='$(TAGS)'
 
-# build-embed produces a binary with static assets embedded, for locally
-# testing embedded release builds without running the full `release` target.
+# build-embed produces a binary with static/templates/pages embedded, for
+# locally testing embedded release builds without running the full `release`
+# target.
 build-embed: deps
 	cd cmd/writefreely; $(GOBUILD) -v -tags='$(EMBED_TAGS)'
 
@@ -103,12 +107,21 @@ install : build
 	cmd/writefreely/$(BINARY_NAME) --init-db
 	cd less/; $(MAKE) install $(MFLAGS)
 
+# static/, templates/, and pages/ are compiled into each release binary via
+# the `embed` build tag (see EMBED_TAGS above), so none of them are shipped
+# as loose files alongside the binary anymore. File-based overrides like
+# static/local/custom.css still work: an admin can create the relevant
+# directory next to the binary and it takes precedence over the embedded
+# copy.
+#
+# Because `embed` reads templates/ from source rather than from $(BUILDPATH),
+# the CSS cache-busting rewrite has to run against the tracked templates/
+# directory itself instead of a disposable copy. It's reverted via
+# `git checkout` once every platform binary has been built.
 release : clean ui
 	mkdir -p $(BUILDPATH)
-	rsync -av --exclude=".*" templates $(BUILDPATH)
-	rsync -av --exclude=".*" pages $(BUILDPATH)
-	scripts/invalidate-css.sh $(BUILDPATH)
 	mkdir $(BUILDPATH)/keys
+	scripts/invalidate-css.sh .
 	$(MAKE) build-linux TAGS='$(EMBED_TAGS)'
 	mv build/$(BINARY_NAME)-linux-amd64 $(BUILDPATH)/$(BINARY_NAME)
 	tar -cvzf $(BINARY_NAME)_$(GITREV)_linux_amd64.tar.gz -C build $(BINARY_NAME)
@@ -137,12 +150,11 @@ release : clean ui
 	mv build/$(BINARY_NAME)-windows-4.0-amd64.exe $(BUILDPATH)/$(BINARY_NAME).exe
 	cd build; zip -r ../$(BINARY_NAME)_$(GITREV)_windows_amd64.zip ./$(BINARY_NAME)
 	rm $(BUILDPATH)/$(BINARY_NAME).exe
+	git checkout -- templates
 
 # This assumes you're on linux/amd64
 release-linux : clean ui
 	mkdir -p $(BUILDPATH)
-	cp -r templates $(BUILDPATH)
-	cp -r pages $(BUILDPATH)
 	mkdir $(BUILDPATH)/keys
 	$(MAKE) build-no-sqlite NOSQLITE_TAGS='netgo embed'
 	mv cmd/writefreely/$(BINARY_NAME) $(BUILDPATH)/$(BINARY_NAME)
