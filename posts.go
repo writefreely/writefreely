@@ -825,17 +825,13 @@ func existingPost(app *App, w http.ResponseWriter, r *http.Request) error {
 
 	addSessionFlash(app, w, r, "Changes saved.", nil)
 	collectionAlias := vars["alias"]
-	redirect := "/" + postID + "/meta"
+	redirect := "/d/" + postID + "/edit/meta"
 	if collectionAlias != "" {
 		collPre := "/" + collectionAlias
 		if app.cfg.App.SingleUser {
 			collPre = ""
 		}
 		redirect = collPre + "/" + pRes.Slug.String + "/edit/meta"
-	} else {
-		if app.cfg.App.SingleUser {
-			redirect = "/d" + redirect
-		}
 	}
 	w.Header().Set("Location", redirect)
 	w.WriteHeader(http.StatusFound)

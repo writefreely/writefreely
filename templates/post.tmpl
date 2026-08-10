@@ -43,7 +43,7 @@
 				{{if .IsCode}}<a href="/{{.ID}}.txt" rel="noindex" dir="{{.Direction}}">View raw</a>{{end}}
 				{{ if .Username }}
 				{{if .IsOwner}}
-				<a href="/{{if .SingleUser}}d/{{end}}{{.ID}}/edit" dir="{{.Direction}}">Edit</a>
+				<a href="/d/{{.ID}}/edit" dir="{{.Direction}}">Edit</a>
 				{{end}}
 				<a class="xtra-feature dash-nav" href="/me/posts/" dir="{{.Direction}}">Drafts</a>
 				{{ end }}
@@ -89,7 +89,7 @@
 		var $nav = document.getElementsByTagName('nav')[0];
 		for (var i=0; i<posts.length; i++) {
 			if (posts[i].id == "{{.ID}}") {
-				$nav.innerHTML = $nav.innerHTML + '<a class="xtra-feature" href="/edit/{{.ID}}" dir="{{.Direction}}">Edit</a>';
+				$nav.innerHTML = $nav.innerHTML + '<a class="xtra-feature" href="/d/{{.ID}}/edit" dir="{{.Direction}}">Edit</a>';
 				var $ownerVis = document.querySelectorAll('.owner-visible');
 				for (var i=0; i<$ownerVis.length; i++) {
 					$ownerVis[i].classList.remove('owner-visible');
