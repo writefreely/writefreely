@@ -255,8 +255,6 @@ func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Req
 	page := r.FormValue("page")
 	p, err := strconv.Atoi(page)
 	if err != nil || p < 1 {
-		// Return outbox
-		oc := activitystreams.NewOrderedCollection(accountRoot, "followers", len(*folls))
 		// Return the root followers collection
 		oc := activitystreams.NewOrderedCollection(accountRoot, "followers", total)
 		setCacheControl(w, apCacheTime)
