@@ -386,3 +386,55 @@ func TestOAuthSignupCannotSwapInviteCodeWithoutInvalidatingSignature(t *testing.
 	}
 	assert.False(t, userExists(t, app, username))
 }
+
+// TestOAuthSignupNormalizesUsername is regression coverage for #648 and #844:
+// usernames created via OAuth must be run through the same slug normalization as
+// normal registration, so the resulting collection alias is always lowercase.
+// Otherwise the blog 404s, since collection URLs are redirected to their
+// lowercase form on request but no matching (lowercase) alias exists.
+func TestOAuthSignupNormalizesUsername(t *testing.T) {
+	app := newSignupTestApp(t)
+	app.cfg.App.OpenRegistration = true
+	h := newTestOauthHandler(app)
+
+	const submitted = "MixedCaseUser"
+	const normalized = "mixedcaseuser"
+
+	tp := oauthSignupPageParams{
+		AccessToken:     "tok-mixed",
+		TokenUsername:   submitted,
+		TokenAlias:      submitted,
+		TokenRemoteUser: "remote-mixed",
+		ClientID:        "client1",
+		Provider:        "generic",
+	}
+	sig := signOauthParams(app.cfg.Server.HashSeed, tp)
+
+	form := url.Values{}
+	form.Set(oauthParamAccessToken, tp.AccessToken)
+	form.Set(oauthParamTokenUsername, tp.TokenUsername)
+	form.Set(oauthParamTokenAlias, tp.TokenAlias)
+	form.Set(oauthParamTokenRemoteUserID, tp.TokenRemoteUser)
+	form.Set(oauthParamClientID, tp.ClientID)
+	form.Set(oauthParamProvider, tp.Provider)
+	form.Set(oauthParamHash, sig)
+	form.Set(oauthParamUsername, submitted)
+
+	req := httptest.NewRequest("POST", "/oauth/signup", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+
+	if err := h.viewOauthSignup(app, w, req); err != nil {
+		t.Fatalf("expected oauth signup to succeed, got error: %v", err)
+	}
+
+	assert.True(t, userExists(t, app, normalized), "user should be stored with a lowercased username")
+	assert.False(t, userExists(t, app, submitted), "user should not be stored with the raw mixed-case username")
+
+	var alias string
+	err := app.db.QueryRow("SELECT alias FROM collections WHERE alias = ?", normalized).Scan(&alias)
+	if err != nil {
+		t.Fatalf("expected collection with lowercased alias %q: %v", normalized, err)
+	}
+	assert.Equal(t, normalized, alias, "collection alias must be lowercase to be reachable")
+}
