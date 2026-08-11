@@ -620,6 +620,17 @@ func ConnectToDatabase(app *App) error {
 		}
 	}
 
+	// Ensure the database schema is up-to-date
+	var dbVer int
+	err = app.db.QueryRow("SELECT MAX(version) FROM appmigrations").Scan(&dbVer)
+	if err != nil {
+		log.Error("Unable to read migrations version: %v", err)
+	} else if dbVer < migrations.CurrentVer() {
+		log.Info("+--------------------------------------------------------------------------+")
+		log.Info("| IMPORTANT! There are pending migrations (%d). Run: writefreely db migrate |", migrations.CurrentVer()-dbVer)
+		log.Info("+--------------------------------------------------------------------------+")
+	}
+
 	return nil
 }
 
