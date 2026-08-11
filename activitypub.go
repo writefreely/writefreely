@@ -259,6 +259,7 @@ func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Req
 		oc := activitystreams.NewOrderedCollection(accountRoot, "followers", len(*folls))
 		// Return the root followers collection
 		oc := activitystreams.NewOrderedCollection(accountRoot, "followers", total)
+		setCacheControl(w, apCacheTime)
 		return impart.RenderActivityJSON(w, oc, http.StatusOK)
 	}
 
@@ -337,6 +338,7 @@ func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Req
 	if err != nil || p < 1 {
 		// Return the root following collection. Blogs don't follow anyone, so this is always empty.
 		oc := activitystreams.NewOrderedCollection(accountRoot, "following", 0)
+		setCacheControl(w, apCacheTime)
 		return impart.RenderActivityJSON(w, oc, http.StatusOK)
 	}
 
