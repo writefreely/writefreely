@@ -10,9 +10,6 @@
 	<a href="https://github.com/writefreely/writefreely/releases/latest">
 		<img src="https://img.shields.io/github/downloads/writefreely/writefreely/total.svg" />
 	</a>
-	<a href="https://goreportcard.com/report/github.com/writefreely/writefreely">
-		<img src="https://goreportcard.com/badge/github.com/writefreely/writefreely" alt="Go Report Card" />
-	</a>
 	<a href="https://ghcr.io/writefreely/writefreely">
 		<img src="https://img.shields.io/badge/docker-%230db7ed.svg?logo=docker&logoColor=white" />
 	</a>

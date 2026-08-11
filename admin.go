@@ -91,16 +91,12 @@ type instanceContent struct {
 	Updated time.Time
 }
 
+// AdminPage holds any additional variables needed to render Admin pages. Currently none.
 type AdminPage struct {
-	UpdateAvailable bool
 }
 
 func NewAdminPage(app *App) *AdminPage {
-	ap := &AdminPage{}
-	if app.updates != nil {
-		ap.UpdateAvailable = app.updates.AreAvailableNoCheck()
-	}
-	return ap
+	return &AdminPage{}
 }
 
 func (c instanceContent) UpdatedFriendly() template.HTML {

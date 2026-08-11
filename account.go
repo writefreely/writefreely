@@ -596,7 +596,11 @@ func getVerboseAuthUser(app *App, token string, u *User, verbose bool) *AuthUser
 
 func viewExportOptions(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	// Fetch extra user data
-	p := NewUserPage(app, r, u, "Export", nil)
+	p := struct {
+		*UserPage
+	}{
+		UserPage: NewUserPage(app, r, u, "Export", nil),
+	}
 
 	showUserPage(w, "export", p)
 	return nil
@@ -1391,7 +1395,7 @@ func emailPasswordReset(app *App, toEmail, token string) error {
 	footerPara := "Didn't request this password reset? Your account is still safe, and you can safely ignore this email."
 
 	plainMsg := fmt.Sprintf("We received a request to reset your password on %s. Please click the following link to continue (or copy and paste it into your browser): %s/reset?t=%s\n\n%s", app.cfg.App.SiteName, app.cfg.App.Host, token, footerPara)
-	m, err := mlr.NewMessage(app.cfg.App.SiteName+" <noreply-password@"+app.cfg.Email.Domain+">", "Reset Your "+app.cfg.App.SiteName+" Password", plainMsg, fmt.Sprintf("<%s>", toEmail))
+	m, err := mlr.NewMessage(mailer.FormatAddress(app.cfg.App.SiteName, "noreply-password@"+app.cfg.Email.Domain), "Reset Your "+app.cfg.App.SiteName+" Password", plainMsg, fmt.Sprintf("<%s>", toEmail))
 	if err != nil {
 		return err
 	}
@@ -1443,7 +1447,7 @@ func loginViaEmail(app *App, alias, redirectTo string) error {
 	footerPara := "This link will only work once and expires in 15 minutes. Didn't ask us to log in? You can safely ignore this email."
 
 	plainMsg := fmt.Sprintf("Log in to %s here: %s/login?to=%s&with=%s\n\n%s", app.cfg.App.SiteName, app.cfg.App.Host, redirectTo, t, footerPara)
-	m, err := mlr.NewMessage(app.cfg.App.SiteName+" <noreply-login@"+app.cfg.Email.Domain+">", "Log in to "+app.cfg.App.SiteName, plainMsg, fmt.Sprintf("<%s>", toEmail))
+	m, err := mlr.NewMessage(mailer.FormatAddress(app.cfg.App.SiteName, "noreply-login@"+app.cfg.Email.Domain), "Log in to "+app.cfg.App.SiteName, plainMsg, fmt.Sprintf("<%s>", toEmail))
 	if err != nil {
 		return err
 	}

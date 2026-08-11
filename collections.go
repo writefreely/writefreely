@@ -414,6 +414,18 @@ func (c CollectionPage) DisplayMonetization() string {
 	return displayMonetization(c.Monetization, c.Alias)
 }
 
+// UserPage provides the fields expected by the shared "user-navigation"
+// template, which otherwise assumes it's rendering for a page that embeds
+// *UserPage (e.g. the "me" backend pages).
+func (c CollectionPage) UserPage() *UserPage {
+	return &UserPage{
+		StaticPage: c.StaticPage,
+		IsAdmin:    c.IsAdmin,
+		CanInvite:  c.CanInvite,
+		CollAlias:  c.CollAlias,
+	}
+}
+
 func (c *DisplayCollection) Direction() string {
 	if c.Language == "" {
 		return "auto"

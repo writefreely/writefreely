@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/csrf"
 	"github.com/hashicorp/go-multierror"
 	"github.com/writeas/impart"
 	wfimport "github.com/writeas/import"
@@ -32,10 +33,12 @@ func viewImport(app *App, u *User, w http.ResponseWriter, r *http.Request) error
 		Flashes     []template.HTML
 		Message     string
 		InfoMsg     bool
+		CSRFField   template.HTML
 	}{
 		UserPage:    p,
 		Collections: c,
 		Flashes:     []template.HTML{},
+		CSRFField:   csrf.TemplateField(r),
 	}
 
 	flashes, _ := getSessionFlashes(app, w, r, nil)
