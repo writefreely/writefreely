@@ -44,6 +44,8 @@ const (
 	apCustomHandleDefault = "blog"
 
 	apCacheTime = time.Minute
+
+	apFollowersPageSize = 20
 )
 
 var (
@@ -249,24 +251,55 @@ func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Req
 		return err
 	}
 
+	total := len(*folls)
 	page := r.FormValue("page")
 	p, err := strconv.Atoi(page)
 	if err != nil || p < 1 {
 		// Return outbox
 		oc := activitystreams.NewOrderedCollection(accountRoot, "followers", len(*folls))
+		// Return the root followers collection
+		oc := activitystreams.NewOrderedCollection(accountRoot, "followers", total)
 		return impart.RenderActivityJSON(w, oc, http.StatusOK)
 	}
 
-	// Return outbox page
-	ocp := activitystreams.NewOrderedCollectionPage(accountRoot, "followers", len(*folls), p)
-	ocp.OrderedItems = []interface{}{}
-	/*
-		for _, f := range *folls {
-			ocp.OrderedItems = append(ocp.OrderedItems, f.ActorID)
-		}
-	*/
+	actorIDs := make([]string, 0, total)
+	for _, f := range *folls {
+		actorIDs = append(actorIDs, f.ActorID)
+	}
+	ocp := apCollectionPage(accountRoot, "followers", actorIDs, p)
+
 	setCacheControl(w, apCacheTime)
 	return impart.RenderActivityJSON(w, ocp, http.StatusOK)
+}
+
+// apCollectionPage builds a single OrderedCollectionPage of actor IDs for an ActivityPub followers/following
+// collection. It slices items into pages of apFollowersPageSize and sets the Next/Prev links so that only pages with
+// content are advertised.
+func apCollectionPage(accountRoot, collType string, actorIDs []string, page int) *activitystreams.OrderedCollectionPage {
+	total := len(actorIDs)
+	ocp := activitystreams.NewOrderedCollectionPage(accountRoot, collType, total, page)
+	ocp.OrderedItems = []interface{}{}
+
+	start := (page - 1) * apFollowersPageSize
+	end := start + apFollowersPageSize
+	if end > total {
+		end = total
+	}
+	if start < end {
+		for _, id := range actorIDs[start:end] {
+			ocp.OrderedItems = append(ocp.OrderedItems, id)
+		}
+	}
+
+	// NewOrderedCollectionPage unconditionally sets Next, so clear it on the
+	// final (or out-of-range) page to avoid presenting an endless collection.
+	if end >= total {
+		ocp.Next = ""
+	}
+	if page > 1 {
+		ocp.Prev = fmt.Sprintf("%s/%s?page=%d", accountRoot, collType, page-1)
+	}
+	return ocp
 }
 
 func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Request) error {
@@ -302,12 +335,11 @@ func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Req
 	page := r.FormValue("page")
 	p, err := strconv.Atoi(page)
 	if err != nil || p < 1 {
-		// Return outbox
+		// Return the root following collection. Blogs don't follow anyone, so this is always empty.
 		oc := activitystreams.NewOrderedCollection(accountRoot, "following", 0)
 		return impart.RenderActivityJSON(w, oc, http.StatusOK)
 	}
 
-	// Return outbox page
 	ocp := activitystreams.NewOrderedCollectionPage(accountRoot, "following", 0, p)
 	ocp.OrderedItems = []interface{}{}
 	setCacheControl(w, apCacheTime)
