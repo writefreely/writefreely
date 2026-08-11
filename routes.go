@@ -186,6 +186,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 
 	// Handle special pages first
 	write.Path("/reset").Handler(csrf.Protect(apper.App().keys.CSRFKey, csrf.Path("/"))(handler.Web(viewResetPassword, UserLevelNoneRequired)))
+	write.Path("/forgot-username").Handler(csrf.Protect(apper.App().keys.CSRFKey, csrf.Path("/"))(handler.Web(viewForgotUsername, UserLevelNoneRequired)))
 	write.HandleFunc("/login", handler.Web(viewLogin, UserLevelNoneRequired))
 	write.HandleFunc("/signup", handler.Web(handleViewLanding, UserLevelNoneRequired))
 	write.HandleFunc("/invite/{code:[a-zA-Z0-9]+}", handler.Web(handleViewInvite, UserLevelOptional)).Methods("GET")

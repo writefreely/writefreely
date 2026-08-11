@@ -40,6 +40,7 @@ import (
 	"github.com/writefreely/writefreely/author"
 	"github.com/writefreely/writefreely/config"
 	"github.com/writefreely/writefreely/key"
+	"github.com/writefreely/writefreely/spam"
 )
 
 const (
@@ -63,6 +64,7 @@ type writestore interface {
 	GetUserByID(int64) (*User, error)
 	GetUserForAuth(string) (*User, error)
 	GetUserForAuthByID(int64) (*User, error)
+	GetUsersByEmail(keys *key.Keychain, cleanEmail string) ([]User, error)
 	GetUserNameFromToken(string) (string, error)
 	GetUserDataFromToken(string) (int64, string, error)
 	GetAPIUser(header string) (*User, error)
@@ -430,6 +432,52 @@ func (db *datastore) GetUserForAuth(username string) (*User, error) {
 	}
 
 	return u, nil
+}
+
+// GetUsersByEmail returns every user whose email address matches the given cleaned address (see spam.CleanEmail).
+// Because emails are stored encrypted with a random nonce, they can't be matched in SQL. This scans and decrypts every
+// stored address, so it's an expensive call. Use it sparingly.
+func (db *datastore) GetUsersByEmail(keys *key.Keychain, cleanEmail string) ([]User, error) {
+	if cleanEmail == "" {
+		return nil, nil
+	}
+
+	rows, err := db.Query("SELECT id, username, email, created, status FROM users WHERE email IS NOT NULL")
+	if err != nil {
+		log.Error("Couldn't SELECT users for email lookup: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []User{}
+	for rows.Next() {
+		u := User{}
+		e := []byte{}
+		err = rows.Scan(&u.ID, &u.Username, &e, &u.Created, &u.Status)
+		if err != nil {
+			log.Error("Couldn't scan user row for email lookup: %v", err)
+			continue
+		}
+		if len(e) == 0 {
+			continue
+		}
+		email, err := data.Decrypt(keys.EmailKey, e)
+		if err != nil {
+			log.Error("Couldn't decrypt email for user %d: %v", u.ID, err)
+			continue
+		}
+
+		if spam.CleanEmail(string(email)) == cleanEmail {
+			u.clearEmail = string(email)
+			users = append(users, u)
+		}
+	}
+	if err = rows.Err(); err != nil {
+		log.Error("Error iterating users for email lookup: %v", err)
+		return nil, err
+	}
+
+	return users, nil
 }
 
 func (db *datastore) GetUserForAuthByID(userID int64) (*User, error) {

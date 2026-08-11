@@ -24,6 +24,7 @@ p.forgot {
 {{if not .DisablePasswordAuth}}
 	<form action="/auth/login" method="post" style="text-align: center;margin-top:1em;" onsubmit="disableSubmit()">
 		<input type="text" name="alias" placeholder="Username" value="{{.LoginUsername}}" {{if not .LoginUsername}}autofocus{{end}} /><br />
+        {{if .EmailEnabled}}<p class="forgot"><a href="/forgot-username">Forgot username?</a></p>{{end}}
 		<input type="password" name="pass" placeholder="Password" {{if .LoginUsername}}autofocus{{end}} /><br />
 		{{if .EmailEnabled}}<p class="forgot"><a href="/reset">Forgot password?</a></p>{{end}}
 		{{if .To}}<input type="hidden" name="to" value="{{.To}}" />{{end}}
