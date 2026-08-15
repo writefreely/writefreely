@@ -1290,8 +1290,13 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 		}
 	}
 	if len(p.Images) > 0 {
+		altText := extractImageAltText(p.Content)
 		for _, i := range p.Images {
-			o.Attachment = append(o.Attachment, activitystreams.NewImageAttachment(i))
+			img := activitystreams.NewImageAttachment(i)
+			if alt, ok := altText[i]; ok {
+				img.Name = alt
+			}
+			o.Attachment = append(o.Attachment, img)
 		}
 	}
 	// Find mentioned users
@@ -1755,10 +1760,27 @@ func (rp *RawPost) Updated8601() string {
 	return rp.Updated.Format("2006-01-02T15:04:05Z")
 }
 
-var imageURLRegex = regexp.MustCompile(`(?i)[^ ]+\.(gif|png|jpg|jpeg|avif|avifs|webp|jxl|image)$`)
+var (
+	imageURLRegex      = regexp.MustCompile(`(?i)[^ ]+\.(gif|png|jpg|jpeg|avif|avifs|webp|jxl|image)$`)
+	imageMarkdownRegex = regexp.MustCompile(`!\[([^\]]*)\]\(\s*(\S+?)(?:\s+"[^"]*")?\s*\)`)
+)
 
 func (p *Post) extractImages() {
 	p.Images = extractImages(p.Content)
+}
+
+// extractImageAltText maps image URLs to their Markdown alt text for any
+// images written with Markdown image syntax in content.
+func extractImageAltText(content string) map[string]string {
+	alts := map[string]string{}
+	for _, m := range imageMarkdownRegex.FindAllStringSubmatch(content, -1) {
+		alt := strings.TrimSpace(m[1])
+		if alt == "" {
+			continue
+		}
+		alts[m[2]] = alt
+	}
+	return alts
 }
 
 func extractImages(content string) []string {
