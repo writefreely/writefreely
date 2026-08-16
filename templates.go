@@ -14,14 +14,15 @@ import (
 	"errors"
 	"html/template"
 	"io"
+	"io/fs"
 	"net/http"
-	"os"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"github.com/dustin/go-humanize"
 	"github.com/writeas/web-core/l10n"
 	"github.com/writeas/web-core/log"
+	"github.com/writefreely/writefreely/author"
 	"github.com/writefreely/writefreely/config"
 )
 
@@ -49,77 +50,118 @@ const (
 	pagesDir     = "pages"
 )
 
+// tmplFile identifies a template file within a specific filesystem, since
+// the files that make up a single parsed template can be split across the
+// independently-configurable templates/ and pages/ trees.
+type tmplFile struct {
+	fsys fs.FS
+	name string
+}
+
+// parseTemplateSet parses files into t in order, associating each with t the
+// same way (html/template.Template).ParseFiles does -- it just reads from
+// each file's own fs.FS instead of assuming a single filesystem.
+func parseTemplateSet(t *template.Template, files ...tmplFile) (*template.Template, error) {
+	if len(files) == 0 {
+		return nil, errors.New("template: no files named in call")
+	}
+	for _, tf := range files {
+		b, err := fs.ReadFile(tf.fsys, tf.name)
+		if err != nil {
+			return nil, err
+		}
+		name := path.Base(tf.name)
+		var tmpl *template.Template
+		if name == t.Name() {
+			tmpl = t
+		} else {
+			tmpl = t.New(name)
+		}
+		_, err = tmpl.Parse(string(b))
+		if err != nil {
+			return nil, err
+		}
+	}
+	return t, nil
+}
+
 func showUserPage(w http.ResponseWriter, name string, obj interface{}) {
 	if obj == nil {
 		log.Error("showUserPage: data is nil!")
 		return
 	}
-	if err := userPages[filepath.Join("user", name+".tmpl")].ExecuteTemplate(w, name, obj); err != nil {
+	if err := userPages[path.Join("user", name+".tmpl")].ExecuteTemplate(w, name, obj); err != nil {
 		log.Error("Error parsing %s: %v", name, err)
 	}
 }
 
-func initTemplate(parentDir, name string) {
+func initTemplate(tfs fs.FS, name string) {
 	if debugging {
-		log.Info("  " + filepath.Join(parentDir, templatesDir, name+".tmpl"))
+		log.Info("  " + name + ".tmpl")
 	}
 
-	files := []string{
-		filepath.Join(parentDir, templatesDir, name+".tmpl"),
-		filepath.Join(parentDir, templatesDir, "include", "footer.tmpl"),
-		filepath.Join(parentDir, templatesDir, "base.tmpl"),
-		filepath.Join(parentDir, templatesDir, "user", "include", "silenced.tmpl"),
+	files := []tmplFile{
+		{tfs, name + ".tmpl"},
+		{tfs, path.Join("include", "footer.tmpl")},
+		{tfs, "base.tmpl"},
+		{tfs, path.Join("user", "include", "silenced.tmpl")},
 	}
 	if name == "collection" || name == "collection-tags" || name == "collection-archive" || name == "chorus-collection" || name == "read" {
 		// These pages list out collection posts, so we also parse templatesDir + "include/posts.tmpl"
-		files = append(files, filepath.Join(parentDir, templatesDir, "include", "posts.tmpl"))
+		files = append(files, tmplFile{tfs, path.Join("include", "posts.tmpl")})
 	}
 	if name == "chorus-collection" || name == "chorus-collection-post" {
-		files = append(files, filepath.Join(parentDir, templatesDir, "user", "include", "header.tmpl"))
+		files = append(files, tmplFile{tfs, path.Join("user", "include", "header.tmpl")})
 	}
 	if name == "collection" || name == "collection-tags" || name == "collection-archive" || name == "collection-post" || name == "post" || name == "chorus-collection" || name == "chorus-collection-post" {
-		files = append(files, filepath.Join(parentDir, templatesDir, "include", "post-render.tmpl"))
+		files = append(files, tmplFile{tfs, path.Join("include", "post-render.tmpl")})
 	}
-	templates[name] = template.Must(template.New("").Funcs(funcMap).ParseFiles(files...))
+	templates[name] = template.Must(parseTemplateSet(template.New("").Funcs(funcMap), files...))
 }
 
-func initPage(parentDir, path, key string) {
+func initPage(tfs, pfs fs.FS, pagePath, key string) {
 	if debugging {
-		log.Info("  [%s] %s", key, path)
+		log.Info("  [%s] %s", key, pagePath)
 	}
 
-	files := []string{
-		path,
-		filepath.Join(parentDir, templatesDir, "include", "footer.tmpl"),
-		filepath.Join(parentDir, templatesDir, "base.tmpl"),
-		filepath.Join(parentDir, templatesDir, "user", "include", "silenced.tmpl"),
+	files := []tmplFile{
+		{pfs, pagePath},
+		{tfs, path.Join("include", "footer.tmpl")},
+		{tfs, "base.tmpl"},
+		{tfs, path.Join("user", "include", "silenced.tmpl")},
 	}
 
 	if key == "login.tmpl" || key == "landing.tmpl" || key == "signup.tmpl" {
-		files = append(files, filepath.Join(parentDir, templatesDir, "include", "oauth.tmpl"))
+		files = append(files, tmplFile{tfs, path.Join("include", "oauth.tmpl")})
 	}
 
-	pages[key] = template.Must(template.New("").Funcs(funcMap).ParseFiles(files...))
+	pages[key] = template.Must(parseTemplateSet(template.New("").Funcs(funcMap), files...))
 }
 
-func initUserPage(parentDir, path, key string) {
+func initUserPage(tfs fs.FS, userPagePath, key string) {
 	if debugging {
-		log.Info("  [%s] %s", key, path)
+		log.Info("  [%s] %s", key, userPagePath)
 	}
 
-	userPages[key] = template.Must(template.New(key).Funcs(funcMap).ParseFiles(
-		path,
-		filepath.Join(parentDir, templatesDir, "user", "include", "header.tmpl"),
-		filepath.Join(parentDir, templatesDir, "user", "include", "footer.tmpl"),
-		filepath.Join(parentDir, templatesDir, "user", "include", "silenced.tmpl"),
-		filepath.Join(parentDir, templatesDir, "user", "include", "nav.tmpl"),
+	userPages[key] = template.Must(parseTemplateSet(template.New(key).Funcs(funcMap),
+		tmplFile{tfs, userPagePath},
+		tmplFile{tfs, path.Join("user", "include", "header.tmpl")},
+		tmplFile{tfs, path.Join("user", "include", "footer.tmpl")},
+		tmplFile{tfs, path.Join("user", "include", "silenced.tmpl")},
+		tmplFile{tfs, path.Join("user", "include", "nav.tmpl")},
 	))
 }
 
 // InitTemplates loads all template files from the configured parent dir.
 func InitTemplates(cfg *config.Config) error {
+	tfs := templatesFileSystem(cfg.Server.TemplatesParentDir)
+	pfs := pagesFileSystem(cfg.Server.PagesParentDir)
+	// Let the author package resolve reserved usernames against the same
+	// (possibly embedded) pages filesystem instead of reading disk directly.
+	author.PagesFS = pfs
+
 	log.Info("Loading templates...")
-	tmplFiles, err := os.ReadDir(filepath.Join(cfg.Server.TemplatesParentDir, templatesDir))
+	tmplFiles, err := fs.ReadDir(tfs, ".")
 	if err != nil {
 		return err
 	}
@@ -128,19 +170,19 @@ func InitTemplates(cfg *config.Config) error {
 		if !f.IsDir() && !strings.HasPrefix(f.Name(), ".") {
 			parts := strings.Split(f.Name(), ".")
 			key := parts[0]
-			initTemplate(cfg.Server.TemplatesParentDir, key)
+			initTemplate(tfs, key)
 		}
 	}
 
 	log.Info("Loading pages...")
 	// Initialize all static pages that use the base template
-	err = filepath.Walk(filepath.Join(cfg.Server.PagesParentDir, pagesDir), func(path string, i os.FileInfo, err error) error {
+	err = fs.WalkDir(pfs, ".", func(p string, i fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if !i.IsDir() && !strings.HasPrefix(i.Name(), ".") {
 			key := i.Name()
-			initPage(cfg.Server.PagesParentDir, path, key)
+			initPage(tfs, pfs, p, key)
 		}
 
 		return nil
@@ -151,21 +193,15 @@ func InitTemplates(cfg *config.Config) error {
 
 	log.Info("Loading user pages...")
 	// Initialize all user pages that use base templates
-	err = filepath.Walk(filepath.Join(cfg.Server.TemplatesParentDir, templatesDir, "user"), func(path string, f os.FileInfo, err error) error {
+	err = fs.WalkDir(tfs, "user", func(p string, f fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if !f.IsDir() && !strings.HasPrefix(f.Name(), ".") {
-			corePath := path
-			if cfg.Server.TemplatesParentDir != "" {
-				corePath = corePath[len(cfg.Server.TemplatesParentDir)+1:]
-			}
-			parts := strings.Split(corePath, string(filepath.Separator))
-			key := f.Name()
-			if len(parts) > 2 {
-				key = filepath.Join(parts[1], f.Name())
-			}
-			initUserPage(cfg.Server.TemplatesParentDir, path, key)
+			// However deep the file is under templates/user/, it's keyed
+			// the same way showUserPage looks it up: "user/<basename>".
+			key := path.Join("user", f.Name())
+			initUserPage(tfs, p, key)
 		}
 
 		return nil

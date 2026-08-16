@@ -13,7 +13,6 @@ package writefreely
 import (
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"strings"
 
 	"github.com/gorilla/csrf"
@@ -27,7 +26,7 @@ import (
 // TODO: this should just be a func, not method
 func (app *App) InitStaticRoutes(r *mux.Router) {
 	// Handle static files
-	fs := http.FileServer(http.Dir(filepath.Join(app.cfg.Server.StaticParentDir, staticDir)))
+	fs := http.FileServer(staticFileSystem(app.cfg.Server.StaticParentDir))
 	fs = cacheControl(fs)
 	app.shttp = http.NewServeMux()
 	app.shttp.Handle("/", fs)
