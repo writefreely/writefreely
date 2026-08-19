@@ -1409,12 +1409,14 @@ func handleWebCollectionUnlock(app *App, w http.ResponseWriter, r *http.Request)
 
 	// Success; set cookie
 	session, err := app.sessionStore.Get(r, blogPassCookieName)
-	if err == nil {
-		session.Values[readReq.Alias] = true
-		err = session.Save(r, w)
-		if err != nil {
-			log.Error("Didn't save unlocked blog '%s': %v", readReq.Alias, err)
-		}
+	if err != nil {
+		// The cookie should still save, even if there's an error.
+		log.Error("Getting blog password cookie for '%s': %v; ignoring", readReq.Alias, err)
+	}
+	session.Values[readReq.Alias] = true
+	err = session.Save(r, w)
+	if err != nil {
+		log.Error("Didn't save unlocked blog '%s': %v", readReq.Alias, err)
 	}
 
 	next := "/" + readReq.Next
