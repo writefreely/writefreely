@@ -11,10 +11,15 @@
 package writefreely
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/writeas/go-webfinger"
 	"github.com/writeas/impart"
@@ -98,17 +103,101 @@ func (wfr wfResolver) IsNotFoundError(err error) bool {
 	return err == wfUserNotFoundErr
 }
 
+// errBlockedRemoteAddr is returned when a webfinger lookup would connect to
+// a private, loopback, link-local, or otherwise disallowed address.
+var errBlockedRemoteAddr = errors.New("refusing to connect to a private or internal address")
+
+// safeWebfingerHTTPClient is a hardened HTTP client for fetching remote
+// webfinger documents. It validates the resolved IP address of every
+// connection (including redirects) at dial time, so DNS rebinding can't be
+// used to bypass the check.
+var safeWebfingerHTTPClient = &http.Client{
+	Timeout: 10 * time.Second,
+	Transport: &http.Transport{
+		DialContext: safeDialContext,
+	},
+	CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		if len(via) >= 5 {
+			return errors.New("too many redirects")
+		}
+		if req.URL.Scheme != "https" {
+			return fmt.Errorf("refusing to follow redirect to non-https scheme %q", req.URL.Scheme)
+		}
+		return nil
+	},
+}
+
+func safeDialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return nil, err
+	}
+	ips, err := net.DefaultResolver.LookupIPAddr(ctx, host)
+	if err != nil {
+		return nil, err
+	}
+	var lastErr error
+	for _, ip := range ips {
+		if !isPublicAddr(ip.IP) {
+			lastErr = fmt.Errorf("%w: %s", errBlockedRemoteAddr, ip.IP)
+			continue
+		}
+		var d net.Dialer
+		conn, err := d.DialContext(ctx, network, net.JoinHostPort(ip.IP.String(), port))
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		return conn, nil
+	}
+	if lastErr == nil {
+		lastErr = fmt.Errorf("no addresses found for %s", host)
+	}
+	return nil, lastErr
+}
+
+// isPublicAddr reports whether ip is safe to connect to, i.e. not a
+// loopback, private, link-local, multicast, or otherwise special-purpose
+// address that could be used to reach internal services or cloud metadata
+// endpoints via SSRF.
+func isPublicAddr(ip net.IP) bool {
+	if ip == nil {
+		return false
+	}
+	if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() ||
+		ip.IsLinkLocalMulticast() || ip.IsInterfaceLocalMulticast() ||
+		ip.IsMulticast() || ip.IsUnspecified() {
+		return false
+	}
+	if ip4 := ip.To4(); ip4 != nil {
+		// 100.64.0.0/10 (Carrier-Grade NAT) and 169.254.169.254-style
+		// cloud metadata addresses are covered by IsLinkLocalUnicast above,
+		// but explicitly block the CGNAT range too.
+		if ip4[0] == 100 && ip4[1]&0xc0 == 64 {
+			return false
+		}
+	}
+	return true
+}
+
 // RemoteLookup looks up a user by handle at a remote server
 // and returns the actor URL
 func RemoteLookup(handle string) string {
 	handle = strings.TrimLeft(handle, "@")
 	// let's take the server part of the handle
 	parts := strings.Split(handle, "@")
-	resp, err := http.Get("https://" + parts[1] + "/.well-known/webfinger?resource=acct:" + handle)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		log.Error("Invalid webfinger handle: %s", handle)
+		return ""
+	}
+	domain := parts[1]
+
+	resp, err := safeWebfingerHTTPClient.Get("https://" + domain + "/.well-known/webfinger?resource=acct:" + handle)
 	if err != nil {
 		log.Error("Error on webfinger request: %v", err)
 		return ""
 	}
+	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
