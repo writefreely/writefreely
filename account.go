@@ -134,6 +134,15 @@ func signup(app *App, w http.ResponseWriter, r *http.Request) (*AuthUser, error)
 func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWriter, r *http.Request) (*AuthUser, error) {
 	reqJSON := IsJSON(r)
 
+	// Signup checks are enforced here to keep them from being bypassed on different endpoints.
+	if app.cfg.App.DisablePasswordAuth {
+		return nil, ErrDisabledPasswordAuth
+	}
+	// Closed registration requires a valid, active invite code.
+	if err := app.canRegister(signup.InviteCode); err != nil {
+		return nil, err
+	}
+
 	// Validate required params (alias)
 	if signup.Alias == "" {
 		return nil, impart.HTTPError{http.StatusBadRequest, "A username is required."}

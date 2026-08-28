@@ -85,6 +85,9 @@ func (p oauthSignupPageParams) HashTokenParams(key string) string {
 	hasher.Write([]byte(p.TokenRemoteUser))
 	hasher.Write([]byte(p.ClientID))
 	hasher.Write([]byte(p.Provider))
+	// Include the invite code so it can't be swapped out between the callback (where it was validated) and this
+	// completion step.
+	hasher.Write([]byte(p.InviteCode))
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
@@ -103,6 +106,14 @@ func (h oauthHandler) viewOauthSignup(app *App, w http.ResponseWriter, r *http.R
 		return impart.HTTPError{Status: http.StatusBadRequest, Message: "Request has been tampered with."}
 	}
 	tp.TokenHash = tp.HashTokenParams(h.Config.Server.HashSeed)
+	// Re-check registration eligibility at the completion step rather than
+	// trusting that the callback already did. The signed hash proves the OAuth
+	// identity params (including the invite code) weren't tampered with, but
+	// the account is only actually created here -- so this is where closed
+	// registration and invite validity must be enforced.
+	if err := app.canRegister(tp.InviteCode); err != nil {
+		return h.showOauthSignupPage(app, w, r, tp, err)
+	}
 	if err := h.validateOauthSignup(r); err != nil {
 		return h.showOauthSignupPage(app, w, r, tp, err)
 	}

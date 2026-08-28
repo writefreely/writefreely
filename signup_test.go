@@ -231,6 +231,47 @@ func TestAPISignupOpenRegistrationStillWorks(t *testing.T) {
 	assert.True(t, userExists(t, app, "apisignup-open"))
 }
 
+// TestSignupDisabledPasswordAuth guards against creating a password-based
+// account when password auth is disabled.
+func TestSignupDisabledPasswordAuth(t *testing.T) {
+	newReq := func(path, alias string) (*http.Request, *httptest.ResponseRecorder) {
+		form := url.Values{}
+		form.Set("alias", alias)
+		form.Set("pass", "sup3rSecret!")
+		req := httptest.NewRequest("POST", path, strings.NewReader(form.Encode()))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		return req, httptest.NewRecorder()
+	}
+
+	t.Run("api", func(t *testing.T) {
+		app := newSignupTestApp(t)
+		app.cfg.App.OpenRegistration = true
+		app.cfg.App.DisablePasswordAuth = true
+
+		req, w := newReq("/api/auth/signup", "pwauth-api")
+		if err := apiSignup(app, w, req); err != ErrDisabledPasswordAuth {
+			t.Fatalf("expected ErrDisabledPasswordAuth, got: %v", err)
+		}
+		assert.False(t, userExists(t, app, "pwauth-api"))
+	})
+
+	t.Run("web", func(t *testing.T) {
+		app := newSignupTestApp(t)
+		app.cfg.App.OpenRegistration = true
+		app.cfg.App.DisablePasswordAuth = true
+
+		req, w := newReq("/auth/signup", "pwauth-web")
+		// handleWebSignup converts the rejection into a flash + 302 redirect
+		// rather than returning the error verbatim, so the real signal is that
+		// no account was created.
+		err := handleWebSignup(app, w, req)
+		if httpErr, ok := err.(impart.HTTPError); !ok || httpErr.Status != http.StatusFound {
+			t.Fatalf("expected 302 redirect, got: %v", err)
+		}
+		assert.False(t, userExists(t, app, "pwauth-web"))
+	})
+}
+
 // TestInitRoutesAlwaysRegistersAPISignup guards against the routing-time
 // bypass in Finding A: /api/auth/signup used to only be registered when
 // OpenRegistration was true *at boot*, so toggling the setting off at

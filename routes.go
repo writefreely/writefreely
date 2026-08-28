@@ -85,9 +85,7 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	// Set up dynamic page handlers
 	// Handle auth
 	auth := write.PathPrefix("/api/auth/").Subrouter()
-	if apper.App().cfg.App.OpenRegistration {
-		auth.HandleFunc("/signup", handler.All(apiSignup)).Methods("POST")
-	}
+	auth.HandleFunc("/signup", handler.All(apiSignup)).Methods("POST")
 	auth.HandleFunc("/login", handler.All(login)).Methods("POST")
 	auth.HandleFunc("/read", handler.WebErrors(handleWebCollectionUnlock, UserLevelNone)).Methods("POST")
 	auth.HandleFunc("/me", handler.All(handleAPILogout)).Methods("DELETE")
