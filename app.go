@@ -406,6 +406,17 @@ var fileRegex = regexp.MustCompile("/([^/]*\\.[^/]*)$")
 func Initialize(apper Apper, debug bool) (*App, error) {
 	debugging = debug
 
+	// Ensure a configuration file exists first, for a nicer error message
+	if _, err := os.Stat(apper.App().cfgFile); os.IsNotExist(err) {
+		flagOpt := ""
+		loc := " yet"
+		if apper.App().cfgFile != config.FileName {
+			flagOpt = " -c " + apper.App().cfgFile
+			loc = " at " + apper.App().cfgFile
+		}
+		return nil, fmt.Errorf("No configuration file%s. To create, run:\n  writefreely%s config start", loc, flagOpt)
+	}
+
 	apper.LoadConfig()
 
 	// Load templates
@@ -618,6 +629,17 @@ func ConnectToDatabase(app *App) error {
 			log.Info("Enabling compatibility for MySQL v5.x")
 			app.db.useSpencerRegex = true
 		}
+	}
+
+	// Ensure the database schema is up-to-date
+	var dbVer int
+	err = app.db.QueryRow("SELECT MAX(version) FROM appmigrations").Scan(&dbVer)
+	if err != nil {
+		log.Error("Unable to read migrations version: %v", err)
+	} else if dbVer < migrations.CurrentVer() {
+		log.Info("+--------------------------------------------------------------------------+")
+		log.Info("| IMPORTANT! There are pending migrations (%d). Run: writefreely db migrate |", migrations.CurrentVer()-dbVer)
+		log.Info("+--------------------------------------------------------------------------+")
 	}
 
 	return nil
