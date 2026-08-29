@@ -1,0 +1,50 @@
+{{define "head"}}<title>Forgot username &mdash; {{.SiteName}}</title>
+<style>
+input {
+	margin-bottom: 0.5em;
+	width: 100%;
+	box-sizing: border-box;
+}
+label {
+	display: block;
+}
+</style>
+{{end}}
+{{define "content"}}
+<div class="toosmall content-container clean">
+	<h1>Forgot your username?</h1>
+
+{{ if .DisablePasswordAuth }}
+	<div class="alert info">
+		<p><strong>Password login is disabled on this server</strong>, so usernames aren't used to log in. Please log in with the option shown on the <a href="/login">login page</a>.</p>
+	</div>
+{{ else if not .EmailEnabled }}
+	<div class="alert info">
+		<p><strong>Email is not configured on this server!</strong> Please <a href="/contact">contact your admin</a> to recover your username.</p>
+	</div>
+{{ else }}
+	{{if .Flashes}}<ul class="errors">
+		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
+	</ul>{{end}}
+
+	{{if not .IsSent}}
+		<p>Enter the email address associated with your account, and we'll send you your username (or usernames).</p>
+
+		<form action="/forgot-username" method="post" onsubmit="disableSubmit()">
+			<label>
+				<p>Email address</p>
+				<input type="email" name="email" placeholder="me@example.com" autofocus />
+			</label>
+			{{ .CSRFField }}
+			<input type="submit" id="btn-login" value="Send Username" />
+		</form>
+
+		<script type="text/javascript">
+		var $btn = document.getElementById("btn-login");
+		function disableSubmit() {
+			$btn.disabled = true;
+		}
+		</script>
+	{{end}}
+{{ end }}
+{{end}}
