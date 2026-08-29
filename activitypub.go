@@ -55,7 +55,19 @@ var (
 var instanceColl *Collection
 
 func initActivityPub(app *App) {
-	ur, _ := url.Parse(app.cfg.App.Host)
+	if app == nil || app.cfg == nil {
+		log.Error("Unable to initialize ActivityPub: app or cfg is nil")
+		return
+	}
+	if app.cfg.App.Host == "" {
+		log.Error("Unable to initialize ActivityPub: App.Host is empty")
+		return
+	}
+	ur, err := url.Parse(app.cfg.App.Host)
+	if err != nil || ur == nil {
+		log.Error("Unable to initialize ActivityPub: invalid App.Host URL: %v", err)
+		return
+	}
 	instanceColl = &Collection{
 		ID:       0,
 		Alias:    ur.Host,
