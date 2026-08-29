@@ -20,7 +20,7 @@ func supportPassReset(db *datastore) error {
 	_, err = t.Exec(`CREATE TABLE password_resets (
     user_id ` + db.typeInt() + ` not null,
     token   ` + db.typeChar(32) + ` not null primary key,
-    used    ` + db.typeBool() + ` default 0 not null,
+    used    ` + db.typeBool() + ` default ` + db.boolFalse() + ` not null,
     created ` + db.typeDateTime() + ` not null
 )`)
 	if err != nil {
