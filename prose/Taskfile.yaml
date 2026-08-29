@@ -1,0 +1,6 @@
+version: "3"
+
+tasks:
+  all:
+    - npm install
+    - npm run-script build
