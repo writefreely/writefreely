@@ -280,7 +280,7 @@ func (p *Post) CreatedDate() string {
 }
 
 func (p *Post) Created8601() string {
-	return p.Created.Format("2006-01-02T15:04:05Z")
+	return p.Created.UTC().Format("2006-01-02T15:04:05Z")
 }
 
 func (p *Post) IsScheduled() bool {
@@ -1741,14 +1741,14 @@ func (rp *RawPost) UserFacingCreated() string {
 }
 
 func (rp *RawPost) Created8601() string {
-	return rp.Created.Format("2006-01-02T15:04:05Z")
+	return rp.Created.UTC().Format("2006-01-02T15:04:05Z")
 }
 
 func (rp *RawPost) Updated8601() string {
 	if rp.Updated.IsZero() {
 		return ""
 	}
-	return rp.Updated.Format("2006-01-02T15:04:05Z")
+	return rp.Updated.UTC().Format("2006-01-02T15:04:05Z")
 }
 
 var imageURLRegex = regexp.MustCompile(`(?i)[^ ]+\.(gif|png|jpg|jpeg|avif|avifs|webp|jxl|image)$`)
