@@ -260,6 +260,7 @@ func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Req
 	// Return outbox page
 	ocp := activitystreams.NewOrderedCollectionPage(accountRoot, "followers", len(*folls), p)
 	ocp.OrderedItems = []interface{}{}
+	ocp.Next = ""
 	/*
 		for _, f := range *folls {
 			ocp.OrderedItems = append(ocp.OrderedItems, f.ActorID)
@@ -310,6 +311,7 @@ func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Req
 	// Return outbox page
 	ocp := activitystreams.NewOrderedCollectionPage(accountRoot, "following", 0, p)
 	ocp.OrderedItems = []interface{}{}
+	ocp.Next = ""
 	setCacheControl(w, apCacheTime)
 	return impart.RenderActivityJSON(w, ocp, http.StatusOK)
 }
@@ -739,9 +741,9 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 
 func makeActivityPost(hostName string, p *activitystreams.Person, url string, m interface{}) error {
 	if url == "" {
-        log.Error("Target POST URL is empty! Person: %+v, Activity: %+v", p, m)
-        return fmt.Errorf("target POST URL is empty")
-    }
+		log.Error("Target POST URL is empty! Person: %+v, Activity: %+v", p, m)
+		return fmt.Errorf("target POST URL is empty")
+	}
 
 	log.Info("POST %s", url)
 	b, err := json.Marshal(m)
