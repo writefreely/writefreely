@@ -1796,6 +1796,11 @@ func (db *datastore) ClaimPosts(cfg *config.Config, userID int64, collAlias stri
 					continue
 				}
 			}
+			// blue note.: use publication timestamp as the post slug.
+			if coll.Alias == "blue0a6m5c" {
+				p.Slug = time.Now().Format("20060102150405")
+			}
+
 			if p.Slug == "" {
 				p.Slug = p.ID
 			}
