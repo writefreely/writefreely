@@ -154,7 +154,7 @@ func handleImport(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 			Font:    "norm",
 			Created: &created,
 		}
-		rp, err := app.db.CreatePost(u.ID, coll.ID, &submittedPost)
+		rp, err := app.db.CreatePost(app.cfg, u.ID, coll.ID, &submittedPost)
 		if err != nil {
 			fileErrs = append(fileErrs, fmt.Errorf("failed to create post from %s", formFile.Filename))
 			log.Error("import textfile: create db post: %v", err)

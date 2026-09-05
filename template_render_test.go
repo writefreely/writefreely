@@ -211,7 +211,7 @@ func createTemplateTestUser(t *testing.T, app *App, username string) (*User, *Co
 
 	title := "Hello World"
 	content := "This is a **test** post used to exercise template rendering.\n\nIt has multiple paragraphs, and a [link](https://example.com)."
-	post, err := app.db.CreatePost(u.ID, coll.ID, &SubmittedPost{Title: &title, Content: &content})
+	post, err := app.db.CreatePost(app.cfg, u.ID, coll.ID, &SubmittedPost{Title: &title, Content: &content})
 	if err != nil {
 		t.Fatalf("create post: %v", err)
 	}

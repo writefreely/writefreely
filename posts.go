@@ -660,7 +660,7 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	var newPost *PublicPost = &PublicPost{}
 	var coll *Collection
 	if accessToken != "" {
-		newPost, err = app.db.CreateOwnedPost(p, accessToken, collAlias, app.cfg.App.Host)
+		newPost, err = app.db.CreateOwnedPost(app.cfg, p, accessToken, collAlias, app.cfg.App.Host)
 	} else {
 		//return ErrNotLoggedIn
 		// TODO: verify user is logged in
@@ -677,7 +677,7 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 			collID = coll.ID
 		}
 		// TODO: return PublicPost from createPost
-		newPost.Post, err = app.db.CreatePost(userID, collID, p)
+		newPost.Post, err = app.db.CreatePost(app.cfg, userID, collID, p)
 	}
 	if err != nil {
 		return err

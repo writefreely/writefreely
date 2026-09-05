@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-ini/ini"
 	"github.com/writeas/web-core/log"
@@ -141,6 +142,10 @@ type (
 		Forest        bool `ini:"forest"` // The admin cares about the forest, not the trees. Hide unnecessary technical info.
 		DisableDrafts bool `ini:"disable_drafts"`
 
+		DatetimeSlugs        bool   `ini:"datetime_slugs"`
+		DatetimeSlugTimezone string `ini:"datetime_slug_timezone"`
+		datetimeSlugLocation *time.Location
+
 		// Users
 		SingleUser       bool `ini:"single_user"`
 		OpenRegistration bool `ini:"open_registration"`
@@ -208,14 +213,15 @@ func New() *Config {
 			Bind: "localhost", /* IPV6 support when not using localhost? */
 		},
 		App: AppCfg{
-			Host:           "http://localhost:8080",
-			Theme:          "write",
-			WebFonts:       true,
-			SingleUser:     true,
-			MinUsernameLen: 3,
-			MaxBlogs:       1,
-			Federation:     true,
-			PublicStats:    true,
+			DatetimeSlugTimezone: "UTC",
+			Host:                 "http://localhost:8080",
+			Theme:                "write",
+			WebFonts:             true,
+			SingleUser:           true,
+			MinUsernameLen:       3,
+			MaxBlogs:             1,
+			Federation:           true,
+			PublicStats:          true,
 		},
 	}
 	c.UseMySQL(true)
@@ -281,6 +287,9 @@ func Load(fname string) (*Config, error) {
 	uc := &Config{}
 	err = cfg.MapTo(uc)
 	if err != nil {
+		return nil, err
+	}
+	if err := uc.App.initDatetimeSlugs(); err != nil {
 		return nil, err
 	}
 

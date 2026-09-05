@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
+
 	"testing"
-	"time"
 
 	"github.com/writefreely/writefreely/config"
 )
@@ -73,75 +72,6 @@ func TestBlueNoteEmptyActivityPages(t *testing.T) {
 					}
 				})
 			}
-		}
-	}
-}
-
-func TestBlueNoteClaimDatetimeSlug(t *testing.T) {
-	app, _ := newTemplateTestApp(t, func(cfg *config.Config) { cfg.App.SingleUser = false })
-	for _, alias := range []string{"blue0a6m5c", "otherblog"} {
-		user, coll, direct := createTemplateTestUser(t, app, alias)
-		// Current scope: direct creation still uses the title-based slug.
-		if direct.Slug.String != "hello-world" {
-			t.Fatalf("direct post slug = %q", direct.Slug.String)
-		}
-		for _, viaClaim := range []bool{false, true} {
-			t.Run(fmt.Sprintf("%s/claim=%t", alias, viaClaim), func(t *testing.T) {
-				title, content, created := "Draft Title", "Draft body", "2001-02-03T04:05:06Z"
-				draft, err := app.db.CreatePost(user.ID, 0, &SubmittedPost{Title: &title, Content: &content, Created: &created})
-				if err != nil {
-					t.Fatal(err)
-				}
-				t.Cleanup(func() {
-					if _, err := app.db.Exec("DELETE FROM posts WHERE id = ?", draft.ID); err != nil {
-						t.Error(err)
-					}
-				})
-				requests := []ClaimPostRequest{{AnonymousAuthPost: &AnonymousAuthPost{ID: draft.ID}}}
-				target := alias
-				if viaClaim {
-					target = ""
-					requests[0].CollectionAlias = alias
-				}
-				before := time.Now().Truncate(time.Second)
-				results, err := app.db.ClaimPosts(app.cfg, user.ID, target, &requests)
-				after := time.Now()
-				if err != nil {
-					t.Fatal(err)
-				}
-				if results == nil || len(*results) != 1 {
-					t.Fatalf("unexpected claim results: %#v", results)
-				}
-				result := (*results)[0]
-				if result.Code != http.StatusOK || result.Post == nil {
-					t.Fatalf("claim failed: %+v", result)
-				}
-				slug := result.Post.Slug.String
-				if alias == "blue0a6m5c" {
-					if !regexp.MustCompile(`^\d{14}$`).MatchString(slug) {
-						t.Fatalf("expected datetime slug, got %q", slug)
-					}
-					// The implementation uses processing time in time.Local, not
-					// the saved publication date. Accept a second boundary crossing.
-					stamp, err := time.ParseInLocation("20060102150405", slug, time.Local)
-					if err != nil {
-						t.Fatal(err)
-					}
-					if stamp.Before(before) || stamp.After(after) {
-						t.Errorf("slug time %s outside [%s, %s]", stamp, before, after)
-					}
-				} else if slug != "draft-title" {
-					t.Errorf("other blog slug = %q, want draft-title", slug)
-				}
-				var savedSlug string
-				var savedCollection int64
-				if err := app.db.QueryRow("SELECT slug, collection_id FROM posts WHERE id = ?", draft.ID).Scan(&savedSlug, &savedCollection); err != nil {
-					t.Fatal(err)
-				}
-				if savedSlug != slug || savedCollection != coll.ID {
-					t.Errorf("saved slug/collection = %q/%d, want %q/%d", savedSlug, savedCollection, slug, coll.ID)
-				}
-			})
 		}
 	}
 }

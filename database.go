@@ -86,8 +86,8 @@ type writestore interface {
 	GetAnonymousPosts(u *User, page int) (*[]PublicPost, error)
 	GetUserPosts(u *User) (*[]PublicPost, error)
 
-	CreateOwnedPost(post *SubmittedPost, accessToken, collAlias, hostName string) (*PublicPost, error)
-	CreatePost(userID, collID int64, post *SubmittedPost) (*Post, error)
+	CreateOwnedPost(cfg *config.Config, post *SubmittedPost, accessToken, collAlias, hostName string) (*PublicPost, error)
+	CreatePost(cfg *config.Config, userID, collID int64, post *SubmittedPost) (*Post, error)
 	UpdateOwnedPost(post *AuthenticatedPost, userID int64) error
 	GetEditablePost(id, editToken string) (*PublicPost, error)
 	PostIDExists(id string) bool
@@ -639,7 +639,7 @@ func (db *datastore) ConsumePasswordResetToken(t string) error {
 	return nil
 }
 
-func (db *datastore) CreateOwnedPost(post *SubmittedPost, accessToken, collAlias, hostName string) (*PublicPost, error) {
+func (db *datastore) CreateOwnedPost(cfg *config.Config, post *SubmittedPost, accessToken, collAlias, hostName string) (*PublicPost, error) {
 	var userID, collID int64 = -1, -1
 	var coll *Collection
 	var err error
@@ -662,7 +662,7 @@ func (db *datastore) CreateOwnedPost(post *SubmittedPost, accessToken, collAlias
 	}
 
 	rp := &PublicPost{}
-	rp.Post, err = db.CreatePost(userID, collID, post)
+	rp.Post, err = db.CreatePost(cfg, userID, collID, post)
 	if err != nil {
 		return rp, err
 	}
@@ -673,7 +673,7 @@ func (db *datastore) CreateOwnedPost(post *SubmittedPost, accessToken, collAlias
 	return rp, nil
 }
 
-func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Post, error) {
+func (db *datastore) CreatePost(cfg *config.Config, userID, collID int64, post *SubmittedPost) (*Post, error) {
 	idLen := postIDLen
 	friendlyID := id.GenerateFriendlyRandomString(idLen)
 
@@ -733,6 +733,16 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 				// SQLite stores datetimes in UTC, so convert time.Now() to it here
 				created = created.UTC()
 			}
+		}
+	}
+
+	if ownerCollID.Valid && (post.Slug == nil || *post.Slug == "") {
+		datetimeSlug, err := cfg.App.DatetimeSlug(created)
+		if err != nil {
+			return nil, err
+		}
+		if datetimeSlug != "" {
+			slug = sql.NullString{String: datetimeSlug, Valid: true}
 		}
 	}
 
@@ -1796,9 +1806,36 @@ func (db *datastore) ClaimPosts(cfg *config.Config, userID int64, collAlias stri
 					continue
 				}
 			}
-			// blue note.: use publication timestamp as the post slug.
-			if coll.Alias == "blue0a6m5c" {
-				p.Slug = time.Now().Format("20060102150405")
+			// Read the saved slug and publication instant under the same ownership
+			// conditions as the update. Re-collecting must not regenerate URLs,
+			// even after the feature is disabled or the publication date changes.
+			var savedSlug sql.NullString
+			var created time.Time
+			if canCollect {
+				err = db.QueryRow("SELECT slug, created FROM posts WHERE id = ? AND owner_id = ?", p.ID, userID).Scan(&savedSlug, &created)
+			} else {
+				err = db.QueryRow("SELECT slug, created FROM posts WHERE id = ? AND modify_token = ? AND owner_id IS NULL", p.ID, p.Token).Scan(&savedSlug, &created)
+			}
+			if err != nil {
+				r.ID, r.Code, r.ErrorMessage = p.ID, http.StatusInternalServerError, "Unable to read post metadata."
+				if err == sql.ErrNoRows {
+					r.Code, r.ErrorMessage = http.StatusForbidden, "Post not found or not owned."
+				}
+				res = append(res, r)
+				continue
+			}
+			if savedSlug.String != "" {
+				p.Slug = savedSlug.String
+			} else {
+				datetimeSlug, err := cfg.App.DatetimeSlug(created)
+				if err != nil {
+					r.ID, r.Code, r.ErrorMessage = p.ID, http.StatusInternalServerError, err.Error()
+					res = append(res, r)
+					continue
+				}
+				if datetimeSlug != "" {
+					p.Slug = datetimeSlug
+				}
 			}
 
 			if p.Slug == "" {
@@ -1814,6 +1851,10 @@ func (db *datastore) ClaimPosts(cfg *config.Config, userID int64, collAlias stri
 				query = "UPDATE posts SET owner_id = ?, collection_id = ?, slug = ? WHERE id = ? AND modify_token = ? AND owner_id IS NULL"
 				params = []interface{}{userID, coll.ID, p.Slug, p.ID, p.Token}
 				slugIdx = 2
+			}
+			if savedSlug.String != "" {
+				// A destination collision must fail rather than rename a saved slug.
+				slugIdx = -1
 			}
 		} else {
 			query = "UPDATE posts SET owner_id = ? WHERE id = ? AND modify_token = ? AND owner_id IS NULL"
