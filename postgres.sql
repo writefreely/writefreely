@@ -5,12 +5,12 @@ CREATE TABLE IF NOT EXISTS "accesstokens" (
 	"one_time" BOOLEAN NOT NULL DEFAULT FALSE,
 	"created" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	"expires" TIMESTAMP DEFAULT NULL,
-	"user_agent" VARCHAR(255) DEFAULT NULL
+	"user_agent" TEXT DEFAULT NULL
 );
 
 
 CREATE TABLE IF NOT EXISTS "appcontent" (
-	"id" VARCHAR(36) PRIMARY KEY,
+	"id" TEXT PRIMARY KEY,
 	"content" TEXT NOT NULL,
 	"updated" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -25,8 +25,8 @@ CREATE TABLE "appmigrations" (
 
 CREATE TABLE IF NOT EXISTS "collectionattributes" (
 	"collection_id" INT NOT NULL,
-	"attribute" VARCHAR(128) NOT NULL,
-	"value" VARCHAR(255) NOT NULL,
+	"attribute" TEXT NOT NULL,
+	"value" TEXT NOT NULL,
 	PRIMARY KEY ("collection_id", "attribute")
 );
 
@@ -40,24 +40,24 @@ CREATE TABLE IF NOT EXISTS "collectionkeys" (
 
 CREATE TABLE IF NOT EXISTS "collectionpasswords" (
     "collection_id" INT PRIMARY KEY,
-    "password" CHAR(60) NOT NULL
+    "password" TEXT NOT NULL
 );
 
 
 CREATE TABLE IF NOT EXISTS "collectionredirects" (
-    "prev_alias" VARCHAR(100) NOT NULL PRIMARY KEY,
-    "new_alias" VARCHAR(100) NOT NULL
+    "prev_alias" TEXT NOT NULL PRIMARY KEY,
+    "new_alias" TEXT NOT NULL
 );
 
 
 CREATE TABLE IF NOT EXISTS "collections" (
     "id" SERIAL PRIMARY KEY,
-    "alias" VARCHAR(100) DEFAULT NULL,
-    "title" VARCHAR(255) NOT NULL,
-    "description" VARCHAR(160) NOT NULL,
+    "alias" TEXT DEFAULT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
     "style_sheet" TEXT,
     "script" TEXT DEFAULT NULL,
-    "format" VARCHAR(8) DEFAULT NULL,
+    "format" TEXT DEFAULT NULL,
     "privacy" INT NOT NULL,
     "owner_id" INT NOT NULL,
     "view_count" INT NOT NULL
@@ -65,11 +65,11 @@ CREATE TABLE IF NOT EXISTS "collections" (
 
 
 CREATE TABLE IF NOT EXISTS "posts" (
-    "id" CHAR(16) PRIMARY KEY,
-    "slug" VARCHAR(100) DEFAULT NULL,
-    "modify_token" CHAR(32) DEFAULT NULL,
-    "text_appearance" CHAR(4) NOT NULL DEFAULT 'norm',
-    "language" CHAR(2) DEFAULT NULL,
+    "id" TEXT PRIMARY KEY,
+    "slug" TEXT DEFAULT NULL,
+    "modify_token" TEXT DEFAULT NULL,
+    "text_appearance" TEXT NOT NULL DEFAULT 'norm',
+    "language" TEXT DEFAULT NULL,
     "rtl" BOOLEAN DEFAULT NULL,
     "privacy" INT NOT NULL,
     "owner_id" INT DEFAULT NULL,
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS "posts" (
     "created" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "view_count" INT NOT NULL,
-    "title" VARCHAR(160) NOT NULL,
+    "title" TEXT NOT NULL,
     "content" TEXT NOT NULL
 );
 
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS "remotefollows" (
 
 
 CREATE TABLE IF NOT EXISTS "remoteuserkeys" (
-    "id" VARCHAR(255) PRIMARY KEY,
+    "id" TEXT PRIMARY KEY,
     "remote_user_id" INT NOT NULL,
     "public_key" BYTEA NOT NULL
 );
@@ -100,22 +100,22 @@ CREATE TABLE IF NOT EXISTS "remoteuserkeys" (
 
 CREATE TABLE IF NOT EXISTS "remoteusers" (
     "id" SERIAL PRIMARY KEY,
-    "actor_id" VARCHAR(255) NOT NULL,
-    "inbox" VARCHAR(255) NOT NULL,
-    "shared_inbox" VARCHAR(255) NOT NULL
+    "actor_id" TEXT NOT NULL,
+    "inbox" TEXT NOT NULL,
+    "shared_inbox" TEXT NOT NULL
 );
 
 
 CREATE TABLE IF NOT EXISTS "userattributes" (
     "user_id" INT NOT NULL,
-    "attribute" VARCHAR(64) NOT NULL,
-    "value" VARCHAR(255) NOT NULL,
+    "attribute" TEXT NOT NULL,
+    "value" TEXT NOT NULL,
     PRIMARY KEY ("user_id", "attribute")
 );
 
 
 CREATE TABLE "userinvites" (
-    "id" CHAR(6) NOT NULL,
+    "id" TEXT NOT NULL,
     "owner_id" INT NOT NULL,
     "max_uses" SMALLINT DEFAULT NULL,
     "created" TIMESTAMP NOT NULL,
@@ -126,15 +126,15 @@ CREATE TABLE "userinvites" (
 
 CREATE TABLE "users" (
     "id" SERIAL PRIMARY KEY,
-    "username" VARCHAR(100) NOT NULL,
-    "password" CHAR(60) NOT NULL,
+    "username" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
     "email" BYTEA DEFAULT NULL,
     "created" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 
 CREATE TABLE "usersinvited" (
-    "invite_id" CHAR(6) NOT NULL,
+    "invite_id" TEXT NOT NULL,
     "user_id" INT NOT NULL
 );
 

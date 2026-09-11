@@ -67,11 +67,9 @@ func (db *datastore) typeText() string {
 
 func (db *datastore) typeChar(l int) string {
 	switch db.driverName {
-	case driverSQLite:
+	case driverSQLite, driverPostgres:
 		return "TEXT"
 	case driverMySQL:
-		return fmt.Sprintf("CHAR(%d)", l)
-	case driverPostgres:
 		return fmt.Sprintf("CHAR(%d)", l)
 	}
 
@@ -80,11 +78,9 @@ func (db *datastore) typeChar(l int) string {
 
 func (db *datastore) typeVarChar(l int) string {
 	switch db.driverName {
-	case driverSQLite:
+	case driverSQLite, driverPostgres:
 		return "TEXT"
 	case driverMySQL:
-		return fmt.Sprintf("VARCHAR(%d)", l)
-	case driverPostgres:
 		return fmt.Sprintf("VARCHAR(%d)", l)
 	}
 
