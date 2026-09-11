@@ -2061,10 +2061,10 @@ func (db *datastore) GetPublishableCollections(u *User, hostName string) (*[]Col
 
 func (db *datastore) GetPublicCollections(hostName string) (*[]Collection, error) {
 	rows, err := db.Query(`SELECT c.id, alias, title, description, privacy, view_count
-		FROM collections c
-		LEFT JOIN users u ON u.id = c.owner_id
-		WHERE c.privacy = 1 AND u.status = 0
-		ORDER BY title ASC`)
+	FROM collections c
+	LEFT JOIN users u ON u.id = c.owner_id
+	WHERE c.privacy = 1 AND u.status = 0
+	ORDER BY title ASC`)
 	if err != nil {
 		log.Error("Failed selecting public collections: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve public collections."}
