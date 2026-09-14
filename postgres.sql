@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS "users" (
     "id" SERIAL PRIMARY KEY,
     "username" TEXT NOT NULL,
     "password" TEXT NOT NULL,
-    "email" TEXT DEFAULT NULL,
+    "email" BYTEA DEFAULT NULL,
     "created" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
