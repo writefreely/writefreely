@@ -1,6 +1,29 @@
+CREATE TABLE IF NOT EXISTS "users" (
+    "id" SERIAL PRIMARY KEY,
+    "username" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
+    "email" TEXT DEFAULT NULL,
+    "created" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE IF NOT EXISTS "collections" (
+    "id" SERIAL PRIMARY KEY,
+    "alias" TEXT DEFAULT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "style_sheet" TEXT,
+    "script" TEXT DEFAULT NULL,
+    "format" TEXT DEFAULT NULL,
+    "privacy" INT NOT NULL,
+    "owner_id" INT NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    "view_count" INT NOT NULL
+);
+
+
 CREATE TABLE IF NOT EXISTS "accesstokens" (
 	"token" BYTEA PRIMARY KEY,
-	"user_id" INT NOT NULL,
+	"user_id" INT NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
 	"sudo" BOOLEAN NOT NULL DEFAULT FALSE,
 	"one_time" BOOLEAN NOT NULL DEFAULT FALSE,
 	"created" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -24,22 +47,23 @@ CREATE TABLE "appmigrations" (
 
 
 CREATE TABLE IF NOT EXISTS "collectionattributes" (
-	"collection_id" INT NOT NULL,
+	"collection_id" INT NOT NULL REFERENCES collections(id) ON UPDATE CASCADE ON DELETE CASCADE,
 	"attribute" TEXT NOT NULL,
 	"value" TEXT NOT NULL,
-	PRIMARY KEY ("collection_id", "attribute")
+
+    PRIMARY KEY ("collection_id", "attribute")
 );
 
 
 CREATE TABLE IF NOT EXISTS "collectionkeys" (
-	"collection_id" INT PRIMARY KEY,
+	"collection_id" INT PRIMARY KEY REFERENCES collections(id) ON UPDATE CASCADE ON DELETE CASCADE,
 	"public_key" BYTEA NOT NULL,
 	"private_key" BYTEA NOT NULL
 );
 
 
 CREATE TABLE IF NOT EXISTS "collectionpasswords" (
-    "collection_id" INT PRIMARY KEY,
+    "collection_id" INT PRIMARY KEY REFERENCES collections(id) ON UPDATE CASCADE ON DELETE CASCADE,
     "password" TEXT NOT NULL
 );
 
@@ -47,20 +71,6 @@ CREATE TABLE IF NOT EXISTS "collectionpasswords" (
 CREATE TABLE IF NOT EXISTS "collectionredirects" (
     "prev_alias" TEXT NOT NULL PRIMARY KEY,
     "new_alias" TEXT NOT NULL
-);
-
-
-CREATE TABLE IF NOT EXISTS "collections" (
-    "id" SERIAL PRIMARY KEY,
-    "alias" TEXT DEFAULT NULL,
-    "title" TEXT NOT NULL,
-    "description" TEXT NOT NULL,
-    "style_sheet" TEXT,
-    "script" TEXT DEFAULT NULL,
-    "format" TEXT DEFAULT NULL,
-    "privacy" INT NOT NULL,
-    "owner_id" INT NOT NULL,
-    "view_count" INT NOT NULL
 );
 
 
@@ -72,29 +82,14 @@ CREATE TABLE IF NOT EXISTS "posts" (
     "language" TEXT DEFAULT NULL,
     "rtl" BOOLEAN DEFAULT NULL,
     "privacy" INT NOT NULL,
-    "owner_id" INT DEFAULT NULL,
-    "collection_id" INT DEFAULT NULL,
+    "owner_id" INT DEFAULT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    "collection_id" INT DEFAULT NULL REFERENCES collections(id) ON UPDATE CASCADE ON DELETE CASCADE,
     "pinned_position" SMALLINT NULL,
     "created" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "view_count" INT NOT NULL,
     "title" TEXT NOT NULL,
     "content" TEXT NOT NULL
-);
-
-
-CREATE TABLE IF NOT EXISTS "remotefollows" (
-    "collection_id" INT NOT NULL,
-    "remote_user_id" INT NOT NULL,
-    "created" TIMESTAMP NOT NULL,
-    PRIMARY KEY ("collection_id", "remote_user_id")
-);
-
-
-CREATE TABLE IF NOT EXISTS "remoteuserkeys" (
-    "id" TEXT PRIMARY KEY,
-    "remote_user_id" INT NOT NULL,
-    "public_key" BYTEA NOT NULL
 );
 
 
@@ -106,36 +101,48 @@ CREATE TABLE IF NOT EXISTS "remoteusers" (
 );
 
 
+CREATE TABLE IF NOT EXISTS "remotefollows" (
+    "collection_id" INT NOT NULL REFERENCES collections(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    "remote_user_id" INT NOT NULL REFERENCES remoteusers(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    "created" TIMESTAMP NOT NULL,
+
+    PRIMARY KEY ("collection_id", "remote_user_id")
+);
+
+
+CREATE TABLE IF NOT EXISTS "remoteuserkeys" (
+    "id" TEXT PRIMARY KEY,
+    "remote_user_id" INT NOT NULL REFERENCES remoteusers(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    "public_key" BYTEA NOT NULL
+);
+
+
 CREATE TABLE IF NOT EXISTS "userattributes" (
-    "user_id" INT NOT NULL,
+    "user_id" INT NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
     "attribute" TEXT NOT NULL,
     "value" TEXT NOT NULL,
+
     PRIMARY KEY ("user_id", "attribute")
 );
 
 
-CREATE TABLE "userinvites" (
+CREATE TABLE IF NOT EXISTS "userinvites" (
     "id" TEXT NOT NULL,
-    "owner_id" INT NOT NULL,
+    "owner_id" INT NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
     "max_uses" SMALLINT DEFAULT NULL,
     "created" TIMESTAMP NOT NULL,
     "expires" TIMESTAMP DEFAULT NULL,
-    "inactive" BOOLEAN NOT NULL
+    "inactive" BOOLEAN NOT NULL,
+
+    PRIMARY KEY (id)
 );
 
 
-CREATE TABLE "users" (
-    "id" SERIAL PRIMARY KEY,
-    "username" TEXT NOT NULL,
-    "password" TEXT NOT NULL,
-    "email" TEXT DEFAULT NULL,
-    "created" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
+CREATE TABLE IF NOT EXISTS "usersinvited" (
+    "invite_id" TEXT NOT NULL REFERENCES userinvites(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    "user_id" INT NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
 
-
-CREATE TABLE "usersinvited" (
-    "invite_id" TEXT NOT NULL,
-    "user_id" INT NOT NULL
+    PRIMARY KEY (invite_id, user_id)
 );
 
 
