@@ -95,20 +95,16 @@ func (d ColumnType) Format(dialect DialectType, size OptionalInt) (string, error
 		}
 	case ColumnTypeChar:
 		switch dialect {
-		case DialectSQLite:
+		case DialectSQLite, DialectPostgres:
 			return "TEXT", nil
 		case DialectMySQL:
-			return "CHAR" + mod, nil
-		case DialectPostgres:
 			return "CHAR" + mod, nil
 		}
 	case ColumnTypeVarChar:
 		switch dialect {
-		case DialectSQLite:
+		case DialectSQLite, DialectPostgres:
 			return "TEXT", nil
 		case DialectMySQL:
-			return "VARCHAR" + mod, nil
-		case DialectPostgres:
 			return "VARCHAR" + mod, nil
 		}
 	case ColumnTypeBool:
