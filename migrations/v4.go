@@ -34,7 +34,7 @@ func oauth(db *datastore) error {
 			Table("oauth_users").
 			SetIfNotExists(false).
 			Column(dialect.Column("user_id", wf_db.ColumnTypeInteger, wf_db.UnsetSize)).
-			Column(dialect.Column("remote_user_id", wf_db.ColumnTypeInteger, wf_db.UnsetSize)).
+			Column(dialect.Column("remote_user_id", wf_db.ColumnTypeVarChar, wf_db.OptionalInt{Set: true, Value: 128})).
 			ToSQL()
 		if err != nil {
 			return err
