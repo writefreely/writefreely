@@ -3140,7 +3140,7 @@ func (db *datastore) RecordRemoteUserID(ctx context.Context, localUserID int64, 
 	if db.driverName == driverSQLite {
 		_, err = db.ExecContext(ctx, db.QueryWrap("INSERT OR REPLACE INTO oauth_users (user_id, remote_user_id, provider, client_id, access_token) VALUES (?, ?, ?, ?, ?)"), localUserID, remoteUserID, provider, clientID, accessToken)
 	} else {
-		_, err = db.ExecContext(ctx, db.QueryWrap("INSERT INTO oauth_users (user_id, remote_user_id, provider, client_id, access_token) VALUES (?, ?, ?, ?, ?) "+db.upsert("user")+" access_token = ?"), localUserID, remoteUserID, provider, clientID, accessToken, accessToken)
+		_, err = db.ExecContext(ctx, db.QueryWrap("INSERT INTO oauth_users (user_id, remote_user_id, provider, client_id, access_token) VALUES (?, ?, ?, ?, ?) "+db.upsert("user_id", "provider", "client_id")+" access_token = ?"), localUserID, remoteUserID, provider, clientID, accessToken, accessToken)
 	}
 	if err != nil {
 		log.Error("Unable to INSERT oauth_users for '%d': %v", localUserID, err)
