@@ -922,7 +922,7 @@ func (h *Handler) handleOAuthError(w http.ResponseWriter, r *http.Request, err e
 
 func correctPageFromLoginAttempt(r *http.Request) string {
 	to := r.FormValue("to")
-	if to == "" {
+	if to == "" || strings.HasPrefix(to, "//") {
 		to = "/"
 	} else if !strings.HasPrefix(to, "/") {
 		to = "/" + to

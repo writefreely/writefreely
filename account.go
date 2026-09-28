@@ -389,7 +389,7 @@ func webLogin(app *App, w http.ResponseWriter, r *http.Request) error {
 		// Retain post-login URL if one was given
 		redirectTo := "/login"
 		postLoginRedirect := r.FormValue("to")
-		if postLoginRedirect != "" {
+		if postLoginRedirect != "" && strings.HasPrefix(postLoginRedirect, "/") && !strings.HasPrefix(postLoginRedirect, "//") {
 			redirectTo += "?to=" + postLoginRedirect
 		}
 
@@ -408,7 +408,7 @@ func login(app *App, w http.ResponseWriter, r *http.Request) error {
 	verbose := r.FormValue("all") == "true" || r.FormValue("verbose") == "1" || r.FormValue("verbose") == "true" || (reqJSON && oneTimeToken != "")
 
 	redirectTo := r.FormValue("to")
-	if redirectTo == "" {
+	if redirectTo == "" || !strings.HasPrefix(redirectTo, "/") || strings.HasPrefix(redirectTo, "//") {
 		if app.cfg.App.SingleUser {
 			redirectTo = "/me/new"
 		} else {
