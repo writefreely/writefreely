@@ -16,6 +16,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -105,8 +106,19 @@ func (ru *RemoteUser) AsPerson() *activitystreams.Person {
 }
 
 func activityPubClient() *http.Client {
+	// Validate the resolved IP of every connection (including redirects) at
+	// dial time via safeDialContext.
 	return &http.Client{
 		Timeout: 15 * time.Second,
+		Transport: &http.Transport{
+			DialContext: safeDialContext,
+		},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 5 {
+				return errors.New("too many redirects")
+			}
+			return nil
+		},
 	}
 }
 
@@ -808,8 +820,7 @@ func makeActivityPost(hostName string, p *activitystreams.Person, url string, m 
 // isPublicIRI reports whether iri is an http(s) URL whose host resolves
 // exclusively to public, routable IP addresses. It rejects loopback,
 // private, link-local (including cloud metadata endpoints like
-// 169.254.169.254), and unspecified addresses to mitigate SSRF via
-// attacker-supplied ActivityPub IRIs (e.g. inbox actor/object fields).
+// 169.254.169.254), and unspecified addresses.
 func isPublicIRI(iri string) error {
 	u, err := url.Parse(iri)
 	if err != nil {
@@ -827,7 +838,7 @@ func isPublicIRI(iri string) error {
 		return fmt.Errorf("unable to resolve host %q: %v", host, err)
 	}
 	for _, ip := range ips {
-		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() {
+		if !isPublicAddr(ip) {
 			return fmt.Errorf("host %q resolves to disallowed address %s", host, ip)
 		}
 	}
