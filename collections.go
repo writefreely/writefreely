@@ -98,9 +98,12 @@ type (
 	}
 
 	SubmittedCollection struct {
-		// Data used for updating a given collection
-		ID      int64
-		OwnerID uint64
+		// Data used for updating a given collection.
+		// ID and OwnerID are set server-side from the authenticated session and
+		// must never be bound from request input, so they're excluded from both
+		// the JSON and form decoders.
+		ID      int64  `schema:"-" json:"-"`
+		OwnerID uint64 `schema:"-" json:"-"`
 
 		// Form helpers
 		PreferURL string `schema:"prefer_url" json:"prefer_url"`
@@ -1319,6 +1322,10 @@ func existingCollection(app *App, w http.ResponseWriter, r *http.Request) error 
 			return ErrBadFormData
 		}
 	}
+
+	// Always authorize the update against the authenticated user, and never a
+	// request-supplied value.
+	c.OwnerID = uint64(u.ID)
 
 	err = app.db.UpdateCollection(app, &c, collAlias)
 	if err != nil {
