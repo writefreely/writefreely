@@ -18,6 +18,7 @@ import (
 	"regexp"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
 	"github.com/writeas/web-core/log"
 )
@@ -44,6 +45,10 @@ func (db *datastore) isDuplicateKeyErr(err error) bool {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			return mysqlErr.Number == mySQLErrDuplicateKey
 		}
+	} else if db.driverName == driverPostgres {
+		if postgresErr, ok := err.(*pq.Error); ok {
+			return postgresErr.Code == postgresErrDuplicateKey
+		}
 	} else {
 		log.Error("isDuplicateKeyErr: failed check for unrecognized driver '%s'", db.driverName)
 	}
@@ -67,6 +72,12 @@ func (db *datastore) isHighLoadError(err error) bool {
 	if db.driverName == driverMySQL {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			return mysqlErr.Number == mySQLErrMaxUserConns || mysqlErr.Number == mySQLErrTooManyConns
+		}
+	}
+
+	if db.driverName == driverPostgres {
+		if postgresErr, ok := err.(*pq.Error); ok {
+			return postgresErr.Code == postgresErrMaxUserConns || postgresErr.Code == postgresErrTooManyConns
 		}
 	}
 

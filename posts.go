@@ -926,7 +926,7 @@ func deletePost(app *App, w http.ResponseWriter, r *http.Request) error {
 				log.Error("No begin: %v", err)
 				return err
 			}
-			res, err = t.Exec("DELETE FROM posts WHERE id = ? AND owner_id = ?", friendlyID, ownerID)
+			res, err = t.Exec(app.db.QueryWrap("DELETE FROM posts WHERE id = ? AND owner_id = ?"), friendlyID, ownerID)
 		}
 	} else {
 		return impart.HTTPError{http.StatusBadRequest, "No authenticated user or post token given."}
