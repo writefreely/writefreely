@@ -66,65 +66,74 @@ var UnsetSize OptionalInt = OptionalInt{Set: false, Value: 0}
 var UnsetDefault OptionalString = OptionalString{Set: false, Value: ""}
 
 func (d ColumnType) Format(dialect DialectType, size OptionalInt) (string, error) {
-	if dialect != DialectMySQL && dialect != DialectSQLite {
+	if dialect != DialectMySQL && dialect != DialectPostgres && dialect != DialectSQLite {
 		return "", fmt.Errorf("unsupported column type %d for dialect %d and size %v", d, dialect, size)
 	}
+
+	mod := ""
+
+	if size.Set {
+		mod = fmt.Sprintf("(%d)", size.Value)
+	}
+
 	switch d {
 	case ColumnTypeSmallInt:
-		{
-			if dialect == DialectSQLite {
-				return "INTEGER", nil
-			}
-			mod := ""
-			if size.Set {
-				mod = fmt.Sprintf("(%d)", size.Value)
-			}
+		switch dialect {
+		case DialectSQLite:
+			return "INTEGER", nil
+		case DialectMySQL:
 			return "SMALLINT" + mod, nil
+		case DialectPostgres:
+			return "SMALLINT", nil
 		}
 	case ColumnTypeInteger:
-		{
-			if dialect == DialectSQLite {
-				return "INTEGER", nil
-			}
-			mod := ""
-			if size.Set {
-				mod = fmt.Sprintf("(%d)", size.Value)
-			}
+		switch dialect {
+		case DialectSQLite, DialectPostgres:
+			return "INTEGER", nil
+		case DialectMySQL:
 			return "INT" + mod, nil
 		}
 	case ColumnTypeChar:
-		{
-			if dialect == DialectSQLite {
-				return "TEXT", nil
-			}
-			mod := ""
-			if size.Set {
-				mod = fmt.Sprintf("(%d)", size.Value)
-			}
+		switch dialect {
+		case DialectSQLite:
+			return "TEXT", nil
+		case DialectMySQL:
+			return "CHAR" + mod, nil
+		case DialectPostgres:
 			return "CHAR" + mod, nil
 		}
 	case ColumnTypeVarChar:
-		{
-			if dialect == DialectSQLite {
-				return "TEXT", nil
-			}
-			mod := ""
-			if size.Set {
-				mod = fmt.Sprintf("(%d)", size.Value)
-			}
+		switch dialect {
+		case DialectSQLite:
+			return "TEXT", nil
+		case DialectMySQL:
+			return "VARCHAR" + mod, nil
+		case DialectPostgres:
 			return "VARCHAR" + mod, nil
 		}
 	case ColumnTypeBool:
-		{
-			if dialect == DialectSQLite {
-				return "INTEGER", nil
-			}
+		switch dialect {
+		case DialectSQLite:
+			return "INTEGER", nil
+		case DialectMySQL:
 			return "TINYINT(1)", nil
+		case DialectPostgres:
+			return "BOOLEAN", nil
 		}
 	case ColumnTypeDateTime:
-		return "DATETIME", nil
+		switch dialect {
+		case DialectSQLite:
+			return "DATETIME", nil
+		case DialectMySQL:
+			return "DATETIME", nil
+		case DialectPostgres:
+			return "TIMESTAMP", nil
+		}
 	case ColumnTypeText:
-		return "TEXT", nil
+		switch dialect {
+		case DialectSQLite, DialectMySQL, DialectPostgres:
+			return "TEXT", nil
+		}
 	}
 	return "", fmt.Errorf("unsupported column type %d for dialect %d and size %v", d, dialect, size)
 }
@@ -150,9 +159,13 @@ func (c *Column) SetDefault(value string) *Column {
 }
 
 func (c *Column) SetDefaultCurrentTimestamp() *Column {
-	def := "NOW()"
-	if c.Dialect == DialectSQLite {
+	def := ""
+
+	switch c.Dialect {
+	case DialectSQLite, DialectPostgres:
 		def = "CURRENT_TIMESTAMP"
+	case DialectMySQL:
+		def = "NOW()"
 	}
 	c.Default = OptionalString{Set: true, Value: def}
 	return c
