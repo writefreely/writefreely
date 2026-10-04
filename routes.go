@@ -199,9 +199,8 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 		write.HandleFunc("/new", handler.Web(handleViewPad, UserLevelUser)).Methods("GET")
 	}
 
-	// All the existing stuff
-	write.HandleFunc(draftEditPrefix+"/{action}/edit", handler.Web(handleViewPad, UserLevelUser)).Methods("GET")
-	write.HandleFunc(draftEditPrefix+"/{action}/meta", handler.Web(handleViewMeta, UserLevelUser)).Methods("GET")
+	write.HandleFunc("/d/{action}/edit", handler.Web(handleViewPad, UserLevelUser)).Methods("GET")
+	write.HandleFunc("/d/{action}/edit/meta", handler.Web(handleViewMeta, UserLevelUser)).Methods("GET")
 	// Collections
 	if apper.App().cfg.App.SingleUser {
 		RouteCollections(handler, write.PathPrefix("/").Subrouter())
