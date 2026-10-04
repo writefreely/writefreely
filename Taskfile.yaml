@@ -1,0 +1,180 @@
+version: "3"
+
+env:
+  GITREV:
+    sh: git describe | cut -c 2-
+  BINARY_NAME: writefreely
+  IMAGE_NAME: writeas/writefreely
+  BUILDPATH: build/{{.BINARY_NAME}}
+  LDFLAGS: -ldflags="-s -w -X 'github.com/writefreely/writefreely.softwareVer={{.GITREV}}' -extldflags '-static'"
+  GOTEST: go test {{.LDFLAGS}}
+  GOBUILD: go build {{.LDFLAGS}}
+
+includes:
+  less:
+    taskfile: ./less
+    dir: ./less
+    internal: true
+  prose:
+    taskfile: ./prose
+    dir: ./prose
+    internal: true
+
+tasks:
+  ci:
+    - task: deps
+    - cd cmd/writefreely; {{.GOBUILD}} -v
+
+  build:
+    aliases: [all]
+    cmds:
+      - task: deps
+      - cd cmd/writefreely; {{.GOBUILD}} -v -tags='netgo sqlite'
+
+  build-no-sqlite:
+    - task: deps-no-sqlite
+    - cd cmd/writefreely; {{.GOBUILD}} -v -tags='netgo' -o {{.BINARY_NAME}}
+
+  build-linux:
+    - task: deps
+    - |
+      @hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+        go install src.techknowlogick.com/xgo@latest; \
+      fi
+      xgo --targets=linux/amd64, -dest build/ {{.LDFLAGS}} -tags='netgo sqlite' -go go-1.21.x -out writefreely -pkg ./cmd/writefreely .
+
+  build-windows:
+    - task: deps
+    - |
+      @hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+        go install src.techknowlogick.com/xgo@latest; \
+      fi
+      xgo --targets=windows/amd64, -dest build/ {{.LDFLAGS}} -tags='netgo sqlite' -go go-1.21.x -out writefreely -pkg ./cmd/writefreely .
+
+  build-darwin:
+    - task: deps
+    - |
+      @hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+        go install src.techknowlogick.com/xgo@latest; \
+      fi
+      xgo --targets=darwin/amd64, -dest build/ {{.LDFLAG}} -tags='netgo sqlite' -go go-1.21.x -out writefreely -pkg ./cmd/writefreely .
+
+  build-arm6:
+    - task: deps
+    - |
+      @hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+        go install src.techknowlogick.com/xgo@latest; \
+      fi
+      xgo --targets=linux/arm-6, -dest build/ {{.LDFLAGS}} -tags='netgo sqlite' -go go-1.21.x -out writefreely -pkg ./cmd/writefreely .
+
+  build-arm7:
+    - task: deps
+    - |
+      @hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+        go install src.techknowlogick.com/xgo@latest; \
+      fi
+      xgo --targets=linux/arm-7, -dest build/ {{.LDFLAGS}} -tags='netgo sqlite' -go go-1.21.x -out writefreely -pkg ./cmd/writefreely .
+
+  build-arm64:
+    - task: deps
+    - |
+      @hash xgo > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+        go install src.techknowlogick.com/xgo@latest; \
+      fi
+      xgo --targets=linux/arm64, -dest build/ {{.LDFLAGS}} -tags='netgo sqlite' -go go-1.21.x -out writefreely -pkg ./cmd/writefreely .
+
+  build-docker:
+    cmds:
+      - docker build -t {{.IMAGE_NAME}}:latest -t {{.IMAGE_NAME}}:{{.GITREV}} .
+    requires:
+      vars:
+        - IMAGE_NAME
+        - GITREV
+
+  release:
+    - task: clean
+    - task: ui
+    - mkdir -p {{.BUILDPATH}}
+    - cp -r templates {{.BUILDPATH}}
+    - cp -r pages {{.BUILDPATH}}
+    - cp -r static {{.BUILDPATH}}
+    - rm -r {{.BUILDPATH}}/static/local
+    - scripts/invalidate-css.sh {{.BUILDPATH}}
+    - mkdir {{.BUILDPATH}}/keys
+    - task: build-linux
+    - mv build/{{.BINARY_NAME}}-linux-amd64 {{.BUILDPATH}}/{{.BINARY_NAME}}
+    - tar -cvzf {{.BINARY_NAME}}_{{.GITREV}}_linux_amd64.tar.gz -C build {{.BINARY_NAME}}
+    - rm {{.BUILDPATH}}/{{.BINARY_NAME}}
+    - task: build-arm6
+    - mv build/{{.BINARY_NAME}}-linux-arm-6 {{.BUILDPATH}}/{{.BINARY_NAME}}
+    - tar -cvzf {{.BINARY_NAME}}_{{.GITREV}}_linux_arm6.tar.gz -C build {{.BINARY_NAME}}
+    - rm {{.BUILDPATH}}/{{.BINARY_NAME}}
+    - task: build-arm7
+    - mv build/{{.BINARY_NAME}}-linux-arm-7 {{.BUILDPATH}}/{{.BINARY_NAME}}
+    - tar -cvzf {{.BINARY_NAME}}_{{.GITREV}}_linux_arm7.tar.gz -C build {{.BINARY_NAME}}
+    - rm {{.BUILDPATH}}/{{.BINARY_NAME}}
+    - task: build-arm64
+    - mv build/{{.BINARY_NAME}}-linux-arm64 {{.BUILDPATH}}/{{.BINARY_NAME}}
+    - tar -cvzf {{.BINARY_NAME}}_{{.GITREV}}_linux_arm64.tar.gz -C build {{.BINARY_NAME}}
+    - rm {{.BUILDPATH}}/{{.BINARY_NAME}}
+    - task: build-darwin
+    - mv build/{{.BINARY_NAME}}-darwin-10.12-amd64 {{.BUILDPATH}}/{{.BINARY_NAME}}
+    - tar -cvzf {{.BINARY_NAME}}_{{.GITREV}}_macos_amd64.tar.gz -C build {{.BINARY_NAME}}
+    - rm {{.BUILDPATH}}/{{.BINARY_NAME}}
+    - task: build-windows
+    - mv build/{{.BINARY_NAME}}-windows-4.0-amd64.exe {{.BUILDPATH}}/{{.BINARY_NAME}}.exe
+    - tar -cvzf {{.BINARY_NAME}}_{{.GITREV}}_windows_amd64.zip -C build {{.BINARY_NAME}}
+    - rm {{.BUILDPATH}}/{{.BINARY_NAME}}
+    - task: build-docker
+    - task: release-docker
+
+  release-linux: # This assumes you're on linux/amd64
+    desc: "build release for Linux"
+    cmds:
+      - task: clean
+      - task: ui
+      - mkdir -p {{.BUILDPATH}}
+      - cp -r templates {{.BUILDPATH}}
+      - cp -r pages {{.BUILDPATH}}
+      - cp -r static {{.BUILDPATH}}
+      - mkdir {{.BUILDPATH}}/keys
+      - task: build-no-sqlite
+      - mv cmd/writefreely/{{.BINARY_NAME}} {{.BUILDPATH}}/{{.BINARY_NAME}}
+      - tar -cvzf {{.BINARY_NAME}}_{{.GITREV}}_linux_amd64.tar.gz -C build {{.BINARY_NAME}}
+
+  release-docker:
+    cmds:
+      - docker push {{.IMAGE_NAME}}
+    requires:
+      vars: ["IMAGE_NAME"]
+
+  test:
+    - "{{.GOTEST}} -v ./..."
+
+  run:
+    - go install {{.LDFLAGS}} -tags='netgo sqlite' ./...
+    - "{{.BINARY_NAME}} --debug"
+
+  deps:
+    - go get -tags='sqlite' -d -v ./...
+
+  deps-no-sqlite:
+    - go get -d -v ./...
+
+  install:
+    - task: build
+    - cmd/writefreely/{{.BINARY_NAME}} --config
+    - cmd/writefreely/{{.BINARY_NAME}} --gen-keys
+    - cmd/writefreely/{{.BINARY_NAME}} --init-db
+    - task: less:install
+
+  clean:
+    cmds:
+      - rm -rf build
+      - rm -rf tmp
+      - task: less:clean
+
+  ui:
+    cmds:
+      - task: less:all
+      - task: prose:all
