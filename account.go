@@ -1422,6 +1422,169 @@ func emailPasswordReset(app *App, toEmail, token string) error {
 	return mlr.Send(m)
 }
 
+// forgotUsernameAvailable reports whether the username-recovery feature can run on this instance. It requires email to
+// be configured (to send the reminder) and password authentication to be enabled. On an OAuth-only instance the
+// WriteFreely username isn't used to log in, so there's nothing to recover.
+func forgotUsernameAvailable(app *App) bool {
+	return app.cfg.Email.Enabled() && !app.cfg.App.DisablePasswordAuth
+}
+
+func viewForgotUsername(app *App, w http.ResponseWriter, r *http.Request) error {
+	if r.Method == http.MethodPost {
+		return handleForgotUsernameInit(app, w, r)
+	}
+
+	f, _ := getSessionFlashes(app, w, r, nil)
+
+	d := struct {
+		page.StaticPage
+		Flashes      []string
+		EmailEnabled bool
+		CSRFField    template.HTML
+		IsSent       bool
+	}{
+		StaticPage:   pageForReq(app, r),
+		Flashes:      f,
+		EmailEnabled: app.cfg.Email.Enabled(),
+		CSRFField:    csrf.TemplateField(r),
+		IsSent:       r.FormValue("sent") == "1",
+	}
+	err := pages["forgot-username.tmpl"].ExecuteTemplate(w, "base", d)
+	if err != nil {
+		log.Error("Unable to render forgot username page: %v", err)
+	}
+	return err
+}
+
+// forgotUsernameLimiter throttles the expensive full-table email scan behind /forgot-username, since the endpoint is
+// unauthenticated.
+var forgotUsernameLimiter = struct {
+	sync.Mutex
+	lastReq map[string]time.Time
+}{
+	lastReq: map[string]time.Time{},
+}
+
+const forgotUsernameCooldown = 1 * time.Minute
+
+// allowForgotUsernameReq reports whether the given IP may kick off another username lookup, recording the request time
+// when it may.
+func allowForgotUsernameReq(ip string) bool {
+	now := time.Now()
+	forgotUsernameLimiter.Lock()
+	defer forgotUsernameLimiter.Unlock()
+
+	if last, ok := forgotUsernameLimiter.lastReq[ip]; ok && now.Sub(last) < forgotUsernameCooldown {
+		return false
+	}
+	// Clear out expired entries so the map doesn't grow without bound
+	for k, t := range forgotUsernameLimiter.lastReq {
+		if now.Sub(t) >= forgotUsernameCooldown {
+			delete(forgotUsernameLimiter.lastReq, k)
+		}
+	}
+	forgotUsernameLimiter.lastReq[ip] = now
+	return true
+}
+
+func handleForgotUsernameInit(app *App, w http.ResponseWriter, r *http.Request) error {
+	if !forgotUsernameAvailable(app) {
+		// Email isn't configured or password auth is disabled, so there's
+		// nothing to do; send back to the form, where they'll get an explanation.
+		return impart.HTTPError{http.StatusFound, "/forgot-username"}
+	}
+
+	returnLoc := impart.HTTPError{http.StatusFound, "/forgot-username?sent=1"}
+
+	email := spam.CleanEmail(r.FormValue("email"))
+	if email == "" {
+		addSessionFlash(app, w, r, "Please enter a valid email address.", nil)
+		return impart.HTTPError{http.StatusFound, "/forgot-username"}
+	}
+
+	// Always respond the same way, whether or not the address is on file, so this can't be used to enumerate accounts.
+	// The lookup itself scans and decrypts every stored email, so do it in the background.
+	if allowForgotUsernameReq(spam.GetIP(r)) {
+		go sendForgotUsernameEmail(app, email)
+	}
+
+	addSessionFlash(app, w, r, "If your email address is associated with any account on "+app.cfg.App.SiteName+", you'll receive an email with your username shortly.", nil)
+	return returnLoc
+}
+
+// sendForgotUsernameEmail looks up every account associated with the given cleaned email address and emails the list of
+// usernames to it. It does nothing if no accounts match.
+func sendForgotUsernameEmail(app *App, cleanEmail string) {
+	users, err := app.db.GetUsersByEmail(app.keys, cleanEmail)
+	if err != nil {
+		log.Error("Error looking up usernames for email: %s", err)
+		return
+	}
+	if len(users) == 0 {
+		return
+	}
+
+	usernames := make([]string, 0, len(users))
+	toEmail := ""
+	for i := range users {
+		u := &users[i]
+		if u.IsAdmin() {
+			// Never disclose admin accounts
+			continue
+		}
+		usernames = append(usernames, u.Username)
+		if toEmail == "" {
+			toEmail = u.EmailClear(app.keys)
+		}
+	}
+	if len(usernames) == 0 {
+		return
+	}
+
+	err = emailForgotUsername(app, toEmail, usernames)
+	if err != nil {
+		log.Error("Error sending username reminder: %s", err)
+	}
+}
+
+func emailForgotUsername(app *App, toEmail string, usernames []string) error {
+	mlr, err := mailer.New(app.cfg.Email)
+	if err != nil {
+		return err
+	}
+
+	intro := fmt.Sprintf("We received a request for the %s username associated with this email address.", app.cfg.App.SiteName)
+	if len(usernames) > 1 {
+		intro += " It's associated with more than one account:"
+	}
+	footerPara := "Didn't request this? Your account is still safe, and you can safely ignore this email."
+
+	var plainList, htmlList strings.Builder
+	for _, un := range usernames {
+		plainList.WriteString(fmt.Sprintf("\n - %s", un))
+		htmlList.WriteString(fmt.Sprintf("<li>%s</li>", template.HTMLEscapeString(un)))
+	}
+
+	plainMsg := fmt.Sprintf("%s\n%s\n\nLog in here: %s/login\n\n%s", intro, plainList.String(), app.cfg.App.Host, footerPara)
+	m, err := mlr.NewMessage(mailer.FormatAddress(app.cfg.App.SiteName, "noreply-username@"+app.cfg.Email.Domain), "Your "+app.cfg.App.SiteName+" Username", plainMsg, fmt.Sprintf("<%s>", toEmail))
+	if err != nil {
+		return err
+	}
+	m.AddTag("Username Reminder")
+	m.SetHTML(fmt.Sprintf(`<html>
+	<body style="font-family:Lora, 'Palatino Linotype', Palatino, Baskerville, 'Book Antiqua', 'New York', 'DejaVu serif', serif; font-size: 100%%; margin:1em 2em;">
+		<div style="margin:0 auto; max-width: 40em; font-size: 1.2em;">
+        <h1 style="font-size:1.75em"><a style="text-decoration:none;color:#000;" href="%s">%s</a></h1>
+		<p>%s</p>
+		<ul style="font-size:1.2em;margin-bottom:1.5em;">%s</ul>
+		<p style="font-size:1.2em;margin-bottom:1.5em;"><a href="%s/login">Log in to %s</a></p>
+        <p style="font-size: 0.86em;margin:1em auto">%s</p>
+        </div>
+	</body>
+</html>`, app.cfg.App.Host, app.cfg.App.SiteName, template.HTMLEscapeString(intro), htmlList.String(), app.cfg.App.Host, app.cfg.App.SiteName, footerPara))
+	return mlr.Send(m)
+}
+
 func loginViaEmail(app *App, alias, redirectTo string) error {
 	if !app.cfg.Email.Enabled() {
 		return fmt.Errorf("EMAIL ISN'T CONFIGURED on this server")
