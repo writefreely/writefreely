@@ -13,6 +13,7 @@ package writefreely
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -552,7 +553,7 @@ func (db *datastore) GetUserDataFromToken(accessToken string) (int64, string, er
 func (db *datastore) GetAPIUser(header string) (*User, error) {
 	uID := db.GetUserID(header)
 	if uID == -1 {
-		return nil, fmt.Errorf(ErrUserNotFound.Error())
+		return nil, errors.New(ErrUserNotFound.Error())
 	}
 	return db.GetUserByID(uID)
 }
@@ -3432,7 +3433,7 @@ func (db *datastore) UpdateSubscriberConfirmed(subID, token string) error {
 	}
 
 	// TODO: ensure all addresses with original name are also confirmed, e.g. matt+fake@write.as and matt@write.as are now confirmed
-	_, err = db.Exec(fmt.Sprint("UPDATE emailsubscribers SET confirmed = %s WHERE email = ?", db.BoolTrue()), email)
+	_, err = db.Exec(fmt.Sprintf("UPDATE emailsubscribers SET confirmed = %s WHERE email = ?", db.BoolTrue()), email)
 	if err != nil {
 		log.Error("Could not update email subscriber confirmation status: %v", err)
 		return err
