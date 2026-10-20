@@ -3583,15 +3583,22 @@ func (db *datastore) QueryWrap(q string) string {
 	}
 
 	output := ""
-	escape := false
+	escaped := false
+	var escapeChar byte = 0
 	ctr := 0
 
 	for i := range len(q) {
-		if q[i] == '\'' || q[i] == '`' {
-			escape = !escape
+		if escaped {
+			if q[i] == escapeChar {
+				escaped = false
+				escapeChar = 0
+			}
+		} else if q[i] == '\'' || q[i] == '`' || q[i] == '"' {
+			escaped = true
+			escapeChar = q[i]
 		}
 
-		if q[i] == '?' && !escape {
+		if q[i] == '?' && !escaped {
 			ctr += 1
 			output += fmt.Sprintf("$%d", ctr)
 		} else {
