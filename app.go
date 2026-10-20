@@ -38,6 +38,7 @@ import (
 	"github.com/writeas/web-core/converter"
 	"github.com/writeas/web-core/log"
 	"golang.org/x/crypto/acme/autocert"
+	"golang.org/x/exp/slices"
 
 	"github.com/writefreely/writefreely/author"
 	"github.com/writefreely/writefreely/config"
@@ -990,15 +991,26 @@ func connectToDatabase(app *App) {
 
 	var db *sql.DB
 	var err error
-	var db_tls map[bool]string
-	db_tls = make(map[bool]string)
-	db_tls[true] = "enable"
-	db_tls[false] = "disable"
+
 	if app.cfg.Database.Type == driverMySQL {
-		db, err = sql.Open(app.cfg.Database.Type, fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s&tls=%t", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String()), app.cfg.Database.TLS))
+		var tlsValues = []string{"true", "false"}
+
+		if !slices.Contains(tlsValues, app.cfg.Database.TLS) {
+			log.Error("Invalid TLS value '%s'. Expected: %s", app.cfg.Database.TLS, strings.Join(tlsValues, "|"))
+			os.Exit(1)
+		}
+
+		db, err = sql.Open(app.cfg.Database.Type, fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s&tls=%s", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String()), app.cfg.Database.TLS))
 		db.SetMaxOpenConns(50)
 	} else if app.cfg.Database.Type == driverPostgres {
-		db, err = sql.Open(app.cfg.Database.Type, fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Database, db_tls[app.cfg.Database.TLS]))
+		var tlsValues = []string{"disable", "allow", "prefer", "require", "verify-ca", "verify-full"}
+
+		if !slices.Contains(tlsValues, app.cfg.Database.TLS) {
+			log.Error("Invalid TLS value '%s'. Expected: %s", app.cfg.Database.TLS, strings.Join(tlsValues, "|"))
+			os.Exit(1)
+		}
+
+		db, err = sql.Open(app.cfg.Database.Type, fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Database, app.cfg.Database.TLS))
 		db.SetMaxOpenConns(50)
 	} else if app.cfg.Database.Type == driverSQLite {
 		if !SQLiteEnabled {

@@ -63,7 +63,7 @@ type (
 		Database string `ini:"database"`
 		Host     string `ini:"host"`
 		Port     int    `ini:"port"`
-		TLS      bool   `ini:"tls"`
+		TLS      string `ini:"tls"`
 	}
 
 	WriteAsOauthCfg struct {
