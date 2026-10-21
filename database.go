@@ -210,20 +210,20 @@ func (db *datastore) dateAdd(l int, unit string) string {
 	case driverMySQL:
 		return fmt.Sprintf("DATE_ADD(NOW(), INTERVAL %d %s)", l, unit)
 	case driverPostgres:
-		return fmt.Sprintf("NOW() + INTERVAL '%d %s')", l, unit)
+		return fmt.Sprintf("(NOW() + ('%d %s')::interval)", l, unit)
 	}
 
 	panic(INVALID_DRIVER_MSG)
 }
 
-func (db *datastore) dateSub(l int, unit string) string {
+func (db *datastore) dateSub(value string, unit string) string {
 	switch db.driverName {
 	case driverSQLite:
-		return fmt.Sprintf("DATETIME('now', '-%d %s')", l, unit)
+		return fmt.Sprintf("DATETIME('now', '-' || cast(%s as TEXT) || ' %s')", value, unit)
 	case driverMySQL:
-		return fmt.Sprintf("DATE_SUB(NOW(), INTERVAL %d %s)", l, unit)
+		return fmt.Sprintf("DATE_SUB(NOW(), INTERVAL %s %s)", value, unit)
 	case driverPostgres:
-		return fmt.Sprintf("(NOW() - INTERVAL '%d %s')", l, unit)
+		return fmt.Sprintf("(NOW() - (%s::integer || ' %s')::interval)", value, unit)
 	}
 
 	panic(INVALID_DRIVER_MSG)
@@ -676,7 +676,7 @@ func (db *datastore) CreatePasswordResetToken(userID int64) (string, error) {
 
 func (db *datastore) GetUserFromPasswordReset(token string) int64 {
 	var userID int64
-	err := db.QueryRow("SELECT user_id FROM password_resets WHERE token = ? AND used = "+db.BoolFalse()+" AND created > "+db.dateSub(3, "HOUR"), token).Scan(&userID)
+	err := db.QueryRow("SELECT user_id FROM password_resets WHERE token = ? AND used = "+db.BoolFalse()+" AND created > "+db.dateSub("3", "HOUR"), token).Scan(&userID)
 	if err != nil {
 		return 0
 	}
@@ -3496,10 +3496,7 @@ func (db *datastore) DeleteJobByPost(postID string) error {
 }
 
 func (db *datastore) GetJobsToRun(action string) ([]*PostJob, error) {
-	timeWhere := "created < DATE_SUB(NOW(), INTERVAL delay MINUTE) AND created > DATE_SUB(NOW(), INTERVAL delay + 5 MINUTE)"
-	if db.driverName == driverSQLite {
-		timeWhere = "created < DATETIME('now', '-' || delay || ' MINUTE') AND created > DATETIME('now', '-' || (delay+5) || ' MINUTE')"
-	}
+	timeWhere := fmt.Sprintf("created < %s AND created > %s", db.dateSub("delay", "MINUTE"), db.dateSub("(delay + 5)", "MINUTE"))
 	rows, err := db.Query(`SELECT pj.id, post_id, action, delay
 		FROM publishjobs pj
 		INNER JOIN posts p
