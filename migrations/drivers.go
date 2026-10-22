@@ -120,7 +120,7 @@ func (db *datastore) typeDateTime() string {
 	case driverMySQL:
 		return "DATETIME"
 	case driverPostgres:
-		return "TIMESTAMP"
+		return "TIMESTAMPTZ"
 	}
 
 	panic(INVALID_DRIVER_MSG)
