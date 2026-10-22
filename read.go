@@ -72,7 +72,7 @@ func (app *App) FetchPublicPosts() (interface{}, error) {
 	// Conditions
 	limit := fmt.Sprintf("LIMIT %d", tlMaxPostCache)
 	// This is better than the hard limit when limiting posts from individual authors
-	// ageCond := `p.created >= ` + app.db.dateSub(3, "month") + ` AND `
+	// ageCond := `p.created >= ` + app.db.dateSub("3", "month") + ` AND `
 
 	// Finds all public posts and posts in a public collection published during the owner's active subscription period and within the last 3 months
 	rows, err := app.db.Query(`SELECT p.id, c.id, alias, c.title, p.slug, p.title, p.content, p.text_appearance, p.language, p.rtl, p.created, p.updated

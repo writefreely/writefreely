@@ -63,7 +63,7 @@ type (
 		Database string `ini:"database"`
 		Host     string `ini:"host"`
 		Port     int    `ini:"port"`
-		TLS      bool   `ini:"tls"`
+		TLS      string `ini:"tls"`
 	}
 
 	WriteAsOauthCfg struct {
@@ -228,6 +228,15 @@ func (cfg *Config) UseMySQL(fresh bool) {
 	if fresh {
 		cfg.Database.Host = "localhost"
 		cfg.Database.Port = 3306
+	}
+}
+
+// UsePostgres resets the Config's Database to use default values for a Postgres setup.
+func (cfg *Config) UsePostgres(fresh bool) {
+	cfg.Database.Type = "postgres"
+	if fresh {
+		cfg.Database.Host = "localhost"
+		cfg.Database.Port = 5432
 	}
 }
 

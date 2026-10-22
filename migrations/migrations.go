@@ -13,6 +13,7 @@ package migrations
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/writeas/web-core/log"
 )
@@ -29,8 +30,9 @@ func NewDatastore(db *sql.DB, dn string) *datastore {
 
 // TODO: use these consts from writefreely pkg
 const (
-	driverMySQL  = "mysql"
-	driverSQLite = "sqlite3"
+	driverMySQL    = "mysql"
+	driverPostgres = "postgres"
+	driverSQLite   = "sqlite3"
 )
 
 type Migration interface {
@@ -82,7 +84,7 @@ func CurrentVer() int {
 
 func SetInitialMigrations(db *datastore) error {
 	// Included schema files represent changes up to V1, so note that in the database
-	_, err := db.Exec("INSERT INTO appmigrations (version, migrated, result) VALUES (?, "+db.now()+", ?)", 1, "")
+	_, err := db.Exec(db.QueryWrap("INSERT INTO appmigrations (version, migrated, result) VALUES (?, "+db.now()+", ?)"), 1, "")
 	if err != nil {
 		return err
 	}
@@ -120,7 +122,7 @@ func Migrate(db *datastore) error {
 			}
 
 			// Update migrations table
-			_, err = db.Exec("INSERT INTO appmigrations (version, migrated, result) VALUES (?, "+db.now()+", ?)", curVer, "")
+			_, err = db.Exec(db.QueryWrap("INSERT INTO appmigrations (version, migrated, result) VALUES (?, "+db.now()+", ?)"), curVer, "")
 			if err != nil {
 				return err
 			}
@@ -135,16 +137,23 @@ func Migrate(db *datastore) error {
 func (db *datastore) tableExists(t string) bool {
 	var dummy string
 	var err error
-	if db.driverName == driverSQLite {
-		err = db.QueryRow("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", t).Scan(&dummy)
-	} else {
-		err = db.QueryRow("SHOW TABLES LIKE '" + t + "'").Scan(&dummy)
+	var q string
+	switch db.driverName {
+	case driverSQLite:
+		q = fmt.Sprintf("SELECT name FROM sqlite_master WHERE type = 'table' AND name = '%s'", t)
+	case driverMySQL:
+		q = fmt.Sprintf("SHOW TABLES LIKE '%s'", t)
+	case driverPostgres:
+		q = fmt.Sprintf("SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename = '%s'", t)
 	}
+
+	err = db.QueryRow(q).Scan(&dummy)
+
 	switch {
 	case err == sql.ErrNoRows:
 		return false
 	case err != nil:
-		log.Error("Couldn't SHOW TABLES: %v", err)
+		log.Error("Couldn't SHOW TABLES: %v", err.Error())
 		return false
 	}
 
