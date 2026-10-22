@@ -146,7 +146,7 @@ CREATE TABLE IF NOT EXISTS "usersinvited" (
 );
 
 
-CREATE INDEX IF NOT EXISTS "alias" ON "collections" ("alias");
+CREATE UNIQUE INDEX IF NOT EXISTS "alias" ON "collections" ("alias");
 CREATE UNIQUE INDEX IF NOT EXISTS "id_slug" ON "posts" ("collection_id", "slug");
 CREATE UNIQUE INDEX IF NOT EXISTS "owner_id" ON "posts" ("owner_id", "id");
 CREATE INDEX IF NOT EXISTS "privacy_id" ON "posts" ("privacy", "id");
