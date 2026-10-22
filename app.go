@@ -23,6 +23,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"syscall"
 	"text/tabwriter"
@@ -986,6 +987,21 @@ func ModerateUsers(apper Apper, filter UserFilter, action UserAction) error {
 	return nil
 }
 
+func postgresUrl(c config.DatabaseCfg) string {
+	q := url.Values{}
+	q.Set("sslmode", c.TLS)
+	q.Set("timezone", "UTC")
+	q.Set("application_name", "WriteFreely")
+	u := url.URL{
+		Scheme:   "postgres",
+		Host:     net.JoinHostPort(c.Host, strconv.Itoa(c.Port)),
+		Path:     "/" + c.Database,
+		RawQuery: q.Encode(),
+	}
+	u.User = url.UserPassword(c.User, c.Password)
+	return u.String()
+}
+
 func connectToDatabase(app *App) {
 	log.Info("Connecting to %s database...", app.cfg.Database.Type)
 
@@ -1010,7 +1026,7 @@ func connectToDatabase(app *App) {
 			os.Exit(1)
 		}
 
-		db, err = sql.Open(app.cfg.Database.Type, fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Database, app.cfg.Database.TLS))
+		db, err = sql.Open(app.cfg.Database.Type, postgresUrl(app.cfg.Database))
 		db.SetMaxOpenConns(50)
 	} else if app.cfg.Database.Type == driverSQLite {
 		if !SQLiteEnabled {
