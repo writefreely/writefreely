@@ -20,16 +20,10 @@ import (
 
 func apAddRemoteUser(app *App, t *sql.Tx, fullActor *activitystreams.Person) (int64, error) {
 	// Add remote user locally, since it wasn't found before
-	res, err := t.Exec(app.db.QueryWrap("INSERT INTO remoteusers (actor_id, inbox, shared_inbox, url) VALUES (?, ?, ?, ?)"), fullActor.ID, fullActor.Inbox, fullActor.Endpoints.SharedInbox, fullActor.URL)
+	remoteUserID, err := app.db.InsertReturningIDT(t, "INSERT INTO remoteusers (actor_id, inbox, shared_inbox, url) VALUES (?, ?, ?, ?)", fullActor.ID, fullActor.Inbox, fullActor.Endpoints.SharedInbox, fullActor.URL)
 	if err != nil {
 		t.Rollback()
 		return -1, fmt.Errorf("couldn't add new remoteuser in DB: %v", err)
-	}
-
-	remoteUserID, err := res.LastInsertId()
-	if err != nil {
-		t.Rollback()
-		return -1, fmt.Errorf("no lastinsertid for followers, rolling back: %v", err)
 	}
 
 	// Add in key

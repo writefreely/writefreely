@@ -243,9 +243,44 @@ func (db *datastore) version() (string, error) {
 	return v, nil
 }
 
+func (db *datastore) InsertReturningIDT(t *sql.Tx, query string, args ...interface{}) (int64, error) {
+	var id int64
+	var err error
+
+	if db.driverName == driverPostgres {
+		err = t.QueryRow(db.QueryWrap(query + " RETURNING id"), args...).Scan(&id)
+	} else {
+		res, err := t.Exec(query, args...)
+		if err == nil {
+			id, err = res.LastInsertId()
+		}
+	}
+	return id, err
+}
+
+func (db *datastore) InsertReturningID(query string, args ...interface{}) (int64, error) {
+	t, err := db.Begin()
+	if err != nil {
+		return 0, err
+	}
+
+	id, err := db.InsertReturningIDT(t, query, args...)
+
+	if( err != nil ){
+		t.Rollback();
+	} else {
+		err = t.Commit()
+		if err != nil {
+			t.Rollback()
+			log.Error("Rolling back after Commit(): %v\n", err)
+		}
+	}
+
+	return id, err
+}
+
 // CreateUser creates a new user in the database from the given User, UPDATING it in the process with the user's ID.
 func (db *datastore) CreateUser(cfg *config.Config, u *User, collectionTitle string, collectionDesc string) error {
-	var res sql.Result
 	if db.PostIDExists(u.Username) {
 		return impart.HTTPError{http.StatusConflict, "Invalid collection name."}
 	}
@@ -258,40 +293,21 @@ func (db *datastore) CreateUser(cfg *config.Config, u *User, collectionTitle str
 
 	// 1. Add to `users` table
 	// NOTE: Assumes User's Password is already hashed!
-	if db.driverName == driverPostgres {
-		err := t.QueryRow(db.QueryWrap("INSERT INTO users (username, password, email) VALUES (?, ?, ?) RETURNING id"), u.Username, u.HashedPass, u.Email).Scan(&u.ID)
-		if err != nil {
-			t.Rollback()
-			if db.isDuplicateKeyErr(err) {
-				return impart.HTTPError{http.StatusConflict, "Username is already taken."}
-			}
-			log.Error("Rolling back users INSERT: %v\n", err)
-			return err
+	u.ID, err = db.InsertReturningIDT(t, "INSERT INTO users (username, password, email) VALUES (?, ?, ?)", u.Username, u.HashedPass, u.Email)
+	if err != nil {
+		t.Rollback()
+		if db.isDuplicateKeyErr(err) {
+			return impart.HTTPError{http.StatusConflict, "Username is already taken."}
 		}
-	} else {
-		res, err = t.Exec(db.QueryWrap("INSERT INTO users (username, password, email) VALUES (?, ?, ?)"), u.Username, u.HashedPass, u.Email)
-		if err != nil {
-			t.Rollback()
-			if db.isDuplicateKeyErr(err) {
-				return impart.HTTPError{http.StatusConflict, "Username is already taken."}
-			}
-
-			log.Error("Rolling back users INSERT: %v\n", err)
-			return err
-		}
-		u.ID, err = res.LastInsertId()
-		if err != nil {
-			t.Rollback()
-			log.Error("Rolling back after LastInsertId: %v\n", err)
-			return err
-		}
+		log.Error("Rolling back users INSERT: %v\n", err)
+		return err
 	}
 
 	// 2. Create user's Collection
 	if collectionTitle == "" {
 		collectionTitle = u.Username
 	}
-	res, err = t.Exec(db.QueryWrap("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)"), u.Username, collectionTitle, collectionDesc, defaultVisibility(cfg), u.ID, 0)
+	_, err = t.Exec(db.QueryWrap("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)"), u.Username, collectionTitle, collectionDesc, defaultVisibility(cfg), u.ID, 0)
 	if err != nil {
 		t.Rollback()
 		if db.isDuplicateKeyErr(err) {
@@ -369,16 +385,6 @@ func (db *datastore) CreateCollection(cfg *config.Config, alias, title string, u
 		return nil, impart.HTTPError{http.StatusForbidden, "You've reached the maximum number of blogs."}
 	}
 
-	// All good, so create new collection
-	res, err := db.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", alias, title, "", defaultVisibility(cfg), userID, 0)
-	if err != nil {
-		if db.isDuplicateKeyErr(err) {
-			return nil, impart.HTTPError{http.StatusConflict, "Collection already exists."}
-		}
-		log.Error("Couldn't add to collections: %v\n", err)
-		return nil, err
-	}
-
 	c := &Collection{
 		Alias:       alias,
 		Title:       title,
@@ -387,9 +393,14 @@ func (db *datastore) CreateCollection(cfg *config.Config, alias, title string, u
 		Public:      defaultVisibility(cfg) == CollPublic,
 	}
 
-	c.ID, err = res.LastInsertId()
+	// All good, so create new collection
+	c.ID, err = db.InsertReturningID("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", alias, title, "", defaultVisibility(cfg), userID, 0)
 	if err != nil {
-		log.Error("Couldn't get collection LastInsertId: %v\n", err)
+		if db.isDuplicateKeyErr(err) {
+			return nil, impart.HTTPError{http.StatusConflict, "Collection already exists."}
+		}
+		log.Error("Couldn't add to collections: %v\n", err)
+		return nil, err
 	}
 
 	return c, nil
@@ -3456,16 +3467,12 @@ func (db *datastore) IsSubscriberConfirmed(email string) bool {
 }
 
 func (db *datastore) InsertJob(j *PostJob) error {
-	res, err := db.Exec("INSERT INTO publishjobs (post_id, action, delay) VALUES (?, ?, ?)", j.PostID, j.Action, j.Delay)
-	if err != nil {
-		return err
+	jobID, err := db.InsertReturningID("INSERT INTO publishjobs (post_id, action, delay) VALUES (?, ?, ?)", j.PostID, j.Action, j.Delay)
+	if err == nil {
+		log.Info("[jobs] Queued %s job #%d for post %s, delayed %d minutes", j.Action, jobID, j.PostID, j.Delay)
 	}
-	jobID, err := res.LastInsertId()
-	if err != nil {
-		log.Error("[jobs] Couldn't get last insert ID! %s", err)
-	}
-	log.Info("[jobs] Queued %s job #%d for post %s, delayed %d minutes", j.Action, jobID, j.PostID, j.Delay)
-	return nil
+
+	return err
 }
 
 func (db *datastore) UpdateJobForPost(postID string, delay int64) error {
