@@ -3,8 +3,10 @@ package writefreely
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"testing"
 
+	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -75,5 +77,22 @@ func TestQueryWrap(t *testing.T) {
 				t.Errorf("non-postgres QueryWrap(%q) = %q, want unchanged", tt.in, got)
 			}
 		})
+	}
+}
+
+func TestPostgresErrorChecksUnwrap(t *testing.T) {
+	db := &datastore{driverName: driverPostgres}
+	wrap := func(code pq.ErrorCode) error {
+		return fmt.Errorf("context: %w", &pq.Error{Code: code})
+	}
+
+	if !db.isDuplicateKeyErr(wrap(postgresErrDuplicateKey)) {
+		t.Error("isDuplicateKeyErr: wrapped unique_violation not recognised")
+	}
+	if !db.isHighLoadError(wrap(postgresErrTooManyConns)) {
+		t.Error("isHighLoadError: wrapped too_many_connections not recognised")
+	}
+	if db.isDuplicateKeyErr(wrap("42601")) {
+		t.Error("isDuplicateKeyErr: syntax_error recognised as a duplicate")
 	}
 }
