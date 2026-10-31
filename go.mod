@@ -56,7 +56,7 @@ require (
 require github.com/xhit/go-simple-mail/v2 v2.16.0
 
 require (
-	github.com/lib/pq v1.10.9
+	github.com/lib/pq v1.12.3
 	golang.org/x/exp v0.0.0-20261109185158-a52e3aef5920
 )
 
