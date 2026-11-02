@@ -228,6 +228,7 @@ func (cfg *Config) UseMySQL(fresh bool) {
 	if fresh {
 		cfg.Database.Host = "localhost"
 		cfg.Database.Port = 3306
+		cfg.Database.TLS = "false"
 	}
 }
 
@@ -237,6 +238,7 @@ func (cfg *Config) UsePostgres(fresh bool) {
 	if fresh {
 		cfg.Database.Host = "localhost"
 		cfg.Database.Port = 5432
+		cfg.Database.TLS = "disable"
 	}
 }
 
