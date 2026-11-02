@@ -684,13 +684,11 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			}
 
 			// Add follow
-			_, err = t.Exec(app.db.QueryWrap("INSERT INTO remotefollows (collection_id, remote_user_id, created) VALUES (?, ?, "+app.db.now()+")"), c.ID, followerID)
+			_, err = t.Exec(app.db.QueryWrap("INSERT INTO remotefollows (collection_id, remote_user_id, created) VALUES (?, ?, "+app.db.now()+") " + app.db.upsert("collection_id", "remote_user_id")+" created = remotefollows.created"), c.ID, followerID)
 			if err != nil {
-				if !app.db.isDuplicateKeyErr(err) {
-					t.Rollback()
-					log.Error("Couldn't add follower in DB: %v\n", err)
-					return
-				}
+				t.Rollback()
+				log.Error("Couldn't add follower in DB: %v\n", err)
+				return
 			}
 
 			err = t.Commit()
