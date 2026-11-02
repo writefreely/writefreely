@@ -12,6 +12,7 @@ package migrations
 
 import (
 	"fmt"
+	wf_db "github.com/writefreely/writefreely/db"
 )
 
 const INVALID_DRIVER_MSG = "Invalid database driver, check configuration file"
@@ -181,34 +182,10 @@ func (db *datastore) limit(offset int, size int) string {
 	panic(INVALID_DRIVER_MSG)
 }
 
-/**
- * MySQL/SQLite use '?' as placeholders in prepared statments
- * while PostgreSQL use '$1', '$2' ... '$n' instead
- *
- * this function converts a prepared statement in MySQL/SQLite 
- * format into PostgreSQL format
- */
 func (db *datastore) QueryWrap(q string) string {
 	if db.driverName != driverPostgres {
 		return q
 	}
 
-	output := ""
-	escape := false
-	ctr := 0
-
-	for i := range len(q) {
-		if q[i] == '\'' || q[i] == '`' {
-			escape = !escape
-		}
-
-		if q[i] == '?' && !escape {
-			ctr += 1
-			output += fmt.Sprintf("$%d", ctr)
-		} else {
-			output += string(q[i])
-		}
-	}
-
-	return output
+	return wf_db.PGQueryWrap(q)
 }

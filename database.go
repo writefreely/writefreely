@@ -3575,41 +3575,10 @@ func (db *datastore) Exec(query string, args ...any) (sql.Result, error) {
 	return (*db.DB).Exec(db.QueryWrap(query), args...)
 }
 
-/**
- * MySQL/SQLite use '?' as placeholders in prepared statments
- * while PostgreSQL use '$1', '$2' ... '$n' instead
- *
- * this function converts a prepared statement in MySQL/SQLite 
- * format into PostgreSQL format
- */
 func (db *datastore) QueryWrap(q string) string {
 	if db.driverName != driverPostgres {
 		return q
 	}
 
-	output := ""
-	escaped := false
-	var escapeChar byte = 0
-	ctr := 0
-
-	for i := range len(q) {
-		if escaped {
-			if q[i] == escapeChar {
-				escaped = false
-				escapeChar = 0
-			}
-		} else if q[i] == '\'' || q[i] == '`' || q[i] == '"' {
-			escaped = true
-			escapeChar = q[i]
-		}
-
-		if q[i] == '?' && !escaped {
-			ctr += 1
-			output += fmt.Sprintf("$%d", ctr)
-		} else {
-			output += string(q[i])
-		}
-	}
-
-	return output
+	return wf_db.PGQueryWrap(q)
 }
