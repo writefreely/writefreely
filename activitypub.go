@@ -581,7 +581,7 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 	}
 
 	// Handle synchronous activities
-	if isLike {
+	if isLike || isUnlike {
 		t, err := app.db.Begin()
 		if err != nil {
 			log.Error("Unable to start transaction: %v", err)
@@ -593,19 +593,32 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 			remoteUserID = remoteUser.ID
 		} else {
 			remoteUserID, err = apAddRemoteUser(app, t, fullActor)
+			if err != nil {
+				return err
+			}
 		}
 
-		// Add like
-		_, err = t.Exec(app.db.QueryWrap("INSERT INTO remote_likes (post_id, remote_user_id, created) VALUES (?, ?, "+app.db.now()+")"), likePostID, remoteUserID)
-		if err != nil {
-			if !app.db.isDuplicateKeyErr(err) {
+		if isLike {
+			// Add like
+			_, err = t.Exec(app.db.QueryWrap("INSERT INTO remote_likes (post_id, remote_user_id, created) VALUES (?, ?, "+app.db.now()+")"), likePostID, remoteUserID)
+			if err != nil {
+				if !app.db.isDuplicateKeyErr(err) {
+					t.Rollback()
+					log.Error("Couldn't add like in DB: %v\n", err)
+					return fmt.Errorf("Couldn't add like in DB: %v", err)
+				} else {
+					t.Rollback()
+					log.Error("Couldn't add like in DB: %v\n", err)
+					return fmt.Errorf("Couldn't add like in DB: %v", err)
+				}
+			}
+		} else {
+			// Remove like
+			_, err = t.Exec(app.db.QueryWrap("DELETE FROM remote_likes WHERE post_id = ? AND remote_user_id = ?"), unlikePostID, remoteUserID)
+			if err != nil {
 				t.Rollback()
-				log.Error("Couldn't add like in DB: %v\n", err)
-				return fmt.Errorf("Couldn't add like in DB: %v", err)
-			} else {
-				t.Rollback()
-				log.Error("Couldn't add like in DB: %v\n", err)
-				return fmt.Errorf("Couldn't add like in DB: %v", err)
+				log.Error("Couldn't delete Like from DB: %v\n", err)
+				return fmt.Errorf("Couldn't delete Like from DB: %v", err)
 			}
 		}
 
@@ -617,41 +630,11 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 		}
 
 		if debugging {
-			log.Info("Successfully liked post %s by remote user %s", likePostID, remoteUser.URL)
-		}
-		impart.RenderActivityJSON(w, "", http.StatusOK)
-		return nil
-	} else if isUnlike {
-		t, err := app.db.Begin()
-		if err != nil {
-			log.Error("Unable to start transaction: %v", err)
-			return fmt.Errorf("unable to start transaction: %v", err)
-		}
-
-		var remoteUserID int64
-		if remoteUser != nil {
-			remoteUserID = remoteUser.ID
-		} else {
-			remoteUserID, err = apAddRemoteUser(app, t, fullActor)
-		}
-
-		// Remove like
-		_, err = t.Exec(app.db.QueryWrap("DELETE FROM remote_likes WHERE post_id = ? AND remote_user_id = ?"), unlikePostID, remoteUserID)
-		if err != nil {
-			t.Rollback()
-			log.Error("Couldn't delete Like from DB: %v\n", err)
-			return fmt.Errorf("Couldn't delete Like from DB: %v", err)
-		}
-
-		err = t.Commit()
-		if err != nil {
-			t.Rollback()
-			log.Error("Rolling back after Commit(): %v\n", err)
-			return fmt.Errorf("Rolling back after Commit(): %v\n", err)
-		}
-
-		if debugging {
-			log.Info("Successfully un-liked post %s by remote user %s", unlikePostID, remoteUser.URL)
+			if isLike {
+				log.Info("Successfully liked post %s by remote user %s", likePostID, remoteUser.URL)
+			} else {
+				log.Info("Successfully un-liked post %s by remote user %s", unlikePostID, remoteUser.URL)
+			}
 		}
 		impart.RenderActivityJSON(w, "", http.StatusOK)
 		return nil
@@ -695,6 +678,9 @@ func handleFetchCollectionInbox(app *App, w http.ResponseWriter, r *http.Request
 				followerID = remoteUser.ID
 			} else {
 				followerID, err = apAddRemoteUser(app, t, fullActor)
+				if err != nil {
+					return
+				}
 			}
 
 			// Add follow
