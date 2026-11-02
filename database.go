@@ -250,7 +250,8 @@ func (db *datastore) InsertReturningIDT(t *sql.Tx, query string, args ...interfa
 	if db.driverName == driverPostgres {
 		err = t.QueryRow(db.QueryWrap(query + " RETURNING id"), args...).Scan(&id)
 	} else {
-		res, err := t.Exec(query, args...)
+		var res sql.Result
+		res, err = t.Exec(query, args...)
 		if err == nil {
 			id, err = res.LastInsertId()
 		}
