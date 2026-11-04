@@ -69,7 +69,7 @@ func handleSPSPEndpoint(app *App, w http.ResponseWriter, r *http.Request) error 
 		return err
 	}
 
-	fmt.Fprintf(w, pointer)
+	fmt.Fprint(w, pointer)
 	return nil
 }
 

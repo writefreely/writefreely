@@ -23,6 +23,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"syscall"
 	"text/tabwriter"
@@ -38,6 +39,7 @@ import (
 	"github.com/writeas/web-core/converter"
 	"github.com/writeas/web-core/log"
 	"golang.org/x/crypto/acme/autocert"
+	"golang.org/x/exp/slices"
 
 	"github.com/writefreely/writefreely/author"
 	"github.com/writefreely/writefreely/config"
@@ -600,7 +602,7 @@ func (app *App) InitDecoder() {
 // tests the connection.
 func ConnectToDatabase(app *App) error {
 	// Check database configuration
-	if app.cfg.Database.Type == driverMySQL && app.cfg.Database.User == "" {
+	if (app.cfg.Database.Type == driverMySQL || app.cfg.Database.Type == driverPostgres) && app.cfg.Database.User == "" {
 		return fmt.Errorf("Database user not set.")
 	}
 	if app.cfg.Database.Host == "" {
@@ -985,13 +987,46 @@ func ModerateUsers(apper Apper, filter UserFilter, action UserAction) error {
 	return nil
 }
 
+func postgresUrl(c config.DatabaseCfg) string {
+	q := url.Values{}
+	q.Set("sslmode", c.TLS)
+	q.Set("timezone", "UTC")
+	q.Set("application_name", "WriteFreely")
+	u := url.URL{
+		Scheme:   "postgres",
+		Host:     net.JoinHostPort(c.Host, strconv.Itoa(c.Port)),
+		Path:     "/" + c.Database,
+		RawQuery: q.Encode(),
+	}
+	u.User = url.UserPassword(c.User, c.Password)
+	return u.String()
+}
+
 func connectToDatabase(app *App) {
 	log.Info("Connecting to %s database...", app.cfg.Database.Type)
 
 	var db *sql.DB
 	var err error
+
 	if app.cfg.Database.Type == driverMySQL {
-		db, err = sql.Open(app.cfg.Database.Type, fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s&tls=%t", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String()), app.cfg.Database.TLS))
+		var tlsValues = []string{"true", "false"}
+
+		if !slices.Contains(tlsValues, app.cfg.Database.TLS) {
+			log.Error("Invalid TLS value '%s'. Expected: %s", app.cfg.Database.TLS, strings.Join(tlsValues, "|"))
+			os.Exit(1)
+		}
+
+		db, err = sql.Open(app.cfg.Database.Type, fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=%s&tls=%s", app.cfg.Database.User, app.cfg.Database.Password, app.cfg.Database.Host, app.cfg.Database.Port, app.cfg.Database.Database, url.QueryEscape(time.Local.String()), app.cfg.Database.TLS))
+		db.SetMaxOpenConns(50)
+	} else if app.cfg.Database.Type == driverPostgres {
+		var tlsValues = []string{"disable", "allow", "prefer", "require", "verify-ca", "verify-full"}
+
+		if !slices.Contains(tlsValues, app.cfg.Database.TLS) {
+			log.Error("Invalid TLS value '%s'. Expected: %s", app.cfg.Database.TLS, strings.Join(tlsValues, "|"))
+			os.Exit(1)
+		}
+
+		db, err = sql.Open(app.cfg.Database.Type, postgresUrl(app.cfg.Database))
 		db.SetMaxOpenConns(50)
 	} else if app.cfg.Database.Type == driverSQLite {
 		if !SQLiteEnabled {
@@ -1005,7 +1040,7 @@ func connectToDatabase(app *App) {
 		db, err = sql.Open("sqlite3_with_regex", app.cfg.Database.FileName+"?parseTime=true&cached=shared")
 		db.SetMaxOpenConns(2)
 	} else {
-		log.Error("Invalid database type '%s'. Only 'mysql' and 'sqlite3' are supported right now.", app.cfg.Database.Type)
+		log.Error("Invalid database type '%s'. Only 'mysql', 'postgres' and 'sqlite3' are supported right now.", app.cfg.Database.Type)
 		os.Exit(1)
 	}
 	if err != nil {
@@ -1099,8 +1134,11 @@ func CreateUser(apper Apper, username, password string, isAdmin bool) error {
 	return nil
 }
 
-//go:embed schema.sql
-var schemaSql string
+//go:embed mysql.sql
+var mysqlSql string
+
+//go:embed postgres.sql
+var postgresSql string
 
 //go:embed sqlite.sql
 var sqliteSql string
@@ -1109,28 +1147,24 @@ func adminInitDatabase(app *App) error {
 	var schema string
 	if app.cfg.Database.Type == driverSQLite {
 		schema = sqliteSql
-	} else {
-		schema = schemaSql
 	}
-
-	tblReg := regexp.MustCompile("CREATE TABLE (IF NOT EXISTS )?`([a-z_]+)`")
+	if app.cfg.Database.Type == driverPostgres {
+		schema = postgresSql
+	}
+	if app.cfg.Database.Type == driverMySQL {
+		schema = mysqlSql
+	}
 
 	queries := strings.Split(string(schema), ";\n")
 	for _, q := range queries {
-		if strings.TrimSpace(q) == "" {
+		q = strings.TrimSpace(q)
+		if q == "" {
 			continue
 		}
-		parts := tblReg.FindStringSubmatch(q)
-		if len(parts) >= 3 {
-			log.Info("Creating table %s...", parts[2])
+		if _, err := app.db.Exec(q); err != nil {
+			log.Error("Error %s executing:\n%s\n", err, q)
 		} else {
-			log.Info("Creating table ??? (Weird query) No match in: %v", parts)
-		}
-		_, err := app.db.Exec(q)
-		if err != nil {
-			log.Error("%s", err)
-		} else {
-			log.Info("Created.")
+			log.Info("Successfully executed:\n%s\n", q)
 		}
 	}
 

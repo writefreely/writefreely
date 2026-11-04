@@ -18,16 +18,23 @@ import (
 )
 
 func oauth(db *datastore) error {
-	dialect := wf_db.DialectMySQL
-	if db.driverName == driverSQLite {
+	var dialect wf_db.DialectType
+
+	switch db.driverName {
+	case driverSQLite:
 		dialect = wf_db.DialectSQLite
+	case driverMySQL:
+		dialect = wf_db.DialectMySQL
+	case driverPostgres:
+		dialect = wf_db.DialectPostgres
 	}
+
 	return wf_db.RunTransactionWithOptions(context.Background(), db.DB, &sql.TxOptions{}, func(ctx context.Context, tx *sql.Tx) error {
 		createTableUsersOauth, err := dialect.
 			Table("oauth_users").
 			SetIfNotExists(false).
 			Column(dialect.Column("user_id", wf_db.ColumnTypeInteger, wf_db.UnsetSize)).
-			Column(dialect.Column("remote_user_id", wf_db.ColumnTypeInteger, wf_db.UnsetSize)).
+			Column(dialect.Column("remote_user_id", wf_db.ColumnTypeVarChar, wf_db.OptionalInt{Set: true, Value: 128})).
 			ToSQL()
 		if err != nil {
 			return err
