@@ -4,13 +4,8 @@ import (
     "fmt"
 )
 
-/**
- * MySQL/SQLite use '?' as placeholders in prepared statments
- * while PostgreSQL use '$1', '$2' ... '$n' instead
- *
- * this function converts a prepared statement in MySQL/SQLite
- * format into PostgreSQL format
- */
+// PGQueryWrap converts a prepared statement from MySQL/SQLite format, which
+// uses ? placeholders, into PostgreSQL format, which uses $1, $2 ... $n.
 func PGQueryWrap(q string) string {
     output := ""
     escaped := false
