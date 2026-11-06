@@ -53,7 +53,7 @@ require (
 	golang.org/x/net v0.60.0
 )
 
-require github.com/xhit/go-simple-mail/v2 v2.16.0
+require github.com/xhit/go-simple-mail/v2 v2.17.0
 
 require (
 	code.as/core/socks v1.0.0 // indirect
