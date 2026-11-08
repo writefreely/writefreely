@@ -43,7 +43,7 @@ textarea.section.norm {
 	<div class="option">
 		<h2><a name="preferred-url"></a>URL</h2>
 		<div class="section">
-			{{if eq .Alias .Username}}<p style="font-size: 0.8em">This blog uses your username in its URL{{if .Federation}} and fediverse handle{{end}}. You can change it in your <a href="/me/settings">Account Settings</a>.</p>{{end}}
+			{{if eq .Alias .UserPage.Username}}<p style="font-size: 0.8em">This blog uses your username in its URL{{if .Federation}} and fediverse handle{{end}}. You can change it in your <a href="/me/settings">Account Settings</a>.</p>{{end}}
 			<ul style="list-style:none">
 				<li>
 					{{.FriendlyHost}}/{{if not .SingleUser}}<strong>{{.Alias}}</strong>/{{end}}

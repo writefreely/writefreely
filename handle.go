@@ -467,7 +467,8 @@ func (h *Handler) WebErrors(f handlerFunc, ul UserLevelFunc) http.HandlerFunc {
 }
 
 func (h *Handler) CollectionPostOrStatic(w http.ResponseWriter, r *http.Request) {
-	if strings.Contains(r.URL.Path, ".") && !isRaw(r) {
+	// This mirrors handleViewPost() to serve reserved static files like robots.txt
+	if (strings.Contains(r.URL.Path, ".") && !isRaw(r)) || r.URL.Path == "/robots.txt" || r.URL.Path == "/manifest.json" {
 		start := time.Now()
 		status := 200
 		defer func() {
@@ -921,7 +922,7 @@ func (h *Handler) handleOAuthError(w http.ResponseWriter, r *http.Request, err e
 
 func correctPageFromLoginAttempt(r *http.Request) string {
 	to := r.FormValue("to")
-	if to == "" {
+	if to == "" || strings.HasPrefix(to, "//") {
 		to = "/"
 	} else if !strings.HasPrefix(to, "/") {
 		to = "/" + to

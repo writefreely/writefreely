@@ -124,6 +124,10 @@ func compileFullExport(app *App, u *User) *ExportUser {
 			log.Error("unable to get collection posts: %v", err)
 		}
 		app.db.GetPostsCount(co, true)
+		// Remove redundant Collection information on each post
+		for i, _ := range *co.Posts {
+			(*co.Posts)[i].Collection = nil
+		}
 		collObjs = append(collObjs, *co)
 	}
 	exportUser.Collections = &collObjs

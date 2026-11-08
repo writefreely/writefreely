@@ -105,7 +105,7 @@ func (p *Post) augmentContent(c *Collection) {
 		return
 	}
 	// Add post signatures
-	if c.Signature != "" {
+	if c.Signature != "" && !strings.HasSuffix(strings.TrimSpace(p.Content), strings.TrimSpace(c.Signature)) {
 		p.Content += "\n\n" + c.Signature
 	}
 }

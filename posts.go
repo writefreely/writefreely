@@ -219,11 +219,11 @@ func (p *Post) DisplayTitle() string {
 	return t
 }
 
-// PlainDisplayTitle strips away Markdown from the generated Post's title (if
-// any), for use in places like RSS feeds and ActivityStreams objects, where
-// the raw Markdown would be unwanted.
+// PlainDisplayTitle strips away Markdown and HTML from the generated Post's
+// title (if any), for use in places like RSS feeds and ActivityStreams objects,
+// where only plain text is wanted.
 func (p *Post) PlainDisplayTitle() string {
-	if t := stripmd.Strip(p.DisplayTitle()); t != "" {
+	if t := stripmd.Strip(stripHTMLWithoutEscaping(p.DisplayTitle())); t != "" {
 		return t
 	}
 	return p.ID
@@ -301,6 +301,18 @@ func (p *Post) HasTitleLink() bool {
 	}
 	hasLink, _ := regexp.MatchString(`([^!]+|^)\[.+\]\(.+\)`, p.Title.String)
 	return hasLink
+}
+
+// UserPage provides the fields expected by the shared "user-navigation"
+// template, which otherwise assumes it's rendering for a page that embeds
+// *UserPage (e.g. the "me" backend pages).
+func (c CollectionPostPage) UserPage() *UserPage {
+	return &UserPage{
+		StaticPage: c.StaticPage,
+		IsAdmin:    c.IsAdmin,
+		CanInvite:  c.CanInvite,
+		CollAlias:  c.CollAlias,
+	}
 }
 
 func (c CollectionPostPage) DisplayMonetization() string {
@@ -1113,7 +1125,11 @@ func pinPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		err = app.db.UpdatePostPinState(isPinning, p.ID, coll.ID, userID, p.Position)
 		ppr := PinPostResult{ID: p.ID}
 		if err != nil {
-			ppr.Code = http.StatusInternalServerError
+			if err == ErrForbiddenCollection {
+				ppr.Code = http.StatusForbidden
+			} else {
+				ppr.Code = http.StatusInternalServerError
+			}
 			// TODO: set error message
 		} else {
 			ppr.Code = http.StatusOK
@@ -1273,8 +1289,13 @@ func (p *PublicPost) ActivityObject(app *App) *activitystreams.Object {
 		}
 	}
 	if len(p.Images) > 0 {
+		altText := extractImageAltText(p.Content)
 		for _, i := range p.Images {
-			o.Attachment = append(o.Attachment, activitystreams.NewImageAttachment(i))
+			img := activitystreams.NewImageAttachment(i)
+			if alt, ok := altText[i]; ok {
+				img.Name = alt
+			}
+			o.Attachment = append(o.Attachment, img)
 		}
 	}
 	// Find mentioned users
@@ -1742,10 +1763,27 @@ func (rp *RawPost) Updated8601() string {
 	return rp.Updated.Format("2006-01-02T15:04:05Z")
 }
 
-var imageURLRegex = regexp.MustCompile(`(?i)[^ ]+\.(gif|png|jpg|jpeg|avif|avifs|webp|jxl|image)$`)
+var (
+	imageURLRegex      = regexp.MustCompile(`(?i)[^ ]+\.(gif|png|jpg|jpeg|avif|avifs|webp|jxl|image)$`)
+	imageMarkdownRegex = regexp.MustCompile(`!\[([^\]]*)\]\(\s*(\S+?)(?:\s+"[^"]*")?\s*\)`)
+)
 
 func (p *Post) extractImages() {
 	p.Images = extractImages(p.Content)
+}
+
+// extractImageAltText maps image URLs to their Markdown alt text for any
+// images written with Markdown image syntax in content.
+func extractImageAltText(content string) map[string]string {
+	alts := map[string]string{}
+	for _, m := range imageMarkdownRegex.FindAllStringSubmatch(content, -1) {
+		alt := strings.TrimSpace(m[1])
+		if alt == "" {
+			continue
+		}
+		alts[m[2]] = alt
+	}
+	return alts
 }
 
 func extractImages(content string) []string {

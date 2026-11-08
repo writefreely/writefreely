@@ -101,6 +101,9 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 		// Editing a floating article
 		appData.Post = getRawPost(app, action)
 		appData.Post.Id = action
+		if appData.Post.OwnerID != appData.User.ID {
+			return impart.HTTPError{http.StatusFound, r.URL.Path[:strings.LastIndex(r.URL.Path, "/edit")]}
+		}
 	}
 
 	if appData.Post.Gone {
@@ -172,6 +175,9 @@ func handleViewMeta(app *App, w http.ResponseWriter, r *http.Request) error {
 		// Editing a floating article
 		appData.Post = getRawPost(app, action)
 		appData.Post.Id = action
+		if appData.Post.OwnerID != appData.User.ID {
+			return impart.HTTPError{http.StatusFound, r.URL.Path[:strings.LastIndex(r.URL.Path, "/meta")]}
+		}
 	}
 	appData.NeedsToken = appData.User == nil || appData.User.ID != appData.Post.OwnerID
 

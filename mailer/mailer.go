@@ -12,6 +12,7 @@ package mailer
 
 import (
 	"fmt"
+	netmail "net/mail"
 	"strings"
 
 	"github.com/mailgun/mailgun-go"
@@ -47,6 +48,14 @@ type (
 		vars  map[string]string
 	}
 )
+
+// FormatAddress returns a correctly quoted and escaped "name <address>"
+// string, per RFC 5322, for use as a From, To, or Reply-To header value.
+// This ensures names containing special characters (like commas) don't
+// break address parsing.
+func FormatAddress(name, address string) string {
+	return (&netmail.Address{Name: name, Address: address}).String()
+}
 
 // New creates a new Mailer from the instance's config.EmailCfg, returning an error if not properly configured.
 func New(eCfg config.EmailCfg) (*Mailer, error) {
@@ -84,7 +93,7 @@ func (m *Mailer) NewMessage(from, subject, text string, to ...string) (*Message,
 			from:       from,
 			replyTo:    "",
 			subject:    subject,
-			recipients: make([]Recipient, len(to)),
+			recipients: make([]Recipient, 0, len(to)),
 			html:       "",
 			text:       text,
 		}

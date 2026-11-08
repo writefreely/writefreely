@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/id"
@@ -68,10 +69,12 @@ func handleViewUserInvites(app *App, u *User, w http.ResponseWriter, r *http.Req
 
 	p := struct {
 		*UserPage
-		Invites  *[]Invite
-		Silenced bool
+		Invites   *[]Invite
+		Silenced  bool
+		CSRFField template.HTML
 	}{
-		UserPage: NewUserPage(app, r, u, "Invite People", f),
+		UserPage:  NewUserPage(app, r, u, "Invite People", f),
+		CSRFField: csrf.TemplateField(r),
 	}
 
 	var err error

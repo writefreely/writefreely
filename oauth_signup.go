@@ -22,6 +22,7 @@ import (
 	"github.com/writeas/impart"
 	"github.com/writeas/web-core/auth"
 	"github.com/writeas/web-core/log"
+	"github.com/writefreely/writefreely/author"
 	"github.com/writefreely/writefreely/page"
 )
 
@@ -84,6 +85,9 @@ func (p oauthSignupPageParams) HashTokenParams(key string) string {
 	hasher.Write([]byte(p.TokenRemoteUser))
 	hasher.Write([]byte(p.ClientID))
 	hasher.Write([]byte(p.Provider))
+	// Include the invite code so it can't be swapped out between the callback (where it was validated) and this
+	// completion step.
+	hasher.Write([]byte(p.InviteCode))
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
@@ -102,6 +106,14 @@ func (h oauthHandler) viewOauthSignup(app *App, w http.ResponseWriter, r *http.R
 		return impart.HTTPError{Status: http.StatusBadRequest, Message: "Request has been tampered with."}
 	}
 	tp.TokenHash = tp.HashTokenParams(h.Config.Server.HashSeed)
+	// Re-check registration eligibility at the completion step rather than
+	// trusting that the callback already did. The signed hash proves the OAuth
+	// identity params (including the invite code) weren't tampered with, but
+	// the account is only actually created here -- so this is where closed
+	// registration and invite validity must be enforced.
+	if err := app.canRegister(tp.InviteCode); err != nil {
+		return h.showOauthSignupPage(app, w, r, tp, err)
+	}
 	if err := h.validateOauthSignup(r); err != nil {
 		return h.showOauthSignupPage(app, w, r, tp, err)
 	}
@@ -117,7 +129,9 @@ func (h oauthHandler) viewOauthSignup(app *App, w http.ResponseWriter, r *http.R
 		}
 	}
 	newUser := &User{
-		Username:   r.FormValue(oauthParamUsername),
+		// Normalize the username into a valid slug, just like normal registration, so the collection alias is always
+		// lowercase
+		Username:   getSlug(r.FormValue(oauthParamUsername), ""),
 		HashedPass: hashedPass,
 		HasPass:    hasPass,
 		Email:      prepareUserEmail(r.FormValue(oauthParamEmail), h.EmailKey),
@@ -153,12 +167,16 @@ func (h oauthHandler) viewOauthSignup(app *App, w http.ResponseWriter, r *http.R
 }
 
 func (h oauthHandler) validateOauthSignup(r *http.Request) error {
-	username := r.FormValue(oauthParamUsername)
+	// Validate the normalized username, since that's what we'll actually store as the user's name and collection alias
+	username := getSlug(r.FormValue(oauthParamUsername), "")
 	if len(username) < h.Config.App.MinUsernameLen {
 		return impart.HTTPError{Status: http.StatusBadRequest, Message: "Username is too short."}
 	}
 	if len(username) > 100 {
 		return impart.HTTPError{Status: http.StatusBadRequest, Message: "Username is too long."}
+	}
+	if !author.IsValidUsername(h.Config, username) {
+		return impart.HTTPError{Status: http.StatusPreconditionFailed, Message: "Username is reserved or isn't valid. It must be at least 3 characters long, and can only include letters, numbers, and hyphens."}
 	}
 	collTitle := r.FormValue(oauthParamAlias)
 	if len(collTitle) == 0 {

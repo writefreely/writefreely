@@ -109,6 +109,7 @@ func main() {
 
 	app.Commands = []*cli.Command{
 		&cmdUser,
+		&cmdUsers,
 		&cmdDB,
 		&cmdConfig,
 		&cmdKeys,

@@ -25,7 +25,6 @@ var (
 			&cmdAddUser,
 			&cmdDelUser,
 			&cmdResetPass,
-			// TODO: possibly add a user list command
 		},
 	}
 

@@ -16,8 +16,10 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -104,8 +106,19 @@ func (ru *RemoteUser) AsPerson() *activitystreams.Person {
 }
 
 func activityPubClient() *http.Client {
+	// Validate the resolved IP of every connection (including redirects) at
+	// dial time via safeDialContext.
 	return &http.Client{
 		Timeout: 15 * time.Second,
+		Transport: &http.Transport{
+			DialContext: safeDialContext,
+		},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 5 {
+				return errors.New("too many redirects")
+			}
+			return nil
+		},
 	}
 }
 
@@ -118,7 +131,6 @@ func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Re
 		alias = filepath.Base(r.RequestURI)
 	}
 
-	// TODO: enforce visibility
 	// Get base Collection data
 	var c *Collection
 	var err error
@@ -135,6 +147,9 @@ func handleFetchCollectionActivities(app *App, w http.ResponseWriter, r *http.Re
 	c.hostName = app.cfg.App.Host
 
 	if !c.IsInstanceColl() {
+		if c.IsPrivate() || c.IsProtected() {
+			return ErrCollectionNotFound
+		}
 		silenced, err := app.db.IsUserSilenced(c.OwnerID)
 		if err != nil {
 			log.Error("fetch collection activities: %v", err)
@@ -157,7 +172,6 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 	vars := mux.Vars(r)
 	alias := vars["alias"]
 
-	// TODO: enforce visibility
 	// Get base Collection data
 	var c *Collection
 	var err error
@@ -168,6 +182,9 @@ func handleFetchCollectionOutbox(app *App, w http.ResponseWriter, r *http.Reques
 	}
 	if err != nil {
 		return err
+	}
+	if c.IsPrivate() || c.IsProtected() {
+		return ErrCollectionNotFound
 	}
 	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
@@ -220,7 +237,6 @@ func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Req
 	vars := mux.Vars(r)
 	alias := vars["alias"]
 
-	// TODO: enforce visibility
 	// Get base Collection data
 	var c *Collection
 	var err error
@@ -231,6 +247,9 @@ func handleFetchCollectionFollowers(app *App, w http.ResponseWriter, r *http.Req
 	}
 	if err != nil {
 		return err
+	}
+	if c.IsPrivate() || c.IsProtected() {
+		return ErrCollectionNotFound
 	}
 	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
@@ -275,7 +294,6 @@ func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Req
 	vars := mux.Vars(r)
 	alias := vars["alias"]
 
-	// TODO: enforce visibility
 	// Get base Collection data
 	var c *Collection
 	var err error
@@ -286,6 +304,9 @@ func handleFetchCollectionFollowing(app *App, w http.ResponseWriter, r *http.Req
 	}
 	if err != nil {
 		return err
+	}
+	if c.IsPrivate() || c.IsProtected() {
+		return ErrCollectionNotFound
 	}
 	silenced, err := app.db.IsUserSilenced(c.OwnerID)
 	if err != nil {
@@ -796,8 +817,40 @@ func makeActivityPost(hostName string, p *activitystreams.Person, url string, m 
 	return nil
 }
 
+// isPublicIRI reports whether iri is an http(s) URL whose host resolves
+// exclusively to public, routable IP addresses. It rejects loopback,
+// private, link-local (including cloud metadata endpoints like
+// 169.254.169.254), and unspecified addresses.
+func isPublicIRI(iri string) error {
+	u, err := url.Parse(iri)
+	if err != nil {
+		return fmt.Errorf("invalid IRI: %v", err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("unsupported IRI scheme %q", u.Scheme)
+	}
+	host := u.Hostname()
+	if host == "" {
+		return fmt.Errorf("missing host in IRI")
+	}
+	ips, err := net.LookupIP(host)
+	if err != nil {
+		return fmt.Errorf("unable to resolve host %q: %v", host, err)
+	}
+	for _, ip := range ips {
+		if !isPublicAddr(ip) {
+			return fmt.Errorf("host %q resolves to disallowed address %s", host, ip)
+		}
+	}
+	return nil
+}
+
 func resolveIRI(hostName, url string) ([]byte, error) {
 	log.Info("GET %s", url)
+
+	if err := isPublicIRI(url); err != nil {
+		return nil, fmt.Errorf("refusing to fetch IRI: %v", err)
+	}
 
 	r, _ := http.NewRequest("GET", url, nil)
 	r.Header.Add("Accept", "application/activity+json")

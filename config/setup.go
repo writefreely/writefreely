@@ -390,6 +390,17 @@ func Configure(fname string, configSections string) (*SetupData, error) {
 			}
 			data.Config.App.Private = fedStatsType == "Private"
 		}
+
+		selPrompt = promptui.Select{
+			Templates: selTmpls,
+			Label:     "Automatically check for updates",
+			Items:     []string{"Yes", "No"},
+		}
+		_, updateCheckType, err := selPrompt.Run()
+		if err != nil {
+			return data, err
+		}
+		data.Config.App.UpdateChecks = updateCheckType == "Yes"
 	}
 
 	return data, Save(data.Config, fname)

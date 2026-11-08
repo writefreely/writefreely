@@ -135,6 +135,7 @@ type writestore interface {
 	UpdateDynamicContent(id, title, content, contentType string) error
 	GetAllUsers(page uint) (*[]User, error)
 	GetAllUsersCount() int64
+	GetUsersFiltered(f UserFilter) ([]FilteredUser, error)
 	GetUserLastPostTime(id int64) (*time.Time, error)
 	GetCollectionLastPostTime(id int64) (*time.Time, error)
 
@@ -314,6 +315,14 @@ func (db *datastore) CreateCollection(cfg *config.Config, alias, title string, u
 		return nil, impart.HTTPError{http.StatusConflict, "Invalid collection name."}
 	}
 
+	collCount, err := db.GetUserCollectionCount(userID)
+	if err != nil {
+		return nil, err
+	}
+	if !cfg.App.CanCreateBlogs(collCount) {
+		return nil, impart.HTTPError{http.StatusForbidden, "You've reached the maximum number of blogs."}
+	}
+
 	// All good, so create new collection
 	res, err := db.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", alias, title, "", defaultVisibility(cfg), userID, 0)
 	if err != nil {
@@ -454,7 +463,7 @@ func (db *datastore) GetUserNameFromToken(accessToken string) (string, error) {
 
 	var oneTime bool
 	var username string
-	err := db.QueryRow("SELECT username, one_time FROM accesstokens LEFT JOIN users ON user_id = id WHERE token LIKE ? AND (expires IS NULL OR expires > "+db.now()+")", t).Scan(&username, &oneTime)
+	err := db.QueryRow("SELECT username, one_time FROM accesstokens LEFT JOIN users ON user_id = id WHERE token = ? AND (expires IS NULL OR expires > "+db.now()+")", string(t)).Scan(&username, &oneTime)
 	switch {
 	case err == sql.ErrNoRows:
 		return "", ErrBadAccessToken
@@ -479,7 +488,7 @@ func (db *datastore) GetUserDataFromToken(accessToken string) (int64, string, er
 	var userID int64
 	var oneTime bool
 	var username string
-	err := db.QueryRow("SELECT user_id, username, one_time FROM accesstokens LEFT JOIN users ON user_id = id WHERE token LIKE ? AND (expires IS NULL OR expires > "+db.now()+")", t).Scan(&userID, &username, &oneTime)
+	err := db.QueryRow("SELECT user_id, username, one_time FROM accesstokens LEFT JOIN users ON user_id = id WHERE token = ? AND (expires IS NULL OR expires > "+db.now()+")", string(t)).Scan(&userID, &username, &oneTime)
 	switch {
 	case err == sql.ErrNoRows:
 		return 0, "", ErrBadAccessToken
@@ -518,7 +527,7 @@ func (db *datastore) GetUserIDPrivilege(accessToken string) (userID int64, sudo 
 	}
 
 	var oneTime bool
-	err := db.QueryRow("SELECT user_id, sudo, one_time FROM accesstokens WHERE token LIKE ? AND (expires IS NULL OR expires > "+db.now()+")", t).Scan(&userID, &sudo, &oneTime)
+	err := db.QueryRow("SELECT user_id, sudo, one_time FROM accesstokens WHERE token = ? AND (expires IS NULL OR expires > "+db.now()+")", string(t)).Scan(&userID, &sudo, &oneTime)
 	switch {
 	case err == sql.ErrNoRows:
 		return -1, false
@@ -535,7 +544,7 @@ func (db *datastore) GetUserIDPrivilege(accessToken string) (userID int64, sudo 
 }
 
 func (db *datastore) DeleteToken(accessToken []byte) error {
-	res, err := db.Exec("DELETE FROM accesstokens WHERE token LIKE ?", accessToken)
+	res, err := db.Exec("DELETE FROM accesstokens WHERE token = ?", string(accessToken))
 	if err != nil {
 		return err
 	}
@@ -700,7 +709,7 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 			ownerCollID.Valid = true
 			var slugVal string
 			if post.Slug != nil && *post.Slug != "" {
-				slugVal = *post.Slug
+				slugVal = getSlug(*post.Slug, post.Language.String)
 			} else {
 				if post.Title != nil && *post.Title != "" {
 					slugVal = getSlug(*post.Title, post.Language.String)
@@ -956,9 +965,12 @@ func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias st
 	var rowsAffected int64
 	var changed bool
 	var res sql.Result
-	err := db.QueryRow("SELECT id FROM collections WHERE alias = ?", alias).Scan(&collID)
-	if err != nil {
+	err := db.QueryRow("SELECT id FROM collections WHERE alias = ? AND owner_id = ?", alias, c.OwnerID).Scan(&collID)
+	if err == sql.ErrNoRows {
+		return ErrUnauthorizedEditPost
+	} else if err != nil {
 		log.Error("Failed selecting from collections: %v. Some things won't work.", err)
+		return err
 	}
 
 	// Update MathJax value
@@ -1876,15 +1888,24 @@ func (db *datastore) UpdatePostPinState(pinned bool, postID string, collID, owne
 			pos = 1
 		}
 	}
+	var res sql.Result
 	var err error
 	if pinned {
-		_, err = db.Exec("UPDATE posts SET pinned_position = ? WHERE id = ?", pos, postID)
+		res, err = db.Exec("UPDATE posts SET pinned_position = ? WHERE id = ? AND collection_id = ? AND owner_id = ?", pos, postID, collID, ownerID)
 	} else {
-		_, err = db.Exec("UPDATE posts SET pinned_position = NULL WHERE id = ?", postID)
+		res, err = db.Exec("UPDATE posts SET pinned_position = NULL WHERE id = ? AND collection_id = ? AND owner_id = ?", postID, collID, ownerID)
 	}
 	if err != nil {
 		log.Error("Unable to update pinned post: %v", err)
 		return err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		log.Error("Unable to determine rows affected updating pinned post: %v", err)
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrForbiddenCollection
 	}
 	return nil
 }
@@ -1937,17 +1958,18 @@ func (db *datastore) GetPinnedPosts(coll *CollectionObj, includeFuture bool) (*[
 }
 
 func (db *datastore) GetCollections(u *User, hostName string) (*[]Collection, error) {
-	rows, err := db.Query("SELECT id, alias, title, description, privacy, view_count FROM collections WHERE owner_id = ? ORDER BY id ASC", u.ID)
+	rows, err := db.Query("SELECT id, alias, title, description, style_sheet, script, privacy, view_count FROM collections WHERE owner_id = ? ORDER BY id ASC", u.ID)
 	if err != nil {
 		log.Error("Failed selecting from collections: %v", err)
 		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve user collections."}
 	}
 	defer rows.Close()
 
+	var styleVal, scriptVal sql.NullString
 	colls := []Collection{}
 	for rows.Next() {
 		c := Collection{}
-		err = rows.Scan(&c.ID, &c.Alias, &c.Title, &c.Description, &c.Visibility, &c.Views)
+		err = rows.Scan(&c.ID, &c.Alias, &c.Title, &c.Description, &styleVal, &scriptVal, &c.Visibility, &c.Views)
 		if err != nil {
 			log.Error("Failed scanning row: %v", err)
 			break
@@ -1955,6 +1977,8 @@ func (db *datastore) GetCollections(u *User, hostName string) (*[]Collection, er
 		c.hostName = hostName
 		c.URL = c.CanonicalURL()
 		c.Public = c.IsPublic()
+		c.StyleSheet = styleVal.String
+		c.Script = scriptVal.String
 
 		/*
 			// NOTE: future functionality
@@ -2908,6 +2932,66 @@ func (db *datastore) GetAllUsersCount() int64 {
 	}
 
 	return count
+}
+
+// GetUsersFiltered returns users matching the given filters, each paired with
+// their post count. It intentionally omits pagination: it's used by the `users`
+// moderation command, which needs the full matching set in a single pass.
+// Admins are excluded unless f.IncludeAdmins is set (listing only) so bulk
+// silence/delete actions can never affect them.
+func (db *datastore) GetUsersFiltered(f UserFilter) ([]FilteredUser, error) {
+	var where []string
+	var params []interface{}
+
+	if !f.IncludeAdmins {
+		where = append(where, "u.id != 1")
+	}
+
+	if f.Since != nil {
+		where = append(where, "u.created >= ?")
+		params = append(params, *f.Since)
+	}
+	if f.Until != nil {
+		where = append(where, "u.created < ?")
+		params = append(params, *f.Until)
+	}
+	if f.NoInvite {
+		where = append(where, "NOT EXISTS (SELECT 1 FROM usersinvited i WHERE i.user_id = u.id)")
+	}
+	if f.NoOAuth {
+		where = append(where, "NOT EXISTS (SELECT 1 FROM oauth_users o WHERE o.user_id = u.id)")
+	}
+	if f.MaxPosts >= 0 {
+		where = append(where, "(SELECT COUNT(*) FROM posts p WHERE p.owner_id = u.id) <= ?")
+		params = append(params, f.MaxPosts)
+	}
+
+	q := "SELECT u.id, u.username, u.created, u.status, " +
+		"(SELECT COUNT(*) FROM posts p WHERE p.owner_id = u.id) AS post_count " +
+		"FROM users u"
+	if len(where) > 0 {
+		q += " WHERE " + strings.Join(where, " AND ")
+	}
+	q += " ORDER BY u.created ASC"
+
+	rows, err := db.Query(q, params...)
+	if err != nil {
+		log.Error("Failed selecting filtered users: %v", err)
+		return nil, impart.HTTPError{http.StatusInternalServerError, "Couldn't retrieve users."}
+	}
+	defer rows.Close()
+
+	users := []FilteredUser{}
+	for rows.Next() {
+		fu := FilteredUser{User: &User{}}
+		err = rows.Scan(&fu.User.ID, &fu.User.Username, &fu.User.Created, &fu.User.Status, &fu.PostCount)
+		if err != nil {
+			log.Error("Failed scanning GetUsersFiltered() row: %v", err)
+			return nil, err
+		}
+		users = append(users, fu)
+	}
+	return users, nil
 }
 
 func (db *datastore) GetUserLastPostTime(id int64) (*time.Time, error) {
