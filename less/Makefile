@@ -1,5 +1,9 @@
 CSSDIR=../static/css/
 
+# Prefer a locally installed lessc (via `npm install` in this directory) over
+# a global one.
+export PATH := $(CURDIR)/node_modules/.bin:$(PATH)
+
 all :
 	@command -v lessc >/dev/null 2>&1 || { echo >&2 "lessc is not installed, please run: make install or: less/install-less.sh"; exit 1; }
 	lessc app.less --clean-css="--s1 --advanced" $(CSSDIR)write.css
