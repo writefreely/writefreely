@@ -30,7 +30,7 @@ RUN make build \
       /stage
 
 # Final image
-FROM alpine:3.18.4
+FROM alpine:3.24.3
 
 RUN apk -U upgrade \
     && apk add --no-cache openssl ca-certificates
