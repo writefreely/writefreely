@@ -315,6 +315,14 @@ func (db *datastore) CreateCollection(cfg *config.Config, alias, title string, u
 		return nil, impart.HTTPError{http.StatusConflict, "Invalid collection name."}
 	}
 
+	collCount, err := db.GetUserCollectionCount(userID)
+	if err != nil {
+		return nil, err
+	}
+	if !cfg.App.CanCreateBlogs(collCount) {
+		return nil, impart.HTTPError{http.StatusForbidden, "You've reached the maximum number of blogs."}
+	}
+
 	// All good, so create new collection
 	res, err := db.Exec("INSERT INTO collections (alias, title, description, privacy, owner_id, view_count) VALUES (?, ?, ?, ?, ?, ?)", alias, title, "", defaultVisibility(cfg), userID, 0)
 	if err != nil {
@@ -455,7 +463,7 @@ func (db *datastore) GetUserNameFromToken(accessToken string) (string, error) {
 
 	var oneTime bool
 	var username string
-	err := db.QueryRow("SELECT username, one_time FROM accesstokens LEFT JOIN users ON user_id = id WHERE token LIKE ? AND (expires IS NULL OR expires > "+db.now()+")", t).Scan(&username, &oneTime)
+	err := db.QueryRow("SELECT username, one_time FROM accesstokens LEFT JOIN users ON user_id = id WHERE token = ? AND (expires IS NULL OR expires > "+db.now()+")", string(t)).Scan(&username, &oneTime)
 	switch {
 	case err == sql.ErrNoRows:
 		return "", ErrBadAccessToken
@@ -480,7 +488,7 @@ func (db *datastore) GetUserDataFromToken(accessToken string) (int64, string, er
 	var userID int64
 	var oneTime bool
 	var username string
-	err := db.QueryRow("SELECT user_id, username, one_time FROM accesstokens LEFT JOIN users ON user_id = id WHERE token LIKE ? AND (expires IS NULL OR expires > "+db.now()+")", t).Scan(&userID, &username, &oneTime)
+	err := db.QueryRow("SELECT user_id, username, one_time FROM accesstokens LEFT JOIN users ON user_id = id WHERE token = ? AND (expires IS NULL OR expires > "+db.now()+")", string(t)).Scan(&userID, &username, &oneTime)
 	switch {
 	case err == sql.ErrNoRows:
 		return 0, "", ErrBadAccessToken
@@ -519,7 +527,7 @@ func (db *datastore) GetUserIDPrivilege(accessToken string) (userID int64, sudo 
 	}
 
 	var oneTime bool
-	err := db.QueryRow("SELECT user_id, sudo, one_time FROM accesstokens WHERE token LIKE ? AND (expires IS NULL OR expires > "+db.now()+")", t).Scan(&userID, &sudo, &oneTime)
+	err := db.QueryRow("SELECT user_id, sudo, one_time FROM accesstokens WHERE token = ? AND (expires IS NULL OR expires > "+db.now()+")", string(t)).Scan(&userID, &sudo, &oneTime)
 	switch {
 	case err == sql.ErrNoRows:
 		return -1, false
@@ -536,7 +544,7 @@ func (db *datastore) GetUserIDPrivilege(accessToken string) (userID int64, sudo 
 }
 
 func (db *datastore) DeleteToken(accessToken []byte) error {
-	res, err := db.Exec("DELETE FROM accesstokens WHERE token LIKE ?", accessToken)
+	res, err := db.Exec("DELETE FROM accesstokens WHERE token = ?", string(accessToken))
 	if err != nil {
 		return err
 	}
@@ -701,7 +709,7 @@ func (db *datastore) CreatePost(userID, collID int64, post *SubmittedPost) (*Pos
 			ownerCollID.Valid = true
 			var slugVal string
 			if post.Slug != nil && *post.Slug != "" {
-				slugVal = *post.Slug
+				slugVal = getSlug(*post.Slug, post.Language.String)
 			} else {
 				if post.Title != nil && *post.Title != "" {
 					slugVal = getSlug(*post.Title, post.Language.String)
@@ -957,9 +965,12 @@ func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias st
 	var rowsAffected int64
 	var changed bool
 	var res sql.Result
-	err := db.QueryRow("SELECT id FROM collections WHERE alias = ?", alias).Scan(&collID)
-	if err != nil {
+	err := db.QueryRow("SELECT id FROM collections WHERE alias = ? AND owner_id = ?", alias, c.OwnerID).Scan(&collID)
+	if err == sql.ErrNoRows {
+		return ErrUnauthorizedEditPost
+	} else if err != nil {
 		log.Error("Failed selecting from collections: %v. Some things won't work.", err)
+		return err
 	}
 
 	// Update MathJax value
@@ -1025,8 +1036,12 @@ func (db *datastore) UpdateCollection(app *App, c *SubmittedCollection, alias st
 		if *c.Monetization != "" {
 			// Strip away any excess spaces
 			trimmed := strings.TrimSpace(*c.Monetization)
-			// Only update value when it starts with "$", per spec: https://paymentpointers.org
-			if strings.HasPrefix(trimmed, "$") {
+			// Only update value when it starts with "$" or "https" URL, per spec: https://paymentpointers.org
+			if strings.HasPrefix(trimmed, "$") || strings.HasPrefix(trimmed, "https://") {
+				if strings.HasPrefix(trimmed, "https://") {
+					// Standardize to pointer that begins with "$"
+					trimmed = strings.Replace(trimmed, "https://", "$", 1)
+				}
 				c.Monetization = &trimmed
 			} else {
 				// Value appears invalid, so don't update
@@ -1873,15 +1888,24 @@ func (db *datastore) UpdatePostPinState(pinned bool, postID string, collID, owne
 			pos = 1
 		}
 	}
+	var res sql.Result
 	var err error
 	if pinned {
-		_, err = db.Exec("UPDATE posts SET pinned_position = ? WHERE id = ?", pos, postID)
+		res, err = db.Exec("UPDATE posts SET pinned_position = ? WHERE id = ? AND collection_id = ? AND owner_id = ?", pos, postID, collID, ownerID)
 	} else {
-		_, err = db.Exec("UPDATE posts SET pinned_position = NULL WHERE id = ?", postID)
+		res, err = db.Exec("UPDATE posts SET pinned_position = NULL WHERE id = ? AND collection_id = ? AND owner_id = ?", postID, collID, ownerID)
 	}
 	if err != nil {
 		log.Error("Unable to update pinned post: %v", err)
 		return err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		log.Error("Unable to determine rows affected updating pinned post: %v", err)
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrForbiddenCollection
 	}
 	return nil
 }

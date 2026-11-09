@@ -60,7 +60,7 @@ var (
 	debugging bool
 
 	// Software version can be set from git env using -ldflags
-	softwareVer = "0.17.1"
+	softwareVer = "0.17.3"
 
 	// DEPRECATED VARS
 	isSingleUser bool
@@ -406,6 +406,17 @@ var fileRegex = regexp.MustCompile("/([^/]*\\.[^/]*)$")
 func Initialize(apper Apper, debug bool) (*App, error) {
 	debugging = debug
 
+	// Ensure a configuration file exists first, for a nicer error message
+	if _, err := os.Stat(apper.App().cfgFile); os.IsNotExist(err) {
+		flagOpt := ""
+		loc := " yet"
+		if apper.App().cfgFile != config.FileName {
+			flagOpt = " -c " + apper.App().cfgFile
+			loc = " at " + apper.App().cfgFile
+		}
+		return nil, fmt.Errorf("No configuration file%s. To create, run:\n  writefreely%s config start", loc, flagOpt)
+	}
+
 	apper.LoadConfig()
 
 	// Load templates
@@ -574,6 +585,9 @@ func (app *App) InitDecoder() {
 	// TODO: do this at the package level, instead of the App level
 	// Initialize modules
 	app.formDecoder = schema.NewDecoder()
+	// Ignore fields like the CSRF token that forms submit but that don't
+	// map to any decoded struct.
+	app.formDecoder.IgnoreUnknownKeys(true)
 	app.formDecoder.RegisterConverter(converter.NullJSONString{}, converter.ConvertJSONNullString)
 	app.formDecoder.RegisterConverter(converter.NullJSONBool{}, converter.ConvertJSONNullBool)
 	app.formDecoder.RegisterConverter(sql.NullString{}, converter.ConvertSQLNullString)
@@ -615,6 +629,17 @@ func ConnectToDatabase(app *App) error {
 			log.Info("Enabling compatibility for MySQL v5.x")
 			app.db.useSpencerRegex = true
 		}
+	}
+
+	// Ensure the database schema is up-to-date
+	var dbVer int
+	err = app.db.QueryRow("SELECT MAX(version) FROM appmigrations").Scan(&dbVer)
+	if err != nil {
+		log.Error("Unable to read migrations version: %v", err)
+	} else if dbVer < migrations.CurrentVer() {
+		log.Info("+--------------------------------------------------------------------------+")
+		log.Info("| IMPORTANT! There are pending migrations (%d). Run: writefreely db migrate |", migrations.CurrentVer()-dbVer)
+		log.Info("+--------------------------------------------------------------------------+")
 	}
 
 	return nil

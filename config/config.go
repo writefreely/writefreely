@@ -103,21 +103,22 @@ type (
 	}
 
 	GenericOauthCfg struct {
-		ClientID         string `ini:"client_id"`
-		ClientSecret     string `ini:"client_secret"`
-		Host             string `ini:"host"`
-		DisplayName      string `ini:"display_name"`
-		CallbackProxy    string `ini:"callback_proxy"`
-		CallbackProxyAPI string `ini:"callback_proxy_api"`
-		TokenEndpoint    string `ini:"token_endpoint"`
-		InspectEndpoint  string `ini:"inspect_endpoint"`
-		AuthEndpoint     string `ini:"auth_endpoint"`
-		Scope            string `ini:"scope"`
-		AllowDisconnect  bool   `ini:"allow_disconnect"`
-		MapUserID        string `ini:"map_user_id"`
-		MapUsername      string `ini:"map_username"`
-		MapDisplayName   string `ini:"map_display_name"`
-		MapEmail         string `ini:"map_email"`
+		ClientID           string `ini:"client_id"`
+		ClientSecret       string `ini:"client_secret"`
+		Host               string `ini:"host"`
+		DisplayName        string `ini:"display_name"`
+		CallbackProxy      string `ini:"callback_proxy"`
+		CallbackProxyAPI   string `ini:"callback_proxy_api"`
+		TokenEndpoint      string `ini:"token_endpoint"`
+		InspectEndpoint    string `ini:"inspect_endpoint"`
+		AuthEndpoint       string `ini:"auth_endpoint"`
+		AuthUseRequestBody bool   `ini:"auth_use_basic_auth"`
+		Scope              string `ini:"scope"`
+		AllowDisconnect    bool   `ini:"allow_disconnect"`
+		MapUserID          string `ini:"map_user_id"`
+		MapUsername        string `ini:"map_username"`
+		MapDisplayName     string `ini:"map_display_name"`
+		MapEmail           string `ini:"map_email"`
 	}
 
 	// AppCfg holds values that affect how the application functions

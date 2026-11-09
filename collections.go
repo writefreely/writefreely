@@ -98,9 +98,12 @@ type (
 	}
 
 	SubmittedCollection struct {
-		// Data used for updating a given collection
-		ID      int64
-		OwnerID uint64
+		// Data used for updating a given collection.
+		// ID and OwnerID are set server-side from the authenticated session and
+		// must never be bound from request input, so they're excluded from both
+		// the JSON and form decoders.
+		ID      int64  `schema:"-" json:"-"`
+		OwnerID uint64 `schema:"-" json:"-"`
 
 		// Form helpers
 		PreferURL string `schema:"prefer_url" json:"prefer_url"`
@@ -345,6 +348,10 @@ func (c *Collection) PersonObject(ids ...int64) *activitystreams.Person {
 		}
 	}
 
+	if c.Monetization != "" {
+		p.AddWebMonetization(c.Monetization)
+	}
+
 	collID := c.ID
 	if len(ids) > 0 {
 		collID = ids[0]
@@ -412,6 +419,18 @@ func (c *Collection) PlainDescription() string {
 
 func (c CollectionPage) DisplayMonetization() string {
 	return displayMonetization(c.Monetization, c.Alias)
+}
+
+// UserPage provides the fields expected by the shared "user-navigation"
+// template, which otherwise assumes it's rendering for a page that embeds
+// *UserPage (e.g. the "me" backend pages).
+func (c CollectionPage) UserPage() *UserPage {
+	return &UserPage{
+		StaticPage: c.StaticPage,
+		IsAdmin:    c.IsAdmin,
+		CanInvite:  c.CanInvite,
+		CollAlias:  c.CollAlias,
+	}
 }
 
 func (c *DisplayCollection) Direction() string {
@@ -1308,6 +1327,10 @@ func existingCollection(app *App, w http.ResponseWriter, r *http.Request) error 
 		}
 	}
 
+	// Always authorize the update against the authenticated user, and never a
+	// request-supplied value.
+	c.OwnerID = uint64(u.ID)
+
 	err = app.db.UpdateCollection(app, &c, collAlias)
 	if err != nil {
 		if err, ok := err.(impart.HTTPError); ok {
@@ -1397,12 +1420,14 @@ func handleWebCollectionUnlock(app *App, w http.ResponseWriter, r *http.Request)
 
 	// Success; set cookie
 	session, err := app.sessionStore.Get(r, blogPassCookieName)
-	if err == nil {
-		session.Values[readReq.Alias] = true
-		err = session.Save(r, w)
-		if err != nil {
-			log.Error("Didn't save unlocked blog '%s': %v", readReq.Alias, err)
-		}
+	if err != nil {
+		// The cookie should still save, even if there's an error.
+		log.Error("Getting blog password cookie for '%s': %v; ignoring", readReq.Alias, err)
+	}
+	session.Values[readReq.Alias] = true
+	err = session.Save(r, w)
+	if err != nil {
+		log.Error("Didn't save unlocked blog '%s': %v", readReq.Alias, err)
 	}
 
 	next := "/" + readReq.Next

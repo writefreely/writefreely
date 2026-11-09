@@ -39,6 +39,7 @@ h3 { font-weight: normal; }
 	</div>
 
 	<form method="post" action="/api/me/self" autocomplete="false">
+		{{ .CSRFField }}
 		<div class="option">
 			<h3>Username</h3>
 			<div class="section">
@@ -51,6 +52,7 @@ h3 { font-weight: normal; }
 
 	{{if not .DisablePasswordAuth}}
 	<form method="post" action="/api/me/self" autocomplete="false">
+		{{ .CSRFField }}
 		<input type="hidden" name="logout" value="{{.IsLogOut}}" />
 		<div class="option">
 			<h3>Passphrase</h3>
@@ -90,6 +92,7 @@ h3 { font-weight: normal; }
 			<p>These are your linked external accounts.</p>
 			{{ range $oauth_account := .OauthAccounts }}
 				<form method="post" action="/api/me/oauth/remove" autocomplete="false">
+					{{ $.CSRFField }}
 					<input type="hidden" name="provider" value="{{ $oauth_account.Provider }}" />
 					<input type="hidden" name="client_id" value="{{ $oauth_account.ClientID }}" />
 					<input type="hidden" name="remote_user_id" value="{{ $oauth_account.RemoteUserID }}" />

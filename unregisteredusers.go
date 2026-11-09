@@ -19,6 +19,25 @@ import (
 	"github.com/writeas/web-core/log"
 )
 
+// canRegister reports whether a new account may be created given the instance's registration setting and the given
+// invite code. When registration is open, anyone may sign up. When it's closed, a valid, still-active invite code is
+// required -- otherwise any non-empty value (or none at all) would be enough to create an account. This is the single
+// gate every signup path (web, API, and OAuth) must pass through so the checks can't be side-stepped by hitting a
+// different endpoint.
+func (app *App) canRegister(inviteCode string) error {
+	if app.cfg.App.OpenRegistration {
+		return nil
+	}
+	i, err := app.db.GetUserInvite(inviteCode)
+	if err != nil {
+		return impart.HTTPError{http.StatusForbidden, "Registration is closed"}
+	}
+	if !i.Active(app.db) {
+		return impart.HTTPError{http.StatusNotFound, "Invite link has expired."}
+	}
+	return nil
+}
+
 func handleWebSignup(app *App, w http.ResponseWriter, r *http.Request) error {
 	reqJSON := IsJSON(r)
 
@@ -44,8 +63,8 @@ func handleWebSignup(app *App, w http.ResponseWriter, r *http.Request) error {
 			return ErrBadFormData
 		}
 	}
-	if !app.cfg.App.OpenRegistration && ur.InviteCode == "" {
-		return impart.HTTPError{http.StatusForbidden, "Registration is closed"}
+	if err := app.canRegister(ur.InviteCode); err != nil {
+		return err
 	}
 	ur.Web = true
 	ur.Normalize = true

@@ -10,6 +10,6 @@ updates:
     schedule:
       interval: "daily"
   - package-ecosystem: "docker"
-    directory: "/Dockerfile"
+    directory: "/"
     schedule:
       interval: "daily"

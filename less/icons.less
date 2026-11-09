@@ -2,12 +2,9 @@
 	font-family: 'Material Icons';
 	font-style: normal;
 	font-weight: 400;
-	src: url(MaterialIcons-Regular.eot); /* For IE6-8 */
-	src: local('Material Icons'),
-	   local('MaterialIcons-Regular'),
-	   url(/fonts/MaterialIcons-Regular.woff2) format('woff2'),
-	   url(/fonts/MaterialIcons-Regular.woff) format('woff'),
-	   url(/fonts/MaterialIcons-Regular.ttf) format('truetype');
+	font-display: block;
+	src: url(/fonts/MaterialIcons-Regular.woff2) format('woff2'),
+	     url(/fonts/MaterialIcons-Regular.woff) format('woff');
 }
 
 .material-icons {
@@ -17,13 +14,14 @@
 	font-size: 24px;  /* Preferred icon size */
 	display: inline-block;
 	width: 1em;
-	height: 1em;
 	line-height: 1;
 	text-transform: none;
 	letter-spacing: normal;
 	word-wrap: normal;
 	white-space: nowrap;
 	direction: ltr;
+
+	font-size-adjust: none;
 
 	/* Support for all WebKit browsers. */
 	-webkit-font-smoothing: antialiased;

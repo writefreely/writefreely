@@ -56,7 +56,7 @@ func (p *Post) handlePremiumContent(c *Collection, isOwner, postPage bool, cfg *
 			} else {
 				if spl > -1 {
 					p.Content = p.Content[:spl+len(shortCodePaid)]
-					p.Content = strings.Replace(p.Content, shortCodePaid, "\n\n"+`<p class="split">Continue reading with a <strong>Coil</strong> membership.</p>`+"\n\n", 1)
+					p.Content = strings.Replace(p.Content, shortCodePaid, "\n\n"+`<p class="split">Continue reading with <strong>Web Monetization</strong>.</p>`+"\n\n", 1)
 				}
 			}
 		} else {
@@ -105,7 +105,7 @@ func (p *Post) augmentContent(c *Collection) {
 		return
 	}
 	// Add post signatures
-	if c.Signature != "" {
+	if c.Signature != "" && !strings.HasSuffix(strings.TrimSpace(p.Content), strings.TrimSpace(c.Signature)) {
 		p.Content += "\n\n" + c.Signature
 	}
 }
