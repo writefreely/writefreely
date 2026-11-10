@@ -13,13 +13,33 @@ package writefreely
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
-	stripmd "github.com/writeas/go-strip-markdown/v2"
 	"github.com/writeas/web-core/log"
 )
+
+// feedItemDescription returns a plain-text synopsis of a post for an RSS
+// item's <description>, while the full post goes in <content:encoded>. It uses
+// the excerpt the author marked with <!--more--> (or the free part of a paid
+// post) if there is one, and a short summary of the post otherwise.
+//
+// The post must already be formatted, so its HTML fields are populated.
+func feedItemDescription(p *PublicPost) string {
+	if p.HTMLExcerpt != "" {
+		return plainTextFromHTML(string(p.HTMLExcerpt))
+	}
+	summary := strings.Join(strings.Fields(plainTextFromHTML(string(p.HTMLContent))), " ")
+	return shortPostDescription(summary)
+}
+
+// plainTextFromHTML removes all markup from rendered post HTML, including
+// shortcodes like <!--more-->, leaving only the readable text.
+func plainTextFromHTML(s string) string {
+	return strings.TrimSpace(stripHTMLWithoutEscaping(s))
+}
 
 func ViewFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 	alias := collectionAliasFromReq(req)
@@ -77,7 +97,7 @@ func ViewFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 
 	collectionTitle := coll.DisplayTitle()
 	if tag != "" {
-		collectionTitle = tag + " &mdash; " + collectionTitle
+		collectionTitle = tag + " — " + collectionTitle
 	}
 
 	baseUrl := coll.CanonicalURL()
@@ -95,8 +115,10 @@ func ViewFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 		Created:     time.Now(),
 	}
 
-	var title, permalink string
+	var title, permalink, description string
 	for _, p := range *coll.Posts {
+		// Summarize the post before augmentReadingDestination adds a "Read more" link to its HTML
+		description = feedItemDescription(&p)
 		// Add necessary path back to the web browser for Web Monetization if needed
 		p.Collection = coll.CollectionObj // augmentReadingDestination requires a populated Collection field
 		p.augmentReadingDestination()
@@ -107,7 +129,7 @@ func ViewFeed(app *App, w http.ResponseWriter, req *http.Request) error {
 			Id:          fmt.Sprintf("%s%s", basePermalinkUrl, p.Slug.String),
 			Title:       title,
 			Link:        &feeds.Link{Href: permalink},
-			Description: "<![CDATA[" + stripmd.Strip(p.Content) + "]]>",
+			Description: description,
 			Content:     string(p.HTMLContent),
 			Author:      &feeds.Author{author, ""},
 			Created:     p.Created,
