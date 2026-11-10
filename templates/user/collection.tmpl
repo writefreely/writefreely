@@ -176,10 +176,10 @@ textarea.section.norm {
 	</div>
 
 	<div class="option">
-		<h2>Custom CSS</h2>
+		<h2 id="css-editor-label">Custom CSS</h2>
 		<div class="section">
-			<textarea id="css-editor" class="section codable" name="style_sheet">{{.StyleSheet}}</textarea>
-			<p class="explain">See our guide on <a href="https://writefreely.org/docs/latest/writer/css">customization</a>.</p>
+			<textarea id="css-editor" class="section codable" name="style_sheet" aria-labelledby="css-editor-label">{{.StyleSheet}}</textarea>
+			<p class="explain"><span id="css-editor-keys" hidden>Tab indents. To leave the editor, press Escape and then Tab, or press <kbd id="css-editor-tab-key">Ctrl+M</kbd> to make Tab move between fields.</span> See our guide on <a href="https://writefreely.org/docs/latest/writer/css">customization</a>.</p>
 		</div>
 	</div>
 
@@ -237,7 +237,7 @@ textarea.section.norm {
 
 <script src="/js/h.js"></script>
 <script src="/js/modals.js"></script>
-<script src="/js/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="/js/cssedit.bundle.js"></script>
 <script>
 H.getEl('cancel-delete').on('click', closeModals);
 var deleteBlog = function(e) {
@@ -267,16 +267,7 @@ var deleteBlog = function(e) {
 	http.send(null);
 };
 
-function createHidden(theForm, key, value) {
-    var input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = key;
-    input.value = value;
-    theForm.appendChild(input);
-}
 function disableSubmit() {
-	var $form = document.forms['customize-form'];
-	createHidden($form, 'style_sheet', cssEditor.getSession().getValue());
 	var $btn = document.getElementById("save-changes");
 	$btn.value = "Saving changes...";
 	$btn.disabled = true;
@@ -299,20 +290,14 @@ H.getEl('email_subs').on('click', function() {
     $letterReply.disabled = !show
 })
 
-if (matchMedia('(pointer:fine)').matches) {
-	// Only initialize Ace editor on devices with a mouse
-	var opt = {
-		showLineNumbers: false,
-		showPrintMargin: 0,
-		minLines: 10,
-		maxLines: 40,
-	};
-	var theme = "ace/theme/chrome";
-	var cssEditor = ace.edit("css-editor");
-	cssEditor.setTheme(theme);
-	cssEditor.session.setMode("ace/mode/css");
-	cssEditor.setOptions(opt);
-	cssEditor.resize(true);
+// Upgrade the Custom CSS textarea to a code editor. Without the bundle, the
+// plain textarea still works.
+if (window.WFCSSEditor) {
+	if (WFCSSEditor.isMac) {
+		document.getElementById('css-editor-tab-key').textContent = 'Shift+Option+M';
+	}
+	document.getElementById('css-editor-keys').hidden = false;
+	WFCSSEditor.fromTextArea(document.getElementById('css-editor'), {describedBy: 'css-editor-keys'});
 }
 </script>
 
