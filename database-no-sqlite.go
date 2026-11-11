@@ -14,7 +14,9 @@
 package writefreely
 
 import (
+	"errors"
 	"github.com/go-sql-driver/mysql"
+	"github.com/lib/pq"
 	"github.com/writeas/web-core/log"
 )
 
@@ -22,6 +24,10 @@ func (db *datastore) isDuplicateKeyErr(err error) bool {
 	if db.driverName == driverMySQL {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			return mysqlErr.Number == mySQLErrDuplicateKey
+		}
+	} else if db.driverName == driverPostgres {
+		if postgresErr, ok := errors.AsType[*pq.Error](err); ok {
+			return postgresErr.Code == postgresErrDuplicateKey
 		}
 	} else {
 		log.Error("isDuplicateKeyErr: failed check for unrecognized driver '%s'", db.driverName)
@@ -46,6 +52,12 @@ func (db *datastore) isHighLoadError(err error) bool {
 	if db.driverName == driverMySQL {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			return mysqlErr.Number == mySQLErrMaxUserConns || mysqlErr.Number == mySQLErrTooManyConns
+		}
+	}
+
+	if db.driverName == driverPostgres {
+		if postgresErr, ok := errors.AsType[*pq.Error](err); ok {
+			return postgresErr.Code == postgresErrMaxUserConns || postgresErr.Code == postgresErrTooManyConns
 		}
 	}
 
