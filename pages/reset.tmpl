@@ -8,6 +8,10 @@ input {
 label {
 	display: block;
 }
+p.forgot {
+	font-size: 0.86em;
+	margin-top: 0.5em;
+}
 </style>
 {{end}}
 {{define "content"}}
@@ -43,6 +47,7 @@ label {
 				<p>Username</p>
 				<input type="text" name="alias" placeholder="Username" autofocus />
 			</label>
+			<p class="forgot"><a href="/forgot-username">Forgot username?</a></p>
 			{{ .CSRFField }}
 			<input type="submit" id="btn-login" value="Reset Password" />
 		</form>
