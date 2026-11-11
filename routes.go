@@ -23,6 +23,22 @@ import (
 	"github.com/writefreely/go-nodeinfo"
 )
 
+// maxRequestBodySize is the maximum allowed HTTP request body size. It guards
+// against memory-exhaustion denial of service from unbounded request bodies
+// read by handlers (settings, posts, imports, etc.) via io.ReadAll on r.Body.
+const maxRequestBodySize int64 = 32 << 20
+
+// bodyLimitMiddleware wraps each request body with http.MaxBytesReader so a
+// single oversized request cannot exhaust server memory.
+func bodyLimitMiddleware(maxBytes int64) mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 // InitStaticRoutes adds routes for serving static files.
 // TODO: this should just be a func, not method
 func (app *App) InitStaticRoutes(r *mux.Router) {
@@ -38,6 +54,10 @@ func (app *App) InitStaticRoutes(r *mux.Router) {
 func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	// Create handler
 	handler := NewWFHandler(apper)
+
+	// Limit request body size to mitigate memory-exhaustion DoS from unbounded
+	// request bodies read by handlers (settings, posts, imports, etc.).
+	r.Use(bodyLimitMiddleware(maxRequestBodySize))
 
 	// Set up routes
 	hostSubroute := apper.App().cfg.App.Host[strings.Index(apper.App().cfg.App.Host, "://")+3:]
