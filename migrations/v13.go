@@ -35,8 +35,8 @@ func supportLetters(db *datastore) error {
     email         ` + db.typeVarChar(255) + ` null,
     subscribed    ` + db.typeDateTime() + ` not null,
     token         ` + db.typeChar(16) + ` not null,
-    confirmed     ` + db.typeBool() + ` default 0 not null,
-    allow_export  ` + db.typeBool() + ` default 0 not null,
+    confirmed     ` + db.typeBool() + ` default ` + db.boolFalse() + ` not null,
+    allow_export  ` + db.typeBool() + ` default ` + db.boolFalse() + ` not null,
     constraint eu_coll_email
         unique (collection_id, email),
     constraint eu_coll_user

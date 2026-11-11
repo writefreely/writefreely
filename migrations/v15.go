@@ -17,7 +17,16 @@ func addPostRetrievalIndex(db *datastore) error {
 		return err
 	}
 
-	_, err = t.Exec("CREATE INDEX posts_get_collection_index ON posts (`collection_id`, `pinned_position`, `created`)")
+	switch db.driverName {
+	case driverSQLite:
+		_, err = t.Exec("CREATE INDEX posts_get_collection_index ON posts (`collection_id`, `pinned_position`, `created`)")
+	case driverMySQL:
+		_, err = t.Exec("CREATE INDEX posts_get_collection_index ON posts (`collection_id`, `pinned_position`, `created`)")
+	case driverPostgres:
+		_, err = t.Exec("CREATE INDEX posts_get_collection_idx ON posts (collection_id, pinned_position, created)")
+	}
+
+	
 	if err != nil {
 		t.Rollback()
 		return err
