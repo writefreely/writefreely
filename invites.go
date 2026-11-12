@@ -61,7 +61,7 @@ func (i Invite) ExpiresFriendly() string {
 
 func handleViewUserInvites(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	// Don't show page if instance doesn't allow it
-	if !(app.cfg.App.UserInvites != "" && (u.IsAdmin() || app.cfg.App.UserInvites != "admin")) {
+	if !canUserInvite(app.cfg, u.IsAdmin()) {
 		return impart.HTTPError{http.StatusNotFound, ""}
 	}
 
@@ -102,6 +102,11 @@ func handleViewUserInvites(app *App, u *User, w http.ResponseWriter, r *http.Req
 func handleCreateUserInvite(app *App, u *User, w http.ResponseWriter, r *http.Request) error {
 	muVal := r.FormValue("uses")
 	expVal := r.FormValue("expires")
+
+	// Don't allow creating invites if instance doesn't allow this user to
+	if !canUserInvite(app.cfg, u.IsAdmin()) {
+		return impart.HTTPError{http.StatusNotFound, ""}
+	}
 
 	if u.IsSilenced() {
 		return ErrUserSilenced
