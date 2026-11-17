@@ -16,13 +16,14 @@
 					</ul>
 				</nav>
 				<nav class="tabs">
-					<a href="/me/c/{{.UserPage.Username}}" {{if and (hasPrefix .Path "/me/c/") (hasSuffix .Path .UserPage.Username)}}class="selected"{{end}}>Customize</a>
-					<a href="/me/c/{{.UserPage.Username}}/stats" {{if hasSuffix .Path "/stats"}}class="selected"{{end}}>Stats</a>
-					<a href="/me/c/{{.UserPage.Username}}/subscribers" {{if hasSuffix .Path "/subscribers"}}class="selected"{{end}}>Subscribers</a>
+					<a href="/me/c/{{if .CollAlias}}{{.CollAlias}}{{else}}{{.Username}}{{end}}" {{if and (hasPrefix .Path "/me/c/") (or (and .CollAlias (hasSuffix .Path .CollAlias)) (and .Username (hasSuffix .Path .Username)))}}class="selected"{{end}}>Customize</a>
+					<a href="/me/c/{{if .CollAlias}}{{.CollAlias}}{{else}}{{.Username}}{{end}}/stats" {{if hasSuffix .Path "/stats"}}class="selected"{{end}}>Stats</a>
+					<a href="/me/c/{{if .CollAlias}}{{.CollAlias}}{{else}}{{.Username}}{{end}}/subscribers" {{if hasSuffix .Path "/subscribers"}}class="selected"{{end}}>Subscribers</a>
 					<a href="/me/posts/"{{if eq .Path "/me/posts/"}} class="selected"{{end}}>Drafts</a>
 				</nav>
 			</nav>
 			<div class="right-side">
+				<a class="global-theme-toggle" href="#theme" title="Toggle theme" data-theme-toggle="true"><img class="ic-24dp" src="/img/ic_brightness_dark@2x.png" /></a>
 				<a class="simple-btn" href="/me/new">New Post</a>
 			</div>
 		{{else}}
@@ -69,6 +70,7 @@
 			</nav>
 			{{if .UserPage.Username}}
 				<div class="right-side">
+					<a class="global-theme-toggle" href="#theme" title="Toggle theme" data-theme-toggle="true"><img class="ic-24dp" src="/img/ic_brightness_dark@2x.png" /></a>
 					<a class="simple-btn" href="/{{if .CollAlias}}#{{.CollAlias}}{{end}}">New Post</a>
 				</div>
 			{{end}}
@@ -77,12 +79,22 @@
 	</header>
 {{end}}
 {{define "header"}}<!DOCTYPE HTML>
-<html>
+<html class="light">
 <head>
 	<meta charset="utf-8">
 
 	<title>{{.PageTitle}} {{if .Separator}}{{.Separator}}{{else}}&mdash;{{end}} {{.SiteName}}</title>
 
+	<script type="text/javascript">
+		(function () {
+			var theme = localStorage.getItem('padTheme');
+			if (!theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+				theme = 'dark';
+			}
+			document.documentElement.classList.remove('light', 'dark');
+			document.documentElement.classList.add(theme || 'light');
+		})();
+	</script>
 	<link rel="stylesheet" type="text/css" href="/css/write.css" />
 	{{if .CustomCSS}}<link rel="stylesheet" type="text/css" href="/local/custom.css" />{{end}}
 	<link rel="shortcut icon" href="/favicon.ico" />

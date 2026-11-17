@@ -215,3 +215,154 @@ body {
 		}
 	}
 }
+
+html {
+	&.light {
+		body:not(#pad):not(#pad-sub) {
+			background-color: @lightBG;
+			color: @lightTextColor;
+		}
+	}
+
+	&.dark {
+		body:not(#pad):not(#pad-sub) {
+			background-color: @darkBG;
+			color: @darkTextColor;
+		}
+
+		body:not(#pad):not(#pad-sub) {
+			a {
+				color: @darkLinkColor;
+				&:hover {
+					color: darken(@darkLinkColor, 10%);
+				}
+			}
+
+			h1, h2, h3, h4, h5, h6 {
+				color: @darkTextColor;
+				a {
+					color: @darkTextColor;
+				}
+			}
+
+			hr {
+				background: @darkNavBorder;
+			}
+
+			footer nav,
+			.description,
+			.meta-note,
+			.subtitle,
+			.post-title time,
+			.post-title time a:link,
+			.post-title time a:visited,
+			.post-title + .time {
+				color: #999;
+			}
+
+			input, textarea, select {
+				background: @darkNavBG;
+				color: @darkTextColor;
+				border-color: @darkNavBorder;
+			}
+
+			pre, code, blockquote {
+				background-color: #262626;
+				color: @darkTextColor;
+				border-color: @darkNavBorder;
+			}
+
+			.dropdown-nav ul ul,
+			nav#manage ul ul {
+				background: @darkNavBG;
+				border-color: @darkNavBorder;
+			}
+
+			.dropdown-nav ul li,
+			nav#manage ul li {
+				&:hover {
+					background: @darkNavHoverBG;
+				}
+				&.current-user {
+					color: #fff;
+				}
+				&.menu-heading {
+					color: #ccc;
+				}
+				&.selected {
+					a {
+						color: #777;
+					}
+				}
+			}
+
+			.dropdown-nav ul a,
+			nav#manage ul a,
+			header nav a,
+			#user-nav a,
+			#full-nav a {
+				color: @darkTextColor;
+			}
+
+			nav#full-nav a.simple-btn {
+				background: @darkNavBG;
+				color: @darkTextColor;
+				border-color: @darkNavBorder !important;
+			}
+
+			img.ic-18dp,
+			img.ic-24dp {
+				filter: brightness(1.15);
+			}
+
+			.alert {
+				&.info {
+					color: #b9def0;
+					background-color: #24404d;
+					border-color: #35596a;
+				}
+				&.success {
+					color: #cde9c7;
+					background-color: #294232;
+					border-color: #3a6047;
+				}
+				&.danger {
+					color: #f4d999;
+					background-color: #473c1d;
+					border-color: #856404;
+					h3 {
+						color: @darkTextColor !important;
+					}
+				}
+			}
+		}
+	}
+}
+
+.global-theme-toggle {
+	display: inline-block;
+	position: relative;
+	top: -0.15rem;
+	margin-right: 0.85rem;
+	padding: 0;
+	background: transparent;
+	border: 0;
+	box-shadow: none;
+	line-height: 1;
+	vertical-align: middle;
+	&:hover {
+		text-decoration: none;
+	}
+	img {
+		display: block;
+		filter: none !important;
+	}
+}
+
+.global-theme-toggle--floating {
+	position: fixed;
+	top: 1.15rem;
+	right: 1.25rem;
+	z-index: 1000;
+	margin-left: 0;
+}
