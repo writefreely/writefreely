@@ -337,7 +337,9 @@ func (c *Collection) PersonObject(ids ...int64) *activitystreams.Person {
 	uname := c.Alias
 	p.PreferredUsername = uname
 	p.Name = c.DisplayTitle()
-	p.Summary = c.Description
+	// ActivityStreams' summary is HTML, so send the description as the blog shows it,
+	// with its Markdown rendered, rather than as typed.
+	p.Summary = string(*c.DisplayDescription())
 	if p.Name != "" {
 		if av := c.AvatarURL(); av != "" {
 			p.Icon = activitystreams.Image{
