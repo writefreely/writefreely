@@ -1,0 +1,21 @@
+{
+  "name": "writefreely-cssedit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CodeMirror 6 editor for WriteFreely's Custom CSS field",
+  "main": "cssedit.js",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "license": "AGPL-3.0-only",
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/lang-css": "^6.3.1",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15"
+  }
+}

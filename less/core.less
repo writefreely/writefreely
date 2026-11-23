@@ -562,16 +562,32 @@ textarea {
 		}
 	}
 }
-.ace_editor {
-	height: 12em;
-	border: 1px solid #333;
-	max-width: initial;
-	width: 100%;
-	font-size: 0.86em !important;
+// Custom CSS editor (CodeMirror 6, see cssedit/)
+#collection-options .cm-editor {
+	font-size: 0.86em;
 	border: 1px solid #ccc;
-	padding: 0.65em 0.75em;
-	margin: 0;
 	.rounded(.25em);
+	// About 40 lines at CodeMirror's 1.4 line-height, then scroll
+	max-height: 56em;
+	&.cm-focused {
+		outline: auto;
+	}
+	.cm-scroller {
+		font-family: @monoFont;
+		overflow: auto;
+	}
+	.cm-content {
+		// About 10 lines
+		min-height: 14em;
+		padding: 0.65em 0;
+	}
+	.cm-line {
+		padding: 0 0.75em;
+	}
+}
+#collection-options p.explain kbd {
+	font-family: @monoFont;
+	font-size: 0.9em;
 }
 
 p {

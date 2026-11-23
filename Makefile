@@ -142,6 +142,7 @@ release-docker :
 ui : force_look
 	cd less/; $(MAKE) $(MFLAGS)
 	cd prose/; $(MAKE) $(MFLAGS)
+	cd cssedit/; $(MAKE) $(MFLAGS)
 
 $(TMPBIN):
 	mkdir -p $(TMPBIN)
