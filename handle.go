@@ -142,7 +142,7 @@ func (h *Handler) User(f userHandlerFunc) http.HandlerFunc {
 					status = http.StatusInternalServerError
 				}
 
-				log.Info(h.app.ReqLog(r, status, time.Since(start)))
+				log.InfoLog.Print(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			u := getUserSession(h.app.App(), r)
@@ -186,7 +186,7 @@ func (h *Handler) Admin(f userHandlerFunc) http.HandlerFunc {
 					status = http.StatusInternalServerError
 				}
 
-				log.Info(h.app.ReqLog(r, status, time.Since(start)))
+				log.InfoLog.Print(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			u := getUserSession(h.app.App(), r)
@@ -224,7 +224,7 @@ func (h *Handler) AdminApper(f userApperHandlerFunc) http.HandlerFunc {
 					status = http.StatusInternalServerError
 				}
 
-				log.Info(h.app.ReqLog(r, status, time.Since(start)))
+				log.InfoLog.Print(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			u := getUserSession(h.app.App(), r)
@@ -326,7 +326,7 @@ func (h *Handler) UserAll(web bool, f userHandlerFunc, a authFunc) http.HandlerF
 					status = 500
 				}
 
-				log.Info(h.app.ReqLog(r, status, time.Since(start)))
+				log.InfoLog.Print(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			u, err := a(h.app.App(), r)
@@ -412,7 +412,7 @@ func (h *Handler) WebErrors(f handlerFunc, ul UserLevelFunc) http.HandlerFunc {
 					status = 500
 				}
 
-				log.Info(h.app.ReqLog(r, status, time.Since(start)))
+				log.InfoLog.Print(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			var session *sessions.Session
@@ -472,7 +472,7 @@ func (h *Handler) CollectionPostOrStatic(w http.ResponseWriter, r *http.Request)
 		start := time.Now()
 		status := 200
 		defer func() {
-			log.Info(h.app.ReqLog(r, status, time.Since(start)))
+			log.InfoLog.Print(h.app.ReqLog(r, status, time.Since(start)))
 		}()
 
 		// Serve static file
@@ -504,7 +504,7 @@ func (h *Handler) Web(f handlerFunc, ul UserLevelFunc) http.HandlerFunc {
 					status = 500
 				}
 
-				log.Info(h.app.ReqLog(r, status, time.Since(start)))
+				log.InfoLog.Print(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			if ul(h.app.App().cfg) != UserLevelNoneType {
@@ -562,7 +562,7 @@ func (h *Handler) All(f handlerFunc) http.HandlerFunc {
 					status = 500
 				}
 
-				log.Info(h.app.ReqLog(r, status, time.Since(start)))
+				log.InfoLog.Print(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			// TODO: do any needed authentication
@@ -596,7 +596,7 @@ func (h *Handler) PlainTextAPI(f handlerFunc) http.HandlerFunc {
 					fmt.Fprintf(w, "Something didn't work quite right. The robots have alerted the humans.")
 				}
 
-				log.Info(fmt.Sprintf("\"%s %s\" %d %s \"%s\" \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent(), r.Host))
+				log.InfoLog.Print(fmt.Sprintf("\"%s %s\" %d %s \"%s\" \"%s\"", r.Method, r.RequestURI, status, time.Since(start), r.UserAgent(), r.Host))
 			}()
 
 			err := f(h.app.App(), w, r)
@@ -627,7 +627,7 @@ func (h *Handler) OAuth(f handlerFunc) http.HandlerFunc {
 					status = 500
 				}
 
-				log.Info(h.app.ReqLog(r, status, time.Since(start)))
+				log.InfoLog.Print(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			err := f(h.app.App(), w, r)
@@ -657,7 +657,7 @@ func (h *Handler) AllReader(f handlerFunc) http.HandlerFunc {
 					status = 500
 				}
 
-				log.Info(h.app.ReqLog(r, status, time.Since(start)))
+				log.InfoLog.Print(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			// Allow any origin, as public endpoints are handled in here
@@ -717,7 +717,7 @@ func (h *Handler) Download(f dataHandlerFunc, ul UserLevelFunc) http.HandlerFunc
 					status = 500
 				}
 
-				log.Info(h.app.ReqLog(r, status, time.Since(start)))
+				log.InfoLog.Print(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			data, filename, err := f(h.app.App(), w, r)
@@ -780,7 +780,7 @@ func (h *Handler) Redirect(url string, ul UserLevelFunc) http.HandlerFunc {
 
 			status = sendRedirect(w, http.StatusFound, url)
 
-			log.Info(h.app.ReqLog(r, status, time.Since(start)))
+			log.InfoLog.Print(h.app.ReqLog(r, status, time.Since(start)))
 
 			return nil
 		}())
@@ -893,7 +893,7 @@ func (h *Handler) handleTextError(w http.ResponseWriter, r *http.Request, err er
 		}
 
 		w.WriteHeader(err.Status)
-		fmt.Fprintf(w, http.StatusText(err.Status))
+		fmt.Fprint(w, http.StatusText(err.Status))
 		return
 	}
 
@@ -944,7 +944,7 @@ func (h *Handler) LogHandlerFunc(f http.HandlerFunc) http.HandlerFunc {
 				}
 
 				// TODO: log actual status code returned
-				log.Info(h.app.ReqLog(r, status, time.Since(start)))
+				log.InfoLog.Print(h.app.ReqLog(r, status, time.Since(start)))
 			}()
 
 			if h.app.App().cfg.App.Private {
