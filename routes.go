@@ -110,6 +110,8 @@ func InitRoutes(apper Apper, r *mux.Router) *mux.Router {
 	me.HandleFunc("/export.json", handler.Download(viewExportFull, UserLevelUser)).Methods("GET")
 	me.Path("/import").Handler(csrfProtect(handler.User(viewImport))).Methods("GET")
 	me.Path("/settings").Handler(csrfProtect(handler.User(viewSettings))).Methods("GET")
+	me.Path("/confirm").Handler(csrfProtect(handler.User(handleConfirmAccount))).Methods("GET", "POST")
+	me.Path("/confirm/resend").Handler(csrfProtect(handler.User(handleResendConfirmation))).Methods("POST")
 	me.Path("/invites").Handler(csrfProtect(handler.User(handleViewUserInvites))).Methods("GET")
 	me.HandleFunc("/logout", handler.Web(viewLogout, UserLevelNone)).Methods("GET")
 

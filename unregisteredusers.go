@@ -76,7 +76,11 @@ func handleWebSignup(app *App, w http.ResponseWriter, r *http.Request) error {
 	if ur.InviteCode != "" {
 		to = "/invite/" + ur.InviteCode
 	}
-	_, err := signupWithRegistration(app, ur, w, r)
+	au, err := signupWithRegistration(app, ur, w, r)
+	if err == nil && au.User.NeedsConfirmation() {
+		// Tell the user to check their email before they get started
+		to = "/me/confirm"
+	}
 	if err != nil {
 		if err, ok := err.(impart.HTTPError); ok {
 			session, _ := app.sessionStore.Get(r, cookieName)

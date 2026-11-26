@@ -97,8 +97,8 @@ form dd {
 						<dd><input type="password" id="password" name="pass" maxlength="72" autocomplete="new-password" placeholder="" tabindex="2" style="width: 100%; box-sizing: border-box;" {{if .ForcedLanding}}disabled{{end}} /></dd>
 					</label>
 					<label>
-						<dt>Email (optional)</dt>
-						<dd><input type="email" name="email" id="email" style="letter-spacing: 1px; width: 100%; box-sizing: border-box;" placeholder="me@example.com" tabindex="3" {{if .ForcedLanding}}disabled{{end}} /></dd>
+						<dt>Email{{if not .RequireEmail}} (optional){{end}}</dt>
+						<dd><input type="email" name="email" id="email" style="letter-spacing: 1px; width: 100%; box-sizing: border-box;" placeholder="me@example.com" tabindex="3"{{if .RequireEmail}} required{{end}} {{if .ForcedLanding}}disabled{{end}} /></dd>
 					</label>
 					<dt>
 						<button id="btn-create" type="submit" style="margin-top: 0" {{if .ForcedLanding}}disabled{{end}}>Create blog</button>

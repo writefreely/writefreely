@@ -88,6 +88,8 @@ type (
 		CurrentPage int
 		TotalPages  int
 		Silenced    bool
+
+		NeedsConfirmation bool
 	}
 
 	CollectionNav struct {
@@ -502,13 +504,13 @@ func newCollection(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 		userID = u.ID
 	}
-	silenced, err := app.db.IsUserSilenced(userID)
+	status, err := app.db.GetUserStatus(userID)
 	if err != nil {
 		log.Error("new collection: %v", err)
 		return ErrInternalGeneral
 	}
-	if silenced {
-		return ErrUserSilenced
+	if err := status.restrictionErr(); err != nil {
+		return err
 	}
 
 	if !author.IsValidUsername(app.cfg, c.Alias) {
@@ -895,11 +897,13 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 	}
 	c.hostName = app.cfg.App.Host
 
-	silenced, err := app.db.IsUserSilenced(c.OwnerID)
+	ownerStatus, err := app.db.GetUserStatus(c.OwnerID)
 	if err != nil {
 		log.Error("view collection: %v", err)
 		return ErrInternalGeneral
 	}
+	// Like a silenced account, an account that hasn't confirmed its email address yet is hidden from everyone else
+	silenced := ownerStatus != UserActive
 
 	// Serve ActivityStreams data now, if requested
 	if IsActivityPubRequest(r) {
@@ -982,7 +986,8 @@ func handleViewCollection(app *App, w http.ResponseWriter, r *http.Request) erro
 	if !isOwner && silenced {
 		return ErrCollectionNotFound
 	}
-	displayPage.Silenced = isOwner && silenced
+	displayPage.Silenced = isOwner && ownerStatus == UserSilenced
+	displayPage.NeedsConfirmation = isOwner && ownerStatus == UserNeedsConfirmation
 	displayPage.Owner = owner
 	coll.Owner = displayPage.Owner
 
@@ -1118,7 +1123,7 @@ func handleViewCollectionTag(app *App, w http.ResponseWriter, r *http.Request) e
 			// Log the error and just continue
 			log.Error("Error getting user for collection: %v", err)
 		}
-		if owner.IsSilenced() {
+		if owner != nil && !owner.IsActive() {
 			return ErrCollectionNotFound
 		}
 	}
@@ -1219,7 +1224,7 @@ func handleViewCollectionLang(app *App, w http.ResponseWriter, r *http.Request) 
 			// Log the error and just continue
 			log.Error("Error getting user for collection: %v", err)
 		}
-		if owner.IsSilenced() {
+		if owner != nil && !owner.IsActive() {
 			return ErrCollectionNotFound
 		}
 	}
@@ -1282,14 +1287,14 @@ func existingCollection(app *App, w http.ResponseWriter, r *http.Request) error 
 		}
 	}
 
-	silenced, err := app.db.IsUserSilenced(u.ID)
+	status, err := app.db.GetUserStatus(u.ID)
 	if err != nil {
 		log.Error("existing collection: %v", err)
 		return ErrInternalGeneral
 	}
 
-	if silenced {
-		return ErrUserSilenced
+	if err := status.restrictionErr(); err != nil {
+		return err
 	}
 
 	if r.Method == "DELETE" {

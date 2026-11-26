@@ -918,6 +918,8 @@ func ModerateUsers(apper Apper, filter UserFilter, action UserAction) error {
 				status = "admin"
 			} else if u.IsSilenced() {
 				status = "silenced"
+			} else if u.NeedsConfirmation() {
+				status = "unconfirmed"
 			}
 			fmt.Fprintf(w, "%d\t%s\t%s\t%d\t%s\n", u.ID, u.Username, u.Created.Format("2006-01-02 15:04 MST"), u.PostCount, status)
 		}

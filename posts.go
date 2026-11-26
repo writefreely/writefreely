@@ -588,12 +588,12 @@ func newPost(app *App, w http.ResponseWriter, r *http.Request) error {
 	} else {
 		userID = app.db.GetUserID(accessToken)
 	}
-	silenced, err := app.db.IsUserSilenced(userID)
-	if err != nil {
+	status, err := app.db.GetUserStatus(userID)
+	if err != nil && err != ErrUserNotFound {
 		log.Error("new post: %v", err)
 	}
-	if silenced {
-		return ErrUserSilenced
+	if err := status.restrictionErr(); err != nil {
+		return err
 	}
 
 	if userID == -1 {
@@ -776,12 +776,12 @@ func existingPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	silenced, err := app.db.IsUserSilenced(userID)
-	if err != nil {
+	status, err := app.db.GetUserStatus(userID)
+	if err != nil && err != ErrUserNotFound {
 		log.Error("existing post: %v", err)
 	}
-	if silenced {
-		return ErrUserSilenced
+	if err := status.restrictionErr(); err != nil {
+		return err
 	}
 
 	// Modify post struct
@@ -978,12 +978,12 @@ func addPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		ownerID = u.ID
 	}
 
-	silenced, err := app.db.IsUserSilenced(ownerID)
-	if err != nil {
+	status, err := app.db.GetUserStatus(ownerID)
+	if err != nil && err != ErrUserNotFound {
 		log.Error("add post: %v", err)
 	}
-	if silenced {
-		return ErrUserSilenced
+	if err := status.restrictionErr(); err != nil {
+		return err
 	}
 
 	// Parse claimed posts in format:
@@ -1087,12 +1087,12 @@ func pinPost(app *App, w http.ResponseWriter, r *http.Request) error {
 		userID = u.ID
 	}
 
-	silenced, err := app.db.IsUserSilenced(userID)
-	if err != nil {
+	status, err := app.db.GetUserStatus(userID)
+	if err != nil && err != ErrUserNotFound {
 		log.Error("pin post: %v", err)
 	}
-	if silenced {
-		return ErrUserSilenced
+	if err := status.restrictionErr(); err != nil {
+		return err
 	}
 
 	// Parse request

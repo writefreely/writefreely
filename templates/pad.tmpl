@@ -18,6 +18,15 @@
 			<div style="text-transform: uppercase; font-size: 0.75em; color: #999; position: absolute; top: 2em; right: 3em;">Preview</div>
 			<article id="post"><div class="e-content">Generating...</div></article>
 		</div>
+		{{if .NeedsConfirmation}}
+		<div id="modal-needs-confirmation" class="modal">
+			<h2>Confirm your email to start publishing</h2>
+			<div class="body short">
+				<p style="text-align: left; font-size: 1.1em;">You're almost ready to start publishing! First, please check your email and click the link in the message we sent you to confirm your email address.</p>
+				<p style="text-align: left; font-size: 1.1em;">Didn't get it? You can <a href="/me/confirm">send it again</a>, or update your email address in your <a href="/me/settings">Account Settings</a>.</p>
+			</div>
+		</div>
+		{{end}}
 
 		<textarea dir="auto" id="writer" placeholder="Write..." class="{{.Post.Font}}" autofocus>{{if .Post.Title}}# {{.Post.Title}}
 
@@ -180,7 +189,12 @@
 		var publishing = false;
 		var justPublished = false;
 		var silenced = {{.Silenced}};
+		var unconfirmed = {{.NeedsConfirmation}};
 		var publish = function(content, font) {
+			if (unconfirmed === true) {
+				alert("Please confirm your email address before publishing.");
+				return;
+			}
 			if (silenced === true) {
 				alert("Your account is silenced, so you can't publish or update posts.");
 				return;
@@ -444,6 +458,10 @@
             };
             http.send(JSON.stringify(params));
         }
+
+		{{if .NeedsConfirmation}}
+		showModal('needs-confirmation');
+		{{end}}
 
         try {
 		  (function() {

@@ -73,6 +73,7 @@ var migrations = []Migration{
 	New("speed up blog post retrieval", addPostRetrievalIndex),       // V14 -> V15
 	New("support ActivityPub likes", supportRemoteLikes),             // V15 -> V16 (v0.16.0)
 	New("fix post signature character set", fixPostSignatureCharset), // V16 -> V17 (v0.17.0)
+	New("support email confirmation", supportEmailConfirmation),      // V17 -> V18
 }
 
 // CurrentVer returns the current migration version the application is on

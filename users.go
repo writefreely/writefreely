@@ -24,7 +24,34 @@ type UserStatus int
 const (
 	UserActive = iota
 	UserSilenced
+
+	// UserNeedsConfirmation marks a new account that can't publish until its owner confirms their email address.
+	UserNeedsConfirmation = -1
 )
+
+func (us UserStatus) String() string {
+	switch us {
+	case UserActive:
+		return "Active"
+	case UserSilenced:
+		return "Silenced"
+	case UserNeedsConfirmation:
+		return "Unconfirmed"
+	}
+	return ""
+}
+
+// restrictionErr returns the error to give a user whose account status keeps them from publishing, or nil when their
+// account is active.
+func (us UserStatus) restrictionErr() error {
+	switch us {
+	case UserActive:
+		return nil
+	case UserNeedsConfirmation:
+		return ErrUserNeedsConfirmation
+	}
+	return ErrUserSilenced
+}
 
 type (
 	userCredentials struct {
@@ -149,8 +176,17 @@ func (u *User) IsAdmin() bool {
 	return u.ID == 1
 }
 
+func (u *User) IsActive() bool {
+	return u.Status == UserActive
+}
+
 func (u *User) IsSilenced() bool {
-	return u.Status&UserSilenced != 0
+	return u.Status == UserSilenced
+}
+
+// NeedsConfirmation returns true if the user must confirm their email address before they can publish.
+func (u *User) NeedsConfirmation() bool {
+	return u.Status == UserNeedsConfirmation
 }
 
 func (u *User) IsEmailSubscriber(app *App, collID int64) bool {

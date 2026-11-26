@@ -76,6 +76,14 @@ select {
 			</div>
 		</div>
 		<div class="features row">
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><label for="require_email">
+					Require Email Address
+					<p>Require new users to give an email address when they sign up.{{if .EmailEnabled}} They'll confirm it before they can publish.{{else}} <strong>Email isn't configured</strong>, so addresses won't be confirmed.{{end}}</p>
+				</label></div>
+			<div{{if .Config.SingleUser}} class="invisible"{{end}}><input type="checkbox" name="require_email" id="require_email" {{if .Config.RequireEmail}}checked="checked"{{end}} />
+			</div>
+		</div>
+		<div class="features row">
 			<div{{if .Config.SingleUser}} class="invisible"{{end}}><label for="open_deletion">
 					Allow account deletion
 					<p>Allow all users to delete their account. Admins can always delete users.</p>

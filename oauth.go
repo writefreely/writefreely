@@ -467,6 +467,12 @@ func loginOrFail(store sessions.Store, w http.ResponseWriter, r *http.Request, u
 		fmt.Println("error saving session", err)
 		return err
 	}
+	if user.NeedsConfirmation() {
+		// Tell the user to check their email before they get started. Use a 302 so a POSTed signup form isn't
+		// resubmitted to the confirmation page.
+		http.Redirect(w, r, "/me/confirm", http.StatusFound)
+		return nil
+	}
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 	return nil
 }

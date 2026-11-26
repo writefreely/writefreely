@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/mail"
 	"regexp"
 	"strconv"
 	"strings"
@@ -53,6 +54,8 @@ type (
 		IsAdmin   bool
 		CanInvite bool
 		CollAlias string
+
+		NeedsConfirmation bool
 	}
 )
 
@@ -150,6 +153,14 @@ func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWr
 	if signup.Pass == "" {
 		return nil, impart.HTTPError{http.StatusBadRequest, "A password is required."}
 	}
+	signup.Email = strings.TrimSpace(signup.Email)
+	if signup.Email == "" {
+		if app.cfg.App.RequireEmail {
+			return nil, ErrEmailRequired
+		}
+	} else if !validEmailAddress(signup.Email) {
+		return nil, ErrInvalidEmail
+	}
 	var desiredUsername string
 	if signup.Normalize {
 		// With this option we simply conform the username to what we expect
@@ -178,6 +189,12 @@ func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWr
 		Email:      prepareUserEmail(signup.Email, app.keys.EmailKey),
 		Created:    time.Now().Truncate(time.Second).UTC(),
 	}
+	// Hold off on activating the account until the user confirms their email address, if the instance requires one
+	// and can send email.
+	confirmEmail := app.cfg.ConfirmEmail()
+	if confirmEmail {
+		u.Status = UserNeedsConfirmation
+	}
 
 	// Create actual user
 	if err := app.db.CreateUser(app.cfg, u, desiredUsername, signup.Description); err != nil {
@@ -189,6 +206,13 @@ func signupWithRegistration(app *App, signup userRegistration, w http.ResponseWr
 		err = app.db.CreateInvitedUser(signup.InviteCode, u.ID)
 		if err != nil {
 			return nil, err
+		}
+	}
+
+	if confirmEmail {
+		err = sendEmailConfirmation(app, u.ID, u.Username, signup.Email, true)
+		if err != nil {
+			log.Error("Unable to send confirmation email for %s: %s", u.Username, err)
 		}
 	}
 
@@ -804,7 +828,7 @@ func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		log.Error("unable to fetch collections: %v", err)
 	}
 
-	silenced, err := app.db.IsUserSilenced(u.ID)
+	status, err := app.db.GetUserStatus(u.ID)
 	if err != nil {
 		if err == ErrUserNotFound {
 			return err
@@ -820,8 +844,9 @@ func viewArticles(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		UserPage:       NewUserPage(app, r, u, u.Username+"'s Posts", f),
 		AnonymousPosts: p,
 		Collections:    c,
-		Silenced:       silenced,
+		Silenced:       status == UserSilenced,
 	}
+	d.UserPage.NeedsConfirmation = status == UserNeedsConfirmation
 	d.UserPage.SetMessaging(u)
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	w.Header().Set("Expires", "Thu, 04 Oct 1990 20:00:00 GMT")
@@ -842,7 +867,7 @@ func viewCollections(app *App, u *User, w http.ResponseWriter, r *http.Request) 
 	uc, _ := app.db.GetUserCollectionCount(u.ID)
 	// TODO: handle any errors
 
-	silenced, err := app.db.IsUserSilenced(u.ID)
+	status, err := app.db.GetUserStatus(u.ID)
 	if err != nil {
 		if err == ErrUserNotFound {
 			return err
@@ -863,8 +888,9 @@ func viewCollections(app *App, u *User, w http.ResponseWriter, r *http.Request) 
 		Collections:      c,
 		UsedCollections:  int(uc),
 		NewBlogsDisabled: !app.cfg.App.CanCreateBlogs(uc),
-		Silenced:         silenced,
+		Silenced:         status == UserSilenced,
 	}
+	d.UserPage.NeedsConfirmation = status == UserNeedsConfirmation
 	d.UserPage.SetMessaging(u)
 	showUserPage(w, "collections", d)
 
@@ -882,7 +908,7 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 		return ErrCollectionNotFound
 	}
 
-	silenced, err := app.db.IsUserSilenced(u.ID)
+	status, err := app.db.GetUserStatus(u.ID)
 	if err != nil {
 		if err == ErrUserNotFound {
 			return err
@@ -901,10 +927,11 @@ func viewEditCollection(app *App, u *User, w http.ResponseWriter, r *http.Reques
 	}{
 		UserPage:   NewUserPage(app, r, u, "Edit "+c.DisplayTitle(), flashes),
 		Collection: c,
-		Silenced:   silenced,
+		Silenced:   status == UserSilenced,
 		EmailCfg:   app.cfg.Email,
 	}
 	obj.UserPage.CollAlias = c.Alias
+	obj.UserPage.NeedsConfirmation = status == UserNeedsConfirmation
 	if obj.EmailCfg.Enabled() {
 		obj.LetterReplyTo = app.db.GetCollectionAttribute(c.ID, collAttrLetterReplyTo)
 	}
@@ -974,7 +1001,20 @@ func updateSettings(app *App, w http.ResponseWriter, r *http.Request) error {
 		// Username hasn't actually changed; blank it out
 		s.Username = ""
 	}
-	err = app.db.ChangeSettings(app, u, &s)
+
+	// Get the current account status and email address, to see if a changed address needs confirming
+	prevUser, err := app.db.GetUserForAuthByID(u.ID)
+	if err != nil {
+		return err
+	}
+	s.Email = strings.TrimSpace(s.Email)
+	emailChanged := s.Email != "" && !strings.EqualFold(s.Email, prevUser.EmailClear(app.keys))
+
+	if emailChanged && !validEmailAddress(s.Email) {
+		err = ErrInvalidEmail
+	} else {
+		err = app.db.ChangeSettings(app, u, &s)
+	}
 	if err != nil {
 		if reqJSON {
 			return err
@@ -985,6 +1025,14 @@ func updateSettings(app *App, w http.ResponseWriter, r *http.Request) error {
 		}
 	} else {
 		// Successful update.
+		// Send a new confirmation email if the user changed their address before confirming their old one
+		if emailChanged && prevUser.NeedsConfirmation() && app.cfg.Email.Enabled() {
+			err = sendEmailConfirmation(app, u.ID, u.Username, s.Email, true)
+			if err != nil {
+				log.Error("Unable to send confirmation email for %s: %s", u.Username, err)
+			}
+		}
+
 		if reqJSON {
 			return impart.WriteSuccess(w, u, http.StatusOK)
 		}
@@ -1069,7 +1117,7 @@ func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error 
 		titleStats = c.DisplayTitle() + " "
 	}
 
-	silenced, err := app.db.IsUserSilenced(u.ID)
+	status, err := app.db.GetUserStatus(u.ID)
 	if err != nil {
 		if err == ErrUserNotFound {
 			return err
@@ -1092,9 +1140,10 @@ func viewStats(app *App, u *User, w http.ResponseWriter, r *http.Request) error 
 		Collection:   c,
 		TopPosts:     topPosts,
 		EmailEnabled: app.cfg.Email.Enabled(),
-		Silenced:     silenced,
+		Silenced:     status == UserSilenced,
 	}
 	obj.UserPage.CollAlias = c.Alias
+	obj.UserPage.NeedsConfirmation = status == UserNeedsConfirmation
 	if app.cfg.App.Federation {
 		folls, err := app.db.GetAPFollowers(c)
 		if err != nil {
@@ -1126,6 +1175,14 @@ func handleViewSubscribers(app *App, u *User, w http.ResponseWriter, r *http.Req
 
 	filter := r.FormValue("filter")
 
+	status, err := app.db.GetUserStatus(u.ID)
+	if err != nil {
+		if err == ErrUserNotFound {
+			return err
+		}
+		log.Error("view subscribers: %v", err)
+	}
+
 	flashes, _ := getSessionFlashes(app, w, r, nil)
 	obj := struct {
 		*UserPage
@@ -1146,12 +1203,13 @@ func handleViewSubscribers(app *App, u *User, w http.ResponseWriter, r *http.Req
 			Path:       r.URL.Path,
 			SingleUser: app.cfg.App.SingleUser,
 		},
-		Silenced:          u.IsSilenced(),
+		Silenced:          status == UserSilenced,
 		Filter:            filter,
 		FederationEnabled: app.cfg.App.Federation,
 		CanEmailSub:       app.cfg.Email.Enabled(),
 		EmailSubsEnabled:  c.EmailSubsEnabled(),
 	}
+	obj.UserPage.NeedsConfirmation = status == UserNeedsConfirmation
 
 	obj.Followers, err = app.db.GetAPFollowers(c)
 	if err != nil {
@@ -1255,6 +1313,7 @@ func viewSettings(app *App, u *User, w http.ResponseWriter, r *http.Request) err
 		OauthGitea:              enableOauthGitea,
 		GiteaDisplayName:        config.OrDefaultString(app.Config().GiteaOauth.DisplayName, giteaDisplayName),
 	}
+	obj.UserPage.NeedsConfirmation = fullUser.NeedsConfirmation()
 
 	showUserPage(w, "settings", obj)
 	return nil
@@ -1712,6 +1771,12 @@ func removeOauth(app *App, u *User, w http.ResponseWriter, r *http.Request) erro
 	}
 
 	return impart.HTTPError{Status: http.StatusFound, Message: "/me/settings"}
+}
+
+// validEmailAddress reports whether the given string is a single, bare email address, like "me@example.com".
+func validEmailAddress(email string) bool {
+	addr, err := mail.ParseAddress(email)
+	return err == nil && addr.Address == email && strings.Contains(email, "@")
 }
 
 func prepareUserEmail(input string, emailKey []byte) zero.String {

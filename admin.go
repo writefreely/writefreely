@@ -169,11 +169,15 @@ func handleViewAdminSettings(app *App, u *User, w http.ResponseWriter, r *http.R
 		*AdminPage
 		Config config.AppCfg
 
+		EmailEnabled bool
+
 		Message, ConfigMessage string
 	}{
 		UserPage:  NewUserPage(app, r, u, "Admin", nil),
 		AdminPage: NewAdminPage(app),
 		Config:    app.cfg.App,
+
+		EmailEnabled: app.cfg.Email.Enabled(),
 
 		Message:       r.FormValue("m"),
 		ConfigMessage: r.FormValue("cm"),
@@ -357,7 +361,8 @@ func handleAdminToggleUserStatus(app *App, u *User, w http.ResponseWriter, r *ht
 		log.Error("failed to get user: %v", err)
 		return impart.HTTPError{http.StatusInternalServerError, fmt.Sprintf("Could not get user from username: %v", err)}
 	}
-	if user.IsSilenced() {
+	if user.IsSilenced() || user.NeedsConfirmation() {
+		// Unsilence the user, or activate an account that hasn't confirmed its email address yet
 		err = app.db.SetUserStatus(user.ID, UserActive)
 	} else {
 		err = app.db.SetUserStatus(user.ID, UserSilenced)
@@ -570,6 +575,7 @@ func handleAdminUpdateConfig(apper Apper, u *User, w http.ResponseWriter, r *htt
 	apper.App().cfg.App.Landing = r.FormValue("landing")
 	apper.App().cfg.App.OpenRegistration = r.FormValue("open_registration") == "on"
 	apper.App().cfg.App.OpenDeletion = r.FormValue("open_deletion") == "on"
+	apper.App().cfg.App.RequireEmail = r.FormValue("require_email") == "on"
 	mul, err := strconv.Atoi(r.FormValue("min_username_len"))
 	if err == nil {
 		apper.App().cfg.App.MinUsernameLen = mul

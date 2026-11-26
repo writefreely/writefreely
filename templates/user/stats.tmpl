@@ -18,7 +18,9 @@ td.none {
 </style>
 
 <div class="content-container snug">
-	{{if .Silenced}}
+	{{if .NeedsConfirmation}}
+		{{template "user-unconfirmed"}}
+	{{else if .Silenced}}
 		{{template "user-silenced"}}
 	{{end}}
 
