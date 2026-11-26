@@ -77,15 +77,15 @@ func handleViewUserInvites(app *App, u *User, w http.ResponseWriter, r *http.Req
 		CSRFField: csrf.TemplateField(r),
 	}
 
-	var err error
-
-	p.Silenced, err = app.db.IsUserSilenced(u.ID)
+	status, err := app.db.GetUserStatus(u.ID)
 	if err != nil {
 		if err == ErrUserNotFound {
 			return err
 		}
 		log.Error("view invites: %v", err)
 	}
+	p.Silenced = status == UserSilenced
+	p.NeedsConfirmation = status == UserNeedsConfirmation
 
 	p.Invites, err = app.db.GetUserInvites(u.ID)
 	if err != nil {
@@ -108,11 +108,15 @@ func handleCreateUserInvite(app *App, u *User, w http.ResponseWriter, r *http.Re
 		return impart.HTTPError{http.StatusNotFound, ""}
 	}
 
-	if u.IsSilenced() {
-		return ErrUserSilenced
+	status, err := app.db.GetUserStatus(u.ID)
+	if err != nil {
+		log.Error("create invite: %v", err)
+		return ErrInternalGeneral
+	}
+	if err := status.restrictionErr(); err != nil {
+		return err
 	}
 
-	var err error
 	var maxUses int
 	if muVal != "0" {
 		maxUses, err = strconv.Atoi(muVal)

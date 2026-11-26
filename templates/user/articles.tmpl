@@ -15,7 +15,9 @@
 {{if .Flashes}}<ul class="errors">
 	{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
 </ul>{{end}}
-{{if .Silenced}}
+{{if .NeedsConfirmation}}
+	{{template "user-unconfirmed"}}
+{{else if .Silenced}}
 	{{template "user-silenced"}}
 {{end}}
 

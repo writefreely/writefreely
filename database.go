@@ -226,7 +226,7 @@ func (db *datastore) CreateUser(cfg *config.Config, u *User, collectionTitle str
 
 	// 1. Add to `users` table
 	// NOTE: Assumes User's Password is already hashed!
-	res, err := t.Exec("INSERT INTO users (username, password, email) VALUES (?, ?, ?)", u.Username, u.HashedPass, u.Email)
+	res, err := t.Exec("INSERT INTO users (username, password, email, status) VALUES (?, ?, ?, ?)", u.Username, u.HashedPass, u.Email, u.Status)
 	if err != nil {
 		t.Rollback()
 		if db.isDuplicateKeyErr(err) {
@@ -366,21 +366,34 @@ func (db *datastore) GetUserByID(id int64) (*User, error) {
 	return u, nil
 }
 
-// IsUserSilenced returns true if the user account associated with id is
-// currently silenced.
-func (db *datastore) IsUserSilenced(id int64) (bool, error) {
-	u := &User{ID: id}
-
-	err := db.QueryRow("SELECT status FROM users WHERE id = ?", id).Scan(&u.Status)
+// GetUserStatus returns the current status of the user account associated with id.
+func (db *datastore) GetUserStatus(id int64) (UserStatus, error) {
+	var status UserStatus
+	err := db.QueryRow("SELECT status FROM users WHERE id = ?", id).Scan(&status)
 	switch {
 	case err == sql.ErrNoRows:
-		return false, ErrUserNotFound
+		return UserActive, ErrUserNotFound
 	case err != nil:
 		log.Error("Couldn't SELECT user status: %v", err)
-		return false, fmt.Errorf("is user silenced: %v", err)
+		return UserActive, fmt.Errorf("get user status: %v", err)
+	}
+	return status, nil
+}
+
+// IsUserSilenced returns true if the user account associated with id is
+// currently silenced.
+// NOTE: this treats any non-active status as silenced, including an account that hasn't confirmed its email address
+// yet, so that account's content stays hidden. Use GetUserStatus to tell those cases apart.
+func (db *datastore) IsUserSilenced(id int64) (bool, error) {
+	status, err := db.GetUserStatus(id)
+	if err != nil {
+		if err != ErrUserNotFound {
+			err = fmt.Errorf("is user silenced: %v", err)
+		}
+		return false, err
 	}
 
-	return u.IsSilenced(), nil
+	return status != UserActive, nil
 }
 
 // DoesUserNeedAuth returns true if the user hasn't provided any methods for
@@ -692,6 +705,64 @@ func (db *datastore) ConsumePasswordResetToken(t string) error {
 		return err
 	}
 
+	return nil
+}
+
+// GetEmailConfirmationToken returns the user's pending email confirmation token, or an empty string if they have none.
+func (db *datastore) GetEmailConfirmationToken(userID int64) (string, error) {
+	var t string
+	err := db.QueryRow("SELECT token FROM email_confirmations WHERE user_id = ? AND confirmed = 0 ORDER BY created DESC LIMIT 1", userID).Scan(&t)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil
+		}
+		log.Error("Couldn't SELECT email_confirmations for user %d: %v", userID, err)
+		return "", err
+	}
+	return t, nil
+}
+
+// CreateEmailConfirmationToken creates a new token for confirming the user's current email address. Since tokens
+// aren't tied to a stored address, any pending tokens, which were sent to a previous address, are deleted.
+func (db *datastore) CreateEmailConfirmationToken(userID int64) (string, error) {
+	t := id.Generate62RandomString(32)
+
+	_, err := db.Exec("DELETE FROM email_confirmations WHERE user_id = ? AND confirmed = 0", userID)
+	if err != nil {
+		log.Error("Couldn't DELETE pending email_confirmations for user %d: %v", userID, err)
+		return "", err
+	}
+	_, err = db.Exec("INSERT INTO email_confirmations (user_id, token, confirmed, created) VALUES (?, ?, 0, "+db.now()+")", userID, t)
+	if err != nil {
+		log.Error("Couldn't INSERT email_confirmations for user %d: %v", userID, err)
+		return "", err
+	}
+
+	return t, nil
+}
+
+// ValidateEmailConfirmationToken returns an error if the given token isn't a valid email confirmation token for the
+// user.
+func (db *datastore) ValidateEmailConfirmationToken(userID int64, token string) error {
+	var t string
+	err := db.QueryRow("SELECT token FROM email_confirmations WHERE user_id = ? AND token = ?", userID, token).Scan(&t)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("Invalid link for this user.")
+		}
+		log.Error("Couldn't SELECT email_confirmations for user %d: %v", userID, err)
+		return fmt.Errorf("Internal error.")
+	}
+	return nil
+}
+
+// MarkEmailConfirmed records that the user confirmed their email address with the given token.
+func (db *datastore) MarkEmailConfirmed(userID int64, token string) error {
+	_, err := db.Exec("UPDATE email_confirmations SET confirmed = 1 WHERE user_id = ? AND token = ?", userID, token)
+	if err != nil {
+		log.Error("Couldn't UPDATE email_confirmations for user %d: %v", userID, err)
+		return err
+	}
 	return nil
 }
 
@@ -2756,6 +2827,16 @@ func (db *datastore) DeleteAccount(userID int64) error {
 	}
 	rs, _ = res.RowsAffected()
 	log.Info("Deleted %d from userattributes", rs)
+
+	// Delete email confirmations
+	res, err = t.Exec("DELETE FROM email_confirmations WHERE user_id = ?", userID)
+	if err != nil {
+		t.Rollback()
+		log.Error("Unable to delete email_confirmations: %v", err)
+		return err
+	}
+	rs, _ = res.RowsAffected()
+	log.Info("Deleted %d from email_confirmations", rs)
 
 	// Delete user invites
 	res, err = t.Exec("DELETE FROM userinvites WHERE owner_id = ?", userID)

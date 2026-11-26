@@ -128,14 +128,21 @@ func (h oauthHandler) viewOauthSignup(app *App, w http.ResponseWriter, r *http.R
 			return h.showOauthSignupPage(app, w, r, tp, fmt.Errorf("unable to hash password"))
 		}
 	}
+	email := strings.TrimSpace(r.FormValue(oauthParamEmail))
 	newUser := &User{
 		// Normalize the username into a valid slug, just like normal registration, so the collection alias is always
 		// lowercase
 		Username:   getSlug(r.FormValue(oauthParamUsername), ""),
 		HashedPass: hashedPass,
 		HasPass:    hasPass,
-		Email:      prepareUserEmail(r.FormValue(oauthParamEmail), h.EmailKey),
+		Email:      prepareUserEmail(email, h.EmailKey),
 		Created:    time.Now().Truncate(time.Second).UTC(),
+	}
+	// Trust the email address the OAuth provider gave us (which the signed hash proves wasn't tampered with), but
+	// require confirmation of any other address the user entered.
+	confirmEmail := h.Config.ConfirmEmail() && !strings.EqualFold(email, strings.TrimSpace(tp.TokenEmail))
+	if confirmEmail {
+		newUser.Status = UserNeedsConfirmation
 	}
 	displayName := r.FormValue(oauthParamAlias)
 	if len(displayName) == 0 {
@@ -160,6 +167,13 @@ func (h oauthHandler) viewOauthSignup(app *App, w http.ResponseWriter, r *http.R
 		return h.showOauthSignupPage(app, w, r, tp, err)
 	}
 
+	if confirmEmail {
+		err = sendEmailConfirmation(app, newUser.ID, newUser.Username, email, true)
+		if err != nil {
+			log.Error("Unable to send confirmation email for %s: %s", newUser.Username, err)
+		}
+	}
+
 	if err := loginOrFail(h.Store, w, r, newUser); err != nil {
 		return h.showOauthSignupPage(app, w, r, tp, err)
 	}
@@ -182,12 +196,13 @@ func (h oauthHandler) validateOauthSignup(r *http.Request) error {
 	if len(collTitle) == 0 {
 		collTitle = username
 	}
-	email := r.FormValue(oauthParamEmail)
+	email := strings.TrimSpace(r.FormValue(oauthParamEmail))
 	if len(email) > 0 {
-		parts := strings.Split(email, "@")
-		if len(parts) != 2 || (len(parts[0]) < 1 || len(parts[1]) < 1) {
+		if !validEmailAddress(email) {
 			return impart.HTTPError{Status: http.StatusBadRequest, Message: "Invalid email address"}
 		}
+	} else if h.Config.App.RequireEmail {
+		return ErrEmailRequired
 	}
 	return nil
 }

@@ -52,7 +52,10 @@ var (
 	ErrRemoteUserNotFound = impart.HTTPError{http.StatusNotFound, "Remote user not found."}
 	ErrUserNotFoundEmail  = impart.HTTPError{http.StatusNotFound, "Please enter your username instead of your email address."}
 
-	ErrUserSilenced = impart.HTTPError{http.StatusForbidden, "Account is silenced."}
+	ErrUserSilenced          = impart.HTTPError{http.StatusForbidden, "Account is silenced."}
+	ErrUserNeedsConfirmation = impart.HTTPError{http.StatusForbidden, "You must confirm your email address before you can publish."}
+	ErrEmailRequired         = impart.HTTPError{http.StatusBadRequest, "An email address is required."}
+	ErrInvalidEmail          = impart.HTTPError{http.StatusBadRequest, "Invalid email address."}
 
 	ErrDisabledPasswordAuth = impart.HTTPError{http.StatusForbidden, "Password authentication is disabled."}
 )

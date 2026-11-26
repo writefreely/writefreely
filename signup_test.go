@@ -53,6 +53,7 @@ func newSignupTestApp(t *testing.T) *App {
 	cfg.App.Host = "http://localhost:0"
 	cfg.App.SingleUser = false
 	cfg.App.OpenRegistration = false
+	cfg.App.RequireEmail = false // tests that cover email requirements turn this on themselves
 	cfg.App.MinUsernameLen = 3
 	cfg.Server.HashSeed = "test-hash-seed"
 

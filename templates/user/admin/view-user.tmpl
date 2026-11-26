@@ -75,10 +75,13 @@ input.copy-text {
 			<td>{{if .LastPost}}{{.LastPost}}{{else}}Never{{end}}</td>
 		</tr>
 		<tr>
-			<form action="/admin/user/{{.User.Username}}/status" method="POST" {{if not .User.IsSilenced}}onsubmit="return confirmSilence()"{{end}}>
+			<form action="/admin/user/{{.User.Username}}/status" method="POST" {{if not (or .User.IsSilenced .User.NeedsConfirmation)}}onsubmit="return confirmSilence()"{{end}}>
 				<th><a id="status"></a>Status</th>
 				<td class="active-silence">
-				{{if .User.IsSilenced}}
+				{{if .User.NeedsConfirmation}}
+					<p>Unconfirmed</p>
+					<input type="submit" value="Activate" title="Activate this account without waiting for the user to confirm their email address" />
+				{{else if .User.IsSilenced}}
 					<p>Silenced</p>
 					<input type="submit" value="Unsilence"/>
 				{{else}}

@@ -40,6 +40,8 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 		Blogs    *[]Collection
 		Silenced bool
 
+		NeedsConfirmation bool
+
 		Editing        bool        // True if we're modifying an existing post
 		EditCollection *Collection // Collection of the post we're editing, if any
 	}{
@@ -53,13 +55,15 @@ func handleViewPad(app *App, w http.ResponseWriter, r *http.Request) error {
 		if err != nil {
 			log.Error("Unable to get user's blogs for Pad: %v", err)
 		}
-		appData.Silenced, err = app.db.IsUserSilenced(appData.User.ID)
+		status, err := app.db.GetUserStatus(appData.User.ID)
 		if err != nil {
 			if err == ErrUserNotFound {
 				return err
 			}
 			log.Error("Unable to get user status for Pad: %v", err)
 		}
+		appData.Silenced = status == UserSilenced
+		appData.NeedsConfirmation = status == UserNeedsConfirmation
 	}
 
 	padTmpl := app.cfg.App.Editor
@@ -136,17 +140,21 @@ func handleViewMeta(app *App, w http.ResponseWriter, r *http.Request) error {
 		Flashes        []string
 		NeedsToken     bool
 		Silenced       bool
+
+		NeedsConfirmation bool
 	}{
 		StaticPage: pageForReq(app, r),
 		Post:       &RawPost{Font: "norm"},
 		User:       getUserSession(app, r),
 	}
 	var err error
-	appData.Silenced, err = app.db.IsUserSilenced(appData.User.ID)
+	status, err := app.db.GetUserStatus(appData.User.ID)
 	if err != nil {
 		log.Error("view meta: get user status: %v", err)
 		return ErrInternalGeneral
 	}
+	appData.Silenced = status == UserSilenced
+	appData.NeedsConfirmation = status == UserNeedsConfirmation
 
 	if action == "" && slug == "" {
 		return ErrPostNotFound

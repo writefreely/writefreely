@@ -91,7 +91,7 @@ form dd {
                 <label>
                     <dt>Email</dt>
                     <dd>
-<input type="text" name="email" style="width: 100%; box-sizing: border-box;" placeholder="Email"{{ if .Email }} value="{{.Email}}"{{ end }} />
+<input type="email" name="email" style="width: 100%; box-sizing: border-box;" placeholder="Email"{{ if .Email }} value="{{.Email}}"{{ end }}{{ if .RequireEmail }} required{{ end }} />
                     </dd>
                 </label>
                 <dt>

@@ -150,7 +150,12 @@
 		var publishing = false;
 		var justPublished = false;
 		var silenced = {{.Silenced}};
+		var unconfirmed = {{.NeedsConfirmation}};
 		var publish = function(title, content, font) {
+			if (unconfirmed === true) {
+				alert("Please confirm your email address before publishing.");
+				return;
+			}
 			if (silenced === true) {
 				alert("Your account is silenced, so you can't publish or update posts.");
 				return;

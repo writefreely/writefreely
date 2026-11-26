@@ -145,6 +145,7 @@ type (
 		SingleUser       bool `ini:"single_user"`
 		OpenRegistration bool `ini:"open_registration"`
 		OpenDeletion     bool `ini:"open_deletion"`
+		RequireEmail     bool `ini:"require_email"` // Require an email address on signup, and confirm it when email is configured
 		MinUsernameLen   int  `ini:"min_username_len"`
 		MaxBlogs         int  `ini:"max_blogs"`
 
@@ -216,6 +217,9 @@ func New() *Config {
 			MaxBlogs:       1,
 			Federation:     true,
 			PublicStats:    true,
+			// New instances require an email address on signup. Existing config files without this setting keep
+			// it off, since Load doesn't start from these defaults.
+			RequireEmail: true,
 		},
 	}
 	c.UseMySQL(true)
@@ -255,6 +259,12 @@ func (ac *AppCfg) LandingPath() string {
 func (lc EmailCfg) Enabled() bool {
 	return (lc.Domain != "" && lc.MailgunPrivate != "") ||
 		lc.Username != "" && lc.Password != "" && lc.Host != "" && lc.Port > 0
+}
+
+// ConfirmEmail reports whether new accounts must confirm their email address before they're activated. This happens
+// when the instance requires an email address on signup and can send email to confirm it.
+func (cfg *Config) ConfirmEmail() bool {
+	return cfg.App.RequireEmail && cfg.Email.Enabled()
 }
 
 func (ac AppCfg) SignupPath() string {

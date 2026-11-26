@@ -19,7 +19,9 @@ textarea.section.norm {
 <div class="content-container snug">
 	<div id="overlay"></div>
 
-	{{if .Silenced}}
+	{{if .NeedsConfirmation}}
+		{{template "user-unconfirmed"}}
+	{{else if .Silenced}}
 		{{template "user-silenced"}}
 	{{end}}
 

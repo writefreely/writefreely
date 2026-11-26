@@ -1,0 +1,39 @@
+{{define "confirm-email"}}
+{{template "header" .}}
+
+<div class="snug content-container">
+	<h1>Confirm Email Address</h1>
+	{{if .Flashes}}<ul class="errors">
+		{{range .Flashes}}<li class="urgent">{{.}}</li>{{end}}
+	</ul>{{end}}
+
+	{{if .ErrMsg}}
+		<div class="alert error">
+			<p>{{.ErrMsg}}</p>
+		</div>
+	{{else if not .Token}}
+		{{if .EmailEnabled}}
+		<p>We've emailed you at <strong>{{.Email}}</strong>. Please click the link in that email to confirm your email address and start publishing on {{.SiteName}}!</p>
+		<p>If this email address is incorrect, you can update it in your <a href="/me/settings">Account Settings</a>.</p>
+
+		<form method="post" action="/me/confirm/resend" style="margin-top: 2em">
+			{{.CSRFField}}
+			<p>Didn't get the email? Check your spam folder, or send it again.</p>
+			<input type="submit" value="Resend email" />
+		</form>
+		{{else}}
+		<p>Your account needs a confirmed email address before you can start publishing, but {{.SiteName}} can't send email right now. Please contact an admin to activate your account.</p>
+		{{end}}
+	{{else}}
+		<p>Please click the button below to confirm your email address and start publishing.</p>
+
+		<form method="post" action="/me/confirm">
+			{{.CSRFField}}
+			<input type="hidden" name="t" value="{{.Token}}" />
+			<input type="submit" value="Confirm Email Address" />
+		</form>
+	{{end}}
+</div>
+
+{{template "footer" .}}
+{{end}}
