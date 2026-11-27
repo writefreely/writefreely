@@ -1,0 +1,47 @@
+version: "3"
+
+env:
+  CSSDIR: ../static/css/
+
+tasks:
+  check-lessc:
+    internal: true
+    cmds:
+      - |
+        command -v lessc >/dev/null 2>&1 || { 
+          echo "lessc is not installed, please run: task install"; 
+          exit 1; 
+        }
+    silent: true
+
+  install:
+    desc: "Install LESS and compile all LESS files"
+    cmds:
+      - |
+        if ! command -v lessc >/dev/null 2>&1; then
+          echo "Installing LESS..."
+          npm install -g less@3.5.3
+          npm install -g less-plugin-clean-css
+        else
+          echo "LESS is already installed"
+        fi
+      - task: all
+    silent: true
+
+  all:
+    desc: "Compile all LESS files"
+    deps: [check-lessc]
+    cmds:
+      - lessc app.less --clean-css="--s1 --advanced" "{{.CSSDIR}}write.css"
+      - lessc fonts.less --clean-css="--s1 --advanced" "{{.CSSDIR}}fonts.css"
+      - lessc icons.less --clean-css="--s1 --advanced" "{{.CSSDIR}}icons.css"
+      - lessc prose.less --clean-css="--s1 --advanced" "{{.CSSDIR}}prose.css"
+    requires:
+      vars:
+        - CSSDIR
+
+  clean:
+    cmds:
+      - rm -f font.css
+      - rm -f fonts.css
+      - rm -f icons.css
