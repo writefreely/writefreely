@@ -1,7 +1,17 @@
 {{define "post"}}<!DOCTYPE HTML>
-<html {{if .Language}}lang="{{.Language}}"{{end}} dir="{{.Direction}}">
+<html class="light" {{if .Language}}lang="{{.Language}}"{{end}} dir="{{.Direction}}">
 	<head prefix="og: http://ogp.me/ns#">
 		<meta charset="utf-8">
+		<script type="text/javascript">
+			(function () {
+				var theme = localStorage.getItem('padTheme');
+				if (!theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+					theme = 'dark';
+				}
+				document.documentElement.classList.remove('light', 'dark');
+				document.documentElement.classList.add(theme || 'light');
+			})();
+		</script>
 
 		<title>{{if .Title}}{{.Title}}{{else}}{{.GenTitle}}{{end}} {{localhtml "title dash" .Language}} {{.SiteName}}</title>
 		
@@ -99,4 +109,6 @@
 		}
 	}
 	</script>
+	<a id="global-theme-toggle" class="global-theme-toggle global-theme-toggle--floating" href="#theme" title="Toggle theme" data-theme-toggle="true"><img class="ic-24dp" src="/img/ic_brightness_dark@2x.png" /></a>
+	<script src="/js/theme.js"></script>
 </html>{{end}}
