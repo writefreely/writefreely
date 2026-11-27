@@ -231,6 +231,15 @@ func (cfg *Config) UseMySQL(fresh bool) {
 	}
 }
 
+// UsePostgres resets the Config's Database to use default values for a Postgres setup.
+func (cfg *Config) UsePostgres(fresh bool) {
+	cfg.Database.Type = "postgres"
+	if fresh {
+		cfg.Database.Host = "localhost"
+		cfg.Database.Port = 5432
+	}
+}
+
 // UseSQLite resets the Config's Database to use default values for a SQLite setup.
 func (cfg *Config) UseSQLite(fresh bool) {
 	cfg.Database.Type = "sqlite3"
